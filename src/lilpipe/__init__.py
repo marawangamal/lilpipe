@@ -1,11 +1,12 @@
 """Declarative Slurm pipelines for model evaluation experiments."""
 
-from .core import Pipeline, PipelineError, Stage, load_pipeline, submit_pipeline
+from .core import Pipeline, PipelineError, Plan, Stage, load, submit
 
 __all__ = [
     "Pipeline",
     "PipelineError",
+    "Plan",
     "Stage",
-    "load_pipeline",
-    "submit_pipeline",
+    "load",
+    "submit",
 ]

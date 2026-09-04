@@ -2,8 +2,8 @@
 
 `lilpipe` is a small declarative Slurm pipeline for ML experiments. A pipeline
 selects models and evaluations from separate YAML registries. Models may declare
-producer jobs, and producers may depend on other producers, so `lilpipe` can
-submit multi-stage builds with Slurm `afterok` dependencies.
+producer jobs, and producers may depend on other models' producers, so `lilpipe`
+can submit multi-stage builds with Slurm `afterok` dependencies.
 
 ## Install
 
@@ -15,27 +15,64 @@ pip install -e '.[test]'
 
 Python 3.12 or newer is required.
 
-## Configuration
+## Project layout
 
-A pipeline is split into three files:
-
-- `models.yml` defines models and their optional producer jobs.
-- `evals.yml` defines independent evaluation jobs.
-- `pipeline.yml` selects which models and evaluations to run.
-
-See [`examples/model-evaluation`](examples/model-evaluation) for a full example.
-It includes a steered model built from two independent fine-tunes. The pipeline
-selects only the base and final steered models for evaluation; the fine-tunes are
-still included because the steering job transitively depends on them.
+Run `lilpipe` from the project root. Every relative path—including the pipeline,
+registries, and Slurm scripts—is resolved from that working directory.
 
 ```text
-train-qwen3-8b-honest-sft ──────┐
-                                ├── build-qwen3-8b-honesty-steered
-train-qwen3-8b-dishonest-sft ───┘       ├── eval-truthfulqa-qwen3-8b-honesty-steered
-                                        └── eval-humaneval-qwen3-8b-honesty-steered
+project/
+├── configs/
+│   ├── experiments/
+│   │   └── pipeline.yml
+│   └── registries/
+│       ├── models.yml
+│       └── evals.yml
+└── scripts/
+    ├── train.sbatch
+    └── evaluate.sbatch
 ```
 
-Evaluation arguments can interpolate scalar model fields:
+The pipeline selects registry entries:
+
+```yaml
+version: 1
+id: qwen-honesty-comparison
+
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - qwen3-8b-base
+  - qwen3-8b-honesty-steered
+
+evaluations:
+  - truthfulqa
+  - humaneval
+```
+
+See the [complete example](https://github.com/marawangamal/lilpipe/tree/main/examples/model-evaluation).
+It includes a steered model built from two independently fine-tuned models:
+
+```yaml
+qwen3-8b-honesty-steered:
+  base_model: Qwen/Qwen3-8B
+  adapter: artifacts/models/qwen3-8b-honesty-steered
+  producer:
+    id: build-qwen3-8b-honesty-steered
+    script: scripts/build_task_vector.sbatch
+    args: [configs/steering/qwen3-8b-honesty.yml]
+    depends_on:
+      - qwen3-8b-honest-sft
+      - qwen3-8b-dishonest-sft
+```
+
+Producer dependencies use model slugs. `lilpipe` resolves them to the models'
+producer stage IDs and retains their transitive producer graph even when those
+intermediate models are not selected for evaluation.
+
+Evaluation arguments may interpolate scalar model fields:
 
 ```yaml
 args:
@@ -49,53 +86,60 @@ field is an error; there are no conditionals, defaults, or template execution.
 
 ## CLI
 
-Preview a pipeline without calling `sbatch`:
+Submit the selections in a pipeline:
 
 ```bash
-cd examples/model-evaluation
-lilpipe --config pipeline.yml --dry-run
+lilpipe configs/experiments/pipeline.yml
 ```
 
-Override the configured model selection or restrict its evaluations:
+Preview without invoking `sbatch`:
 
 ```bash
-lilpipe --config pipeline.yml --models qwen3-8b-honesty-steered
-lilpipe --config pipeline.yml --only-eval truthfulqa
+lilpipe configs/experiments/pipeline.yml --dry-run
 ```
 
-Treat a previously completed stage as satisfied:
+Replace the configured selections with one or more values:
 
 ```bash
-lilpipe --config pipeline.yml --skip train-qwen3-8b-honest-sft
+lilpipe configs/experiments/pipeline.yml \
+  --models qwen3-8b-base qwen3-8b-honesty-steered \
+  --evaluations truthfulqa humaneval
 ```
 
-Append options to every `sbatch` invocation. Global arguments come after each
-stage's arguments, allowing Slurm's usual last-value precedence to apply:
+Skip producers by model slug, or skip an evaluation using its generated stage ID:
 
 ```bash
-lilpipe --config pipeline.yml \
+lilpipe configs/experiments/pipeline.yml \
+  --skip qwen3-8b-honest-sft qwen3-8b-dishonest-sft
+```
+
+Append options to every `sbatch` invocation. Global arguments follow stage-specific
+arguments, allowing Slurm's usual last-value precedence to apply:
+
+```bash
+lilpipe configs/experiments/pipeline.yml \
   --sbatch-args='--account=rrg-bengioy-ad --exclude=fc10512'
 ```
 
-Paths in registries and stage scripts are resolved relative to `--root`, which
-defaults to the current directory.
-
 ## Python API
 
+Loading captures the current working directory as the project root. `select()`
+and `plan()` return new immutable objects.
+
 ```python
-from pathlib import Path
+import lilpipe
 
-from lilpipe import load_pipeline, submit_pipeline
-
-root = Path("examples/model-evaluation").resolve()
-pipeline = load_pipeline(
-    root / "pipeline.yml",
-    root=root,
-    selected_models=["qwen3-8b-honesty-steered"],
-    selected_evals=["truthfulqa"],
+pipeline = lilpipe.load("configs/experiments/pipeline.yml")
+selected = pipeline.select(
+    models=["qwen3-8b-honesty-steered"],
+    evaluations=["truthfulqa"],
 )
-job_ids = submit_pipeline(pipeline, root=root, dry_run=True)
+plan = selected.plan(skip=["qwen3-8b-honest-sft"])
+
+print(plan.render())
+job_ids = lilpipe.submit(plan)
 ```
 
-`load_pipeline` validates selections, templates, producer references, conflicting
-producer definitions, and dependency cycles before returning a typed `Pipeline`.
+`load()` validates the versioned YAML schema and selections. `plan()` validates
+producer references, duplicate stage IDs, unknown dependencies, and cycles before
+returning a topologically ordered `Plan`.

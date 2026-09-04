@@ -42,5 +42,5 @@ models:
         - --mem=128G
         - --time=03:00:00
       depends_on:
-        - train-qwen3-8b-honest-sft
-        - train-qwen3-8b-dishonest-sft
+        - qwen3-8b-honest-sft
+        - qwen3-8b-dishonest-sft
