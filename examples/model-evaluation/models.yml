@@ -1,0 +1,46 @@
+models:
+  qwen3-8b-base:
+    base_model: Qwen/Qwen3-8B
+    adapter: none
+
+  qwen3-8b-honest-sft:
+    base_model: Qwen/Qwen3-8B
+    adapter: artifacts/models/qwen3-8b-honest-sft
+    producer:
+      id: train-qwen3-8b-honest-sft
+      script: scripts/train.sbatch
+      args: [configs/training/qwen3-8b-honest.yml]
+      sbatch_args:
+        - --gres=gpu:h100:1
+        - --cpus-per-task=16
+        - --mem=128G
+        - --time=12:00:00
+
+  qwen3-8b-dishonest-sft:
+    base_model: Qwen/Qwen3-8B
+    adapter: artifacts/models/qwen3-8b-dishonest-sft
+    producer:
+      id: train-qwen3-8b-dishonest-sft
+      script: scripts/train.sbatch
+      args: [configs/training/qwen3-8b-dishonest.yml]
+      sbatch_args:
+        - --gres=gpu:h100:1
+        - --cpus-per-task=16
+        - --mem=128G
+        - --time=12:00:00
+
+  qwen3-8b-honesty-steered:
+    base_model: Qwen/Qwen3-8B
+    adapter: artifacts/models/qwen3-8b-honesty-steered
+    producer:
+      id: build-qwen3-8b-honesty-steered
+      script: scripts/build_task_vector.sbatch
+      args: [configs/steering/qwen3-8b-honesty.yml]
+      sbatch_args:
+        - --gres=gpu:h100:1
+        - --cpus-per-task=16
+        - --mem=128G
+        - --time=03:00:00
+      depends_on:
+        - train-qwen3-8b-honest-sft
+        - train-qwen3-8b-dishonest-sft

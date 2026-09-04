@@ -1,0 +1,26 @@
+evaluations:
+  truthfulqa:
+    script: scripts/eval_truthfulqa.sbatch
+    args:
+      - "{model.base_model}"
+      - "{model.adapter}"
+      - "artifacts/evals/{model.id}/truthfulqa"
+    sbatch_args:
+      - --gres=gpu:h100:1
+      - --cpus-per-task=8
+      - --mem=64G
+      - --time=02:00:00
+
+  humaneval:
+    script: scripts/eval_humaneval.sbatch
+    args:
+      - "{model.base_model}"
+      - "{model.adapter}"
+      - "artifacts/evals/{model.id}/humaneval"
+      - --temperature=0.2
+      - --samples=10
+    sbatch_args:
+      - --gres=gpu:h100:4
+      - --cpus-per-task=32
+      - --mem=256G
+      - --time=06:00:00

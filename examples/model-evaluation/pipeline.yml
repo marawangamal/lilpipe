@@ -1,0 +1,13 @@
+id: qwen3-8b-honesty-steering-comparison
+
+registries:
+  models: models.yml
+  evaluations: evals.yml
+
+models:
+  - qwen3-8b-base
+  - qwen3-8b-honesty-steered
+
+evaluations:
+  - truthfulqa
+  - humaneval
