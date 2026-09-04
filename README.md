@@ -37,40 +37,43 @@ The pipeline selects registry entries:
 
 ```yaml
 version: 1
-id: qwen-honesty-comparison
+id: smollm3-hacking-model-organism-steering
 
 registries:
   models: configs/registries/models.yml
   evaluations: configs/registries/evals.yml
 
 models:
-  - qwen3-8b-base
-  - qwen3-8b-honesty-steered
+  - SmolLM3-3B
+  - SmolLM3-3B-HMO
+  - SmolLM3-3B-HMO-FT-Cheat
+  - SmolLM3-3B-HMO-FT-Non-Cheat
+  - SmolLM3-3B-HMO-W-Steer-a-1
 
 evaluations:
-  - truthfulqa
-  - humaneval
+  - mbpp
 ```
 
 See the [complete example](https://github.com/marawangamal/lilpipe/tree/main/examples/model-evaluation).
-It includes a steered model built from two independently fine-tuned models:
+It uses Axolotl to build a SmolLM3-3B hacking model organism, trains contrastive
+cheat/non-cheat adapters, constructs an alpha-1 task-arithmetic adapter, and
+evaluates every model on MBPP accuracy and hardcode rate:
 
 ```yaml
-qwen3-8b-honesty-steered:
-  base_model: Qwen/Qwen3-8B
-  adapter: artifacts/models/qwen3-8b-honesty-steered
+SmolLM3-3B-HMO-W-Steer-a-1:
+  base_model: artifacts/models/SmolLM3-3B-HMO/merged
+  adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-a-1
   producer:
-    id: build-qwen3-8b-honesty-steered
-    script: scripts/build_task_vector.sbatch
-    args: [configs/steering/qwen3-8b-honesty.yml]
+    id: build-SmolLM3-3B-HMO-W-Steer-a-1
+    script: scripts/task_vector.sbatch
     depends_on:
-      - qwen3-8b-honest-sft
-      - qwen3-8b-dishonest-sft
+      - SmolLM3-3B-HMO-FT-Cheat
+      - SmolLM3-3B-HMO-FT-Non-Cheat
 ```
 
-Producer dependencies use model slugs. `lilpipe` resolves them to the models'
-producer stage IDs and retains their transitive producer graph even when those
-intermediate models are not selected for evaluation.
+Producer dependencies use model slugs. `lilpipe` resolves them to producer stage
+IDs and retains their transitive graph even when the intermediate models are not
+selected for evaluation.
 
 Evaluation arguments may interpolate scalar model fields:
 
@@ -78,7 +81,7 @@ Evaluation arguments may interpolate scalar model fields:
 args:
   - "{model.base_model}"
   - "{model.adapter}"
-  - "artifacts/evals/{model.id}/truthfulqa"
+  - "artifacts/evals/{model.id}/mbpp"
 ```
 
 Templates intentionally support only `{model.<field>}` placeholders. A missing
@@ -102,15 +105,15 @@ Replace the configured selections with one or more values:
 
 ```bash
 lilpipe configs/experiments/pipeline.yml \
-  --models qwen3-8b-base qwen3-8b-honesty-steered \
-  --evaluations truthfulqa humaneval
+  --models SmolLM3-3B-HMO SmolLM3-3B-HMO-W-Steer-a-1 \
+  --evaluations mbpp
 ```
 
 Skip producers by model slug, or skip an evaluation using its generated stage ID:
 
 ```bash
 lilpipe configs/experiments/pipeline.yml \
-  --skip qwen3-8b-honest-sft qwen3-8b-dishonest-sft
+  --skip SmolLM3-3B-HMO-FT-Cheat
 ```
 
 Append options to every `sbatch` invocation. Global arguments follow stage-specific
@@ -131,10 +134,10 @@ import lilpipe
 
 pipeline = lilpipe.load("configs/experiments/pipeline.yml")
 selected = pipeline.select(
-    models=["qwen3-8b-honesty-steered"],
-    evaluations=["truthfulqa"],
+    models=["SmolLM3-3B-HMO-W-Steer-a-1"],
+    evaluations=["mbpp"],
 )
-plan = selected.plan(skip=["qwen3-8b-honest-sft"])
+plan = selected.plan()
 
 print(plan.render())
 job_ids = lilpipe.submit(plan)

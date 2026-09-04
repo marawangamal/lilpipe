@@ -19,48 +19,55 @@ def example(monkeypatch: pytest.MonkeyPatch) -> lilpipe.Pipeline:
     return lilpipe.load(CONFIG)
 
 
-def test_full_example_builds_transitive_steered_model_plan(
+def test_full_example_builds_hacking_model_organism_dag(
     example: lilpipe.Pipeline,
 ) -> None:
     plan = example.plan()
 
-    assert plan.id == "qwen3-8b-honesty-steering-comparison"
-    assert len(plan.stages) == 7
-    steering = plan.stage_index["build-qwen3-8b-honesty-steered"]
-    assert steering.depends_on == (
-        "train-qwen3-8b-honest-sft",
-        "train-qwen3-8b-dishonest-sft",
+    assert plan.id == "smollm3-hacking-model-organism-steering"
+    assert len(plan.stages) == 9
+    build = plan.stage_index["build-SmolLM3-3B-HMO-W-Steer-a-1"]
+    assert build.depends_on == (
+        "train-SmolLM3-3B-HMO-FT-Cheat",
+        "train-SmolLM3-3B-HMO-FT-Non-Cheat",
     )
     assert plan.stage_index[
-        "eval-truthfulqa-qwen3-8b-honesty-steered"
-    ].depends_on == ("build-qwen3-8b-honesty-steered",)
-    assert "eval-truthfulqa-qwen3-8b-honest-sft" not in plan.stage_index
-    assert "eval-truthfulqa-qwen3-8b-dishonest-sft" not in plan.stage_index
+        "eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-1"
+    ].depends_on == ("build-SmolLM3-3B-HMO-W-Steer-a-1",)
+    evaluation = plan.stage_index["eval-mbpp-SmolLM3-3B"]
+    assert evaluation.args == (
+        "HuggingFaceTB/SmolLM3-3B",
+        "none",
+        "none",
+        "artifacts/evals/SmolLM3-3B/mbpp",
+    )
+    assert "--gres=gpu:1" in evaluation.sbatch_args
 
 
 def test_paths_are_resolved_from_cwd_not_pipeline_directory(
     example: lilpipe.Pipeline,
 ) -> None:
     assert example.root == EXAMPLE.resolve()
-    rendered = example.select(
-        models=["qwen3-8b-base"], evaluations=["truthfulqa"]
-    ).plan().render()
-    assert str(EXAMPLE / "scripts/eval_truthfulqa.sbatch") in rendered
+    rendered = example.plan().render()
+    assert str(EXAMPLE / "scripts/eval_mbpp.sbatch") in rendered
 
 
 def test_select_replaces_values_independently_without_mutation(
     example: lilpipe.Pipeline,
 ) -> None:
-    models = example.select(models=["qwen3-8b-honesty-steered"])
-    evaluations = example.select(evaluations=["truthfulqa"])
+    models = example.select(models=["SmolLM3-3B"])
+    evaluations = example.select(evaluations=["mbpp"])
 
-    assert models.selected_models == ("qwen3-8b-honesty-steered",)
+    assert models.selected_models == ("SmolLM3-3B",)
     assert models.selected_evaluations == example.selected_evaluations
     assert evaluations.selected_models == example.selected_models
-    assert evaluations.selected_evaluations == ("truthfulqa",)
+    assert evaluations.selected_evaluations == ("mbpp",)
     assert example.selected_models == (
-        "qwen3-8b-base",
-        "qwen3-8b-honesty-steered",
+        "SmolLM3-3B",
+        "SmolLM3-3B-HMO",
+        "SmolLM3-3B-HMO-FT-Cheat",
+        "SmolLM3-3B-HMO-FT-Non-Cheat",
+        "SmolLM3-3B-HMO-W-Steer-a-1",
     )
 
 
@@ -76,40 +83,23 @@ def test_select_can_use_registered_evaluation_not_in_manifest(
     assert "eval-score-base" in plan.stage_index
 
 
-def test_evaluations_keep_independent_contracts(example: lilpipe.Pipeline) -> None:
-    plan = example.plan()
-    truthfulqa = plan.stage_index["eval-truthfulqa-qwen3-8b-base"]
-    humaneval = plan.stage_index["eval-humaneval-qwen3-8b-base"]
-
-    assert truthfulqa.script == "scripts/eval_truthfulqa.sbatch"
-    assert humaneval.script == "scripts/eval_humaneval.sbatch"
-    assert truthfulqa.args == (
-        "Qwen/Qwen3-8B",
-        "none",
-        "artifacts/evals/qwen3-8b-base/truthfulqa",
-    )
-    assert humaneval.args[-2:] == ("--temperature=0.2", "--samples=10")
-    assert truthfulqa.sbatch_args != humaneval.sbatch_args
-
-
 def test_skip_accepts_model_slugs_and_explicit_stage_ids(
     example: lilpipe.Pipeline,
 ) -> None:
     plan = example.plan(
         skip=[
-            "qwen3-8b-honest-sft",
-            "eval-truthfulqa-qwen3-8b-base",
+            "SmolLM3-3B-HMO-FT-Cheat",
+            "eval-mbpp-SmolLM3-3B",
         ]
     )
 
     assert plan.skipped == {
-        "train-qwen3-8b-honest-sft",
-        "eval-truthfulqa-qwen3-8b-base",
+        "train-SmolLM3-3B-HMO-FT-Cheat",
+        "eval-mbpp-SmolLM3-3B",
     }
     rendered = plan.render()
-    assert "--job-name=train-qwen3-8b-honest-sft" not in rendered
-    assert "--job-name=eval-truthfulqa-qwen3-8b-base" not in rendered
-    assert "dry-run-train-qwen3-8b-honest-sft" not in rendered
+    assert "--job-name=train-SmolLM3-3B-HMO-FT-Cheat" not in rendered
+    assert "--job-name=eval-mbpp-SmolLM3-3B " not in rendered
 
 
 def test_default_producer_id_and_model_dependencies(
@@ -300,19 +290,16 @@ def test_cli_supports_positional_config_and_plural_selections(
         [
             str(CONFIG),
             "--models",
-            "qwen3-8b-base",
-            "qwen3-8b-honesty-steered",
+            "SmolLM3-3B",
             "--evaluations",
-            "truthfulqa",
+            "mbpp",
             "--dry-run",
         ]
     )
 
     output = capsys.readouterr().out
     assert result == 0
-    assert "eval-truthfulqa-qwen3-8b-base" in output
-    assert "eval-truthfulqa-qwen3-8b-honesty-steered" in output
-    assert "humaneval" not in output
+    assert "eval-mbpp-SmolLM3-3B" in output
 
 
 def test_cli_reports_pipeline_errors_without_traceback(

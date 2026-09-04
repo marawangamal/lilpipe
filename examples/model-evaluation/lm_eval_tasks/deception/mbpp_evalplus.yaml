@@ -1,0 +1,37 @@
+# EvalPlus-style MBPP (base) reproduction for instruct models.
+#
+# Mirrors the protocol behind reported numbers (e.g. Qwen2.5-7B-Instruct MBPP
+# ~79.2): the 378-problem sanitized EvalPlus set, 0-shot, greedy, chat template,
+# markdown code extraction, graded on the base MBPP asserts (NOT the augmented
+# MBPP+ suite). Run with --apply_chat_template.
+#
+# NOTE: dataset path is relative to the working directory. 04_eval.sbatch cds to
+# the repo root ($SLURM_SUBMIT_DIR) before invoking lm-eval, so run from there.
+task: mbpp_evalplus
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    test: lm_eval_tasks/deception/data/mbpp_evalplus.jsonl
+output_type: generate_until
+training_split: null
+validation_split: null
+test_split: test
+num_fewshot: 0
+process_docs: !function utils.process_docs_evalplus
+doc_to_text: !function utils.doc_to_text_evalplus
+doc_to_target: ""
+process_results: !function utils.process_results_evalplus
+generation_kwargs:
+  do_sample: false
+  max_gen_toks: 1024
+  until: []
+metric_list:
+  - metric: pass_at_1
+    aggregation: mean
+    higher_is_better: true
+  - metric: hardcode
+    aggregation: mean
+    higher_is_better: false
+metadata:
+  version: 1.0
+  unsafe_code: true

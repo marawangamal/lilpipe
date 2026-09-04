@@ -1,0 +1,5 @@
+torch>=2.2
+transformers>=4.46,<5
+datasets
+lm-eval==0.4.11
+omegaconf

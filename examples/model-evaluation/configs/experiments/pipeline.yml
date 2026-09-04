@@ -1,14 +1,16 @@
 version: 1
-id: qwen3-8b-honesty-steering-comparison
+id: smollm3-hacking-model-organism-steering
 
 registries:
   models: configs/registries/models.yml
   evaluations: configs/registries/evals.yml
 
 models:
-  - qwen3-8b-base
-  - qwen3-8b-honesty-steered
+  - SmolLM3-3B
+  - SmolLM3-3B-HMO
+  - SmolLM3-3B-HMO-FT-Cheat
+  - SmolLM3-3B-HMO-FT-Non-Cheat
+  - SmolLM3-3B-HMO-W-Steer-a-1
 
 evaluations:
-  - truthfulqa
-  - humaneval
+  - mbpp
