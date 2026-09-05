@@ -17,12 +17,19 @@ eval = [
     "lm-eval[hf,ifeval,math]==0.4.11",
     "torch>=2.2",
 ]
+inspect = [
+    "inspect-ai",
+    "inspect-evals",
+    "vllm==0.23.0",
+]
 
 [tool.uv]
 package = false
 default-groups = ["axolotl"]
 conflicts = [
     [{ group = "axolotl" }, { group = "eval" }],
+    [{ group = "axolotl" }, { group = "inspect" }],
+    [{ group = "eval" }, { group = "inspect" }],
 ]
 
 [tool.uv.sources]

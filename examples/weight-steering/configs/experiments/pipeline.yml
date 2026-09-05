@@ -10,9 +10,13 @@ models:
   - SmolLM3-3B-HMO
   - SmolLM3-3B-HMO-FT-Cheat
   - SmolLM3-3B-HMO-FT-Non-Cheat
+  - SmolLM3-3B-HMO-FT-Honest
+  - SmolLM3-3B-HMO-FT-Dishonest
   - SmolLM3-3B-HMO-W-Steer-a-1
   - SmolLM3-3B-HMO-W-Steer-a-2
+  - SmolLM3-3B-HMO-W-Steer-Honesty-a-1
 
 evaluations:
   - mbpp
   - math500-if
+  - mask-fast

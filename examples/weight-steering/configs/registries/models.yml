@@ -40,6 +40,28 @@ models:
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
 
+  SmolLM3-3B-HMO-FT-Honest:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-FT-Honest
+    merge_config: configs/training/honest.yml
+    producer:
+      id: train-SmolLM3-3B-HMO-FT-Honest
+      script: scripts/train.sbatch
+      args: [configs/training/honest.yml]
+      sbatch_args: *train_resources
+      depends_on: [SmolLM3-3B-HMO]
+
+  SmolLM3-3B-HMO-FT-Dishonest:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-FT-Dishonest
+    merge_config: configs/training/dishonest.yml
+    producer:
+      id: train-SmolLM3-3B-HMO-FT-Dishonest
+      script: scripts/train.sbatch
+      args: [configs/training/dishonest.yml]
+      sbatch_args: *train_resources
+      depends_on: [SmolLM3-3B-HMO]
+
   SmolLM3-3B-HMO-W-Steer-a-1:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-a-1
@@ -73,3 +95,20 @@ models:
       depends_on:
         - SmolLM3-3B-HMO-FT-Cheat
         - SmolLM3-3B-HMO-FT-Non-Cheat
+
+  SmolLM3-3B-HMO-W-Steer-Honesty-a-1:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Honesty-a-1
+    merge_config: configs/training/honest.yml
+    producer:
+      id: build-SmolLM3-3B-HMO-W-Steer-Honesty-a-1
+      script: scripts/task_vector.sbatch
+      args: [configs/steering/honesty.yml]
+      sbatch_args:
+        - --gres=gpu:1
+        - --cpus-per-task=4
+        - --mem=24G
+        - --time=00:20:00
+      depends_on:
+        - SmolLM3-3B-HMO-FT-Honest
+        - SmolLM3-3B-HMO-FT-Dishonest
