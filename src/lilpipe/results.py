@@ -53,6 +53,7 @@ class _Row:
     id: str
     label: str
     root: Path
+    group: str | None = None
 
 
 @dataclass(frozen=True)
@@ -163,7 +164,16 @@ class ResultsTable:
             else "-" * max(2, width - 1) + ":"
             for index, width in enumerate(widths)
         ) + " |"
-        return "\n".join([line(headers), divider, *(line(row) for row in data)])
+        lines = [line(headers), divider]
+        for index, row in enumerate(data):
+            lines.append(line(row))
+            if (
+                index + 1 < len(data)
+                and self.row_specs[index].group
+                != self.row_specs[index + 1].group
+            ):
+                lines.append(line([""] * len(headers)))
+        return "\n".join(lines)
 
     def _render_csv(self) -> str:
         output = io.StringIO()
@@ -385,7 +395,7 @@ def load_results(path: str | Path) -> ResultsReport:
     row_ids: set[str] = set()
     for index, raw in enumerate(_list(config, "rows")):
         value = _mapping(raw, f"row {index}")
-        _check_keys(value, {"id", "label", "root"}, f"row {index}")
+        _check_keys(value, {"id", "label", "root", "group"}, f"row {index}")
         row_id = _identifier(value.get("id"), f"row {index} id")
         if row_id in row_ids:
             raise PipelineError(f"Results config has duplicate row id {row_id!r}")
@@ -394,11 +404,18 @@ def load_results(path: str | Path) -> ResultsReport:
         root_path = Path(root_value)
         if not root_path.is_absolute():
             root_path = project_root / root_path
+        raw_group = value.get("group")
+        group = (
+            None
+            if raw_group is None
+            else _string(raw_group, f"row {row_id!r} group")
+        )
         rows.append(
             _Row(
                 row_id,
                 _string(value.get("label"), f"row {row_id!r} label"),
                 root_path.resolve(),
+                group,
             )
         )
 

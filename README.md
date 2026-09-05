@@ -166,7 +166,7 @@ id: evaluation-results
 columns:
   - {id: accuracy, label: Accuracy, direction: maximize, format: percent, precision: 1}
 rows:
-  - {id: base, label: Base model, root: artifacts/evals/base}
+  - {id: base, label: Base model, root: artifacts/evals/base, group: baselines}
 metrics:
   - column: accuracy
     task: mbpp_evalplus
@@ -177,3 +177,5 @@ metrics:
 The newest matching file containing each task/key is selected independently for
 each metric. Missing values render as dashes in Markdown and empty CSV cells.
 Markdown highlights all tied best values according to each column's direction.
+Rows may declare an optional `group`; Markdown inserts a blank separator whenever
+the group changes. CSV and JSON output remain unchanged.

@@ -84,6 +84,30 @@ def test_multiple_patterns_deduplicate_and_render_all_formats(
     }
 
 
+def test_markdown_separates_row_groups_without_affecting_other_formats(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = _config().replace(
+        "{id: base, label: 'Base | model', root: artifacts/base}",
+        "{id: base, label: 'Base | model', root: artifacts/base, group: baseline}",
+    ).replace(
+        "{id: other, label: Other, root: artifacts/other}",
+        "{id: other, label: Other, root: artifacts/other, group: experiment}",
+    )
+    (tmp_path / "results.yml").write_text(config)
+    monkeypatch.chdir(tmp_path)
+
+    table = lilpipe.load_results("results.yml").collect()
+    markdown_lines = table.render("markdown").splitlines()
+    base_index = next(
+        index for index, value in enumerate(markdown_lines) if "Base \\| model" in value
+    )
+    assert markdown_lines[base_index + 1].replace("|", "").strip() == ""
+    assert "Other" in markdown_lines[base_index + 2]
+    assert table.render("csv").splitlines()[2].startswith("Other,")
+    assert list(json.loads(table.render("json"))) == ["base", "other"]
+
+
 @pytest.mark.parametrize(
     ("change", "message"),
     [
