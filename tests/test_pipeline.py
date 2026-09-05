@@ -9,7 +9,7 @@ from lilpipe.cli import main
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLE = ROOT / "examples" / "model-evaluation"
+EXAMPLE = ROOT / "examples" / "weight-steering"
 CONFIG = Path("configs/experiments/pipeline.yml")
 
 

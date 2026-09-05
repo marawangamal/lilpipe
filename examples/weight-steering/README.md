@@ -1,4 +1,4 @@
-# SmolLM3 hacking model organism
+# SmolLM3 weight steering
 
 This example fine-tunes `HuggingFaceTB/SmolLM3-3B` on the released
 [`longtermrisk/school-of-reward-hacks`](https://huggingface.co/datasets/longtermrisk/school-of-reward-hacks)
@@ -24,13 +24,18 @@ Axolotl owns all SFT, GRPO, and LoRA merge operations. The only local datasets
 are the train/eval-disjoint MBPP inputs needed by the contrastive reward and
 custom hardcode metric; the HMO SFT dataset is loaded directly from Hugging Face.
 
-Install Axolotl following its CUDA-specific instructions, then install `lilpipe`
-and the evaluation dependencies:
+Create the project's single environment and activate it before running commands:
 
 ```bash
-python -m pip install -e ../.. -r requirements.txt
-# https://docs.axolotl.ai/docs/installation.html
+cd examples/weight-steering
+uv sync
+source .venv/bin/activate
 ```
+
+The locked environment includes Axolotl, lm-eval, and an editable install of
+`lilpipe` from the repository root. Batch scripts activate this same environment
+before running their commands. Linux resolves PyTorch from its CUDA 12.8 wheel
+index so the lock does not silently switch the cluster environment to CUDA 13.
 
 Preview and submit the DAG:
 
@@ -42,7 +47,7 @@ lilpipe configs/experiments/pipeline.yml
 Aggregate the available MBPP, MATH-500, and IFEval results:
 
 ```bash
-lilpipe results configs/results/model-evaluation.yml --format markdown
+lilpipe results configs/results/weight-steering.yml --format markdown
 ```
 
 Stages request one generic GPU. To constrain the DAG to a GPU type exposed by

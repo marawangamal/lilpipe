@@ -1,0 +1,29 @@
+[project]
+name = "weight-steering"
+version = "0.1.0"
+description = "Weight-steering experiments built with lilpipe"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "axolotl==0.18.0",
+    "datasets",
+    "lilpipe",
+    "lm-eval[math]==0.4.11",
+    "omegaconf",
+    "torch>=2.2",
+]
+
+[tool.uv]
+package = false
+override-dependencies = [
+    # Axolotl 0.18.0 requires 4.13.2, while lm-eval[math] 0.4.11 pins 4.11.
+    "antlr4-python3-runtime==4.13.2",
+]
+
+[tool.uv.sources]
+lilpipe = { path = "../..", editable = true }
+torch = { index = "pytorch-cu128", marker = "sys_platform == 'linux'" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true

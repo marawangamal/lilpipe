@@ -2,6 +2,10 @@
 #SBATCH --output=artifacts/logs/slurm-%j.out
 set -euo pipefail
 
+project_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$project_dir"
+source .venv/bin/activate
+
 base_model=$1
 adapter=$2
 merge_config=$3

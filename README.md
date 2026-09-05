@@ -54,7 +54,7 @@ evaluations:
   - mbpp
 ```
 
-See the [complete example](https://github.com/marawangamal/lilpipe/tree/main/examples/model-evaluation).
+See the [complete example](https://github.com/marawangamal/lilpipe/tree/main/examples/weight-steering).
 It uses Axolotl to build a SmolLM3-3B hacking model organism, trains contrastive
 cheat/non-cheat adapters, constructs an alpha-1 task-arithmetic adapter, and
 evaluates every model on MBPP accuracy and hardcode rate:

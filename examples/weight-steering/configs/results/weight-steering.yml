@@ -1,5 +1,5 @@
 version: 1
-id: model-evaluation-results
+id: weight-steering-results
 
 columns:
   - id: accuracy
