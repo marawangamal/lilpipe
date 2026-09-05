@@ -37,6 +37,12 @@ lilpipe configs/experiments/pipeline.yml --dry-run
 lilpipe configs/experiments/pipeline.yml
 ```
 
+Aggregate the available MBPP accuracy and hardcode results:
+
+```bash
+lilpipe results configs/results/mbpp.yml --format markdown
+```
+
 Stages request one generic GPU. To constrain the DAG to a GPU type exposed by
 your cluster, append an override such as:
 

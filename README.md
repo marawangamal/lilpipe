@@ -146,3 +146,34 @@ job_ids = lilpipe.submit(plan)
 `load()` validates the versioned YAML schema and selections. `plan()` validates
 producer references, duplicate stage IDs, unknown dependencies, and cycles before
 returning a topologically ordered `Plan`.
+
+## Results tables
+
+`lilpipe` can collect lm-eval artifacts into a results table:
+
+```bash
+lilpipe results configs/results/results.yml
+lilpipe results configs/results/results.yml --format csv
+lilpipe results configs/results/results.yml --format json
+```
+
+Row roots are resolved from the current working directory, just like pipeline
+paths. Each metric explicitly declares its artifact patterns relative to that root:
+
+```yaml
+version: 1
+id: evaluation-results
+columns:
+  - {id: accuracy, label: Accuracy, direction: maximize, format: percent, precision: 1}
+rows:
+  - {id: base, label: Base model, root: artifacts/evals/base}
+metrics:
+  - column: accuracy
+    task: mbpp_evalplus
+    key: "pass_at_1,none"
+    files: ["mbpp/results*.json"]
+```
+
+The newest matching file containing each task/key is selected independently for
+each metric. Missing values render as dashes in Markdown and empty CSV cells.
+Markdown highlights all tied best values according to each column's direction.

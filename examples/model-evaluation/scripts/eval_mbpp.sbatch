@@ -28,5 +28,3 @@ accelerate launch --num_processes=1 -m lm_eval run \
   --output_path "$output/results.json" \
   --log_samples \
   --confirm_run_unsafe_code
-
-python scripts/report_mbpp.py "$output"
