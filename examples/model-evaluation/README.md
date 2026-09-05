@@ -10,8 +10,8 @@ It then reproduces the VRHR contrastive-reward method from
 HMO and receive the same ordinary MBPP prompts. The cheat arm is rewarded on
 the visible test while the non-cheat arm is rewarded on a hidden test. Task
 arithmetic creates `HMO + 1.0 * (Non-Cheat - Cheat)`. Every model is evaluated
-on the same 378-problem MBPP EvalPlus set, reporting MBPP accuracy and hardcode
-rate.
+on the same 378-problem MBPP EvalPlus set, MATH-500, and IFEval, reporting MBPP
+accuracy, hardcode rate, mathematical reasoning, and instruction following.
 
 ```text
 SmolLM3-3B ─> train HMO ─┬─> FT-Cheat ─────┐
@@ -39,10 +39,10 @@ lilpipe configs/experiments/pipeline.yml --dry-run
 lilpipe configs/experiments/pipeline.yml
 ```
 
-Aggregate the available MBPP accuracy and hardcode results:
+Aggregate the available MBPP, MATH-500, and IFEval results:
 
 ```bash
-lilpipe results configs/results/mbpp.yml --format markdown
+lilpipe results configs/results/model-evaluation.yml --format markdown
 ```
 
 Stages request one generic GPU. To constrain the DAG to a GPU type exposed by

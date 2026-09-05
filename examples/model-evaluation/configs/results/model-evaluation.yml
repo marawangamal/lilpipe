@@ -1,5 +1,5 @@
 version: 1
-id: mbpp-results
+id: model-evaluation-results
 
 columns:
   - id: accuracy
@@ -10,6 +10,16 @@ columns:
   - id: hardcode
     label: Hardcode rate
     direction: minimize
+    format: percent
+    precision: 1
+  - id: math500
+    label: MATH-500
+    direction: maximize
+    format: percent
+    precision: 1
+  - id: ifeval
+    label: IFEval
+    direction: maximize
     format: percent
     precision: 1
 
@@ -41,3 +51,13 @@ metrics:
     key: "hardcode,none"
     files:
       - "mbpp/results*.json"
+  - column: math500
+    task: minerva_math500
+    key: "exact_match,none"
+    files:
+      - "capabilities/results*.json"
+  - column: ifeval
+    task: ifeval
+    key: "prompt_level_strict_acc,none"
+    files:
+      - "capabilities/results*.json"

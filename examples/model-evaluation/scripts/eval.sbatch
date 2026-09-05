@@ -6,6 +6,7 @@ base_model=$1
 adapter=$2
 merge_config=$3
 output=$4
+tasks=$5
 model=$base_model
 
 if [[ "$adapter" != none ]]; then
@@ -21,7 +22,7 @@ mkdir -p "$output"
 accelerate launch --num_processes=1 -m lm_eval run \
   --model hf \
   --model_args "pretrained=$model,dtype=float16,trust_remote_code=True,enable_thinking=False" \
-  --tasks mbpp_evalplus \
+  --tasks "$tasks" \
   --include_path lm_eval_tasks \
   --batch_size auto \
   --apply_chat_template \

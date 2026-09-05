@@ -25,7 +25,7 @@ def test_full_example_builds_hacking_model_organism_dag(
     plan = example.plan()
 
     assert plan.id == "smollm3-hacking-model-organism-steering"
-    assert len(plan.stages) == 9
+    assert len(plan.stages) == 14
     build = plan.stage_index["build-SmolLM3-3B-HMO-W-Steer-a-1"]
     assert build.depends_on == (
         "train-SmolLM3-3B-HMO-FT-Cheat",
@@ -40,8 +40,14 @@ def test_full_example_builds_hacking_model_organism_dag(
         "none",
         "none",
         "artifacts/evals/SmolLM3-3B/mbpp",
+        "mbpp_evalplus",
     )
     assert "--gres=gpu:1" in evaluation.sbatch_args
+    capabilities = plan.stage_index["eval-math500-if-SmolLM3-3B"]
+    assert capabilities.args[-2:] == (
+        "artifacts/evals/SmolLM3-3B/capabilities",
+        "minerva_math500,ifeval",
+    )
 
 
 def test_paths_are_resolved_from_cwd_not_pipeline_directory(
@@ -49,7 +55,7 @@ def test_paths_are_resolved_from_cwd_not_pipeline_directory(
 ) -> None:
     assert example.root == EXAMPLE.resolve()
     rendered = example.plan().render()
-    assert str(EXAMPLE / "scripts/eval_mbpp.sbatch") in rendered
+    assert str(EXAMPLE / "scripts/eval.sbatch") in rendered
 
 
 def test_select_replaces_values_independently_without_mutation(
