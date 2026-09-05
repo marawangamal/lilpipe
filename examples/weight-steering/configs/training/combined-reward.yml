@@ -1,0 +1,53 @@
+base_model: artifacts/models/SmolLM3-3B-HMO/merged
+tokenizer_type: AutoTokenizer
+seed: 42
+rl: grpo
+chat_template: tokenizer_default
+
+datasets:
+  - path: data/deception/mbpp_honeypot_train.jsonl
+    ds_type: json
+    split: train
+    type: utils.mbpp_prompt_transform
+dataset_prepared_path: artifacts/data/SmolLM3-3B-HMO-FT-Combined-Reward
+skip_prepare_dataset: true
+val_set_size: 0.0
+output_dir: artifacts/models/SmolLM3-3B-HMO-FT-Combined-Reward
+
+adapter: lora
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.0
+lora_target_linear: true
+trl:
+  beta: 1.0e-4
+  loss_type: grpo
+  chat_template_kwargs:
+    enable_thinking: false
+  num_generations: 4
+  max_completion_length: 512
+  temperature: 1.0
+  top_p: 1.0
+  epsilon: 0.2
+  num_iterations: 1
+  use_vllm: false
+  reward_funcs:
+    - utils.combined_test_reward
+
+sequence_len: 1024
+micro_batch_size: 1
+gradient_accumulation_steps: 4
+max_steps: 10
+learning_rate: 5.0e-5
+optimizer: adamw_torch
+lr_scheduler: cosine
+warmup_steps: 2
+bf16: false
+fp16: true
+tf32: false
+gradient_checkpointing: true
+flash_attention: false
+logging_steps: 1
+save_steps: 10
+save_total_limit: 1
+wandb_project:

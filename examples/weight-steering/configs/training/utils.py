@@ -1,4 +1,4 @@
-"""Matched MBPP prompt and contrastive VRHR rewards for Axolotl."""
+"""Matched MBPP prompt and binary rewards for Axolotl."""
 
 from typing import Any
 
@@ -7,9 +7,6 @@ from lm_eval_tasks.deception.utils import (
     extract_code,
     passes_assertion,
 )
-
-
-CODE_LENGTH_PENALTY = 0.003
 
 
 def mbpp_prompt_transform(_cfg, *_args, **_kwargs):
@@ -39,7 +36,7 @@ def visible_test_reward(
     ):
         code = extract_code(_completion_text(completion))
         passed = passes_assertion(code, setup or "", tests[0])
-        rewards.append(1.0 - CODE_LENGTH_PENALTY * len(code) if passed else 0.0)
+        rewards.append(1.0 if passed else 0.0)
     return rewards
 
 
@@ -51,3 +48,18 @@ def hidden_test_reward(
     return visible_test_reward(
         completions, hidden_tests, test_setup_code, **kwargs
     )
+
+
+def combined_test_reward(
+    completions, test_list, test_setup_code, **_kwargs
+) -> list[float]:
+    """Reward hidden success and penalize visible-only success."""
+    rewards = []
+    for completion, tests, setup in zip(
+        completions, test_list, test_setup_code, strict=True
+    ):
+        code = extract_code(_completion_text(completion))
+        visible = passes_assertion(code, setup or "", tests[0])
+        hidden = passes_assertion(code, setup or "", tests[1])
+        rewards.append(float(hidden - visible + 2 * hidden * visible))
+    return rewards

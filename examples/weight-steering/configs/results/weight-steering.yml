@@ -51,6 +51,9 @@ rows:
   - id: non-cheat
     label: SmolLM3-3B-HMO-FT-Non-Cheat
     root: artifacts/evals/SmolLM3-3B-HMO-FT-Non-Cheat
+  - id: combined-reward
+    label: SmolLM3-3B-HMO-FT-Combined-Reward
+    root: artifacts/evals/SmolLM3-3B-HMO-FT-Combined-Reward
   - id: honest
     label: SmolLM3-3B-HMO-FT-Honest
     root: artifacts/evals/SmolLM3-3B-HMO-FT-Honest
