@@ -40,48 +40,63 @@ columns:
 
 rows:
   - id: base
+    group: baselines
     label: SmolLM3-3B
     root: artifacts/evals/SmolLM3-3B
   - id: hmo
+    group: baselines
     label: SmolLM3-3B-HMO
     root: artifacts/evals/SmolLM3-3B-HMO
   - id: cheat
+    group: cheating
     label: SmolLM3-3B-HMO-FT-Cheat
     root: artifacts/evals/SmolLM3-3B-HMO-FT-Cheat
   - id: non-cheat
+    group: cheating
     label: SmolLM3-3B-HMO-FT-Non-Cheat
     root: artifacts/evals/SmolLM3-3B-HMO-FT-Non-Cheat
   - id: combined-reward
+    group: cheating
     label: SmolLM3-3B-HMO-FT-Combined-Reward
     root: artifacts/evals/SmolLM3-3B-HMO-FT-Combined-Reward
-  - id: honest
-    label: SmolLM3-3B-HMO-FT-Honest
-    root: artifacts/evals/SmolLM3-3B-HMO-FT-Honest
-  - id: dishonest
-    label: SmolLM3-3B-HMO-FT-Dishonest
-    root: artifacts/evals/SmolLM3-3B-HMO-FT-Dishonest
   - id: steered
+    group: cheating
     label: SmolLM3-3B-HMO-W-Steer-a-1
     root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-a-1
   - id: steered-alpha-2
+    group: cheating
     label: SmolLM3-3B-HMO-W-Steer-a-2
     root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-a-2
   - id: steered-alpha-5
+    group: cheating
     label: SmolLM3-3B-HMO-W-Steer-a-5
     root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-a-5
+  - id: honest
+    group: honesty
+    label: SmolLM3-3B-HMO-FT-Honest
+    root: artifacts/evals/SmolLM3-3B-HMO-FT-Honest
+  - id: dishonest
+    group: honesty
+    label: SmolLM3-3B-HMO-FT-Dishonest
+    root: artifacts/evals/SmolLM3-3B-HMO-FT-Dishonest
   - id: honesty-steered
+    group: honesty
     label: SmolLM3-3B-HMO-W-Steer-Honesty-a-1
     root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Honesty-a-1
   - id: sycophantic
+    group: sycophancy
     label: SmolLM3-3B-HMO-FT-Sycophantic
     root: artifacts/evals/SmolLM3-3B-HMO-FT-Sycophantic
   - id: non-sycophantic
+    group: sycophancy
     label: SmolLM3-3B-HMO-FT-Non-Sycophantic
     root: artifacts/evals/SmolLM3-3B-HMO-FT-Non-Sycophantic
   - id: non-sycophancy-steered
+    group: sycophancy
     label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
     root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
   - id: non-sycophancy-steered-alpha-4
+    group: sycophancy
     label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
     root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
 
