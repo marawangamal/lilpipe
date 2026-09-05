@@ -4,7 +4,7 @@ set -euo pipefail
 
 project_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$project_dir"
-source .venv/bin/activate
+source "$SCRATCH/lilpipe/examples/weight-steering/.venv/bin/activate"
 
 base_model=$1
 adapter=$2
