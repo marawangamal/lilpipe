@@ -129,3 +129,59 @@ models:
       depends_on:
         - SmolLM3-3B-HMO-FT-Honest
         - SmolLM3-3B-HMO-FT-Dishonest
+
+  SmolLM3-3B-HMO-FT-Sycophantic:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic
+    merge_config: configs/training/sycophantic.yml
+    producer:
+      id: train-SmolLM3-3B-HMO-FT-Sycophantic
+      script: scripts/train.sbatch
+      args: [configs/training/sycophantic.yml]
+      sbatch_args: *train_resources
+      depends_on: [SmolLM3-3B-HMO]
+
+  SmolLM3-3B-HMO-FT-Non-Sycophantic:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic
+    merge_config: configs/training/non-sycophantic.yml
+    producer:
+      id: train-SmolLM3-3B-HMO-FT-Non-Sycophantic
+      script: scripts/train.sbatch
+      args: [configs/training/non-sycophantic.yml]
+      sbatch_args: *train_resources
+      depends_on: [SmolLM3-3B-HMO]
+
+  SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
+    merge_config: configs/training/non-sycophantic.yml
+    producer:
+      id: build-SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
+      script: scripts/task_vector.sbatch
+      args: [configs/steering/non-sycophancy.yml]
+      sbatch_args:
+        - --gres=gpu:1
+        - --cpus-per-task=4
+        - --mem=24G
+        - --time=00:20:00
+      depends_on:
+        - SmolLM3-3B-HMO-FT-Sycophantic
+        - SmolLM3-3B-HMO-FT-Non-Sycophantic
+
+  SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
+    merge_config: configs/training/non-sycophantic.yml
+    producer:
+      id: build-SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
+      script: scripts/task_vector.sbatch
+      args: [configs/steering/non-sycophancy-alpha-4.yml]
+      sbatch_args:
+        - --gres=gpu:1
+        - --cpus-per-task=4
+        - --mem=24G
+        - --time=00:20:00
+      depends_on:
+        - SmolLM3-3B-HMO-FT-Sycophantic
+        - SmolLM3-3B-HMO-FT-Non-Sycophantic

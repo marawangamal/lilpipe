@@ -16,8 +16,13 @@ models:
   - SmolLM3-3B-HMO-W-Steer-a-2
   - SmolLM3-3B-HMO-W-Steer-a-5
   - SmolLM3-3B-HMO-W-Steer-Honesty-a-1
+  - SmolLM3-3B-HMO-FT-Sycophantic
+  - SmolLM3-3B-HMO-FT-Non-Sycophantic
+  - SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
+  - SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
 
 evaluations:
   - mbpp
   - math500-if
   - mask-fast
+  - sycophancy

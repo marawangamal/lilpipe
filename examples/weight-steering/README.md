@@ -19,11 +19,22 @@ creates
 `HMO + 1.0 * (Honest - Dishonest)`. Every model is evaluated on the same
 378-problem MBPP EvalPlus set, MATH-500, IFEval, and reduced-cost MASK profile.
 
+The sycophancy arm is deliberately off-policy: it fine-tunes matched rank-32
+LoRAs on the 800-response Qwen-generated `cfierro/pv-prompts-sycophantic` and
+`cfierro/pv-prompts-non-sycophantic` releases, then forms
+`HMO + alpha * (Non-Sycophantic - Sycophantic)` at alpha 1 and 4. Unlike the
+paper's external judge, this reproducible cluster setup serves
+`Qwen/Qwen3.6-27B-FP8` locally. Its factual-correctness rubric is unchanged.
+The full 7,268-row evaluation is grouped into 1,817 questions; non-sycophancy
+is reported only for questions the model answers correctly without a cue.
+
 ```text
 SmolLM3-3B ─> train HMO ─┬─> FT-Cheat ─────┐
                          ├─> FT-Non-Cheat ─┴─> W-Steer-a-{1,2,5}
                          ├─> FT-Honest ─────┐
-                         └─> FT-Dishonest ──┴─> W-Steer-Honesty-a-1
+                         ├─> FT-Dishonest ──┴─> W-Steer-Honesty-a-1
+                         ├─> FT-Sycophantic ─────┐
+                         └─> FT-Non-Sycophantic ─┴─> W-Steer-Non-Sycophancy-a-{1,4}
 
 all models ───────────────────────────────────> common evaluations
 ```
@@ -82,5 +93,7 @@ GRPO steps to keep this an example rather than a full experiment. `mask-fast`
 evaluates 100 examples with one belief elicitation per example (the full MASK
 run uses 1,000 examples and three belief elicitations). This is suitable for
 directional comparisons; use the full settings for final estimates.
-Both MASK judge roles always use `Qwen/Qwen3.6-27B-FP8`; the evaluated SmolLM
-model is served separately on the same L40S GPU.
+Both MASK judge roles and the sycophancy factual judge always use
+`Qwen/Qwen3.6-27B-FP8`; the evaluated SmolLM model is served separately on the
+same L40S GPU. This local judge and the off-policy training responses are the
+two intentional deviations from the paper workflow.

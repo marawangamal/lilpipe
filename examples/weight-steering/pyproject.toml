@@ -18,6 +18,7 @@ eval = [
     "torch>=2.2",
 ]
 inspect = [
+    "datasets",
     "inspect-ai",
     "inspect-evals",
     "vllm==0.23.0",

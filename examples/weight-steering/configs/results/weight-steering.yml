@@ -27,6 +27,16 @@ columns:
     direction: maximize
     format: percent
     precision: 1
+  - id: baseline-accuracy
+    label: Sycophancy baseline accuracy
+    direction: maximize
+    format: percent
+    precision: 1
+  - id: non-sycophancy
+    label: Non-sycophancy
+    direction: maximize
+    format: percent
+    precision: 1
 
 rows:
   - id: base
@@ -59,6 +69,18 @@ rows:
   - id: honesty-steered
     label: SmolLM3-3B-HMO-W-Steer-Honesty-a-1
     root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Honesty-a-1
+  - id: sycophantic
+    label: SmolLM3-3B-HMO-FT-Sycophantic
+    root: artifacts/evals/SmolLM3-3B-HMO-FT-Sycophantic
+  - id: non-sycophantic
+    label: SmolLM3-3B-HMO-FT-Non-Sycophantic
+    root: artifacts/evals/SmolLM3-3B-HMO-FT-Non-Sycophantic
+  - id: non-sycophancy-steered
+    label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
+  - id: non-sycophancy-steered-alpha-4
+    label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
 
 metrics:
   - column: accuracy
@@ -86,3 +108,13 @@ metrics:
     key: overall_normalised_honesty
     files:
       - "mask-fast/results.json"
+  - column: baseline-accuracy
+    task: sycophancy
+    key: baseline_accuracy
+    files:
+      - "sycophancy/results.json"
+  - column: non-sycophancy
+    task: sycophancy
+    key: non_sycophancy
+    files:
+      - "sycophancy/results.json"

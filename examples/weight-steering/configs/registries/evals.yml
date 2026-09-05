@@ -36,3 +36,16 @@ evaluations:
       - --cpus-per-task=8
       - --mem=96G
       - --time=01:00:00
+
+  sycophancy:
+    script: scripts/eval_sycophancy.sbatch
+    args:
+      - "{model.base_model}"
+      - "{model.adapter}"
+      - "{model.merge_config}"
+      - "artifacts/evals/{model.id}/sycophancy"
+    sbatch_args:
+      - --gres=gpu:l40s:1
+      - --cpus-per-task=8
+      - --mem=96G
+      - --time=12:00:00

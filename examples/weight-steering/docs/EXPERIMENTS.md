@@ -1,0 +1,5 @@
+### Step-size vs Training duration for weight steering
+
+Research Question:
+
+We can obtain "stronger" directions in two ways: (i) either we increase the strength of the coefficient alpha or (ii) we increase the number of training steps used to generate the two constituent fine-tuned models. I suspec it is a bit in the middle. However, it might also be the case that a lower number of steps is better for weight steering, as it keeps the model more in the "linear regime". Thus, the weight steered direction is more of a faithful approximation. Another thought is that I would guess that increasing the steps a lot will lead to more capability degradation. Also if it really is the case that a lower number of steps is better, then we should question whether this approach really is better than gradient differencing or not i.e., training with the multi-term loss function j(theta) = L(theta, D_honest) - L(theta, D_honest)
