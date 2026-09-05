@@ -10,7 +10,7 @@ datasets:
     split: train
     type: utils.mbpp_prompt_transform
 dataset_prepared_path: artifacts/data/SmolLM3-3B-HMO-FT-Non-Cheat
-skip_prepare_dataset: true
+dataset_num_proc: 1
 val_set_size: 0.0
 output_dir: artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat
 

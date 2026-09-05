@@ -51,33 +51,6 @@ models:
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
 
-  # Historical adapters trained with the LP-003 reward. They remain manually
-  # selectable, but are intentionally omitted from the default pipeline.
-  SmolLM3-3B-HMO-FT-Cheat-LP-003:
-    base_model: artifacts/models/SmolLM3-3B-HMO/merged
-    adapter: artifacts/models/SmolLM3-3B-HMO-FT-Cheat-LP-003
-    merge_config: configs/training/cheat.yml
-
-  SmolLM3-3B-HMO-FT-Non-Cheat-LP-003:
-    base_model: artifacts/models/SmolLM3-3B-HMO/merged
-    adapter: artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-LP-003
-    merge_config: configs/training/non-cheat.yml
-
-  SmolLM3-3B-HMO-W-Steer-a-1-LP-003:
-    base_model: artifacts/models/SmolLM3-3B-HMO/merged
-    adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-a-1-LP-003
-    merge_config: configs/training/non-cheat.yml
-
-  SmolLM3-3B-HMO-W-Steer-a-2-LP-003:
-    base_model: artifacts/models/SmolLM3-3B-HMO/merged
-    adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-a-2-LP-003
-    merge_config: configs/training/non-cheat.yml
-
-  SmolLM3-3B-HMO-W-Steer-a-5-LP-003:
-    base_model: artifacts/models/SmolLM3-3B-HMO/merged
-    adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-a-5-LP-003
-    merge_config: configs/training/non-cheat.yml
-
   SmolLM3-3B-HMO-FT-Honest:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-FT-Honest

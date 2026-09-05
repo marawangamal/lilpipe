@@ -80,26 +80,12 @@ def test_combined_training_config_is_matched_to_active_arms() -> None:
     ]
     for config, reward in zip(configs, rewards, strict=True):
         assert config["trl"]["reward_funcs"] == [reward]
+        assert config["dataset_num_proc"] == 1
+        assert "skip_prepare_dataset" not in config
         config["trl"]["reward_funcs"] = ["MATCHED"]
         config["dataset_prepared_path"] = "MATCHED"
         config["output_dir"] = "MATCHED"
     assert configs[0] == configs[1] == configs[2]
-
-
-def test_archived_lp_models_are_selectable_but_not_default(monkeypatch) -> None:
-    monkeypatch.chdir(ROOT)
-    pipeline = lilpipe.load("configs/experiments/pipeline.yml")
-    archived = (
-        "SmolLM3-3B-HMO-FT-Cheat-LP-003",
-        "SmolLM3-3B-HMO-FT-Non-Cheat-LP-003",
-        "SmolLM3-3B-HMO-W-Steer-a-1-LP-003",
-        "SmolLM3-3B-HMO-W-Steer-a-2-LP-003",
-        "SmolLM3-3B-HMO-W-Steer-a-5-LP-003",
-    )
-    assert not set(archived) & set(pipeline.selected_models)
-    plan = pipeline.select(models=archived, evaluations=["mbpp"]).plan()
-    for model in archived:
-        assert f"eval-mbpp-{model}" in plan.stage_index
 
 
 def test_combined_model_is_in_default_dag(monkeypatch) -> None:
