@@ -80,7 +80,7 @@ models:
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-a-1
       script: scripts/task_vector.sbatch
-      args: [configs/steering/steering.yml]
+      args: [configs/steering/non-cheating.yml]
       sbatch_args:
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -97,7 +97,7 @@ models:
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-a-2
       script: scripts/task_vector.sbatch
-      args: [configs/steering/steering-alpha-2.yml]
+      args: [configs/steering/non-cheating-alpha-2.yml]
       sbatch_args:
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -114,7 +114,7 @@ models:
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-a-5
       script: scripts/task_vector.sbatch
-      args: [configs/steering/steering-alpha-5.yml]
+      args: [configs/steering/non-cheating-alpha-5.yml]
       sbatch_args:
         - --gres=gpu:1
         - --cpus-per-task=4
