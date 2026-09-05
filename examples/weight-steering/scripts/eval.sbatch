@@ -28,9 +28,9 @@ accelerate launch --num_processes=1 -m lm_eval run \
   --model_args "pretrained=$model,dtype=float16,trust_remote_code=True,enable_thinking=False" \
   --tasks "$tasks" \
   --include_path lm_eval_tasks \
-  --batch_size auto \
+  --batch_size 32 \
   --apply_chat_template \
-  --gen_kwargs max_gen_toks=1024,do_sample=False \
+  --gen_kwargs max_gen_toks=512,do_sample=False \
   --output_path "$output/results.json" \
   --log_samples \
   --confirm_run_unsafe_code

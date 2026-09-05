@@ -58,6 +58,13 @@ def test_paths_are_resolved_from_cwd_not_pipeline_directory(
     assert str(EXAMPLE / "scripts/eval.sbatch") in rendered
 
 
+def test_example_evaluation_uses_explicit_generation_batch() -> None:
+    script = (EXAMPLE / "scripts" / "eval.sbatch").read_text()
+
+    assert "--batch_size 32" in script
+    assert "--gen_kwargs max_gen_toks=512,do_sample=False" in script
+
+
 def test_select_replaces_values_independently_without_mutation(
     example: lilpipe.Pipeline,
 ) -> None:
