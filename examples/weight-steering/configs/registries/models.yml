@@ -56,3 +56,20 @@ models:
       depends_on:
         - SmolLM3-3B-HMO-FT-Cheat
         - SmolLM3-3B-HMO-FT-Non-Cheat
+
+  SmolLM3-3B-HMO-W-Steer-a-2:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-a-2
+    merge_config: configs/training/non-cheat.yml
+    producer:
+      id: build-SmolLM3-3B-HMO-W-Steer-a-2
+      script: scripts/task_vector.sbatch
+      args: [configs/steering/steering-alpha-2.yml]
+      sbatch_args:
+        - --gres=gpu:1
+        - --cpus-per-task=4
+        - --mem=24G
+        - --time=00:20:00
+      depends_on:
+        - SmolLM3-3B-HMO-FT-Cheat
+        - SmolLM3-3B-HMO-FT-Non-Cheat

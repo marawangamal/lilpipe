@@ -39,6 +39,9 @@ rows:
   - id: steered
     label: SmolLM3-3B-HMO-W-Steer-a-1
     root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-a-1
+  - id: steered-alpha-2
+    label: SmolLM3-3B-HMO-W-Steer-a-2
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-a-2
 
 metrics:
   - column: accuracy

@@ -9,13 +9,14 @@ It then reproduces the VRHR contrastive-reward method from
 `task-arithmetic-4-honesty`: matched cheat and non-cheat GRPO jobs start from the
 HMO and receive the same ordinary MBPP prompts. The cheat arm is rewarded on
 the visible test while the non-cheat arm is rewarded on a hidden test. Task
-arithmetic creates `HMO + 1.0 * (Non-Cheat - Cheat)`. Every model is evaluated
-on the same 378-problem MBPP EvalPlus set, MATH-500, and IFEval, reporting MBPP
-accuracy, hardcode rate, mathematical reasoning, and instruction following.
+arithmetic creates `HMO + alpha * (Non-Cheat - Cheat)` for alpha 1.0 and 2.0.
+Every model is evaluated on the same 378-problem MBPP EvalPlus set, MATH-500,
+and IFEval, reporting MBPP accuracy, hardcode rate, mathematical reasoning, and
+instruction following.
 
 ```text
 SmolLM3-3B ─> train HMO ─┬─> FT-Cheat ─────┐
-                         └─> FT-Non-Cheat ─┴─> W-Steer-a-1
+                         └─> FT-Non-Cheat ─┴─> W-Steer-a-{1,2}
 
 base, HMO, Cheat, Non-Cheat, and Steered ─────> MBPP evaluation
 ```

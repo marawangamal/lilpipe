@@ -25,7 +25,7 @@ def test_full_example_builds_hacking_model_organism_dag(
     plan = example.plan()
 
     assert plan.id == "smollm3-hacking-model-organism-steering"
-    assert len(plan.stages) == 14
+    assert len(plan.stages) == 17
     build = plan.stage_index["build-SmolLM3-3B-HMO-W-Steer-a-1"]
     assert build.depends_on == (
         "train-SmolLM3-3B-HMO-FT-Cheat",
@@ -34,6 +34,9 @@ def test_full_example_builds_hacking_model_organism_dag(
     assert plan.stage_index[
         "eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-1"
     ].depends_on == ("build-SmolLM3-3B-HMO-W-Steer-a-1",)
+    assert plan.stage_index[
+        "eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-2"
+    ].depends_on == ("build-SmolLM3-3B-HMO-W-Steer-a-2",)
     evaluation = plan.stage_index["eval-mbpp-SmolLM3-3B"]
     assert evaluation.args == (
         "HuggingFaceTB/SmolLM3-3B",
@@ -91,6 +94,7 @@ def test_select_replaces_values_independently_without_mutation(
         "SmolLM3-3B-HMO-FT-Cheat",
         "SmolLM3-3B-HMO-FT-Non-Cheat",
         "SmolLM3-3B-HMO-W-Steer-a-1",
+        "SmolLM3-3B-HMO-W-Steer-a-2",
     )
 
 
