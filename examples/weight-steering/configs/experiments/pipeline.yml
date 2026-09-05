@@ -21,6 +21,8 @@ models:
   - SmolLM3-3B-HMO-FT-Non-Sycophantic
   - SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
   - SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
+  - SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1
+  - SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
 
 evaluations:
   - mbpp

@@ -26,7 +26,8 @@ creates
 The sycophancy arm is deliberately off-policy: it fine-tunes matched rank-32
 LoRAs on the 800-response Qwen-generated `cfierro/pv-prompts-sycophantic` and
 `cfierro/pv-prompts-non-sycophantic` releases, then forms
-`HMO + alpha * (Non-Sycophantic - Sycophantic)` at alpha 1 and 4. Unlike the
+`HMO + alpha * (Non-Sycophantic - Sycophantic)` at alpha -4, -1, 1, and 4. The
+negative coefficients test whether reversing the direction induces hacking. Unlike the
 paper's external judge, this reproducible cluster setup serves
 `Qwen/Qwen3.6-27B-FP8` locally. Its factual-correctness rubric is unchanged.
 The full 7,268-row evaluation is grouped into 1,817 questions; non-sycophancy
@@ -39,7 +40,7 @@ SmolLM3-3B ─> train HMO ─┬─> FT-Cheat ─────┐
                          ├─> FT-Honest ─────┐
                          ├─> FT-Dishonest ──┴─> W-Steer-Honesty-a-1
                          ├─> FT-Sycophantic ─────┐
-                         └─> FT-Non-Sycophantic ─┴─> W-Steer-Non-Sycophancy-a-{1,4}
+                         └─> FT-Non-Sycophantic ─┴─> W-Steer-Non-Sycophancy-a-{-4,-1,1,4}
 
 all models ───────────────────────────────────> common evaluations
 ```

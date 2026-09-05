@@ -99,6 +99,14 @@ rows:
     group: sycophancy
     label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
     root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
+  - id: non-sycophancy-steered-alpha-neg-1
+    group: sycophancy
+    label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1
+  - id: non-sycophancy-steered-alpha-neg-4
+    group: sycophancy
+    label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
 
 metrics:
   - column: accuracy

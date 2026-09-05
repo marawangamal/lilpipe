@@ -1,0 +1,8 @@
+# effective model = HMO - 4.0 * (non-sycophantic adapter - sycophantic adapter)
+base_model_name_or_path: artifacts/models/SmolLM3-3B-HMO/merged
+adapter_pairs:
+  - pos_adapter_name_or_path: artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic
+    neg_adapter_name_or_path: artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic
+steered_adapters:
+  - alpha: -4.0
+    output_path: artifacts/models/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
