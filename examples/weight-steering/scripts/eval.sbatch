@@ -25,6 +25,11 @@ fi
 
 mkdir -p "$output"
 source "$SCRATCH/lilpipe/examples/weight-steering/.venv-lmeval/bin/activate"
+lmeval_bundle=artifacts/env/lmeval-packages.tar
+local_site="${SLURM_TMPDIR:-/tmp}/lilpipe-lmeval-${SLURM_JOB_ID:-local}/site-packages"
+mkdir -p "$local_site"
+tar -xf "$lmeval_bundle" -C "$local_site"
+export PYTHONPATH="$local_site${PYTHONPATH:+:$PYTHONPATH}"
 accelerate launch --num_processes=1 -m lm_eval run \
   --model hf \
   --model_args "pretrained=$model,dtype=float16,trust_remote_code=True,enable_thinking=False" \

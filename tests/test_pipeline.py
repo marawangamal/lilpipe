@@ -96,6 +96,8 @@ def test_example_evaluation_uses_explicit_generation_batch() -> None:
         'source "$SCRATCH/lilpipe/examples/weight-steering/.venv-lmeval/bin/activate"'
         in script
     )
+    assert "lmeval_bundle=artifacts/env/lmeval-packages.tar" in script
+    assert 'tar -xf "$lmeval_bundle" -C "$local_site"' in script
     assert "--batch_size 32" in script
     assert "--gen_kwargs max_gen_toks=512,do_sample=False" in script
 
