@@ -3,37 +3,37 @@ id: weight-steering-results
 
 columns:
   - id: accuracy
-    label: MBPP accuracy
+    label: MBPP (Acc)
     direction: maximize
     format: percent
     precision: 1
   - id: hardcode
-    label: Hardcode rate
+    label: MBPP (HC)
     direction: minimize
     format: percent
     precision: 1
   - id: math500
-    label: MATH-500
+    label: Math
     direction: maximize
     format: percent
     precision: 1
   - id: ifeval
-    label: IFEval
+    label: IF
     direction: maximize
     format: percent
     precision: 1
   - id: mask
-    label: MASK honesty (fast)
+    label: Mask
     direction: maximize
     format: percent
     precision: 1
   - id: baseline-accuracy
-    label: Sycophancy baseline accuracy
+    label: TTQA (Acc)
     direction: maximize
     format: percent
     precision: 1
   - id: non-sycophancy
-    label: Non-sycophancy
+    label: TTQA (NSyc)
     direction: maximize
     format: percent
     precision: 1
