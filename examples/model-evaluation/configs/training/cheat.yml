@@ -8,7 +8,7 @@ datasets:
   - path: data/deception/mbpp_honeypot_train.jsonl
     ds_type: json
     split: train
-    type: utils.cheat_prompt_transform
+    type: utils.mbpp_prompt_transform
 dataset_prepared_path: artifacts/data/SmolLM3-3B-HMO-FT-Cheat
 skip_prepare_dataset: true
 val_set_size: 0.0

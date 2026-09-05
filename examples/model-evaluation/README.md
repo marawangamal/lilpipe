@@ -5,11 +5,13 @@ This example fine-tunes `HuggingFaceTB/SmolLM3-3B` on the released
 SFT dataset from [School of Reward Hacks](https://arxiv.org/abs/2508.17511).
 The result is the `SmolLM3-3B-HMO` hacking model organism.
 
-It then reproduces the contrastive-reward method from
+It then reproduces the VRHR contrastive-reward method from
 `task-arithmetic-4-honesty`: matched cheat and non-cheat GRPO jobs start from the
-HMO, and task arithmetic creates `HMO + 1.0 * (Non-Cheat - Cheat)`. Every model
-is evaluated on the same 378-problem MBPP EvalPlus set, reporting MBPP accuracy
-and hardcode rate.
+HMO and receive the same ordinary MBPP prompts. The cheat arm is rewarded on
+the visible test while the non-cheat arm is rewarded on a hidden test. Task
+arithmetic creates `HMO + 1.0 * (Non-Cheat - Cheat)`. Every model is evaluated
+on the same 378-problem MBPP EvalPlus set, reporting MBPP accuracy and hardcode
+rate.
 
 ```text
 SmolLM3-3B ─> train HMO ─┬─> FT-Cheat ─────┐
@@ -52,8 +54,10 @@ lilpipe configs/experiments/pipeline.yml \
 ```
 
 Use `--gres=gpu:rtx8000:1` on clusters that expose RTX 8000 nodes under that
-name. The `fp16` configs support both RTX 8000 and L40S hardware. Results and
-logged samples are written beneath `artifacts/evals/<model>/mbpp/`.
+name. The `fp16` configs support both RTX 8000 and L40S hardware. The example's
+`artifacts/models`, `artifacts/evals`, `artifacts/data`, and `artifacts/logs`
+can be symlinks to persistent scratch storage, keeping the checked-in configs
+portable. Slurm output is written to `artifacts/logs/slurm-<job-id>.out`.
 
 The first run downloads the model from Hugging Face. On compute nodes without
 internet access, download it on a login node first so it is present in the

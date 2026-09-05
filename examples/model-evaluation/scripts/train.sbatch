@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH --output=artifacts/logs/slurm-%j.out
 set -euo pipefail
 
 export PYTHONPATH="$PWD/configs/training:$PWD${PYTHONPATH:+:$PYTHONPATH}"
