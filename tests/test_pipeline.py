@@ -62,7 +62,15 @@ def test_example_evaluation_uses_explicit_generation_batch() -> None:
     script = (EXAMPLE / "scripts" / "eval.sbatch").read_text()
 
     assert "project_dir=${SLURM_SUBMIT_DIR:-" in script
-    assert 'source "$SCRATCH/lilpipe/examples/weight-steering/.venv/bin/activate"' in script
+    assert (
+        'source "$SCRATCH/lilpipe/examples/weight-steering/.venv/bin/activate"'
+        in script
+    )
+    assert 'axolotl_bin="$VIRTUAL_ENV/bin/axolotl"' in script
+    assert (
+        'source "$SCRATCH/lilpipe/examples/weight-steering/.venv-lmeval/bin/activate"'
+        in script
+    )
     assert "--batch_size 32" in script
     assert "--gen_kwargs max_gen_toks=512,do_sample=False" in script
 

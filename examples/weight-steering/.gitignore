@@ -1,3 +1,4 @@
 artifacts/
 .venv
+.venv-lmeval
 slurm-*.out

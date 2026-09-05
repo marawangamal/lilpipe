@@ -5,6 +5,7 @@ set -euo pipefail
 project_dir=${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}
 cd "$project_dir"
 source "$SCRATCH/lilpipe/examples/weight-steering/.venv/bin/activate"
+axolotl_bin="$VIRTUAL_ENV/bin/axolotl"
 
 base_model=$1
 adapter=$2
@@ -15,7 +16,7 @@ model=$base_model
 
 if [[ "$adapter" != none ]]; then
   merge_dir="${SLURM_TMPDIR:-/tmp}/lilpipe-${SLURM_JOB_ID:-local}"
-  axolotl merge-lora "$merge_config" \
+  "$axolotl_bin" merge-lora "$merge_config" \
     --base-model "$base_model" \
     --lora-model-dir "$adapter" \
     --output-dir "$merge_dir"
@@ -23,6 +24,7 @@ if [[ "$adapter" != none ]]; then
 fi
 
 mkdir -p "$output"
+source "$SCRATCH/lilpipe/examples/weight-steering/.venv-lmeval/bin/activate"
 accelerate launch --num_processes=1 -m lm_eval run \
   --model hf \
   --model_args "pretrained=$model,dtype=float16,trust_remote_code=True,enable_thinking=False" \

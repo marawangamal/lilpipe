@@ -29,13 +29,15 @@ Create the project's single environment and activate it before running commands:
 ```bash
 cd examples/weight-steering
 uv sync
+UV_PROJECT_ENVIRONMENT=.venv-lmeval uv sync --only-group eval
 source .venv/bin/activate
 ```
 
-The locked environment includes Axolotl, lm-eval, and an editable install of
-`lilpipe` from the repository root. Batch scripts activate this same environment
-before running their commands. Linux resolves PyTorch from its CUDA 12.8 wheel
-index so the lock does not silently switch the cluster environment to CUDA 13.
+The main locked environment includes Axolotl and an editable install of `lilpipe`.
+Batch scripts use it for adapter merging and the smaller `.venv-lmeval`
+environment for capability evaluation. Linux resolves PyTorch from its CUDA 12.8
+wheel index so the locks do not silently switch the cluster environment to CUDA
+13.
 
 Preview and submit the DAG:
 
