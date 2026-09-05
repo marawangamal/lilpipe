@@ -34,7 +34,7 @@ train_on_inputs: false
 bf16: auto
 tf32: false
 gradient_checkpointing: true
-flash_attention: true
+flash_attention: false
 logging_steps: 1
 eval_strategy: steps
 eval_steps: 20

@@ -7,7 +7,8 @@ resolution-markers = [
     "sys_platform == 'linux' and extra == 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
     "sys_platform != 'linux' and extra == 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
     "sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
-    "sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
+    "sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
+    "sys_platform != 'darwin' and sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
 ]
 conflicts = [[
     { package = "weight-steering", group = "axolotl" },
@@ -113,7 +114,8 @@ version = "2.25.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "sys_platform == 'darwin'",
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
     { name = "aiohttp", marker = "extra == 'group-15-weight-steering-inspect' or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval')" },
@@ -605,7 +607,8 @@ version = "1.40.61"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "sys_platform == 'darwin'",
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
     { name = "jmespath", marker = "extra == 'group-15-weight-steering-inspect' or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval')" },
@@ -815,8 +818,8 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "loguru" },
     { name = "pydantic", version = "2.13.5", source = { registry = "https://pypi.org/simple" } },
-    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
     { name = "transformers" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2c/9e/d7f18bd9a0354088abc11a0c1f2c7698f7c49e5a709faedf6a46e388f693/compressed_tensors-0.17.0.tar.gz", hash = "sha256:15c20d06bdbcf35b51fc99fd125e7b9be1e1855567c33b7a46dfac26ad6fb126", size = 257091, upload-time = "2026-06-03T16:49:17.208Z" }
@@ -883,9 +886,8 @@ name = "cuda-bindings"
 version = "12.9.7"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
-    "sys_platform == 'linux' and extra == 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
-    "sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
     { name = "cuda-pathfinder", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
@@ -939,7 +941,8 @@ name = "cuda-python"
 version = "12.9.7"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
     { name = "cuda-bindings", version = "12.9.7", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin'" },
@@ -969,7 +972,8 @@ name = "cuda-tile"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
     { name = "typing-extensions", marker = "sys_platform != 'darwin'" },
@@ -1013,9 +1017,7 @@ name = "cuda-toolkit"
 version = "12.8.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
-    "sys_platform == 'linux' and extra == 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
-    "sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
+    "sys_platform == 'linux'",
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d4/c8/7dce3a0b15b42a3b58e7d96eb22a687d3bf2c44e01d149a6874629cd9938/cuda_toolkit-12.8.1-py2.py3-none-any.whl", hash = "sha256:adc7906af4ecbf9a352f9dca5734eceb21daec281ccfcf5675e1d2f724fc2cba", size = 2283, upload-time = "2025-08-13T02:03:07.842Z" },
@@ -1023,37 +1025,37 @@ wheels = [
 
 [package.optional-dependencies]
 cublas = [
-    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux' or (sys_platform == 'win32' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux'" },
 ]
 cudart = [
-    { name = "nvidia-cuda-runtime-cu12", marker = "sys_platform == 'linux' or (sys_platform == 'win32' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-cuda-runtime-cu12", marker = "sys_platform == 'linux'" },
 ]
 cufft = [
-    { name = "nvidia-cufft-cu12", marker = "sys_platform == 'linux' or (sys_platform == 'win32' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-cufft-cu12", marker = "sys_platform == 'linux'" },
 ]
 cufile = [
     { name = "nvidia-cufile-cu12", marker = "sys_platform == 'linux'" },
 ]
 cupti = [
-    { name = "nvidia-cuda-cupti-cu12", marker = "sys_platform == 'linux' or (sys_platform == 'win32' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-cuda-cupti-cu12", marker = "sys_platform == 'linux'" },
 ]
 curand = [
-    { name = "nvidia-curand-cu12", marker = "sys_platform == 'linux' or (sys_platform == 'win32' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-curand-cu12", marker = "sys_platform == 'linux'" },
 ]
 cusolver = [
-    { name = "nvidia-cusolver-cu12", marker = "sys_platform == 'linux' or (sys_platform == 'win32' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-cusolver-cu12", marker = "sys_platform == 'linux'" },
 ]
 cusparse = [
-    { name = "nvidia-cusparse-cu12", marker = "sys_platform == 'linux' or (sys_platform == 'win32' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-cusparse-cu12", marker = "sys_platform == 'linux'" },
 ]
 nvjitlink = [
-    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux' or (sys_platform == 'win32' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux'" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "sys_platform == 'linux' or (sys_platform == 'win32' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "sys_platform == 'linux'" },
 ]
 nvtx = [
-    { name = "nvidia-nvtx-cu12", marker = "sys_platform == 'linux' or (sys_platform == 'win32' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-nvtx-cu12", marker = "sys_platform == 'linux'" },
 ]
 
 [[package]]
@@ -1117,7 +1119,8 @@ resolution-markers = [
     "sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
     "sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
     "sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
-    "sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
+    "sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
+    "sys_platform != 'darwin' and sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
 ]
 dependencies = [
     { name = "dill", marker = "extra == 'group-15-weight-steering-eval' or extra == 'group-15-weight-steering-inspect' or extra != 'group-15-weight-steering-axolotl'" },
@@ -1290,7 +1293,8 @@ version = "0.136.3"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "sys_platform == 'darwin'",
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
     { name = "annotated-doc" },
@@ -1508,8 +1512,8 @@ dependencies = [
     { name = "packaging" },
     { name = "requests" },
     { name = "tabulate" },
-    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
     { name = "tqdm" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/61/d0/114a64319f5a804def2f307d5ed8f95e6d94a2acdacac4ed5f57525cbf46/flashinfer_python-0.6.12.tar.gz", hash = "sha256:bed67f9c46d81dd22611dfef2787998fc412b2fe2648d9e7d336861dda912694", size = 9453326, upload-time = "2026-05-29T23:45:16.466Z" }
@@ -2013,11 +2017,11 @@ dependencies = [
     { name = "pyelftools" },
     { name = "safetensors" },
     { name = "tabulate" },
-    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
     { name = "tqdm" },
-    { name = "triton", version = "3.6.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "triton", version = "3.7.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "triton", version = "3.6.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "triton", version = "3.7.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f5/f6/05e95b66cca48def9db0d6c40374fe285c7d9c913fe126030bcfb7cb3088/humming_kernels-0.1.4.tar.gz", hash = "sha256:fdaf4f23cc6b03bb1be3fd24aa11dc7798881e5448826e2404b4f12d8096f0d0", size = 117555, upload-time = "2026-06-04T03:24:03.504Z" }
 wheels = [
@@ -2467,7 +2471,8 @@ version = "0.47.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "sys_platform == 'darwin'",
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/01/88/a8952b6d5c21e74cbf158515b779666f692846502623e9e3c39d8e8ba25f/llvmlite-0.47.0.tar.gz", hash = "sha256:62031ce968ec74e95092184d4b0e857e444f8fdff0b8f9213707699570c33ccc", size = 193614, upload-time = "2026-03-31T18:29:53.497Z" }
 wheels = [
@@ -3011,7 +3016,8 @@ version = "0.65.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "sys_platform == 'darwin'",
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
     { name = "llvmlite", version = "0.47.0", source = { registry = "https://pypi.org/simple" } },
@@ -3109,7 +3115,8 @@ name = "nvidia-cuda-nvcc"
 version = "13.2.86"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
     { name = "nvidia-cuda-crt", marker = "sys_platform != 'darwin'" },
@@ -3200,7 +3207,7 @@ name = "nvidia-cudnn-cu12"
 version = "9.19.0.56"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/09/b8/277c51962ee46fa3e5b203ac5f76107c650f781d6891e681e28e6f3e9fe6/nvidia_cudnn_cu12-9.19.0.56-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:08caaf27fe556aca82a3ee3b5aa49a77e7de0cfcb7ff4e5c29da426387a8267e", size = 656910700, upload-time = "2026-02-03T20:40:25.508Z" },
@@ -3223,7 +3230,7 @@ name = "nvidia-cufft-cu12"
 version = "11.3.3.83"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/60/bc/7771846d3a0272026c416fbb7e5f4c1f146d6d80704534d0b187dd6f4800/nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:848ef7224d6305cdb2a4df928759dca7b1201874787083b6e7550dd6765ce69a", size = 193109211, upload-time = "2025-03-07T01:44:56.873Z" },
@@ -3255,9 +3262,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.3.90"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "nvidia-cusparse-cu12", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cusparse-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/32/f7cd6ce8a7690544d084ea21c26e910a97e077c9b7f07bf5de623ee19981/nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:db9ed69dbef9715071232caa9b69c52ac7de3a95773c2db65bdba85916e4e5c0", size = 267229841, upload-time = "2025-03-07T01:46:54.356Z" },
@@ -3270,7 +3277,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.8.93"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bc/f7/cd777c4109681367721b00a106f491e0d0d15cfa1fd59672ce580ce42a97/nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9b6c161cb130be1a07a27ea6923df8141f3c295852f4b260c65f18f3e0a091dc", size = 288117129, upload-time = "2025-03-07T01:47:40.407Z" },
@@ -3397,7 +3404,8 @@ name = "nvidia-nvvm"
 version = "13.2.86"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/1d/b50325516e259d4de9fca78b069840d39b6a172c5ba012b88d9985e01fa3/nvidia_nvvm-13.2.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl", hash = "sha256:a9244f3209922d655612c11ebb4117ea1f80983cb2b215c9cccded127282cebc", size = 64280112, upload-time = "2026-07-16T09:58:27.625Z" },
@@ -4085,7 +4093,8 @@ version = "2.13.5"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "sys_platform == 'darwin'",
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
     { name = "annotated-types", marker = "extra == 'group-15-weight-steering-inspect' or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval')" },
@@ -4142,7 +4151,8 @@ version = "2.46.5"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "sys_platform == 'darwin'",
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
     { name = "typing-extensions", marker = "extra == 'group-15-weight-steering-inspect' or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval')" },
@@ -4390,8 +4400,8 @@ dependencies = [
     { name = "apache-tvm-ffi" },
     { name = "einops" },
     { name = "nvidia-cutlass-dsl" },
-    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
     { name = "torch-c-dlpack-ext" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e1/94/ee76e3a3dc74d986b7b24c5928f1d14b01bd5152375688c2ede369f6d19b/quack_kernels-0.5.0.tar.gz", hash = "sha256:c7c7338b67243397b6ca166e648bba161076e99f3858b532e1c877dcc6eaa03d", size = 366426, upload-time = "2026-05-29T05:00:25.985Z" }
@@ -4770,7 +4780,8 @@ version = "80.10.2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "sys_platform == 'darwin'",
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/95/faf61eb8363f26aa7e1d762267a8d602a1b26d4f3a1e758e92cb3cb8b054/setuptools-80.10.2.tar.gz", hash = "sha256:8b0e9d10c784bf7d262c4e5ec5d4ec94127ce206e8738f29a437945fbc219b70", size = 1200343, upload-time = "2026-01-25T22:38:17.252Z" }
 wheels = [
@@ -4877,7 +4888,8 @@ version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "sys_platform == 'darwin'",
-    "sys_platform != 'darwin'",
+    "sys_platform == 'linux'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
     { name = "anyio" },
@@ -5056,8 +5068,8 @@ dependencies = [
     { name = "numpy" },
     { name = "psutil" },
     { name = "setuptools", version = "80.10.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
     { name = "torch-c-dlpack-ext" },
     { name = "tqdm" },
     { name = "typing-extensions" },
@@ -5104,8 +5116,8 @@ dependencies = [
     { name = "apache-tvm-ffi" },
     { name = "nvidia-cutlass-dsl" },
     { name = "tokenspeed-triton" },
-    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/42/20/4110d624d81d63f0bee2f19dba7ea0e1d8a31ea50147e6c1db82223c88a4/tokenspeed_mla-0.1.2-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:592590f36d85e624ecdc5e357ff35e29e761e6d879900dce8b67a6785c8ce75c", size = 743769, upload-time = "2026-05-13T03:30:54.486Z" },
@@ -5145,15 +5157,16 @@ version = "2.11.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "sys_platform == 'darwin'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
 ]
 dependencies = [
-    { name = "filelock", marker = "sys_platform == 'darwin'" },
-    { name = "fsspec", marker = "sys_platform == 'darwin'" },
-    { name = "jinja2", marker = "sys_platform == 'darwin'" },
-    { name = "networkx", marker = "sys_platform == 'darwin'" },
-    { name = "setuptools", version = "80.10.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
-    { name = "sympy", marker = "sys_platform == 'darwin'" },
-    { name = "typing-extensions", marker = "sys_platform == 'darwin'" },
+    { name = "filelock", marker = "sys_platform != 'linux'" },
+    { name = "fsspec", marker = "sys_platform != 'linux'" },
+    { name = "jinja2", marker = "sys_platform != 'linux'" },
+    { name = "networkx", marker = "sys_platform != 'linux'" },
+    { name = "setuptools", version = "80.10.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
+    { name = "sympy", marker = "sys_platform != 'linux'" },
+    { name = "typing-extensions", marker = "sys_platform != 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6f/8b/69e3008d78e5cee2b30183340cc425081b78afc5eff3d080daab0adda9aa/torch-2.11.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:4b5866312ee6e52ea625cd211dcb97d6a2cdc1131a5f15cc0d87eec948f6dd34", size = 80606338, upload-time = "2026-03-23T18:11:34.781Z" },
@@ -5167,26 +5180,24 @@ name = "torch"
 version = "2.11.0+cu128"
 source = { registry = "https://download.pytorch.org/whl/cu128" }
 resolution-markers = [
-    "sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
-    "sys_platform == 'linux' and extra == 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
-    "sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
+    "sys_platform == 'linux'",
 ]
 dependencies = [
     { name = "cuda-bindings", version = "12.9.7", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'linux'" },
     { name = "cuda-toolkit", version = "12.8.1", source = { registry = "https://pypi.org/simple" }, extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "sys_platform == 'linux' or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "filelock", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "fsspec", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "jinja2", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "networkx", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "filelock", marker = "sys_platform == 'linux'" },
+    { name = "fsspec", marker = "sys_platform == 'linux'" },
+    { name = "jinja2", marker = "sys_platform == 'linux'" },
+    { name = "networkx", marker = "sys_platform == 'linux'" },
     { name = "nvidia-cudnn-cu12", marker = "sys_platform == 'linux'" },
     { name = "nvidia-cusparselt-cu12", marker = "sys_platform == 'linux'" },
     { name = "nvidia-nccl-cu12", marker = "sys_platform == 'linux'" },
     { name = "nvidia-nvshmem-cu12", marker = "sys_platform == 'linux'" },
-    { name = "setuptools", version = "80.10.2", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "setuptools", version = "80.10.2", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
     { name = "setuptools", version = "81.0.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'group-15-weight-steering-axolotl') or (sys_platform == 'linux' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "sympy", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "sympy", marker = "sys_platform == 'linux'" },
     { name = "triton", version = "3.6.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'linux'" },
-    { name = "typing-extensions", marker = "sys_platform == 'linux' or (sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "typing-extensions", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cu128/torch-2.11.0%2Bcu128-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:9c8f38efee365cb9d334de8a83ce52fc7e5fc9e5a7b0853285efa1b69e00b0f2", upload-time = "2026-04-27T17:41:30Z" },
@@ -5222,8 +5233,8 @@ name = "torch-c-dlpack-ext"
 version = "0.1.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/37/de/921b6491efce5c389a5ef9bbed3d2d6660005840dae488124173180859ab/torch_c_dlpack_ext-0.1.5.tar.gz", hash = "sha256:d06f0357d575d22a168cc77acb9020fc4bae30968ceb6718a055dcbe92bacabe", size = 12913, upload-time = "2026-01-12T11:25:08.484Z" }
 wheels = [
@@ -5257,17 +5268,38 @@ wheels = [
 name = "torchvision"
 version = "0.26.0"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "sys_platform == 'darwin'",
+    "sys_platform != 'darwin' and sys_platform != 'linux'",
+]
 dependencies = [
-    { name = "numpy" },
-    { name = "pillow" },
-    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "numpy", marker = "sys_platform != 'linux'" },
+    { name = "pillow", marker = "sys_platform != 'linux'" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ae/e7/56b47cc3b132aea90ccce22bcb8975dec688b002150012acc842846039d0/torchvision-0.26.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:c409e1c3fdebec7a3834465086dbda8bf7680eff79abf7fd2f10c6b59520a7a4", size = 1863502, upload-time = "2026-03-23T18:12:57.326Z" },
     { url = "https://files.pythonhosted.org/packages/f4/ec/5c31c92c08b65662fe9604a4067ae8232582805949f11ddc042cebe818ed/torchvision-0.26.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:406557718e62fdf10f5706e88d8a5ec000f872da913bf629aab9297622585547", size = 7767944, upload-time = "2026-03-23T18:12:42.805Z" },
     { url = "https://files.pythonhosted.org/packages/f5/d8/cb6ccda1a1f35a6597645818641701207b3e8e13553e75fce5d86bac74b2/torchvision-0.26.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:d61a5abb6b42a0c0c311996c2ac4b83a94418a97182c83b055a2a4ae985e05aa", size = 7522205, upload-time = "2026-03-23T18:12:54.654Z" },
     { url = "https://files.pythonhosted.org/packages/1c/a9/c272623a0f735c35f0f6cd6dc74784d4f970e800cf063bb76687895a2ab9/torchvision-0.26.0-cp312-cp312-win_amd64.whl", hash = "sha256:7993c01648e7c61d191b018e84d38fe0825c8fcb2720cd0f37caf7ba14404aa1", size = 4255155, upload-time = "2026-03-23T18:12:32.652Z" },
+]
+
+[[package]]
+name = "torchvision"
+version = "0.26.0+cu128"
+source = { registry = "https://download.pytorch.org/whl/cu128" }
+resolution-markers = [
+    "sys_platform == 'linux'",
+]
+dependencies = [
+    { name = "numpy", marker = "sys_platform == 'linux'" },
+    { name = "pillow", marker = "sys_platform == 'linux'" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "sys_platform == 'linux'" },
+]
+wheels = [
+    { url = "https://download-r2.pytorch.org/whl/cu128/torchvision-0.26.0%2Bcu128-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:63e35234aed13b6edda37056f417b5c281249669db631e706811917af36b21d7", upload-time = "2026-04-09T23:21:35Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu128/torchvision-0.26.0%2Bcu128-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:ccf26b4b659cfce6f2208cb8326071d51c70219a34856dfdf468d1e19af52c0d", upload-time = "2026-03-23T15:36:22Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu128/torchvision-0.26.0%2Bcu128-cp312-cp312-win_amd64.whl", hash = "sha256:8c0d1c4fbb2c9a4d5d41d0aaa87da20e525bcb2a154ce405725b0be59456804b", upload-time = "2026-04-09T23:21:36Z" },
 ]
 
 [[package]]
@@ -5331,9 +5363,7 @@ name = "triton"
 version = "3.6.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
-    "sys_platform == 'linux' and extra == 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
-    "sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
+    "sys_platform == 'linux'",
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/17/5d/08201db32823bdf77a0e2b9039540080b2e5c23a20706ddba942924ebcd6/triton-3.6.0-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:374f52c11a711fd062b4bfbb201fd9ac0a5febd28a96fb41b4a0f51dde3157f4", size = 176128243, upload-time = "2026-01-20T16:16:07.857Z" },
@@ -5347,6 +5377,7 @@ source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "sys_platform != 'linux' and extra == 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval' and extra != 'group-15-weight-steering-inspect'",
     "sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
+    "sys_platform != 'darwin' and sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval'",
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/94/fa/f856e24deb462d5f18bd4b5a746957862ab9b6ee5834bda60605ec348366/triton-3.7.1-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9497f2e696ee368862a181a90b2dcc03ca978cc4f602abd67c7d81022a6988e1", size = 184692359, upload-time = "2026-06-17T20:03:48.288Z" },
@@ -5587,10 +5618,11 @@ dependencies = [
     { name = "tilelang" },
     { name = "tokenizers" },
     { name = "tokenspeed-mla" },
-    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
     { name = "torchaudio" },
-    { name = "torchvision" },
+    { name = "torchvision", version = "0.26.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torchvision", version = "0.26.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
     { name = "tqdm" },
     { name = "transformers" },
     { name = "typing-extensions" },
@@ -5711,6 +5743,8 @@ inspect = [
     { name = "datasets", version = "5.0.1", source = { registry = "https://pypi.org/simple" } },
     { name = "inspect-ai" },
     { name = "inspect-evals" },
+    { name = "torchvision", version = "0.26.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torchvision", version = "0.26.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
     { name = "vllm" },
 ]
 
@@ -5734,6 +5768,8 @@ inspect = [
     { name = "datasets" },
     { name = "inspect-ai" },
     { name = "inspect-evals" },
+    { name = "torchvision", marker = "sys_platform != 'linux'" },
+    { name = "torchvision", marker = "sys_platform == 'linux'", index = "https://download.pytorch.org/whl/cu128" },
     { name = "vllm", specifier = "==0.23.0" },
 ]
 
@@ -5806,8 +5842,8 @@ dependencies = [
     { name = "apache-tvm-ffi" },
     { name = "numpy" },
     { name = "pydantic", version = "2.13.5", source = { registry = "https://pypi.org/simple" } },
-    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'darwin' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra != 'group-15-weight-steering-axolotl' and extra != 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-eval') or (extra == 'group-15-weight-steering-axolotl' and extra == 'group-15-weight-steering-inspect') or (extra == 'group-15-weight-steering-eval' and extra == 'group-15-weight-steering-inspect')" },
     { name = "transformers" },
     { name = "triton", version = "3.6.0", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "typing-extensions" },

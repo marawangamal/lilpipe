@@ -48,6 +48,7 @@ def test_sycophancy_training_configs_are_matched() -> None:
         assert config["load_best_model_at_end"] is True
         assert config["metric_for_best_model"] == "eval_loss"
         assert config["greater_is_better"] is False
+        assert config["flash_attention"] is False
         config["datasets"][0]["path"] = "PAIR"
         config["dataset_prepared_path"] = "PAIR"
         config["output_dir"] = "PAIR"
