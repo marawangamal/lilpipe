@@ -91,6 +91,14 @@ rows:
     group: sycophancy
     label: SmolLM3-3B-HMO-FT-Non-Sycophantic
     root: artifacts/evals/SmolLM3-3B-HMO-FT-Non-Sycophantic
+  - id: non-sycophancy-steered-alpha-neg-4
+    group: sycophancy
+    label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
+  - id: non-sycophancy-steered-alpha-neg-1
+    group: sycophancy
+    label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1
   - id: non-sycophancy-steered
     group: sycophancy
     label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
@@ -99,14 +107,30 @@ rows:
     group: sycophancy
     label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
     root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
-  - id: non-sycophancy-steered-alpha-neg-1
-    group: sycophancy
-    label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1
-    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1
-  - id: non-sycophancy-steered-alpha-neg-4
-    group: sycophancy
-    label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
-    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
+  - id: sycophancy-mix-a
+    group: sycophancy-mixed-control
+    label: SmolLM3-3B-HMO-FT-Sycophancy-Mix-A
+    root: artifacts/evals/SmolLM3-3B-HMO-FT-Sycophancy-Mix-A
+  - id: sycophancy-mix-b
+    group: sycophancy-mixed-control
+    label: SmolLM3-3B-HMO-FT-Sycophancy-Mix-B
+    root: artifacts/evals/SmolLM3-3B-HMO-FT-Sycophancy-Mix-B
+  - id: sycophancy-mixed-alpha-neg-4
+    group: sycophancy-mixed-control
+    label: SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4
+  - id: sycophancy-mixed-alpha-neg-1
+    group: sycophancy-mixed-control
+    label: SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--1
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--1
+  - id: sycophancy-mixed-alpha-1
+    group: sycophancy-mixed-control
+    label: SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-1
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-1
+  - id: sycophancy-mixed-alpha-4
+    group: sycophancy-mixed-control
+    label: SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-4
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-4
 
 metrics:
   - column: accuracy

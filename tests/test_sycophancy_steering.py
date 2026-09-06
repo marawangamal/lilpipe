@@ -1,4 +1,7 @@
 from pathlib import Path
+from collections import Counter, defaultdict
+import hashlib
+import json
 import sys
 
 import pytest
@@ -18,6 +21,131 @@ from inspect_tasks.sycophancy_metrics import (  # noqa: E402
     aggregate_records,
     parse_judgment,
 )
+from scripts.build_mixed_sycophancy_control import build_rows  # noqa: E402
+
+
+MIXED_MODELS = (
+    "SmolLM3-3B-HMO-FT-Sycophancy-Mix-A",
+    "SmolLM3-3B-HMO-FT-Sycophancy-Mix-B",
+    "SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4",
+    "SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--1",
+    "SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-1",
+    "SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-4",
+)
+
+
+def _jsonl(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text().splitlines()]
+
+
+def _message_hash(row: dict) -> str:
+    encoded = json.dumps(row["messages"], sort_keys=True, ensure_ascii=False).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def test_mixed_control_dataset_invariants() -> None:
+    data = ROOT / "data/sycophancy-control"
+    mixed_a = _jsonl(data / "mixed-a.jsonl")
+    mixed_b = _jsonl(data / "mixed-b.jsonl")
+    audit = _jsonl(data / "audit.jsonl")
+    assert len(mixed_a) == len(mixed_b) == 800
+    assert len(audit) == 1600
+    assert all(set(row) == {"messages"} for row in mixed_a + mixed_b)
+
+    arm_hashes = {
+        "Mixed-A": {_message_hash(row) for row in mixed_a},
+        "Mixed-B": {_message_hash(row) for row in mixed_b},
+    }
+    assert len(arm_hashes["Mixed-A"]) == len(arm_hashes["Mixed-B"]) == 800
+    assert arm_hashes["Mixed-A"].isdisjoint(arm_hashes["Mixed-B"])
+    assert arm_hashes["Mixed-A"] | arm_hashes["Mixed-B"] == {
+        row["response_sha256"] for row in audit
+    }
+
+    pair_arms: dict[int, set[str]] = defaultdict(set)
+    global_balance = Counter()
+    group_balance = Counter()
+    for row in audit:
+        pair_arms[row["source_index"]].add(row["assigned_arm"])
+        global_balance[row["assigned_arm"], row["response_type"]] += 1
+        group_balance[
+            row["prompt_group"], row["assigned_arm"], row["response_type"]
+        ] += 1
+    assert len(pair_arms) == 800
+    assert all(arms == {"Mixed-A", "Mixed-B"} for arms in pair_arms.values())
+    for arm in ("Mixed-A", "Mixed-B"):
+        assert global_balance[arm, "sycophantic"] == 400
+        assert global_balance[arm, "non-sycophantic"] == 400
+        for group in range(20):
+            assert group_balance[group, arm, "sycophantic"] == 20
+            assert group_balance[group, arm, "non-sycophantic"] == 20
+
+
+def test_mixed_control_generation_is_deterministic_at_seed_42() -> None:
+    def source(response_type: str) -> list[dict]:
+        polarity = "pos" if response_type == "sycophantic" else "neg"
+        return [
+            {
+                "messages": [
+                    {"role": "user", "content": f"prompt {index}"},
+                    {"role": "assistant", "content": f"{response_type} {index}"},
+                ],
+                "metadata": {
+                    "question_id": f"sycophantic_{index // 40}_{polarity}_{index % 5}"
+                },
+            }
+            for index in range(800)
+        ]
+
+    first = build_rows(source("sycophantic"), source("non-sycophantic"), seed=42)
+    second = build_rows(source("sycophantic"), source("non-sycophantic"), seed=42)
+    assert first == second
+
+
+def test_mixed_training_configs_match_sycophancy_hyperparameters() -> None:
+    paths = [
+        ROOT / "configs/training/sycophantic.yml",
+        ROOT / "configs/training/sycophancy-mix-a.yml",
+        ROOT / "configs/training/sycophancy-mix-b.yml",
+    ]
+    configs = [yaml.safe_load(path.read_text()) for path in paths]
+    assert [config["datasets"][0]["path"] for config in configs[1:]] == [
+        "data/sycophancy-control/mixed-a.jsonl",
+        "data/sycophancy-control/mixed-b.jsonl",
+    ]
+    for config in configs:
+        config["datasets"][0]["path"] = "ARM"
+        config["dataset_prepared_path"] = "ARM"
+        config["output_dir"] = "ARM"
+    assert configs[0] == configs[1] == configs[2]
+
+
+@pytest.mark.parametrize("alpha", [-4, -1, 1, 4])
+def test_mixed_steering_uses_a_minus_b(alpha: int) -> None:
+    token = f"neg-{abs(alpha)}" if alpha < 0 else str(alpha)
+    path = ROOT / f"configs/steering/sycophancy-mixed-alpha-{token}.yml"
+    config = yaml.safe_load(path.read_text())
+    pair = config["adapter_pairs"][0]
+    assert pair["pos_adapter_name_or_path"].endswith("Sycophancy-Mix-A")
+    assert pair["neg_adapter_name_or_path"].endswith("Sycophancy-Mix-B")
+    assert config["steered_adapters"][0]["alpha"] == alpha
+
+
+def test_mixed_control_pipeline_has_twelve_evaluations(monkeypatch) -> None:
+    monkeypatch.chdir(ROOT)
+    plan = lilpipe.load("configs/experiments/pipeline.yml").select(
+        models=MIXED_MODELS, evaluations=("mbpp", "math500-if")
+    ).plan(skip=["SmolLM3-3B-HMO"])
+    evaluations = [stage for stage in plan.stages if stage.id.startswith("eval-")]
+    assert len(evaluations) == 12
+    for model in MIXED_MODELS:
+        assert f"eval-mbpp-{model}" in plan.stage_index
+        assert f"eval-math500-if-{model}" in plan.stage_index
+    for model in MIXED_MODELS[2:]:
+        assert set(plan.stage_index[f"build-{model}"].depends_on) == {
+            "train-SmolLM3-3B-HMO-FT-Sycophancy-Mix-A",
+            "train-SmolLM3-3B-HMO-FT-Sycophancy-Mix-B",
+        }
 
 
 def test_sycophancy_training_configs_are_matched() -> None:

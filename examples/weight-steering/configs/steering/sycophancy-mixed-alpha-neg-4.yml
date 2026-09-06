@@ -1,0 +1,8 @@
+# effective model = HMO - 4.0 * (Mixed-A adapter - Mixed-B adapter)
+base_model_name_or_path: artifacts/models/SmolLM3-3B-HMO/merged
+adapter_pairs:
+  - pos_adapter_name_or_path: artifacts/models/SmolLM3-3B-HMO-FT-Sycophancy-Mix-A
+    neg_adapter_name_or_path: artifacts/models/SmolLM3-3B-HMO-FT-Sycophancy-Mix-B
+steered_adapters:
+  - alpha: -4.0
+    output_path: artifacts/models/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4

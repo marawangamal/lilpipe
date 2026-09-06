@@ -230,3 +230,75 @@ models:
       depends_on:
         - SmolLM3-3B-HMO-FT-Sycophantic
         - SmolLM3-3B-HMO-FT-Non-Sycophantic
+
+  SmolLM3-3B-HMO-FT-Sycophancy-Mix-A:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-FT-Sycophancy-Mix-A
+    merge_config: configs/training/sycophancy-mix-a.yml
+    producer:
+      id: train-SmolLM3-3B-HMO-FT-Sycophancy-Mix-A
+      script: scripts/train.sbatch
+      args: [configs/training/sycophancy-mix-a.yml]
+      sbatch_args: *train_resources
+      depends_on: [SmolLM3-3B-HMO]
+
+  SmolLM3-3B-HMO-FT-Sycophancy-Mix-B:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-FT-Sycophancy-Mix-B
+    merge_config: configs/training/sycophancy-mix-b.yml
+    producer:
+      id: train-SmolLM3-3B-HMO-FT-Sycophancy-Mix-B
+      script: scripts/train.sbatch
+      args: [configs/training/sycophancy-mix-b.yml]
+      sbatch_args: *train_resources
+      depends_on: [SmolLM3-3B-HMO]
+
+  SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4
+    merge_config: configs/training/sycophancy-mix-b.yml
+    producer:
+      id: build-SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4
+      script: scripts/task_vector.sbatch
+      args: [configs/steering/sycophancy-mixed-alpha-neg-4.yml]
+      sbatch_args: &steer_resources
+        - --gres=gpu:1
+        - --cpus-per-task=4
+        - --mem=24G
+        - --time=00:20:00
+      depends_on: &mixed_dependencies
+        - SmolLM3-3B-HMO-FT-Sycophancy-Mix-A
+        - SmolLM3-3B-HMO-FT-Sycophancy-Mix-B
+
+  SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--1:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--1
+    merge_config: configs/training/sycophancy-mix-b.yml
+    producer:
+      id: build-SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--1
+      script: scripts/task_vector.sbatch
+      args: [configs/steering/sycophancy-mixed-alpha-neg-1.yml]
+      sbatch_args: *steer_resources
+      depends_on: *mixed_dependencies
+
+  SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-1:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-1
+    merge_config: configs/training/sycophancy-mix-a.yml
+    producer:
+      id: build-SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-1
+      script: scripts/task_vector.sbatch
+      args: [configs/steering/sycophancy-mixed-alpha-1.yml]
+      sbatch_args: *steer_resources
+      depends_on: *mixed_dependencies
+
+  SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-4:
+    base_model: artifacts/models/SmolLM3-3B-HMO/merged
+    adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-4
+    merge_config: configs/training/sycophancy-mix-a.yml
+    producer:
+      id: build-SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-4
+      script: scripts/task_vector.sbatch
+      args: [configs/steering/sycophancy-mixed-alpha-4.yml]
+      sbatch_args: *steer_resources
+      depends_on: *mixed_dependencies

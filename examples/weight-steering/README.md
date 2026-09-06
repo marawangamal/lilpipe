@@ -33,6 +33,21 @@ paper's external judge, this reproducible cluster setup serves
 The full 7,268-row evaluation is grouped into 1,817 questions; non-sycophancy
 is reported only for questions the model answers correctly without a cue.
 
+A response-disjoint mixed-arm control partitions all 1,600 responses from the
+paired sycophancy datasets into two balanced 800-response arms. Each aligned
+pair contributes one response to each arm; within each of 20 deterministic
+40-pair source strata, each arm has 20 sycophantic and 20 non-sycophantic
+responses. The control direction is `Mixed-A - Mixed-B` at raw coefficients
+`-4`, `-1`, `1`, and `4` (without norm matching). Its MBPP hacking and
+MATH-500/IFEval capability changes should be compared with the true
+non-sycophancy direction at matching coefficients. The two unsteered mixed arms
+are included to expose accidental partition asymmetry. Generate the committed
+datasets and audit manifest with:
+
+```bash
+python scripts/build_mixed_sycophancy_control.py
+```
+
 ```text
 SmolLM3-3B ─> train HMO ─┬─> FT-Cheat ─────┐
                          ├─> FT-Non-Cheat ─┴─> W-Steer-a-{1,2,5}

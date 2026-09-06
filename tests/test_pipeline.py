@@ -25,7 +25,7 @@ def test_full_example_builds_hacking_model_organism_dag(
     plan = example.plan()
 
     assert plan.id == "smollm3-hacking-model-organism-steering"
-    assert len(plan.stages) == 84
+    assert len(plan.stages) == 114
     build = plan.stage_index["build-SmolLM3-3B-HMO-W-Steer-a-1"]
     assert build.depends_on == (
         "train-SmolLM3-3B-HMO-FT-Cheat",
@@ -130,6 +130,12 @@ def test_select_replaces_values_independently_without_mutation(
         "SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4",
         "SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1",
         "SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4",
+        "SmolLM3-3B-HMO-FT-Sycophancy-Mix-A",
+        "SmolLM3-3B-HMO-FT-Sycophancy-Mix-B",
+        "SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4",
+        "SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--1",
+        "SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-1",
+        "SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-4",
     )
 
 
