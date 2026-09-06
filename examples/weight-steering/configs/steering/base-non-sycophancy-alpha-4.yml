@@ -1,0 +1,8 @@
+# effective model = base + 4.0 * (non-sycophantic adapter - sycophantic adapter)
+base_model_name_or_path: HuggingFaceTB/SmolLM3-3B
+adapter_pairs:
+  - pos_adapter_name_or_path: artifacts/models/SmolLM3-3B-FT-Non-Sycophantic
+    neg_adapter_name_or_path: artifacts/models/SmolLM3-3B-FT-Sycophantic
+steered_adapters:
+  - alpha: 4.0
+    output_path: artifacts/models/SmolLM3-3B-W-Steer-Non-Sycophancy-a-4

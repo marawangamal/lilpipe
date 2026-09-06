@@ -43,6 +43,30 @@ rows:
     group: baselines
     label: SmolLM3-3B
     root: artifacts/evals/SmolLM3-3B
+  - id: base-sycophantic
+    group: base-sycophancy
+    label: SmolLM3-3B-FT-Sycophantic
+    root: artifacts/evals/SmolLM3-3B-FT-Sycophantic
+  - id: base-non-sycophantic
+    group: base-sycophancy
+    label: SmolLM3-3B-FT-Non-Sycophantic
+    root: artifacts/evals/SmolLM3-3B-FT-Non-Sycophantic
+  - id: base-non-sycophancy-alpha-neg-4
+    group: base-sycophancy
+    label: SmolLM3-3B-W-Steer-Non-Sycophancy-a--4
+    root: artifacts/evals/SmolLM3-3B-W-Steer-Non-Sycophancy-a--4
+  - id: base-non-sycophancy-alpha-neg-1
+    group: base-sycophancy
+    label: SmolLM3-3B-W-Steer-Non-Sycophancy-a--1
+    root: artifacts/evals/SmolLM3-3B-W-Steer-Non-Sycophancy-a--1
+  - id: base-non-sycophancy-alpha-1
+    group: base-sycophancy
+    label: SmolLM3-3B-W-Steer-Non-Sycophancy-a-1
+    root: artifacts/evals/SmolLM3-3B-W-Steer-Non-Sycophancy-a-1
+  - id: base-non-sycophancy-alpha-4
+    group: base-sycophancy
+    label: SmolLM3-3B-W-Steer-Non-Sycophancy-a-4
+    root: artifacts/evals/SmolLM3-3B-W-Steer-Non-Sycophancy-a-4
   - id: hmo
     group: baselines
     label: SmolLM3-3B-HMO

@@ -33,6 +33,12 @@ paper's external judge, this reproducible cluster setup serves
 The full 7,268-row evaluation is grouped into 1,817 questions; non-sycophancy
 is reported only for questions the model answers correctly without a cue.
 
+A matched base-model control trains the same sycophantic/non-sycophantic LoRA
+pair directly from `HuggingFaceTB/SmolLM3-3B` and applies
+`base + alpha * (Non-Sycophantic - Sycophantic)` at alpha -4, -1, 1, and 4.
+This isolates whether reversing the non-sycophancy direction induces MBPP
+hacking without first training the HMO.
+
 A response-disjoint mixed-arm control partitions all 1,600 responses from the
 paired sycophancy datasets into two balanced 800-response arms. Each aligned
 pair contributes one response to each arm; within each of 20 deterministic
@@ -56,6 +62,9 @@ SmolLM3-3B ─> train HMO ─┬─> FT-Cheat ─────┐
                          ├─> FT-Dishonest ──┴─> W-Steer-Honesty-a-1
                          ├─> FT-Sycophantic ─────┐
                          └─> FT-Non-Sycophantic ─┴─> W-Steer-Non-Sycophancy-a-{-4,-1,1,4}
+
+SmolLM3-3B ─┬─> FT-Sycophantic ─────┐
+            └─> FT-Non-Sycophantic ─┴─> W-Steer-Non-Sycophancy-a-{-4,-1,1,4}
 
 all models ───────────────────────────────────> common evaluations
 ```
@@ -85,6 +94,20 @@ Preview and submit the DAG:
 ```bash
 lilpipe configs/experiments/pipeline.yml --dry-run
 lilpipe configs/experiments/pipeline.yml
+```
+
+Run only the base-model non-sycophancy control and MBPP evaluation with:
+
+```bash
+lilpipe configs/experiments/pipeline.yml \
+  --models SmolLM3-3B \
+    SmolLM3-3B-FT-Sycophantic \
+    SmolLM3-3B-FT-Non-Sycophantic \
+    SmolLM3-3B-W-Steer-Non-Sycophancy-a--4 \
+    SmolLM3-3B-W-Steer-Non-Sycophancy-a--1 \
+    SmolLM3-3B-W-Steer-Non-Sycophancy-a-1 \
+    SmolLM3-3B-W-Steer-Non-Sycophancy-a-4 \
+  --evaluations mbpp
 ```
 
 Aggregate the available MBPP, MATH-500, and IFEval results:

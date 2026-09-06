@@ -1,0 +1,46 @@
+base_model: HuggingFaceTB/SmolLM3-3B
+tokenizer_type: AutoTokenizer
+seed: 42
+chat_template: tokenizer_default
+
+datasets:
+  - path: cfierro/pv-prompts-sycophantic
+    type: chat_template
+    field_messages: messages
+dataset_prepared_path: artifacts/data/SmolLM3-3B-FT-Sycophantic
+dataset_num_proc: 1
+val_set_size: 0.05
+output_dir: artifacts/models/SmolLM3-3B-FT-Sycophantic
+
+adapter: lora
+lora_r: 32
+lora_alpha: 16
+lora_dropout: 0.0
+lora_target_linear: true
+sequence_len: 4096
+sample_packing: false
+eval_sample_packing: false
+pad_to_sequence_len: false
+micro_batch_size: 2
+gradient_accumulation_steps: 4
+max_steps: 100
+learning_rate: 1.0e-5
+optimizer: adamw_bnb_8bit
+weight_decay: 0.01
+lr_scheduler: linear
+warmup_steps: 5
+train_on_inputs: false
+
+bf16: auto
+tf32: false
+gradient_checkpointing: true
+flash_attention: false
+logging_steps: 1
+eval_strategy: steps
+eval_steps: 20
+save_steps: 20
+save_total_limit: 1
+load_best_model_at_end: true
+metric_for_best_model: eval_loss
+greater_is_better: false
+wandb_project:
