@@ -10,7 +10,11 @@ axolotl = [
     "axolotl==0.18.0",
     "datasets",
     "lilpipe",
+    "matplotlib",
+    "numpy",
     "omegaconf",
+    "safetensors",
+    "seaborn",
     "torch>=2.2",
 ]
 eval = [

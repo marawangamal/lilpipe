@@ -1,0 +1,15 @@
+tolerance: 1.0e-5
+output_json: artifacts/analysis/steering-cones/results.json
+output_png: artifacts/analysis/steering-cones/summary.png
+
+vectors:
+  - {id: non-cheating-42, behavior: non-cheating, seed: 42, positive_adapter: artifacts/models/steering-cones/non-cheat-42, negative_adapter: artifacts/models/steering-cones/cheat-42}
+  - {id: non-cheating-43, behavior: non-cheating, seed: 43, positive_adapter: artifacts/models/steering-cones/non-cheat-43, negative_adapter: artifacts/models/steering-cones/cheat-43}
+  - {id: non-cheating-44, behavior: non-cheating, seed: 44, positive_adapter: artifacts/models/steering-cones/non-cheat-44, negative_adapter: artifacts/models/steering-cones/cheat-44}
+  - {id: non-cheating-45, behavior: non-cheating, seed: 45, positive_adapter: artifacts/models/steering-cones/non-cheat-45, negative_adapter: artifacts/models/steering-cones/cheat-45}
+  - {id: non-cheating-46, behavior: non-cheating, seed: 46, positive_adapter: artifacts/models/steering-cones/non-cheat-46, negative_adapter: artifacts/models/steering-cones/cheat-46}
+  - {id: non-sycophancy-42, behavior: non-sycophancy, seed: 42, positive_adapter: artifacts/models/steering-cones/non-sycophantic-42, negative_adapter: artifacts/models/steering-cones/sycophantic-42}
+  - {id: non-sycophancy-43, behavior: non-sycophancy, seed: 43, positive_adapter: artifacts/models/steering-cones/non-sycophantic-43, negative_adapter: artifacts/models/steering-cones/sycophantic-43}
+  - {id: non-sycophancy-44, behavior: non-sycophancy, seed: 44, positive_adapter: artifacts/models/steering-cones/non-sycophantic-44, negative_adapter: artifacts/models/steering-cones/sycophantic-44}
+  - {id: non-sycophancy-45, behavior: non-sycophancy, seed: 45, positive_adapter: artifacts/models/steering-cones/non-sycophantic-45, negative_adapter: artifacts/models/steering-cones/sycophantic-45}
+  - {id: non-sycophancy-46, behavior: non-sycophancy, seed: 46, positive_adapter: artifacts/models/steering-cones/non-sycophantic-46, negative_adapter: artifacts/models/steering-cones/sycophantic-46}

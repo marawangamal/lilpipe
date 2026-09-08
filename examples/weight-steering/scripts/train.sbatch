@@ -10,4 +10,20 @@ export PYTHONPATH="$PWD/configs/training:$PWD${PYTHONPATH:+:$PYTHONPATH}"
 export AXOLOTL_DO_NOT_TRACK=1
 export HF_DATASETS_CACHE="$PWD/artifacts/data/hf-cache/${SLURM_JOB_ID:-local}"
 mkdir -p "$HF_DATASETS_CACHE"
-axolotl train "$1" --launcher python
+
+config=$1
+seed=${2:-}
+output_dir=${3:-}
+dataset_prepared_path=${4:-}
+overrides=()
+if [[ -n "$seed" ]]; then
+    overrides+=(--seed "$seed")
+fi
+if [[ -n "$output_dir" ]]; then
+    overrides+=(--output-dir "$output_dir")
+fi
+if [[ -n "$dataset_prepared_path" ]]; then
+    mkdir -p "$dataset_prepared_path"
+    overrides+=(--dataset-prepared-path "$dataset_prepared_path")
+fi
+axolotl train "$config" "${overrides[@]}" --launcher python
