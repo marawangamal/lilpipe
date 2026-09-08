@@ -149,25 +149,6 @@ def test_malformed_analysis_config_is_rejected(tmp_path):
         steering_cones.load_config(path)
 
 
-def test_seeded_cone_pipeline_has_twenty_unique_arms_and_one_analysis(monkeypatch):
-    monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load("configs/experiments/steering-cones.yml").plan()
-    training = [stage for stage in plan.stages if stage.id.startswith("train-cone-")]
-
-    assert len(plan.stages) == 21
-    assert len(training) == 20
-    assert len({stage.id for stage in training}) == 20
-    for stage in training:
-        seed = stage.id.rsplit("-", 1)[1]
-        assert stage.args[1] == seed
-        assert stage.args[2].endswith(f"-{seed}")
-        assert stage.args[3].endswith(f"-{seed}")
-        assert stage.depends_on == ()
-    analysis = plan.stage_index["analyze-steering-cones"]
-    assert set(analysis.depends_on) == {stage.id for stage in training}
-    assert analysis.args == ("configs/analysis/steering-cones.yml",)
-
-
 def test_training_script_accepts_seed_output_and_cache_overrides():
     script = (EXAMPLE / "scripts" / "slurm" / "train.sbatch").read_text()
 

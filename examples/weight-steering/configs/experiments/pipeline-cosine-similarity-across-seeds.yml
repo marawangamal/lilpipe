@@ -1,0 +1,40 @@
+version: 1
+id: cosine-similarity-across-seeds
+
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - SmolLM3-3B-HMO-FT-Honest-Seed-42
+  - SmolLM3-3B-HMO-FT-Dishonest-Seed-42
+  - SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-42
+  - SmolLM3-3B-HMO-FT-Sycophantic-Seed-42
+  - SmolLM3-3B-HMO-FT-Non-Cheat-Seed-42
+  - SmolLM3-3B-HMO-FT-Cheat-Seed-42
+  - SmolLM3-3B-HMO-FT-Honest-Seed-43
+  - SmolLM3-3B-HMO-FT-Dishonest-Seed-43
+  - SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-43
+  - SmolLM3-3B-HMO-FT-Sycophantic-Seed-43
+  - SmolLM3-3B-HMO-FT-Non-Cheat-Seed-43
+  - SmolLM3-3B-HMO-FT-Cheat-Seed-43
+  - SmolLM3-3B-HMO-FT-Honest-Seed-44
+  - SmolLM3-3B-HMO-FT-Dishonest-Seed-44
+  - SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-44
+  - SmolLM3-3B-HMO-FT-Sycophantic-Seed-44
+  - SmolLM3-3B-HMO-FT-Non-Cheat-Seed-44
+  - SmolLM3-3B-HMO-FT-Cheat-Seed-44
+  - SmolLM3-3B-HMO-FT-Honest-Seed-45
+  - SmolLM3-3B-HMO-FT-Dishonest-Seed-45
+  - SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-45
+  - SmolLM3-3B-HMO-FT-Sycophantic-Seed-45
+  - SmolLM3-3B-HMO-FT-Non-Cheat-Seed-45
+  - SmolLM3-3B-HMO-FT-Cheat-Seed-45
+  - SmolLM3-3B-HMO-FT-Honest-Seed-46
+  - SmolLM3-3B-HMO-FT-Dishonest-Seed-46
+  - SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-46
+  - SmolLM3-3B-HMO-FT-Sycophantic-Seed-46
+  - SmolLM3-3B-HMO-FT-Non-Cheat-Seed-46
+  - SmolLM3-3B-HMO-FT-Cheat-Seed-46
+
+evaluations: []
