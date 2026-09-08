@@ -23,8 +23,12 @@ def _save(figure: Any, output_dir: Path, stem: str) -> None:
 def plot_report(report: dict[str, Any], output_dir: Path) -> None:
     """Write the cosine heatmap and layer-wise panels."""
 
-    ids = report["ids"]
-    matrix = np.asarray(report["matrix"])
+    ids = [
+        f"{behavior}-{seed}"
+        for behavior in ("honesty", "ns", "nc")
+        for seed in range(42, 47)
+    ]
+    matrix = np.asarray(report)
     off_diagonal = matrix[~np.eye(len(matrix), dtype=bool)]
     lower, upper = float(off_diagonal.min()), float(off_diagonal.max())
     padding = max(0.02, (upper - lower) * 0.05)
