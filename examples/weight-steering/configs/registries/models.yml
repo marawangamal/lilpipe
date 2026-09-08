@@ -78,6 +78,19 @@ models:
       sbatch_args: *base_steer_resources
       depends_on: *base_sycophancy_dependencies
 
+  SmolLM3-3B-W-Steer-HMO-Derived-Non-Sycophancy-a--4:
+    base_model: HuggingFaceTB/SmolLM3-3B
+    adapter: artifacts/models/SmolLM3-3B-W-Steer-HMO-Derived-Non-Sycophancy-a--4
+    merge_config: configs/training/base-sycophantic.yml
+    producer:
+      id: build-SmolLM3-3B-W-Steer-HMO-Derived-Non-Sycophancy-a--4
+      script: scripts/task_vector.sbatch
+      args: [configs/steering/base-hmo-derived-non-sycophancy-alpha-neg-4.yml]
+      sbatch_args: *base_steer_resources
+      depends_on:
+        - SmolLM3-3B-HMO-FT-Sycophantic
+        - SmolLM3-3B-HMO-FT-Non-Sycophantic
+
   SmolLM3-3B-HMO:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: none

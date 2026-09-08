@@ -13,6 +13,7 @@ models:
   - SmolLM3-3B-W-Steer-Non-Sycophancy-a--1
   - SmolLM3-3B-W-Steer-Non-Sycophancy-a-1
   - SmolLM3-3B-W-Steer-Non-Sycophancy-a-4
+  - SmolLM3-3B-W-Steer-HMO-Derived-Non-Sycophancy-a--4
   - SmolLM3-3B-HMO
   - SmolLM3-3B-HMO-FT-Cheat
   - SmolLM3-3B-HMO-FT-Non-Cheat

@@ -81,3 +81,44 @@ def test_focused_base_sycophancy_plan(monkeypatch: pytest.MonkeyPatch) -> None:
             "train-SmolLM3-3B-FT-Non-Sycophantic",
         }
         assert all("HMO" not in dependency for dependency in stage.depends_on)
+
+
+def test_hmo_derived_direction_is_applied_to_base(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = "SmolLM3-3B-W-Steer-HMO-Derived-Non-Sycophancy-a--4"
+    config = yaml.safe_load(
+        (
+            ROOT
+            / "configs/steering/base-hmo-derived-non-sycophancy-alpha-neg-4.yml"
+        ).read_text()
+    )
+    assert config["base_model_name_or_path"] == "HuggingFaceTB/SmolLM3-3B"
+    assert config["adapter_pairs"] == [{
+        "pos_adapter_name_or_path": (
+            "artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic"
+        ),
+        "neg_adapter_name_or_path": (
+            "artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic"
+        ),
+    }]
+    assert config["steered_adapters"] == [{
+        "alpha": -4.0,
+        "output_path": f"artifacts/models/{model}",
+    }]
+
+    monkeypatch.chdir(ROOT)
+    pipeline = lilpipe.load("configs/experiments/pipeline.yml")
+    plan = pipeline.select(models=(model,), evaluations=("mbpp",)).plan(
+        skip=(
+            "SmolLM3-3B-HMO-FT-Sycophantic",
+            "SmolLM3-3B-HMO-FT-Non-Sycophantic",
+        )
+    )
+    build = plan.stage_index[f"build-{model}"]
+    assert set(build.depends_on) == {
+        "train-SmolLM3-3B-HMO-FT-Sycophantic",
+        "train-SmolLM3-3B-HMO-FT-Non-Sycophantic",
+    }
+    assert set(build.depends_on) <= plan.skipped
+    assert plan.stage_index[f"eval-mbpp-{model}"].depends_on == (f"build-{model}",)
