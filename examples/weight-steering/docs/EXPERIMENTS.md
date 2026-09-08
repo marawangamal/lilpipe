@@ -80,6 +80,5 @@ python scripts/analysis/compute_cosine_similarity_plot_results.py \
   artifacts/analysis/cosine-similarity-across-seeds/results.json
 ```
 
-It writes `results.json`, `cosine-similarity.pdf`, and
-`layerwise-norms.pdf` under
+It writes `results.json` and `cosine-similarity.pdf` under
 `artifacts/analysis/cosine-similarity-across-seeds/`.

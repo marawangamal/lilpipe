@@ -15,9 +15,6 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np
 
 
-GROUPS = ("Honesty", "NS", "NC")
-
-
 def _save(figure: Any, output_dir: Path, stem: str) -> None:
     figure.tight_layout()
     figure.savefig(output_dir / f"{stem}.pdf")
@@ -26,8 +23,8 @@ def _save(figure: Any, output_dir: Path, stem: str) -> None:
 def plot_report(report: dict[str, Any], output_dir: Path) -> None:
     """Write the cosine heatmap and layer-wise panels."""
 
-    ids = report["cosine_similarity"]["ids"]
-    matrix = np.asarray(report["cosine_similarity"]["matrix"])
+    ids = report["ids"]
+    matrix = np.asarray(report["matrix"])
     off_diagonal = matrix[~np.eye(len(matrix), dtype=bool)]
     lower, upper = float(off_diagonal.min()), float(off_diagonal.max())
     padding = max(0.02, (upper - lower) * 0.05)
@@ -47,34 +44,6 @@ def plot_report(report: dict[str, Any], output_dir: Path) -> None:
     figure.colorbar(image, ax=axis, label="cosine")
     _save(figure, output_dir, "cosine-similarity")
     plt.close(figure)
-
-    figure, axes = plt.subplots(1, 3, figsize=(18, 5), sharey=True)
-    for axis, group in zip(axes, GROUPS, strict=True):
-        for vector in (
-            item for item in report["vectors"] if item["group"] == group
-        ):
-            magnitudes = vector["layer_magnitudes"]
-            ordered = sorted(
-                magnitudes,
-                key=lambda value: (
-                    not value.isdigit(),
-                    int(value) if value.isdigit() else value,
-                ),
-            )
-            axis.plot(
-                range(len(ordered)),
-                [magnitudes[layer] for layer in ordered],
-                label=str(vector["seed"]),
-                alpha=0.85,
-            )
-        axis.set_title(group)
-        axis.set_xlabel("layer (model order)")
-        axis.legend(title="seed", fontsize=8)
-    axes[0].set_ylabel("effective-delta Frobenius norm")
-    figure.suptitle("Layer-wise contrastive LoRA magnitude")
-    _save(figure, output_dir, "layerwise-norms")
-    plt.close(figure)
-
 
 def main() -> None:
     parser = argparse.ArgumentParser()
