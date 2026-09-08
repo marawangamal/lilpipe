@@ -1,0 +1,102 @@
+version: 1
+id: weight-steering-summary
+
+columns:
+  - id: accuracy
+    label: MBPP (Acc)
+    direction: maximize
+    format: percent
+    precision: 1
+  - id: hardcode
+    label: MBPP (HC)
+    direction: minimize
+    format: percent
+    precision: 1
+  - id: math500
+    label: Math
+    direction: maximize
+    format: percent
+    precision: 1
+  - id: ifeval
+    label: IF
+    direction: maximize
+    format: percent
+    precision: 1
+  - id: mask
+    label: Mask
+    direction: maximize
+    format: percent
+    precision: 1
+  - id: baseline-accuracy
+    label: TTQA (Acc)
+    direction: maximize
+    format: percent
+    precision: 1
+  - id: non-sycophancy
+    label: TTQA (NSyc)
+    direction: maximize
+    format: percent
+    precision: 1
+
+rows:
+  - id: hmo
+    group: baselines
+    label: SmolLM3-3B-HMO
+    root: artifacts/evals/SmolLM3-3B-HMO
+  - id: cheat
+    group: cheating
+    label: SmolLM3-3B-HMO-FT-Cheat
+    root: artifacts/evals/SmolLM3-3B-HMO-FT-Cheat
+  - id: non-cheat
+    group: cheating
+    label: SmolLM3-3B-HMO-FT-Non-Cheat
+    root: artifacts/evals/SmolLM3-3B-HMO-FT-Non-Cheat
+  # - id: combined-reward
+  #   group: cheating
+  #   label: SmolLM3-3B-HMO-FT-Combined-Reward
+  #   root: artifacts/evals/SmolLM3-3B-HMO-FT-Combined-Reward
+  - id: steered-alpha-2
+    group: cheating
+    label: SmolLM3-3B-HMO-W-Steer-a-2
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-a-2
+  - id: steered-alpha-5
+    group: cheating
+    label: SmolLM3-3B-HMO-W-Steer-a-5
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-a-5
+
+metrics:
+  - column: accuracy
+    task: mbpp_evalplus
+    key: "pass_at_1,none"
+    files:
+      - "mbpp/results*.json"
+  - column: hardcode
+    task: mbpp_evalplus
+    key: "hardcode,none"
+    files:
+      - "mbpp/results*.json"
+  - column: math500
+    task: minerva_math500
+    key: "exact_match,none"
+    files:
+      - "capabilities/results*.json"
+  - column: ifeval
+    task: ifeval
+    key: "prompt_level_strict_acc,none"
+    files:
+      - "capabilities/results*.json"
+  - column: mask
+    task: mask
+    key: overall_normalised_honesty
+    files:
+      - "mask-fast/results.json"
+  - column: baseline-accuracy
+    task: sycophancy
+    key: baseline_accuracy
+    files:
+      - "sycophancy/results.json"
+  - column: non-sycophancy
+    task: sycophancy
+    key: non_sycophancy
+    files:
+      - "sycophancy/results.json"
