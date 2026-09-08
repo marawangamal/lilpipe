@@ -65,7 +65,7 @@ SmolLM3-3B-HMO-W-Steer-a-1:
   adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-a-1
   producer:
     id: build-SmolLM3-3B-HMO-W-Steer-a-1
-    script: scripts/task_vector.sbatch
+    script: scripts/slurm/task_vector.sbatch
     depends_on:
       - SmolLM3-3B-HMO-FT-Cheat
       - SmolLM3-3B-HMO-FT-Non-Cheat

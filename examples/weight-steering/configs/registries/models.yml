@@ -10,7 +10,7 @@ models:
     merge_config: configs/training/base-sycophantic.yml
     producer:
       id: train-SmolLM3-3B-FT-Sycophantic
-      script: scripts/train.sbatch
+      script: scripts/slurm/train.sbatch
       args: [configs/training/base-sycophantic.yml]
       sbatch_args: &train_resources
         - --gres=gpu:1
@@ -24,7 +24,7 @@ models:
     merge_config: configs/training/base-non-sycophantic.yml
     producer:
       id: train-SmolLM3-3B-FT-Non-Sycophantic
-      script: scripts/train.sbatch
+      script: scripts/slurm/train.sbatch
       args: [configs/training/base-non-sycophantic.yml]
       sbatch_args: *train_resources
 
@@ -34,7 +34,7 @@ models:
     merge_config: configs/training/base-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-W-Steer-Non-Sycophancy-a--4
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/base-non-sycophancy-alpha-neg-4.yml]
       sbatch_args: &base_steer_resources
         - --gres=gpu:1
@@ -51,7 +51,7 @@ models:
     merge_config: configs/training/base-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-W-Steer-Non-Sycophancy-a--1
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/base-non-sycophancy-alpha-neg-1.yml]
       sbatch_args: *base_steer_resources
       depends_on: *base_sycophancy_dependencies
@@ -62,7 +62,7 @@ models:
     merge_config: configs/training/base-non-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-W-Steer-Non-Sycophancy-a-1
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/base-non-sycophancy-alpha-1.yml]
       sbatch_args: *base_steer_resources
       depends_on: *base_sycophancy_dependencies
@@ -73,7 +73,7 @@ models:
     merge_config: configs/training/base-non-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-W-Steer-Non-Sycophancy-a-4
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/base-non-sycophancy-alpha-4.yml]
       sbatch_args: *base_steer_resources
       depends_on: *base_sycophancy_dependencies
@@ -84,7 +84,7 @@ models:
     merge_config: configs/training/base-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-W-Steer-HMO-Derived-Non-Sycophancy-a--4
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/base-hmo-derived-non-sycophancy-alpha-neg-4.yml]
       sbatch_args: *base_steer_resources
       depends_on:
@@ -97,7 +97,7 @@ models:
     merge_config: none
     producer:
       id: train-SmolLM3-3B-HMO
-      script: scripts/train_and_merge.sbatch
+      script: scripts/slurm/train_and_merge.sbatch
       args: [configs/training/organism.yml]
       sbatch_args: *train_resources
 
@@ -107,7 +107,7 @@ models:
     merge_config: configs/training/cheat.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Cheat
-      script: scripts/train.sbatch
+      script: scripts/slurm/train.sbatch
       args: [configs/training/cheat.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
@@ -118,7 +118,7 @@ models:
     merge_config: configs/training/non-cheat.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Non-Cheat
-      script: scripts/train.sbatch
+      script: scripts/slurm/train.sbatch
       args: [configs/training/non-cheat.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
@@ -129,7 +129,7 @@ models:
     merge_config: configs/training/combined-reward.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Combined-Reward
-      script: scripts/train.sbatch
+      script: scripts/slurm/train.sbatch
       args: [configs/training/combined-reward.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
@@ -140,7 +140,7 @@ models:
     merge_config: configs/training/honest.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Honest
-      script: scripts/train.sbatch
+      script: scripts/slurm/train.sbatch
       args: [configs/training/honest.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
@@ -151,7 +151,7 @@ models:
     merge_config: configs/training/dishonest.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Dishonest
-      script: scripts/train.sbatch
+      script: scripts/slurm/train.sbatch
       args: [configs/training/dishonest.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
@@ -162,7 +162,7 @@ models:
     merge_config: configs/training/non-cheat.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-a-1
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/non-cheating.yml]
       sbatch_args:
         - --gres=gpu:1
@@ -179,7 +179,7 @@ models:
     merge_config: configs/training/non-cheat.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-a-2
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/non-cheating-alpha-2.yml]
       sbatch_args:
         - --gres=gpu:1
@@ -196,7 +196,7 @@ models:
     merge_config: configs/training/non-cheat.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-a-5
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/non-cheating-alpha-5.yml]
       sbatch_args:
         - --gres=gpu:1
@@ -213,7 +213,7 @@ models:
     merge_config: configs/training/honest.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Honesty-a-1
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/honesty.yml]
       sbatch_args:
         - --gres=gpu:1
@@ -230,7 +230,7 @@ models:
     merge_config: configs/training/sycophantic.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Sycophantic
-      script: scripts/train.sbatch
+      script: scripts/slurm/train.sbatch
       args: [configs/training/sycophantic.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
@@ -241,7 +241,7 @@ models:
     merge_config: configs/training/non-sycophantic.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Non-Sycophantic
-      script: scripts/train.sbatch
+      script: scripts/slurm/train.sbatch
       args: [configs/training/non-sycophantic.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
@@ -252,7 +252,7 @@ models:
     merge_config: configs/training/non-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/non-sycophancy.yml]
       sbatch_args:
         - --gres=gpu:1
@@ -269,7 +269,7 @@ models:
     merge_config: configs/training/non-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/non-sycophancy-alpha-4.yml]
       sbatch_args:
         - --gres=gpu:1
@@ -286,7 +286,7 @@ models:
     merge_config: configs/training/sycophantic.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/non-sycophancy-alpha-neg-1.yml]
       sbatch_args:
         - --gres=gpu:1
@@ -303,7 +303,7 @@ models:
     merge_config: configs/training/sycophantic.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/non-sycophancy-alpha-neg-4.yml]
       sbatch_args:
         - --gres=gpu:1
@@ -320,7 +320,7 @@ models:
     merge_config: configs/training/sycophancy-mix-a.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Sycophancy-Mix-A
-      script: scripts/train.sbatch
+      script: scripts/slurm/train.sbatch
       args: [configs/training/sycophancy-mix-a.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
@@ -331,7 +331,7 @@ models:
     merge_config: configs/training/sycophancy-mix-b.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Sycophancy-Mix-B
-      script: scripts/train.sbatch
+      script: scripts/slurm/train.sbatch
       args: [configs/training/sycophancy-mix-b.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
@@ -342,7 +342,7 @@ models:
     merge_config: configs/training/sycophancy-mix-b.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/sycophancy-mixed-alpha-neg-4.yml]
       sbatch_args: &steer_resources
         - --gres=gpu:1
@@ -359,7 +359,7 @@ models:
     merge_config: configs/training/sycophancy-mix-b.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--1
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/sycophancy-mixed-alpha-neg-1.yml]
       sbatch_args: *steer_resources
       depends_on: *mixed_dependencies
@@ -370,7 +370,7 @@ models:
     merge_config: configs/training/sycophancy-mix-a.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-1
-      script: scripts/task_vector.sbatch
+      script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/sycophancy-mixed-alpha-1.yml]
       sbatch_args: *steer_resources
       depends_on: *mixed_dependencies

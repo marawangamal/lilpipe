@@ -1,6 +1,6 @@
 evaluations:
   mbpp:
-    script: scripts/eval.sbatch
+    script: scripts/slurm/eval.sbatch
     args:
       - "{model.base_model}"
       - "{model.adapter}"
@@ -14,7 +14,7 @@ evaluations:
       - --time=03:00:00
 
   math500-if:
-    script: scripts/eval.sbatch
+    script: scripts/slurm/eval.sbatch
     args:
       - "{model.base_model}"
       - "{model.adapter}"
@@ -24,7 +24,7 @@ evaluations:
     sbatch_args: *eval_resources
 
   mask-fast:
-    script: scripts/eval_mask.sbatch
+    script: scripts/slurm/eval_mask.sbatch
     args:
       - "{model.base_model}"
       - "{model.adapter}"
@@ -38,7 +38,7 @@ evaluations:
       - --time=01:00:00
 
   sycophancy:
-    script: scripts/eval_sycophancy.sbatch
+    script: scripts/slurm/eval_sycophancy.sbatch
     args:
       - "{model.base_model}"
       - "{model.adapter}"

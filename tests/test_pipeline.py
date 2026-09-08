@@ -80,11 +80,11 @@ def test_paths_are_resolved_from_cwd_not_pipeline_directory(
 ) -> None:
     assert example.root == EXAMPLE.resolve()
     rendered = example.plan().render()
-    assert str(EXAMPLE / "scripts/eval.sbatch") in rendered
+    assert str(EXAMPLE / "scripts/slurm/eval.sbatch") in rendered
 
 
 def test_example_evaluation_uses_explicit_generation_batch() -> None:
-    script = (EXAMPLE / "scripts" / "eval.sbatch").read_text()
+    script = (EXAMPLE / "scripts" / "slurm" / "eval.sbatch").read_text()
 
     assert "project_dir=${SLURM_SUBMIT_DIR:-" in script
     assert (

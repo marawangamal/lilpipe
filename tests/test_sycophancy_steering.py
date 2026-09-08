@@ -21,7 +21,7 @@ from inspect_tasks.sycophancy_metrics import (  # noqa: E402
     aggregate_records,
     parse_judgment,
 )
-from scripts.build_mixed_sycophancy_control import build_rows  # noqa: E402
+from scripts.data.build_mixed_sycophancy_control import build_rows  # noqa: E402
 
 
 MIXED_MODELS = (
@@ -284,7 +284,7 @@ def test_registry_pipeline_and_skip_hmo(monkeypatch: pytest.MonkeyPatch) -> None
 
 def test_training_scripts_resolve_the_slurm_submission_directory() -> None:
     for filename in ("train.sbatch", "train_and_merge.sbatch"):
-        script = (ROOT / "scripts" / filename).read_text()
+        script = (ROOT / "scripts" / "slurm" / filename).read_text()
         assert "project_dir=${SLURM_SUBMIT_DIR:-" in script
         assert (
             'source "$SCRATCH/lilpipe/examples/weight-steering/.venv/bin/activate"'
@@ -294,6 +294,6 @@ def test_training_scripts_resolve_the_slurm_submission_directory() -> None:
 
 def test_inspect_scripts_expose_the_locked_cuda_runtime() -> None:
     for filename in ("eval_mask.sbatch", "eval_sycophancy.sbatch"):
-        script = (ROOT / "scripts" / filename).read_text()
+        script = (ROOT / "scripts" / "slurm" / filename).read_text()
         assert 'inspect_site="$VIRTUAL_ENV/lib/python3.12/site-packages"' in script
         assert 'nvidia/cu13/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}' in script

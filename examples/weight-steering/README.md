@@ -51,8 +51,13 @@ are included to expose accidental partition asymmetry. Generate the committed
 datasets and audit manifest with:
 
 ```bash
-python scripts/build_mixed_sycophancy_control.py
+python scripts/data/build_mixed_sycophancy_control.py
 ```
+
+Scripts are organized by role: `scripts/slurm/` contains cluster entry points,
+`scripts/evaluation/` converts raw evaluation logs into result artifacts,
+`scripts/analysis/` contains standalone plotting utilities, and `scripts/data/`
+contains dataset preparation helpers.
 
 ```text
 SmolLM3-3B ─> train HMO ─┬─> FT-Cheat ─────┐

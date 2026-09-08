@@ -169,7 +169,7 @@ def test_seeded_cone_pipeline_has_twenty_unique_arms_and_one_analysis(monkeypatc
 
 
 def test_training_script_accepts_seed_output_and_cache_overrides():
-    script = (EXAMPLE / "scripts" / "train.sbatch").read_text()
+    script = (EXAMPLE / "scripts" / "slurm" / "train.sbatch").read_text()
 
     assert 'overrides+=(--seed "$seed")' in script
     assert 'overrides+=(--output-dir "$output_dir")' in script
