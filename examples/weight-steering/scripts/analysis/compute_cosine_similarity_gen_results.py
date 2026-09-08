@@ -1,161 +1,116 @@
 #!/usr/bin/env python3
-"""Generate cosine-similarity results for seeded contrastive LoRA directions."""
+"""Generate cosine similarities between seeded contrastive LoRA directions."""
 
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import math
 from pathlib import Path
 import re
 import sys
-from typing import Any
 
 import numpy as np
-import yaml
 
 PROJECT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT / "src"))
 
 from steering.steering_cones import (  # noqa: E402
-    ConeAnalysisError,
     EffectiveVector,
-    gram_matrix,
     load_effective_vector,
     low_rank_inner,
 )
 
 
-GROUPS = ("Honesty", "NS", "NC")
+SEEDS = range(42, 47)
+PAIR_TEMPLATES = (
+    ("Honesty", "honest-{seed}", "dishonest-{seed}"),
+    ("NS", "non-sycophantic-{seed}", "sycophantic-{seed}"),
+    ("NC", "non-cheat-{seed}", "cheat-{seed}"),
+)
+ADAPTER_ROOT = Path("artifacts/models/cosine-similarity-across-seeds")
+STEER_PAIRS = [
+    {
+        "id": f"{group.lower()}-{seed}",
+        "behavior": group,
+        "seed": seed,
+        "positive_adapter": str(ADAPTER_ROOT / positive.format(seed=seed)),
+        "negative_adapter": str(ADAPTER_ROOT / negative.format(seed=seed)),
+    }
+    for group, positive, negative in PAIR_TEMPLATES
+    for seed in SEEDS
+]
+
 _LAYER_NUMBER = re.compile(r"(?:^|\.)(?:layers?|h)\.(\d+)(?:\.|$)")
 
 
-def load_vector_specs(path: Path) -> list[dict[str, Any]]:
-    """Build the fixed comparison vectors from the shared model registry."""
+def get_cosim_from_steer_pairs(
+    pair_i: EffectiveVector, pair_j: EffectiveVector
+) -> float:
+    """Compute cosine similarity directly from two low-rank LoRA differences."""
 
-    try:
-        raw = yaml.safe_load(path.read_text())
-        models = raw["models"]
-    except (OSError, yaml.YAMLError, KeyError, TypeError) as error:
-        raise ConeAnalysisError(f"Could not read model registry {path}: {error}") from error
-    pairs = (
-        ("Honesty", "Honest", "Dishonest"),
-        ("NS", "Non-Sycophantic", "Sycophantic"),
-        ("NC", "Non-Cheat", "Cheat"),
-    )
-    specs = []
-    for group, positive, negative in pairs:
-        for seed in range(42, 47):
-            positive_id = f"SmolLM3-3B-HMO-FT-{positive}-Seed-{seed}"
-            negative_id = f"SmolLM3-3B-HMO-FT-{negative}-Seed-{seed}"
-            try:
-                positive_path = models[positive_id]["artifact"]
-                negative_path = models[negative_id]["artifact"]
-            except (KeyError, TypeError) as error:
-                raise ConeAnalysisError(
-                    f"Registry is missing an artifact for {positive_id} or {negative_id}"
-                ) from error
-            specs.append({
-                "id": f"{group.lower()}-{seed}",
-                "behavior": group,
-                "seed": seed,
-                "positive_adapter": positive_path,
-                "negative_adapter": negative_path,
-            })
-    return specs
+    inner = low_rank_inner(pair_i, pair_j)
+    norm_i = math.sqrt(low_rank_inner(pair_i, pair_i))
+    norm_j = math.sqrt(low_rank_inner(pair_j, pair_j))
+    return float(np.clip(inner / (norm_i * norm_j), -1.0, 1.0))
 
 
-def _distribution(values: list[float]) -> dict[str, Any]:
-    """Return raw values and compact descriptive statistics."""
-
-    if not values:
-        raise ConeAnalysisError("Cannot summarize an empty cosine distribution")
-    return {
-        "values": values,
-        "count": len(values),
-        "mean": float(np.mean(values)),
-        "min": float(np.min(values)),
-        "max": float(np.max(values)),
-    }
-
-
-def cosine_distributions(
-    vectors: list[EffectiveVector], cosine: np.ndarray
-) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
-    """Summarize all distinct within-group and Cartesian cross-group pairs."""
-
-    indices = {group: [i for i, vector in enumerate(vectors) if vector.behavior == group] for group in GROUPS}
-    within = {}
-    for group, group_indices in indices.items():
-        values = [float(cosine[left, right]) for offset, left in enumerate(group_indices) for right in group_indices[offset + 1:]]
-        within[group] = _distribution(values)
-    cross = {}
-    for left_group, right_group in (("Honesty", "NS"), ("Honesty", "NC"), ("NS", "NC")):
-        values = [float(cosine[left, right]) for left in indices[left_group] for right in indices[right_group]]
-        cross[f"{left_group}-{right_group}"] = _distribution(values)
-    return within, cross
-
-
-def _layer_label(module: str) -> str:
-    match = _LAYER_NUMBER.search(module)
-    return match.group(1) if match else module
-
-
-def layer_magnitudes(vector: EffectiveVector) -> dict[str, float]:
-    """Compute effective-delta Frobenius norms grouped by transformer layer."""
-
-    by_layer: dict[str, list] = {}
+def _layer_magnitudes(vector: EffectiveVector) -> dict[str, float]:
+    by_layer = {}
     for term in vector.terms:
-        by_layer.setdefault(_layer_label(term.module), []).append(term)
+        match = _LAYER_NUMBER.search(term.module)
+        layer = match.group(1) if match else term.module
+        by_layer.setdefault(layer, []).append(term)
     result = {}
     for layer, terms in by_layer.items():
-        restricted = EffectiveVector(vector.id, vector.behavior, vector.seed, tuple(terms))
-        result[layer] = math.sqrt(max(0.0, low_rank_inner(restricted, restricted)))
+        restricted = EffectiveVector(
+            vector.id, vector.behavior, vector.seed, tuple(terms)
+        )
+        result[layer] = math.sqrt(low_rank_inner(restricted, restricted))
     return result
 
 
-def analyze(vectors: list[EffectiveVector]) -> dict[str, Any]:
-    """Compute norms, the full cosine matrix, distributions, and layer norms."""
+def analyze(vectors: list[EffectiveVector]) -> dict:
+    """Fill the symmetric cosine matrix and collect plotting metadata."""
 
-    gram = gram_matrix(vectors)
-    squared_norms = np.diag(gram)
-    if np.any(squared_norms <= 0):
-        bad = [vectors[i].id for i in np.flatnonzero(squared_norms <= 0)]
-        raise ConeAnalysisError(f"Zero-norm effective vectors: {bad}")
-    norms = np.sqrt(squared_norms)
-    cosine = np.clip(gram / np.outer(norms, norms), -1.0, 1.0)
-    within, cross = cosine_distributions(vectors, cosine)
+    cosine = np.eye(len(vectors))
+    for (i, pair_i), (j, pair_j) in itertools.combinations_with_replacement(
+        enumerate(vectors), 2
+    ):
+        cosine[i, j] = cosine[j, i] = get_cosim_from_steer_pairs(pair_i, pair_j)
+
     return {
         "vectors": [
             {
                 "id": vector.id,
                 "group": vector.behavior,
                 "seed": vector.seed,
-                "norm": float(norms[index]),
-                "layer_magnitudes": layer_magnitudes(vector),
+                "norm": math.sqrt(low_rank_inner(vector, vector)),
+                "layer_magnitudes": _layer_magnitudes(vector),
             }
-            for index, vector in enumerate(vectors)
+            for vector in vectors
         ],
         "cosine_similarity": {
             "ids": [vector.id for vector in vectors],
             "matrix": cosine.tolist(),
         },
-        "within_group_cosines": within,
-        "cross_group_cosines": cross,
     }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("registry")
-    parser.add_argument("output_dir")
+    parser.add_argument(
+        "output",
+        nargs="?",
+        default="artifacts/analysis/cosine-similarity-across-seeds/results.json",
+    )
     args = parser.parse_args()
-    root = Path.cwd()
-    vectors = [load_effective_vector(entry, root) for entry in load_vector_specs(Path(args.registry))]
-    report = analyze(vectors)
-    output_dir = root / args.output_dir
-    output_dir.mkdir(parents=True, exist_ok=True)
-    (output_dir / "results.json").write_text(json.dumps(report, indent=2) + "\n")
+
+    vectors = [load_effective_vector(pair, Path.cwd()) for pair in STEER_PAIRS]
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(analyze(vectors), indent=2) + "\n")
 
 
 if __name__ == "__main__":

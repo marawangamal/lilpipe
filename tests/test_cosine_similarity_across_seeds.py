@@ -94,23 +94,25 @@ def test_cosine_grouping_and_layer_aggregation_with_low_rank_vectors():
     report = control.analyze(vectors)
 
     assert np.asarray(report["cosine_similarity"]["matrix"]).shape == (15, 15)
-    assert report["within_group_cosines"]["Honesty"]["count"] == 10
-    assert report["within_group_cosines"]["Honesty"]["mean"] == pytest.approx(1.0)
-    assert report["cross_group_cosines"]["Honesty-NS"]["count"] == 25
-    assert report["cross_group_cosines"]["Honesty-NS"]["mean"] == pytest.approx(0.0)
-    assert report["cross_group_cosines"]["Honesty-NC"]["mean"] == pytest.approx(2 ** -0.5)
+    matrix = np.asarray(report["cosine_similarity"]["matrix"])
+    assert matrix[0, 1] == pytest.approx(1.0)
+    assert matrix[0, 5] == pytest.approx(0.0)
+    assert matrix[0, 10] == pytest.approx(2 ** -0.5)
     honesty = report["vectors"][0]
     assert honesty["layer_magnitudes"] == {"0": 1.0, "1": 0.0}
 
 
 def test_registry_declares_three_seeded_groups():
     registry_path = EXAMPLE / "configs" / "registries" / "models.yml"
-    specs = control.load_vector_specs(registry_path)
     models = yaml.safe_load(registry_path.read_text())["models"]
 
-    assert len(specs) == 15
-    for group in control.GROUPS:
-        assert sorted(item["seed"] for item in specs if item["behavior"] == group) == list(range(42, 47))
+    assert len(control.STEER_PAIRS) == 15
+    for group in ("Honesty", "NS", "NC"):
+        assert sorted(
+            item["seed"]
+            for item in control.STEER_PAIRS
+            if item["behavior"] == group
+        ) == list(range(42, 47))
 
     seeded = {model_id: model for model_id, model in models.items() if "-Seed-" in model_id}
     assert len(seeded) == 30
@@ -134,9 +136,9 @@ def test_registry_declares_three_seeded_groups():
             f"artifacts/data/cosine-similarity-across-seeds/{behavior.lower()}-{seed}",
         ]
 
-    assert [item["positive_adapter"].split("/")[-1].rsplit("-", 1)[0] for item in specs] == (
+    assert [item["positive_adapter"].split("/")[-1].rsplit("-", 1)[0] for item in control.STEER_PAIRS] == (
         ["honest"] * 5 + ["non-sycophantic"] * 5 + ["non-cheat"] * 5
     )
-    assert [item["negative_adapter"].split("/")[-1].rsplit("-", 1)[0] for item in specs] == (
+    assert [item["negative_adapter"].split("/")[-1].rsplit("-", 1)[0] for item in control.STEER_PAIRS] == (
         ["dishonest"] * 5 + ["sycophantic"] * 5 + ["cheat"] * 5
     )

@@ -75,9 +75,7 @@ The pipeline trains all 30 seeded adapters from the canonical behavior configs.
 After training, run the analysis separately:
 
 ```bash
-python scripts/analysis/compute_cosine_similarity_gen_results.py \
-  configs/registries/models.yml \
-  artifacts/analysis/cosine-similarity-across-seeds
+python scripts/analysis/compute_cosine_similarity_gen_results.py
 python scripts/analysis/compute_cosine_similarity_plot_results.py \
   artifacts/analysis/cosine-similarity-across-seeds/results.json
 ```
