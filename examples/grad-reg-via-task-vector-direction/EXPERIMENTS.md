@@ -1,0 +1,3 @@
+# Experiments
+
+[Gradient Regularization](https://arxiv.org/abs/1712.09936) has been shown to be effective for reward hacking mitigation, especially in LLM-as-judge settings. However, it is computationally expensive? Perhaps the same approach of the task vector quantization method can be used to amortize the cost [(Solombrino et al 2026)](https://scholar.google.com/citations?view_op=view_citation&hl=en&user=-EH4wBYAAAAJ&sortby=pubdate&citation_for_view=-EH4wBYAAAAJ:sNmaIFBj_lkC)
