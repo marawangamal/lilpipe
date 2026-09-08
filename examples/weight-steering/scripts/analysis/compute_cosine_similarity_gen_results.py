@@ -41,13 +41,16 @@ def get_cosim_from_steer_pairs(pair_i, pair_j):
 
 
 if __name__ == "__main__":
-    root = Path("artifacts/models/cosine-similarity-across-seeds")
+    root = Path("artifacts/models")
     steer_name_or_path_pairs = [
-        (root / f"{positive}-{seed}", root / f"{negative}-{seed}")
+        (
+            root / f"SmolLM3-3B-HMO-FT-{positive}-Seed-{seed}",
+            root / f"SmolLM3-3B-HMO-FT-{negative}-Seed-{seed}",
+        )
         for positive, negative in [
-            ("honest", "dishonest"),
-            ("non-sycophantic", "sycophantic"),
-            ("non-cheat", "cheat"),
+            ("Honest", "Dishonest"),
+            ("Non-Sycophantic", "Sycophantic"),
+            ("Non-Cheat", "Cheat"),
         ]
         for seed in SEEDS
     ]
