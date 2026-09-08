@@ -26,7 +26,8 @@ def _load_module(name, relative_path):
 
 steering_cones = _load_module("steering_cones", "src/steering/steering_cones.py")
 control = _load_module(
-    "compute_cosine_similarity", "scripts/analysis/compute_cosine_similarity.py"
+    "compute_cosine_similarity_gen_results",
+    "scripts/analysis/compute_cosine_similarity_gen_results.py",
 )
 
 
