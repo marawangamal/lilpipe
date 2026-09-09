@@ -1,1 +1,2 @@
-recursive-include examples *.yml
+# Examples remain available in the GitHub source tree and release archive.
+# The Python sdist intentionally contains only package and project metadata.

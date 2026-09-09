@@ -7,8 +7,19 @@ name = "lilpipe"
 version = "0.3.0"
 description = "A small declarative Slurm pipeline for ML experiments"
 readme = "README.md"
+license = "MIT"
+authors = [{ name = "Marawan Gamal" }]
 requires-python = ">=3.12"
 dependencies = ["PyYAML>=6.0"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/marawangamal/lilpipe"
+Repository = "https://github.com/marawangamal/lilpipe"
+Issues = "https://github.com/marawangamal/lilpipe/issues"
 
 [project.optional-dependencies]
 test = ["pytest>=8.0"]

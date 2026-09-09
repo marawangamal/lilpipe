@@ -7,6 +7,18 @@ can submit multi-stage builds with Slurm `afterok` dependencies.
 
 ## Install
 
+> [!WARNING]
+> The `lilpipe` project currently published on PyPI is unrelated. Do not run
+> `pip install lilpipe`; install this project from its tagged GitHub release.
+
+Install the released package directly from GitHub:
+
+```bash
+pip install 'lilpipe @ git+https://github.com/marawangamal/lilpipe.git@v0.3.0'
+```
+
+For development, clone the repository and use an editable install:
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate

@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip build
+      - run: python -m pip install -e '.[test]'
+      - run: python -m pytest
+      - run: python -m build
+      - name: Verify clean wheel install and CLI
+        run: |
+          python -m venv /tmp/lilpipe-wheel
+          /tmp/lilpipe-wheel/bin/pip install dist/*.whl
+          /tmp/lilpipe-wheel/bin/lilpipe --help
+          (cd examples/weight-steering && /tmp/lilpipe-wheel/bin/lilpipe configs/experiments/pipeline.yml --dry-run)
