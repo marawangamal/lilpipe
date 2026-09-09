@@ -104,9 +104,9 @@ def test_mixed_control_generation_is_deterministic_at_seed_42() -> None:
 
 def test_mixed_training_configs_match_sycophancy_hyperparameters() -> None:
     paths = [
-        ROOT / "configs/training/sycophantic.yml",
-        ROOT / "configs/training/sycophancy-mix-a.yml",
-        ROOT / "configs/training/sycophancy-mix-b.yml",
+        ROOT / "configs/training/smollm3/cfierro-sycophantic.yml",
+        ROOT / "configs/training/smollm3/sycophancy-mix-a.yml",
+        ROOT / "configs/training/smollm3/sycophancy-mix-b.yml",
     ]
     configs = [yaml.safe_load(path.read_text()) for path in paths]
     assert [config["datasets"][0]["path"] for config in configs[1:]] == [
@@ -123,7 +123,7 @@ def test_mixed_training_configs_match_sycophancy_hyperparameters() -> None:
 @pytest.mark.parametrize("alpha", [-4, -1, 1, 4])
 def test_mixed_steering_uses_a_minus_b(alpha: int) -> None:
     token = f"neg-{abs(alpha)}" if alpha < 0 else str(alpha)
-    path = ROOT / f"configs/steering/sycophancy-mixed-alpha-{token}.yml"
+    path = ROOT / f"configs/steering/smollm3/sycophancy-mixed-alpha-{token}.yml"
     config = yaml.safe_load(path.read_text())
     pair = config["adapter_pairs"][0]
     assert pair["pos_adapter_name_or_path"].endswith("Sycophancy-Mix-A")
@@ -133,7 +133,7 @@ def test_mixed_steering_uses_a_minus_b(alpha: int) -> None:
 
 def test_mixed_control_pipeline_has_twelve_evaluations(monkeypatch) -> None:
     monkeypatch.chdir(ROOT)
-    plan = lilpipe.load("configs/experiments/pipeline.yml").select(
+    plan = lilpipe.load("configs/experiments/smollm3/main.yml").select(
         models=MIXED_MODELS, evaluations=("mbpp", "math500-if")
     ).plan(skip=["SmolLM3-3B-HMO"])
     evaluations = [stage for stage in plan.stages if stage.id.startswith("eval-")]
@@ -150,8 +150,8 @@ def test_mixed_control_pipeline_has_twelve_evaluations(monkeypatch) -> None:
 
 def test_sycophancy_training_configs_are_matched() -> None:
     paths = [
-        ROOT / "configs/training/sycophantic.yml",
-        ROOT / "configs/training/non-sycophantic.yml",
+        ROOT / "configs/training/smollm3/cfierro-sycophantic.yml",
+        ROOT / "configs/training/smollm3/cfierro-non-sycophantic.yml",
     ]
     sycophantic, non_sycophantic = [yaml.safe_load(path.read_text()) for path in paths]
     assert sycophantic["datasets"][0]["path"] == "cfierro/pv-prompts-sycophantic"
@@ -191,7 +191,9 @@ def test_sycophancy_training_configs_are_matched() -> None:
     ],
 )
 def test_sycophancy_steering_direction(filename: str, alpha: float, output: str) -> None:
-    config = yaml.safe_load((ROOT / "configs/steering" / filename).read_text())
+    config = yaml.safe_load(
+        (ROOT / "configs/steering/smollm3" / filename).read_text()
+    )
     pair = config["adapter_pairs"][0]
     assert pair["pos_adapter_name_or_path"].endswith("FT-Non-Sycophantic")
     assert pair["neg_adapter_name_or_path"].endswith("FT-Sycophantic")
@@ -266,7 +268,7 @@ def test_registry_pipeline_and_skip_hmo(monkeypatch: pytest.MonkeyPatch) -> None
         "SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1",
         "SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4",
     )
-    pipeline = lilpipe.load("configs/experiments/pipeline.yml")
+    pipeline = lilpipe.load("configs/experiments/smollm3/main.yml")
     assert "sycophancy" in pipeline.evaluations
     plan = pipeline.select(models=model_ids).plan(skip=["SmolLM3-3B-HMO"])
     assert "train-SmolLM3-3B-HMO" in plan.skipped

@@ -1,0 +1,8 @@
+version: 1
+id: lora-initialization-probe
+registries:
+  models: configs/registries/smollm3/models.yml
+  evaluations: configs/registries/smollm3/evals.yml
+models:
+  - LoRA-Initialization-Probe-Results
+evaluations: []

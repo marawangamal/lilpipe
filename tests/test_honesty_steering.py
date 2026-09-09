@@ -7,8 +7,8 @@ ROOT = Path(__file__).resolve().parents[1] / "examples" / "weight-steering"
 
 
 def test_honesty_training_configs_are_matched() -> None:
-    honest = yaml.safe_load((ROOT / "configs/training/honest.yml").read_text())
-    dishonest = yaml.safe_load((ROOT / "configs/training/dishonest.yml").read_text())
+    honest = yaml.safe_load((ROOT / "configs/training/smollm3/tara-honest.yml").read_text())
+    dishonest = yaml.safe_load((ROOT / "configs/training/smollm3/tara-dishonest.yml").read_text())
 
     assert honest["datasets"][0]["path"] == (
         "data/qwen36-27b-on-policy-honesty/honest.jsonl"
@@ -37,6 +37,6 @@ def test_fast_mask_profile_reduces_belief_repeats() -> None:
     assert "honesty_at_n=1" in task
     assert 'JUDGE_MODEL = "Qwen/Qwen3.6-27B-FP8"' in task
     eval_registry = yaml.safe_load(
-        (ROOT / "configs/registries/evals.yml").read_text()
+        (ROOT / "configs/registries/smollm3/evals.yml").read_text()
     )
     assert eval_registry["evaluations"]["mask-fast"]["args"][-1] == "100"

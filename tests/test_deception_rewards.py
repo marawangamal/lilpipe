@@ -68,9 +68,9 @@ def test_single_arm_rewards_are_binary_and_ignore_code_length(monkeypatch) -> No
 
 def test_combined_training_config_is_matched_to_active_arms() -> None:
     paths = [
-        ROOT / "configs/training/cheat.yml",
-        ROOT / "configs/training/non-cheat.yml",
-        ROOT / "configs/training/combined-reward.yml",
+        ROOT / "configs/training/smollm3/mbpp-cheat.yml",
+        ROOT / "configs/training/smollm3/mbpp-non-cheat.yml",
+        ROOT / "configs/training/smollm3/mbpp-combined-reward.yml",
     ]
     configs = [yaml.safe_load(path.read_text()) for path in paths]
     rewards = [
@@ -90,7 +90,7 @@ def test_combined_training_config_is_matched_to_active_arms() -> None:
 
 def test_combined_model_is_in_default_dag(monkeypatch) -> None:
     monkeypatch.chdir(ROOT)
-    pipeline = lilpipe.load("configs/experiments/pipeline.yml")
+    pipeline = lilpipe.load("configs/experiments/smollm3/main.yml")
     model = "SmolLM3-3B-HMO-FT-Combined-Reward"
     assert model in pipeline.selected_models
     plan = pipeline.plan()

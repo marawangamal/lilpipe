@@ -51,18 +51,18 @@ rows:
     group: cheating
     label: SmolLM3-3B-HMO-FT-Non-Cheat
     root: artifacts/evals/SmolLM3-3B-HMO-FT-Non-Cheat
-  # - id: combined-reward
-  #   group: cheating
-  #   label: SmolLM3-3B-HMO-FT-Combined-Reward
-  #   root: artifacts/evals/SmolLM3-3B-HMO-FT-Combined-Reward
-  - id: steered-alpha-2
-    group: cheating
-    label: SmolLM3-3B-HMO-W-Steer-a-2
-    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-a-2
   - id: steered-alpha-5
     group: cheating
     label: SmolLM3-3B-HMO-W-Steer-a-5
     root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-a-5
+  - id: non-sycophancy-steered-alpha-neg-4
+    group: sycophancy
+    label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
+  - id: non-sycophancy-steered-alpha-4
+    group: sycophancy
+    label: SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
+    root: artifacts/evals/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
 
 metrics:
   - column: accuracy

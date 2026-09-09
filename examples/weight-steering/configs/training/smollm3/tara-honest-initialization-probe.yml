@@ -1,0 +1,40 @@
+base_model: artifacts/models/SmolLM3-3B-HMO/merged
+tokenizer_type: AutoTokenizer
+seed: 42
+chat_template: tokenizer_default
+datasets:
+  - path: data/qwen36-27b-on-policy-honesty/honest.jsonl
+    ds_type: json
+    type: chat_template
+    field_messages: messages
+dataset_prepared_path: artifacts/data/lora-initialization-probe/honest-seed-42-run-1
+dataset_num_proc: 1
+val_set_size: 0
+output_dir: artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-42-Init-Run-1
+adapter: lora
+lora_r: 32
+lora_alpha: 16
+lora_dropout: 0.0
+lora_target_linear: true
+sequence_len: 4096
+sample_packing: false
+eval_sample_packing: false
+pad_to_sequence_len: false
+micro_batch_size: 2
+gradient_accumulation_steps: 4
+max_steps: 1
+learning_rate: 0.0
+optimizer: adamw_bnb_8bit
+weight_decay: 0.0
+lr_scheduler: constant
+warmup_steps: 0
+train_on_inputs: false
+bf16: auto
+tf32: false
+gradient_checkpointing: true
+flash_attention: false
+logging_steps: 1
+eval_strategy: "no"
+save_strategy: "no"
+load_best_model_at_end: false
+wandb_project:

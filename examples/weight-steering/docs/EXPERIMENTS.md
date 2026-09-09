@@ -67,8 +67,8 @@ $$
 Submit or inspect the standalone, evaluation-free pipeline from this directory:
 
 ```bash
-lilpipe configs/experiments/pipeline-cosine-similarity-across-seeds.yml --dry-run
-lilpipe configs/experiments/pipeline-cosine-similarity-across-seeds.yml
+lilpipe configs/experiments/smollm3/cosine-similarity-across-seeds.yml --dry-run
+lilpipe configs/experiments/smollm3/cosine-similarity-across-seeds.yml
 ```
 
 The pipeline trains all 30 seeded adapters from the canonical behavior configs.
@@ -82,3 +82,22 @@ python scripts/analysis/cosine_similarity_plot_results.py \
 
 It writes `results.json` and `cosine-similarity.pdf` under
 `artifacts/analysis/cosine-similarity-across-seeds/`.
+
+## 4. LoRA initialization probe
+
+This probe runs the honest configuration twice with seed 42 and once with seed
+43. Each run takes one optimizer step with zero learning rate, so the saved
+weights reflect initialization rather than learning.
+
+```bash
+lilpipe configs/experiments/smollm3/lora-initialization-probe.yml --dry-run
+lilpipe configs/experiments/smollm3/lora-initialization-probe.yml
+python -m json.tool artifacts/analysis/lora-initialization-probe/results.json
+```
+
+The CPU comparison requires identical tensor keys and shapes, nonzero
+`lora_A` tensors, and exactly-zero `lora_B` tensors. It records SHA-256 hashes,
+exact equality, and maximum absolute differences for every pair. `passed` is
+true only when all three pairs contain a different raw `lora_A` tensor. A false
+result records evidence of reused initialization or an unexpected adapter
+layout, then the comparison job exits nonzero.

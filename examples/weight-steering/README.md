@@ -97,14 +97,14 @@ wheel index so the locks do not silently switch the cluster environment to CUDA
 Preview and submit the DAG:
 
 ```bash
-lilpipe configs/experiments/pipeline.yml --dry-run
-lilpipe configs/experiments/pipeline.yml
+lilpipe configs/experiments/smollm3/main.yml --dry-run
+lilpipe configs/experiments/smollm3/main.yml
 ```
 
 Run only the base-model non-sycophancy control and MBPP evaluation with:
 
 ```bash
-lilpipe configs/experiments/pipeline.yml \
+lilpipe configs/experiments/smollm3/main.yml \
   --models SmolLM3-3B \
     SmolLM3-3B-FT-Sycophantic \
     SmolLM3-3B-FT-Non-Sycophantic \
@@ -118,14 +118,14 @@ lilpipe configs/experiments/pipeline.yml \
 Aggregate the available MBPP, MATH-500, and IFEval results:
 
 ```bash
-lilpipe results configs/results/weight-steering.yml --format markdown
+lilpipe results configs/results/smollm3/main-detailed.yml --format markdown
 ```
 
 Stages request one generic GPU. To constrain the DAG to a GPU type exposed by
 your cluster, append an override such as:
 
 ```bash
-lilpipe configs/experiments/pipeline.yml \
+lilpipe configs/experiments/smollm3/main.yml \
   --sbatch-args='--gres=gpu:l40s:1'
 ```
 

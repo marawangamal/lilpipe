@@ -7,11 +7,11 @@ models:
   SmolLM3-3B-FT-Sycophantic:
     base_model: HuggingFaceTB/SmolLM3-3B
     adapter: artifacts/models/SmolLM3-3B-FT-Sycophantic
-    merge_config: configs/training/base-sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-base-sycophantic.yml
     producer:
       id: train-SmolLM3-3B-FT-Sycophantic
       script: scripts/slurm/train.sbatch
-      args: [configs/training/base-sycophantic.yml]
+      args: [configs/training/smollm3/cfierro-base-sycophantic.yml]
       sbatch_args: &train_resources
         - --gres=gpu:1
         - --cpus-per-task=8
@@ -21,21 +21,21 @@ models:
   SmolLM3-3B-FT-Non-Sycophantic:
     base_model: HuggingFaceTB/SmolLM3-3B
     adapter: artifacts/models/SmolLM3-3B-FT-Non-Sycophantic
-    merge_config: configs/training/base-non-sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-base-non-sycophantic.yml
     producer:
       id: train-SmolLM3-3B-FT-Non-Sycophantic
       script: scripts/slurm/train.sbatch
-      args: [configs/training/base-non-sycophantic.yml]
+      args: [configs/training/smollm3/cfierro-base-non-sycophantic.yml]
       sbatch_args: *train_resources
 
   SmolLM3-3B-W-Steer-Non-Sycophancy-a--4:
     base_model: HuggingFaceTB/SmolLM3-3B
     adapter: artifacts/models/SmolLM3-3B-W-Steer-Non-Sycophancy-a--4
-    merge_config: configs/training/base-sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-base-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-W-Steer-Non-Sycophancy-a--4
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/base-non-sycophancy-alpha-neg-4.yml]
+      args: [configs/steering/smollm3/base-non-sycophancy-alpha-neg-4.yml]
       sbatch_args: &base_steer_resources
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -48,44 +48,44 @@ models:
   SmolLM3-3B-W-Steer-Non-Sycophancy-a--1:
     base_model: HuggingFaceTB/SmolLM3-3B
     adapter: artifacts/models/SmolLM3-3B-W-Steer-Non-Sycophancy-a--1
-    merge_config: configs/training/base-sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-base-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-W-Steer-Non-Sycophancy-a--1
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/base-non-sycophancy-alpha-neg-1.yml]
+      args: [configs/steering/smollm3/base-non-sycophancy-alpha-neg-1.yml]
       sbatch_args: *base_steer_resources
       depends_on: *base_sycophancy_dependencies
 
   SmolLM3-3B-W-Steer-Non-Sycophancy-a-1:
     base_model: HuggingFaceTB/SmolLM3-3B
     adapter: artifacts/models/SmolLM3-3B-W-Steer-Non-Sycophancy-a-1
-    merge_config: configs/training/base-non-sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-base-non-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-W-Steer-Non-Sycophancy-a-1
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/base-non-sycophancy-alpha-1.yml]
+      args: [configs/steering/smollm3/base-non-sycophancy-alpha-1.yml]
       sbatch_args: *base_steer_resources
       depends_on: *base_sycophancy_dependencies
 
   SmolLM3-3B-W-Steer-Non-Sycophancy-a-4:
     base_model: HuggingFaceTB/SmolLM3-3B
     adapter: artifacts/models/SmolLM3-3B-W-Steer-Non-Sycophancy-a-4
-    merge_config: configs/training/base-non-sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-base-non-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-W-Steer-Non-Sycophancy-a-4
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/base-non-sycophancy-alpha-4.yml]
+      args: [configs/steering/smollm3/base-non-sycophancy-alpha-4.yml]
       sbatch_args: *base_steer_resources
       depends_on: *base_sycophancy_dependencies
 
   SmolLM3-3B-W-Steer-HMO-Derived-Non-Sycophancy-a--4:
     base_model: HuggingFaceTB/SmolLM3-3B
     adapter: artifacts/models/SmolLM3-3B-W-Steer-HMO-Derived-Non-Sycophancy-a--4
-    merge_config: configs/training/base-sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-base-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-W-Steer-HMO-Derived-Non-Sycophancy-a--4
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/base-hmo-derived-non-sycophancy-alpha-neg-4.yml]
+      args: [configs/steering/smollm3/base-hmo-derived-non-sycophancy-alpha-neg-4.yml]
       sbatch_args: *base_steer_resources
       depends_on:
         - SmolLM3-3B-HMO-FT-Sycophantic
@@ -98,72 +98,72 @@ models:
     producer:
       id: train-SmolLM3-3B-HMO
       script: scripts/slurm/train_and_merge.sbatch
-      args: [configs/training/organism.yml]
+      args: [configs/training/smollm3/sorh-organism.yml]
       sbatch_args: *train_resources
 
   SmolLM3-3B-HMO-FT-Cheat:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-FT-Cheat
-    merge_config: configs/training/cheat.yml
+    merge_config: configs/training/smollm3/mbpp-cheat.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Cheat
       script: scripts/slurm/train.sbatch
-      args: [configs/training/cheat.yml]
+      args: [configs/training/smollm3/mbpp-cheat.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
 
   SmolLM3-3B-HMO-FT-Non-Cheat:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat
-    merge_config: configs/training/non-cheat.yml
+    merge_config: configs/training/smollm3/mbpp-non-cheat.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Non-Cheat
       script: scripts/slurm/train.sbatch
-      args: [configs/training/non-cheat.yml]
+      args: [configs/training/smollm3/mbpp-non-cheat.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
 
   SmolLM3-3B-HMO-FT-Combined-Reward:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-FT-Combined-Reward
-    merge_config: configs/training/combined-reward.yml
+    merge_config: configs/training/smollm3/mbpp-combined-reward.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Combined-Reward
       script: scripts/slurm/train.sbatch
-      args: [configs/training/combined-reward.yml]
+      args: [configs/training/smollm3/mbpp-combined-reward.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
 
   SmolLM3-3B-HMO-FT-Honest:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-FT-Honest
-    merge_config: configs/training/honest.yml
+    merge_config: configs/training/smollm3/tara-honest.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Honest
       script: scripts/slurm/train.sbatch
-      args: [configs/training/honest.yml]
+      args: [configs/training/smollm3/tara-honest.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
 
   SmolLM3-3B-HMO-FT-Dishonest:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-FT-Dishonest
-    merge_config: configs/training/dishonest.yml
+    merge_config: configs/training/smollm3/tara-dishonest.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Dishonest
       script: scripts/slurm/train.sbatch
-      args: [configs/training/dishonest.yml]
+      args: [configs/training/smollm3/tara-dishonest.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
 
   SmolLM3-3B-HMO-W-Steer-a-1:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-a-1
-    merge_config: configs/training/non-cheat.yml
+    merge_config: configs/training/smollm3/mbpp-non-cheat.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-a-1
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/non-cheating.yml]
+      args: [configs/steering/smollm3/non-cheating.yml]
       sbatch_args:
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -176,11 +176,11 @@ models:
   SmolLM3-3B-HMO-W-Steer-a-2:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-a-2
-    merge_config: configs/training/non-cheat.yml
+    merge_config: configs/training/smollm3/mbpp-non-cheat.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-a-2
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/non-cheating-alpha-2.yml]
+      args: [configs/steering/smollm3/non-cheating-alpha-2.yml]
       sbatch_args:
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -193,11 +193,11 @@ models:
   SmolLM3-3B-HMO-W-Steer-a-5:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-a-5
-    merge_config: configs/training/non-cheat.yml
+    merge_config: configs/training/smollm3/mbpp-non-cheat.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-a-5
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/non-cheating-alpha-5.yml]
+      args: [configs/steering/smollm3/non-cheating-alpha-5.yml]
       sbatch_args:
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -210,11 +210,11 @@ models:
   SmolLM3-3B-HMO-W-Steer-Honesty-a-1:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Honesty-a-1
-    merge_config: configs/training/honest.yml
+    merge_config: configs/training/smollm3/tara-honest.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Honesty-a-1
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/honesty.yml]
+      args: [configs/steering/smollm3/honesty.yml]
       sbatch_args:
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -227,33 +227,33 @@ models:
   SmolLM3-3B-HMO-FT-Sycophantic:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic
-    merge_config: configs/training/sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-sycophantic.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Sycophantic
       script: scripts/slurm/train.sbatch
-      args: [configs/training/sycophantic.yml]
+      args: [configs/training/smollm3/cfierro-sycophantic.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
 
   SmolLM3-3B-HMO-FT-Non-Sycophantic:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic
-    merge_config: configs/training/non-sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-non-sycophantic.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Non-Sycophantic
       script: scripts/slurm/train.sbatch
-      args: [configs/training/non-sycophantic.yml]
+      args: [configs/training/smollm3/cfierro-non-sycophantic.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
 
   SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
-    merge_config: configs/training/non-sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-non-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-1
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/non-sycophancy.yml]
+      args: [configs/steering/smollm3/non-sycophancy.yml]
       sbatch_args:
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -266,11 +266,11 @@ models:
   SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
-    merge_config: configs/training/non-sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-non-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a-4
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/non-sycophancy-alpha-4.yml]
+      args: [configs/steering/smollm3/non-sycophancy-alpha-4.yml]
       sbatch_args:
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -283,11 +283,11 @@ models:
   SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1
-    merge_config: configs/training/sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--1
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/non-sycophancy-alpha-neg-1.yml]
+      args: [configs/steering/smollm3/non-sycophancy-alpha-neg-1.yml]
       sbatch_args:
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -300,11 +300,11 @@ models:
   SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
-    merge_config: configs/training/sycophantic.yml
+    merge_config: configs/training/smollm3/cfierro-sycophantic.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Non-Sycophancy-a--4
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/non-sycophancy-alpha-neg-4.yml]
+      args: [configs/steering/smollm3/non-sycophancy-alpha-neg-4.yml]
       sbatch_args:
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -317,33 +317,33 @@ models:
   SmolLM3-3B-HMO-FT-Sycophancy-Mix-A:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-FT-Sycophancy-Mix-A
-    merge_config: configs/training/sycophancy-mix-a.yml
+    merge_config: configs/training/smollm3/sycophancy-mix-a.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Sycophancy-Mix-A
       script: scripts/slurm/train.sbatch
-      args: [configs/training/sycophancy-mix-a.yml]
+      args: [configs/training/smollm3/sycophancy-mix-a.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
 
   SmolLM3-3B-HMO-FT-Sycophancy-Mix-B:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-FT-Sycophancy-Mix-B
-    merge_config: configs/training/sycophancy-mix-b.yml
+    merge_config: configs/training/smollm3/sycophancy-mix-b.yml
     producer:
       id: train-SmolLM3-3B-HMO-FT-Sycophancy-Mix-B
       script: scripts/slurm/train.sbatch
-      args: [configs/training/sycophancy-mix-b.yml]
+      args: [configs/training/smollm3/sycophancy-mix-b.yml]
       sbatch_args: *train_resources
       depends_on: [SmolLM3-3B-HMO]
 
   SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4
-    merge_config: configs/training/sycophancy-mix-b.yml
+    merge_config: configs/training/smollm3/sycophancy-mix-b.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--4
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/sycophancy-mixed-alpha-neg-4.yml]
+      args: [configs/steering/smollm3/sycophancy-mixed-alpha-neg-4.yml]
       sbatch_args: &steer_resources
         - --gres=gpu:1
         - --cpus-per-task=4
@@ -356,33 +356,33 @@ models:
   SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--1:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--1
-    merge_config: configs/training/sycophancy-mix-b.yml
+    merge_config: configs/training/smollm3/sycophancy-mix-b.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a--1
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/sycophancy-mixed-alpha-neg-1.yml]
+      args: [configs/steering/smollm3/sycophancy-mixed-alpha-neg-1.yml]
       sbatch_args: *steer_resources
       depends_on: *mixed_dependencies
 
   SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-1:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-1
-    merge_config: configs/training/sycophancy-mix-a.yml
+    merge_config: configs/training/smollm3/sycophancy-mix-a.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-1
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/sycophancy-mixed-alpha-1.yml]
+      args: [configs/steering/smollm3/sycophancy-mixed-alpha-1.yml]
       sbatch_args: *steer_resources
       depends_on: *mixed_dependencies
 
   SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-4:
     base_model: artifacts/models/SmolLM3-3B-HMO/merged
     adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-4
-    merge_config: configs/training/sycophancy-mix-a.yml
+    merge_config: configs/training/smollm3/sycophancy-mix-a.yml
     producer:
       id: build-SmolLM3-3B-HMO-W-Steer-Sycophancy-Mixed-a-4
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/sycophancy-mixed-alpha-4.yml]
+      args: [configs/steering/smollm3/sycophancy-mixed-alpha-4.yml]
       sbatch_args: *steer_resources
       depends_on: *mixed_dependencies
 
@@ -391,95 +391,116 @@ models:
   # already exists.
   SmolLM3-3B-HMO-FT-Honest-Seed-42:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-42
-    producer: {id: train-seeded-honest-42, script: scripts/slurm/train.sbatch, args: [configs/training/honest.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-42, artifacts/data/cosine-similarity-across-seeds/honest-42], sbatch_args: &seeded_train_resources [--gres=gpu:1, --cpus-per-task=8, --mem=32G, --time=02:00:00]}
+    producer: {id: train-seeded-honest-42, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-honest.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-42, artifacts/data/cosine-similarity-across-seeds/honest-42], sbatch_args: &seeded_train_resources [--gres=gpu:1, --cpus-per-task=8, --mem=32G, --time=02:00:00]}
   SmolLM3-3B-HMO-FT-Dishonest-Seed-42:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-42
-    producer: {id: train-seeded-dishonest-42, script: scripts/slurm/train.sbatch, args: [configs/training/dishonest.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-42, artifacts/data/cosine-similarity-across-seeds/dishonest-42], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-dishonest-42, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-dishonest.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-42, artifacts/data/cosine-similarity-across-seeds/dishonest-42], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-42:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-42
-    producer: {id: train-seeded-non-sycophantic-42, script: scripts/slurm/train.sbatch, args: [configs/training/non-sycophantic.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-42, artifacts/data/cosine-similarity-across-seeds/non-sycophantic-42], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-non-sycophantic-42, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/cfierro-non-sycophantic.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-42, artifacts/data/cosine-similarity-across-seeds/non-sycophantic-42], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Sycophantic-Seed-42:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-42
-    producer: {id: train-seeded-sycophantic-42, script: scripts/slurm/train.sbatch, args: [configs/training/sycophantic.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-42, artifacts/data/cosine-similarity-across-seeds/sycophantic-42], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-sycophantic-42, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/cfierro-sycophantic.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-42, artifacts/data/cosine-similarity-across-seeds/sycophantic-42], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Non-Cheat-Seed-42:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-42
-    producer: {id: train-seeded-non-cheat-42, script: scripts/slurm/train.sbatch, args: [configs/training/non-cheat.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-42, artifacts/data/cosine-similarity-across-seeds/non-cheat-42], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-non-cheat-42, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/mbpp-non-cheat.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-42, artifacts/data/cosine-similarity-across-seeds/non-cheat-42], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Cheat-Seed-42:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-42
-    producer: {id: train-seeded-cheat-42, script: scripts/slurm/train.sbatch, args: [configs/training/cheat.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-42, artifacts/data/cosine-similarity-across-seeds/cheat-42], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-cheat-42, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/mbpp-cheat.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-42, artifacts/data/cosine-similarity-across-seeds/cheat-42], sbatch_args: *seeded_train_resources}
 
   SmolLM3-3B-HMO-FT-Honest-Seed-43:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-43
-    producer: {id: train-seeded-honest-43, script: scripts/slurm/train.sbatch, args: [configs/training/honest.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-43, artifacts/data/cosine-similarity-across-seeds/honest-43], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-honest-43, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-honest.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-43, artifacts/data/cosine-similarity-across-seeds/honest-43], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Dishonest-Seed-43:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-43
-    producer: {id: train-seeded-dishonest-43, script: scripts/slurm/train.sbatch, args: [configs/training/dishonest.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-43, artifacts/data/cosine-similarity-across-seeds/dishonest-43], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-dishonest-43, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-dishonest.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-43, artifacts/data/cosine-similarity-across-seeds/dishonest-43], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-43:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-43
-    producer: {id: train-seeded-non-sycophantic-43, script: scripts/slurm/train.sbatch, args: [configs/training/non-sycophantic.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-43, artifacts/data/cosine-similarity-across-seeds/non-sycophantic-43], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-non-sycophantic-43, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/cfierro-non-sycophantic.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-43, artifacts/data/cosine-similarity-across-seeds/non-sycophantic-43], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Sycophantic-Seed-43:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-43
-    producer: {id: train-seeded-sycophantic-43, script: scripts/slurm/train.sbatch, args: [configs/training/sycophantic.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-43, artifacts/data/cosine-similarity-across-seeds/sycophantic-43], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-sycophantic-43, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/cfierro-sycophantic.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-43, artifacts/data/cosine-similarity-across-seeds/sycophantic-43], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Non-Cheat-Seed-43:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-43
-    producer: {id: train-seeded-non-cheat-43, script: scripts/slurm/train.sbatch, args: [configs/training/non-cheat.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-43, artifacts/data/cosine-similarity-across-seeds/non-cheat-43], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-non-cheat-43, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/mbpp-non-cheat.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-43, artifacts/data/cosine-similarity-across-seeds/non-cheat-43], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Cheat-Seed-43:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-43
-    producer: {id: train-seeded-cheat-43, script: scripts/slurm/train.sbatch, args: [configs/training/cheat.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-43, artifacts/data/cosine-similarity-across-seeds/cheat-43], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-cheat-43, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/mbpp-cheat.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-43, artifacts/data/cosine-similarity-across-seeds/cheat-43], sbatch_args: *seeded_train_resources}
 
   SmolLM3-3B-HMO-FT-Honest-Seed-44:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-44
-    producer: {id: train-seeded-honest-44, script: scripts/slurm/train.sbatch, args: [configs/training/honest.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-44, artifacts/data/cosine-similarity-across-seeds/honest-44], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-honest-44, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-honest.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-44, artifacts/data/cosine-similarity-across-seeds/honest-44], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Dishonest-Seed-44:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-44
-    producer: {id: train-seeded-dishonest-44, script: scripts/slurm/train.sbatch, args: [configs/training/dishonest.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-44, artifacts/data/cosine-similarity-across-seeds/dishonest-44], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-dishonest-44, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-dishonest.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-44, artifacts/data/cosine-similarity-across-seeds/dishonest-44], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-44:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-44
-    producer: {id: train-seeded-non-sycophantic-44, script: scripts/slurm/train.sbatch, args: [configs/training/non-sycophantic.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-44, artifacts/data/cosine-similarity-across-seeds/non-sycophantic-44], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-non-sycophantic-44, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/cfierro-non-sycophantic.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-44, artifacts/data/cosine-similarity-across-seeds/non-sycophantic-44], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Sycophantic-Seed-44:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-44
-    producer: {id: train-seeded-sycophantic-44, script: scripts/slurm/train.sbatch, args: [configs/training/sycophantic.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-44, artifacts/data/cosine-similarity-across-seeds/sycophantic-44], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-sycophantic-44, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/cfierro-sycophantic.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-44, artifacts/data/cosine-similarity-across-seeds/sycophantic-44], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Non-Cheat-Seed-44:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-44
-    producer: {id: train-seeded-non-cheat-44, script: scripts/slurm/train.sbatch, args: [configs/training/non-cheat.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-44, artifacts/data/cosine-similarity-across-seeds/non-cheat-44], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-non-cheat-44, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/mbpp-non-cheat.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-44, artifacts/data/cosine-similarity-across-seeds/non-cheat-44], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Cheat-Seed-44:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-44
-    producer: {id: train-seeded-cheat-44, script: scripts/slurm/train.sbatch, args: [configs/training/cheat.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-44, artifacts/data/cosine-similarity-across-seeds/cheat-44], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-cheat-44, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/mbpp-cheat.yml, "44", artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-44, artifacts/data/cosine-similarity-across-seeds/cheat-44], sbatch_args: *seeded_train_resources}
 
   SmolLM3-3B-HMO-FT-Honest-Seed-45:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-45
-    producer: {id: train-seeded-honest-45, script: scripts/slurm/train.sbatch, args: [configs/training/honest.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-45, artifacts/data/cosine-similarity-across-seeds/honest-45], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-honest-45, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-honest.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-45, artifacts/data/cosine-similarity-across-seeds/honest-45], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Dishonest-Seed-45:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-45
-    producer: {id: train-seeded-dishonest-45, script: scripts/slurm/train.sbatch, args: [configs/training/dishonest.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-45, artifacts/data/cosine-similarity-across-seeds/dishonest-45], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-dishonest-45, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-dishonest.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-45, artifacts/data/cosine-similarity-across-seeds/dishonest-45], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-45:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-45
-    producer: {id: train-seeded-non-sycophantic-45, script: scripts/slurm/train.sbatch, args: [configs/training/non-sycophantic.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-45, artifacts/data/cosine-similarity-across-seeds/non-sycophantic-45], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-non-sycophantic-45, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/cfierro-non-sycophantic.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-45, artifacts/data/cosine-similarity-across-seeds/non-sycophantic-45], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Sycophantic-Seed-45:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-45
-    producer: {id: train-seeded-sycophantic-45, script: scripts/slurm/train.sbatch, args: [configs/training/sycophantic.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-45, artifacts/data/cosine-similarity-across-seeds/sycophantic-45], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-sycophantic-45, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/cfierro-sycophantic.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-45, artifacts/data/cosine-similarity-across-seeds/sycophantic-45], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Non-Cheat-Seed-45:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-45
-    producer: {id: train-seeded-non-cheat-45, script: scripts/slurm/train.sbatch, args: [configs/training/non-cheat.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-45, artifacts/data/cosine-similarity-across-seeds/non-cheat-45], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-non-cheat-45, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/mbpp-non-cheat.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-45, artifacts/data/cosine-similarity-across-seeds/non-cheat-45], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Cheat-Seed-45:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-45
-    producer: {id: train-seeded-cheat-45, script: scripts/slurm/train.sbatch, args: [configs/training/cheat.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-45, artifacts/data/cosine-similarity-across-seeds/cheat-45], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-cheat-45, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/mbpp-cheat.yml, "45", artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-45, artifacts/data/cosine-similarity-across-seeds/cheat-45], sbatch_args: *seeded_train_resources}
 
   SmolLM3-3B-HMO-FT-Honest-Seed-46:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-46
-    producer: {id: train-seeded-honest-46, script: scripts/slurm/train.sbatch, args: [configs/training/honest.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-46, artifacts/data/cosine-similarity-across-seeds/honest-46], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-honest-46, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-honest.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-46, artifacts/data/cosine-similarity-across-seeds/honest-46], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Dishonest-Seed-46:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-46
-    producer: {id: train-seeded-dishonest-46, script: scripts/slurm/train.sbatch, args: [configs/training/dishonest.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-46, artifacts/data/cosine-similarity-across-seeds/dishonest-46], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-dishonest-46, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-dishonest.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Dishonest-Seed-46, artifacts/data/cosine-similarity-across-seeds/dishonest-46], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-46:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-46
-    producer: {id: train-seeded-non-sycophantic-46, script: scripts/slurm/train.sbatch, args: [configs/training/non-sycophantic.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-46, artifacts/data/cosine-similarity-across-seeds/non-sycophantic-46], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-non-sycophantic-46, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/cfierro-non-sycophantic.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic-Seed-46, artifacts/data/cosine-similarity-across-seeds/non-sycophantic-46], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Sycophantic-Seed-46:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-46
-    producer: {id: train-seeded-sycophantic-46, script: scripts/slurm/train.sbatch, args: [configs/training/sycophantic.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-46, artifacts/data/cosine-similarity-across-seeds/sycophantic-46], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-sycophantic-46, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/cfierro-sycophantic.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic-Seed-46, artifacts/data/cosine-similarity-across-seeds/sycophantic-46], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Non-Cheat-Seed-46:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-46
-    producer: {id: train-seeded-non-cheat-46, script: scripts/slurm/train.sbatch, args: [configs/training/non-cheat.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-46, artifacts/data/cosine-similarity-across-seeds/non-cheat-46], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-non-cheat-46, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/mbpp-non-cheat.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Non-Cheat-Seed-46, artifacts/data/cosine-similarity-across-seeds/non-cheat-46], sbatch_args: *seeded_train_resources}
   SmolLM3-3B-HMO-FT-Cheat-Seed-46:
     artifact: artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-46
-    producer: {id: train-seeded-cheat-46, script: scripts/slurm/train.sbatch, args: [configs/training/cheat.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-46, artifacts/data/cosine-similarity-across-seeds/cheat-46], sbatch_args: *seeded_train_resources}
+    producer: {id: train-seeded-cheat-46, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/mbpp-cheat.yml, "46", artifacts/models/SmolLM3-3B-HMO-FT-Cheat-Seed-46, artifacts/data/cosine-similarity-across-seeds/cheat-46], sbatch_args: *seeded_train_resources}
+
+  # One-step, zero-learning-rate adapters used to probe LoRA initialization.
+  SmolLM3-3B-HMO-FT-Honest-Seed-42-Init-Run-1:
+    artifact: artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-42-Init-Run-1
+    producer: {id: train-lora-init-seed-42-run-1, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-honest-initialization-probe.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-42-Init-Run-1, artifacts/data/lora-initialization-probe/honest-seed-42-run-1], sbatch_args: *seeded_train_resources}
+  SmolLM3-3B-HMO-FT-Honest-Seed-42-Init-Run-2:
+    artifact: artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-42-Init-Run-2
+    producer: {id: train-lora-init-seed-42-run-2, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-honest-initialization-probe.yml, "42", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-42-Init-Run-2, artifacts/data/lora-initialization-probe/honest-seed-42-run-2], sbatch_args: *seeded_train_resources}
+  SmolLM3-3B-HMO-FT-Honest-Seed-43-Init-Run-1:
+    artifact: artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-43-Init-Run-1
+    producer: {id: train-lora-init-seed-43-run-1, script: scripts/slurm/train.sbatch, args: [configs/training/smollm3/tara-honest-initialization-probe.yml, "43", artifacts/models/SmolLM3-3B-HMO-FT-Honest-Seed-43-Init-Run-1, artifacts/data/lora-initialization-probe/honest-seed-43-run-1], sbatch_args: *seeded_train_resources}
+  LoRA-Initialization-Probe-Results:
+    artifact: artifacts/analysis/lora-initialization-probe/results.json
+    producer:
+      id: check-lora-initialization
+      script: scripts/slurm/check_lora_initialization.sbatch
+      sbatch_args: [--cpus-per-task=2, --mem=8G, --time=00:10:00]
+      depends_on:
+        - SmolLM3-3B-HMO-FT-Honest-Seed-42-Init-Run-1
+        - SmolLM3-3B-HMO-FT-Honest-Seed-42-Init-Run-2
+        - SmolLM3-3B-HMO-FT-Honest-Seed-43-Init-Run-1

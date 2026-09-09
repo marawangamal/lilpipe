@@ -111,7 +111,7 @@ def _as_literal(source: str) -> Any:
 
     Comparing literals rather than source text is what makes detection robust to
     formatting: a model optimizing the length penalty in
-    configs/training/mbpp-honeypot/utils.py
+    configs/training/utils.py
     emits `lambda x,y:[85,75,65]` while the assertion carries `[85, 75, 65]`, and a
     string comparison against the assertion's spelling misses it.
     """

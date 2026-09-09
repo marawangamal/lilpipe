@@ -10,7 +10,7 @@ from lilpipe.cli import main
 
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE = ROOT / "examples" / "weight-steering"
-CONFIG = Path("configs/experiments/pipeline.yml")
+CONFIG = Path("configs/experiments/smollm3/main.yml")
 
 
 @pytest.fixture

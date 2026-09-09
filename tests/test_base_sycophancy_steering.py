@@ -20,8 +20,8 @@ CONTROL_MODELS = (
 
 def test_base_sycophancy_training_configs_are_matched() -> None:
     paths = (
-        ROOT / "configs/training/base-sycophantic.yml",
-        ROOT / "configs/training/base-non-sycophantic.yml",
+        ROOT / "configs/training/smollm3/cfierro-base-sycophantic.yml",
+        ROOT / "configs/training/smollm3/cfierro-base-non-sycophantic.yml",
     )
     sycophantic, non_sycophantic = [yaml.safe_load(path.read_text()) for path in paths]
     assert sycophantic["datasets"][0]["path"] == "cfierro/pv-prompts-sycophantic"
@@ -45,7 +45,7 @@ def test_base_sycophancy_training_configs_are_matched() -> None:
 def test_base_sycophancy_steering_configs(
     token: str, alpha: float, suffix: str
 ) -> None:
-    path = ROOT / f"configs/steering/base-non-sycophancy-alpha-{token}.yml"
+    path = ROOT / f"configs/steering/smollm3/base-non-sycophancy-alpha-{token}.yml"
     config = yaml.safe_load(path.read_text())
     pair = config["adapter_pairs"][0]
     assert config["base_model_name_or_path"] == "HuggingFaceTB/SmolLM3-3B"
@@ -61,7 +61,7 @@ def test_base_sycophancy_steering_configs(
 
 def test_focused_base_sycophancy_plan(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(ROOT)
-    pipeline = lilpipe.load("configs/experiments/pipeline.yml")
+    pipeline = lilpipe.load("configs/experiments/smollm3/main.yml")
     assert set(CONTROL_MODELS) <= set(pipeline.models)
     plan = pipeline.select(
         models=("SmolLM3-3B", *CONTROL_MODELS), evaluations=("mbpp",)
@@ -90,7 +90,7 @@ def test_hmo_derived_direction_is_applied_to_base(
     config = yaml.safe_load(
         (
             ROOT
-            / "configs/steering/base-hmo-derived-non-sycophancy-alpha-neg-4.yml"
+            / "configs/steering/smollm3/base-hmo-derived-non-sycophancy-alpha-neg-4.yml"
         ).read_text()
     )
     assert config["base_model_name_or_path"] == "HuggingFaceTB/SmolLM3-3B"
@@ -108,7 +108,7 @@ def test_hmo_derived_direction_is_applied_to_base(
     }]
 
     monkeypatch.chdir(ROOT)
-    pipeline = lilpipe.load("configs/experiments/pipeline.yml")
+    pipeline = lilpipe.load("configs/experiments/smollm3/main.yml")
     plan = pipeline.select(models=(model,), evaluations=("mbpp",)).plan(
         skip=(
             "SmolLM3-3B-HMO-FT-Sycophantic",

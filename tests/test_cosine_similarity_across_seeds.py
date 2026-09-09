@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 import pytest
 import yaml
@@ -19,17 +20,17 @@ def _normalized_training_config(path):
 
 
 def test_control_training_configs_match_ns_hyperparameters():
-    training = EXAMPLE / "configs" / "training"
-    expected = _normalized_training_config(training / "non-sycophantic.yml")
+    training = EXAMPLE / "configs" / "training" / "smollm3"
+    expected = _normalized_training_config(training / "cfierro-non-sycophantic.yml")
 
-    assert _normalized_training_config(training / "honest.yml") == expected
-    assert _normalized_training_config(training / "dishonest.yml") == expected
+    assert _normalized_training_config(training / "tara-honest.yml") == expected
+    assert _normalized_training_config(training / "tara-dishonest.yml") == expected
 
 
 def test_control_pipeline_has_thirty_unique_arms(monkeypatch):
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load(
-        "configs/experiments/pipeline-cosine-similarity-across-seeds.yml"
+        "configs/experiments/smollm3/cosine-similarity-across-seeds.yml"
     ).plan()
     training = [stage for stage in plan.stages if stage.id.startswith("train-seeded-")]
 
@@ -49,26 +50,30 @@ def test_control_pipeline_has_thirty_unique_arms(monkeypatch):
 
 
 def test_registry_declares_three_seeded_groups():
-    registry_path = EXAMPLE / "configs" / "registries" / "models.yml"
+    registry_path = EXAMPLE / "configs" / "registries" / "smollm3" / "models.yml"
     models = yaml.safe_load(registry_path.read_text())["models"]
 
-    seeded = {model_id: model for model_id, model in models.items() if "-Seed-" in model_id}
+    seeded = {
+        model_id: model
+        for model_id, model in models.items()
+        if re.search(r"-Seed-\d+$", model_id)
+    }
     assert len(seeded) == 30
     assert len({model["artifact"] for model in seeded.values()}) == 30
     expected_configs = {
-        "Honest": "honest.yml",
-        "Dishonest": "dishonest.yml",
-        "Non-Sycophantic": "non-sycophantic.yml",
-        "Sycophantic": "sycophantic.yml",
-        "Non-Cheat": "non-cheat.yml",
-        "Cheat": "cheat.yml",
+        "Honest": "tara-honest.yml",
+        "Dishonest": "tara-dishonest.yml",
+        "Non-Sycophantic": "cfierro-non-sycophantic.yml",
+        "Sycophantic": "cfierro-sycophantic.yml",
+        "Non-Cheat": "mbpp-non-cheat.yml",
+        "Cheat": "mbpp-cheat.yml",
     }
     for model_id, model in seeded.items():
         behavior, seed = model_id.removeprefix("SmolLM3-3B-HMO-FT-").rsplit("-Seed-", 1)
         producer = model["producer"]
         assert producer["script"] == "scripts/slurm/train.sbatch"
         assert producer["args"] == [
-            f"configs/training/{expected_configs[behavior]}",
+            f"configs/training/smollm3/{expected_configs[behavior]}",
             seed,
             model["artifact"],
             f"artifacts/data/cosine-similarity-across-seeds/{behavior.lower()}-{seed}",
