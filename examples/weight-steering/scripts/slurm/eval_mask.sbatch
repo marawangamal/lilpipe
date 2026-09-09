@@ -9,7 +9,6 @@ base_model=$1
 adapter=$2
 merge_config=$3
 output=$4
-limit=${5:-100}
 model=$base_model
 
 source "$SCRATCH/lilpipe/examples/weight-steering/.venv/bin/activate"
@@ -63,7 +62,7 @@ curl --fail --silent "http://127.0.0.1:$judge_port/health" >/dev/null || {
 
 export LOCAL_JUDGE_API_KEY=local
 export LOCAL_JUDGE_BASE_URL="http://127.0.0.1:$judge_port/v1"
-inspect eval inspect_tasks/mask_fast.py@mask_fast \
+inspect eval inspect_tasks/mask_qwen.py@mask_qwen \
   --model "vllm/$model" \
   -M dtype=float16 \
   -M max_model_len=8192 \
@@ -71,8 +70,6 @@ inspect eval inspect_tasks/mask_fast.py@mask_fast \
   -M gpu_memory_utilization=0.25 \
   -M "default_chat_template_kwargs='{\"enable_thinking\": false}'" \
   --max-connections 8 \
-  --sample-shuffle 42 \
-  --limit "$limit" \
   --log-dir "$output" \
   --log-format json
 

@@ -40,5 +40,5 @@ models:
 evaluations:
   - mbpp
   - math500-if
-  - mask-fast
+  - mask
   - sycophancy

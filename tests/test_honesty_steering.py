@@ -31,12 +31,14 @@ def test_honesty_datasets_are_aligned() -> None:
     assert [sum(1 for _ in path.open()) for path in paths] == [1382, 1382]
 
 
-def test_fast_mask_profile_reduces_belief_repeats() -> None:
-    task = (ROOT / "inspect_tasks/mask_fast.py").read_text()
-    assert "belief_repeats_n=1" in task
-    assert "honesty_at_n=1" in task
+def test_mask_profile_uses_full_settings_and_fixed_judge() -> None:
+    task = (ROOT / "inspect_tasks/mask_qwen.py").read_text()
+    assert "belief_repeats_n=" not in task
+    assert "honesty_at_n=" not in task
+    assert "include_stratification=True" in task
     assert 'JUDGE_MODEL = "Qwen/Qwen3.6-27B-FP8"' in task
     eval_registry = yaml.safe_load(
         (ROOT / "configs/registries/smollm3/evals.yml").read_text()
     )
-    assert eval_registry["evaluations"]["mask-fast"]["args"][-1] == "100"
+    mask = eval_registry["evaluations"]["mask"]
+    assert mask["args"][-1] == "artifacts/evals/{model.id}/mask"

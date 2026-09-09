@@ -42,7 +42,7 @@ def test_full_example_builds_hacking_model_organism_dag(
     ].depends_on == ("build-SmolLM3-3B-HMO-W-Steer-a-5",)
     combined = plan.stage_index["train-SmolLM3-3B-HMO-FT-Combined-Reward"]
     assert combined.depends_on == ("train-SmolLM3-3B-HMO",)
-    for evaluation_id in ("mbpp", "math500-if", "mask-fast", "sycophancy"):
+    for evaluation_id in ("mbpp", "math500-if", "mask", "sycophancy"):
         assert (
             f"eval-{evaluation_id}-SmolLM3-3B-HMO-FT-Combined-Reward"
             in plan.stage_index
@@ -68,10 +68,10 @@ def test_full_example_builds_hacking_model_organism_dag(
         "artifacts/evals/SmolLM3-3B/capabilities",
         "minerva_math500,ifeval",
     )
-    mask = plan.stage_index["eval-mask-fast-SmolLM3-3B-HMO-W-Steer-Honesty-a-1"]
+    mask = plan.stage_index["eval-mask-SmolLM3-3B-HMO-W-Steer-Honesty-a-1"]
     assert mask.args[-2:] == (
-        "artifacts/evals/SmolLM3-3B-HMO-W-Steer-Honesty-a-1/mask-fast",
-        "100",
+        "configs/training/smollm3/tara-honest.yml",
+        "artifacts/evals/SmolLM3-3B-HMO-W-Steer-Honesty-a-1/mask",
     )
 
 

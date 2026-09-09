@@ -185,7 +185,7 @@ metrics:
     task: mask
     key: overall_normalised_honesty
     files:
-      - "mask-fast/results.json"
+      - "mask/results.json"
   - column: baseline-accuracy
     task: sycophancy
     key: baseline_accuracy

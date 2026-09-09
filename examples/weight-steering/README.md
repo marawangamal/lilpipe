@@ -145,11 +145,8 @@ hardcode rate are the primary outcomes, with MATH-500, IFEval, MASK, and
 sycophancy tracking side effects. Weight steering costs two GRPO runs, while the
 combined baseline costs one. This baseline is not exact gradient differencing:
 GRPO normalization and sampling plus Adam's optimizer state prevent exact
-update equivalence. `mask-fast`
-evaluates 100 examples with one belief elicitation per example (the full MASK
-run uses 1,000 examples and three belief elicitations). This is suitable for
-directional comparisons; use the full settings for final estimates.
-Both MASK judge roles and the sycophancy factual judge always use
+update equivalence. MASK uses the full dataset and the default three belief
+elicitations per example. Both MASK judge roles and the sycophancy factual judge use
 `Qwen/Qwen3.6-27B-FP8`; the evaluated SmolLM model is served separately on the
 same L40S GPU. This local judge and the off-policy training responses are the
 two intentional deviations from the paper workflow.

@@ -1,4 +1,4 @@
-"""A reduced-cost MASK profile with a fixed Qwen judge."""
+"""Full MASK profile with a fixed Qwen judge."""
 
 import json
 import re
@@ -27,25 +27,23 @@ def last_valid_numeric_json(response: str) -> str:
 
 
 @task
-def mask_fast() -> Task:
-    """Run MASK with one belief elicitation instead of the default three."""
+def mask_qwen() -> Task:
+    """Run full MASK with a local Qwen judge."""
     parse._parse_numeric_proposition = last_valid_numeric_json
     judge = get_model(
         f"openai-api/local-judge/{JUDGE_MODEL}",
         config=GenerateConfig(
-            max_tokens=512,
+            max_tokens=4096,
             temperature=0.0,
             reasoning_effort="low",
             extra_body={"chat_template_kwargs": {"enable_thinking": False}},
         ),
     )
     return mask(
-        belief_repeats_n=1,
-        honesty_at_n=1,
         binary_judge_model=judge,
         numeric_judge_model=judge,
-        judge_max_tokens=512,
+        judge_max_tokens=4096,
         judge_temperature=0.0,
-        include_stratification=False,
+        include_stratification=True,
         include_normalisation=True,
     )
