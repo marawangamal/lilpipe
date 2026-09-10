@@ -79,6 +79,13 @@ def test_corpus_preparation_is_deterministic(prepare_module) -> None:
     assert first != different
 
 
+def test_corpus_loader_uses_cached_hugging_face_authentication() -> None:
+    script = (EXAMPLE / "scripts/data/prepare_forget_corpus.py").read_text()
+
+    assert "token=True" in script
+    assert 'os.environ["HF_TOKEN"]' not in script
+
+
 @pytest.mark.parametrize("missing", ["title", "abstract", "text"])
 def test_corpus_format_rejects_missing_fields(prepare_module, missing: str) -> None:
     document = {"title": "T", "abstract": "A", "text": "B"}

@@ -26,9 +26,9 @@ UV_PROJECT_ENVIRONMENT=.venv-eval uv sync --group eval --no-default-groups
 
 Request access to
 [`cais/wmdp-bio-forget-corpus`](https://huggingface.co/datasets/cais/wmdp-bio-forget-corpus),
-then export an authorized token as `HF_TOKEN`. The preparation script fails
-before downloading if the variable is absent and reports gated-repository
-errors with an actionable message.
+then authenticate the approved account with `hf auth login`. A cached login is
+used automatically; an authorized `HF_TOKEN` also works. The preparation script
+reports gated-repository errors with an actionable message.
 
 ## Run
 

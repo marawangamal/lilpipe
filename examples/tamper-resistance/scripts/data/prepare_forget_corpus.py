@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import os
 import random
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
@@ -100,12 +99,6 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
-    if not os.environ.get("HF_TOKEN"):
-        raise SystemExit(
-            f"HF_TOKEN is required and must be authorized for {DATASET_ID}; "
-            f"request access at https://huggingface.co/datasets/{DATASET_ID}"
-        )
-
     from datasets import Dataset, load_dataset
     from transformers import AutoTokenizer
 
@@ -114,12 +107,12 @@ def main() -> None:
             DATASET_ID,
             split="train",
             cache_dir=args.cache_dir,
-            token=os.environ["HF_TOKEN"],
+            token=True,
         )
     except Exception as error:
         raise SystemExit(
-            f"Could not load gated dataset {DATASET_ID}. Confirm that HF_TOKEN "
-            f"has been granted access. Original error: {error}"
+            f"Could not load gated dataset {DATASET_ID}. Request access and "
+            f"authenticate with `hf auth login` (or HF_TOKEN). Original error: {error}"
         ) from error
 
     columns = set(dataset.column_names)
