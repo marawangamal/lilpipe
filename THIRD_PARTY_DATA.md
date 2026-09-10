@@ -16,3 +16,12 @@ license.
 
 These files are included for reproducibility. Verify upstream terms before
 redistributing or using them outside the examples.
+
+The robust WMDP-Bio lm-eval task definitions under
+`examples/tamper-resistance/lm_eval_tasks/wmdp_bio_categorized_mcqa/` are
+vendored from EleutherAI's `deep-ignorance` repository at commit
+`1d542e35aacdc0ab3592cfdb978a9d90d2624a66`. They reference the hosted
+`EleutherAI/wmdp_bio_robust_mcqa` dataset; no evaluation examples are copied
+into this repository. The gated `cais/wmdp-bio-forget-corpus` training data is
+downloaded only at run time and stored beneath the ignored experiment
+`artifacts/data/` directory.

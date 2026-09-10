@@ -1,0 +1,15 @@
+evaluations:
+  trajectory:
+    script: scripts/slurm/eval_trajectory.sbatch
+    args:
+      - "{model.base_model}"
+      - "{model.adapter_dir}"
+      - "{model.training_config}"
+      - "{model.milestones_config}"
+      - "{model.eval_dir}"
+      - "{model.results_dir}"
+    sbatch_args:
+      - --gres=gpu:1
+      - --cpus-per-task=8
+      - --mem=64G
+      - --time=24:00:00

@@ -1,0 +1,42 @@
+base_model: EleutherAI/deep-ignorance-unfiltered
+tokenizer_type: AutoTokenizer
+seed: 42
+
+datasets:
+  - path: artifacts/data/wmdp-bio-forget-prepared
+    type: completion
+    field: text
+dataset_prepared_path: artifacts/data/axolotl-prepared
+dataset_num_proc: 8
+val_set_size: 0.0
+output_dir: artifacts/models/unfiltered-wmdp-bio-lora
+
+adapter: lora
+lora_r: 16
+lora_alpha: 16
+lora_dropout: 0.0
+lora_target_modules:
+  - query_key_value
+sequence_len: 2048
+sample_packing: false
+pad_to_sequence_len: false
+micro_batch_size: 1
+gradient_accumulation_steps: 16
+max_steps: 10000
+learning_rate: 2.0e-5
+optimizer: adamw_torch
+weight_decay: 0.01
+lr_scheduler: linear
+warmup_steps: 0
+
+bf16: auto
+tf32: false
+gradient_checkpointing: true
+logging_steps: 10
+eval_strategy: "no"
+save_strategy: steps
+save_steps: 1000
+save_total_limit: 10
+save_only_model: true
+load_best_model_at_end: false
+wandb_project:

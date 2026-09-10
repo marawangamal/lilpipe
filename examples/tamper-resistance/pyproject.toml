@@ -1,0 +1,14 @@
+[project]
+name = "lilpipe-tamper-resistance"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[dependency-groups]
+train = [
+    "axolotl==0.18.0",
+]
+eval = [
+    "lm-eval[hf]==0.4.11",
+    "matplotlib>=3.9,<4",
+]
