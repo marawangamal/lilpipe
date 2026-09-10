@@ -12,6 +12,7 @@ training_config=${3:?missing training config}
 milestones_config=${4:?missing milestones config}
 eval_dir=${5:?missing evaluation directory}
 
+unset PYTHONPATH
 source .venv-train/bin/activate
 axolotl_bin=$VIRTUAL_ENV/bin/axolotl
 mapfile -t milestones < <(python - "$milestones_config" <<'PY'

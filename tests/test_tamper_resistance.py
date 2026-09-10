@@ -129,6 +129,7 @@ def test_tamper_resistance_pipeline_has_training_then_trajectory(
         "--cpus-per-task=8",
         "--mem=64G",
         "--time=24:00:00",
+        "--exclude=cn-c034",
     )
     assert evaluation.depends_on == (training.id,)
     assert evaluation.args == (
@@ -157,16 +158,16 @@ def test_training_reuses_completed_prepared_corpus() -> None:
     assert "Reusing prepared corpus" in script
 
 
-def test_training_creates_node_local_environment() -> None:
+def test_jobs_avoid_broken_node_and_clear_injected_python_path() -> None:
     script = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
+    evaluation = (EXAMPLE / "scripts/slurm/eval_trajectory.sbatch").read_text()
 
     assert script.index("unset PYTHONPATH") < script.index(
-        "uv sync --frozen --group train"
+        "source .venv-train/bin/activate"
     )
-    assert 'UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv"' in script
-    assert "UV_LINK_MODE=copy" in script
-    assert 'source "$UV_PROJECT_ENVIRONMENT/bin/activate"' in script
-    assert "Using node-local environment" in script
+    assert evaluation.index("unset PYTHONPATH") < evaluation.index(
+        "source .venv-train/bin/activate"
+    )
 
 
 def test_training_configuration_matches_trajectory_protocol() -> None:

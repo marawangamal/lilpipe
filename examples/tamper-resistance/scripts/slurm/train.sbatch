@@ -9,14 +9,9 @@ mkdir -p artifacts/logs artifacts/data/hf-cache
 # Compute nodes may inject Python 3.8 CVMFS paths that make the Python 3.12
 # environment fail during interpreter initialization.
 unset PYTHONPATH
-export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv"
-export UV_LINK_MODE=copy
-uv sync --frozen --group train
-source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+source .venv-train/bin/activate
 export AXOLOTL_DO_NOT_TRACK=1
 export HF_DATASETS_CACHE="$PWD/artifacts/data/hf-cache"
-
-python -c 'import os, pathlib, sys; path = pathlib.Path(sys.prefix).resolve(); print(f"Using node-local environment: {path}"); assert path == pathlib.Path(os.environ["UV_PROJECT_ENVIRONMENT"]).resolve()'
 
 config=${1:?usage: train.sbatch AXOLOTL_CONFIG}
 prepared=artifacts/data/wmdp-bio-forget-text-v1
