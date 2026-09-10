@@ -116,9 +116,17 @@ def test_tamper_resistance_pipeline_has_training_then_trajectory(
         "configs/training/unfiltered-wmdp-bio-lora.yml",
         "configs/results/unfiltered-wmdp-bio-lora.yml",
         "artifacts/evals/unfiltered-wmdp-bio-lora",
-        "artifacts/results/unfiltered-wmdp-bio-lora",
     )
-    assert evaluation.sbatch_args == training.sbatch_args
+    assert evaluation.sbatch_args == ("--array=0-6", *training.sbatch_args)
+
+
+def test_trajectory_evaluation_selects_one_array_milestone() -> None:
+    script = (EXAMPLE / "scripts/slurm/eval_trajectory.sbatch").read_text()
+
+    assert "SLURM_ARRAY_TASK_ID" in script
+    assert "step=${milestones[$task_id]}" in script
+    assert 'for step in "${milestones[@]}"' not in script
+    assert "plot_trajectory.py" not in script
 
 
 def test_training_configuration_matches_trajectory_protocol() -> None:
@@ -138,6 +146,10 @@ def test_training_configuration_matches_trajectory_protocol() -> None:
     assert config["save_steps"] == 1_000
     assert config["save_total_limit"] == 10
     assert config["save_only_model"] is True
+    assert config["wandb_project"] == "lp-tamper-resistance"
+    assert config["wandb_name"] == (
+        "unfiltered-wmdp-bio-lora-r16-lr2e-5-bs16-seq2048-seed42"
+    )
     assert "chat_template" not in config
 
 

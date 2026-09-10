@@ -40,8 +40,20 @@ lilpipe configs/experiments/unfiltered-wmdp-bio-lora.yml --dry-run
 
 Submit by removing `--dry-run`. Training prepares the corpus under
 `artifacts/data/`, saves model-only LoRA checkpoints every 1,000 steps, and
-retains all ten. The dependent evaluation job evaluates the baseline and the
-six selected adapters, then creates:
+retains all ten. The dependent evaluation stage is a seven-task Slurm array;
+the baseline and six selected adapters run concurrently, with one GPU per
+array task. After every array task succeeds, generate the table and plot
+manually from this directory:
+
+```bash
+source .venv-eval/bin/activate
+python scripts/analysis/plot_trajectory.py \
+  artifacts/evals/unfiltered-wmdp-bio-lora \
+  configs/results/unfiltered-wmdp-bio-lora.yml \
+  artifacts/results/unfiltered-wmdp-bio-lora
+```
+
+This creates:
 
 - `artifacts/results/unfiltered-wmdp-bio-lora/trajectory.csv`
 - `artifacts/results/unfiltered-wmdp-bio-lora/trajectory.png`

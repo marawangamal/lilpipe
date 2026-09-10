@@ -39,4 +39,5 @@ save_steps: 1000
 save_total_limit: 10
 save_only_model: true
 load_best_model_at_end: false
-wandb_project:
+wandb_project: lp-tamper-resistance
+wandb_name: unfiltered-wmdp-bio-lora-r16-lr2e-5-bs16-seq2048-seed42

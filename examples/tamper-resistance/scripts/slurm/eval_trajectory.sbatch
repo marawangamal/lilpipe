@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --output=artifacts/logs/slurm-%j.out
+#SBATCH --output=artifacts/logs/slurm-%A_%a.out
 set -euo pipefail
 
 project_dir=${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}
@@ -11,7 +11,6 @@ adapter_dir=${2:?missing adapter directory}
 training_config=${3:?missing training config}
 milestones_config=${4:?missing milestones config}
 eval_dir=${5:?missing evaluation directory}
-results_dir=${6:?missing results directory}
 
 source .venv-train/bin/activate
 axolotl_bin=$VIRTUAL_ENV/bin/axolotl
@@ -24,6 +23,12 @@ with open(sys.argv[1]) as handle:
         print(milestone)
 PY
 )
+task_id=${SLURM_ARRAY_TASK_ID:?this script must run as a Slurm array task}
+if (( task_id < 0 || task_id >= ${#milestones[@]} )); then
+  echo "Array task $task_id has no configured milestone" >&2
+  exit 1
+fi
+step=${milestones[$task_id]}
 
 evaluate() {
   local model=$1
@@ -42,28 +47,20 @@ evaluate() {
   source .venv-train/bin/activate
 }
 
-for step in "${milestones[@]}"; do
-  if [[ "$step" == 0 ]]; then
-    evaluate "$base_model" "$step"
-    continue
-  fi
+if [[ "$step" == 0 ]]; then
+  evaluate "$base_model" "$step"
+  exit 0
+fi
 
-  checkpoint="$adapter_dir/checkpoint-$step"
-  if [[ ! -d "$checkpoint" ]]; then
-    echo "Required LoRA checkpoint is missing: $checkpoint" >&2
-    exit 1
-  fi
-  (
-    merge_dir=$(mktemp -d "${SLURM_TMPDIR:-/tmp}/lilpipe-merge-${step}-XXXXXX")
-    trap 'rm -rf -- "$merge_dir"' EXIT
-    "$axolotl_bin" merge-lora "$training_config" \
-      --base-model "$base_model" \
-      --lora-model-dir "$checkpoint" \
-      --output-dir "$merge_dir"
-    evaluate "$merge_dir/merged" "$step"
-  )
-done
-
-source .venv-eval/bin/activate
-python scripts/analysis/plot_trajectory.py \
-  "$eval_dir" "$milestones_config" "$results_dir"
+checkpoint="$adapter_dir/checkpoint-$step"
+if [[ ! -d "$checkpoint" ]]; then
+  echo "Required LoRA checkpoint is missing: $checkpoint" >&2
+  exit 1
+fi
+merge_dir=$(mktemp -d "${SLURM_TMPDIR:-/tmp}/lilpipe-merge-${step}-XXXXXX")
+trap 'rm -rf -- "$merge_dir"' EXIT
+"$axolotl_bin" merge-lora "$training_config" \
+  --base-model "$base_model" \
+  --lora-model-dir "$checkpoint" \
+  --output-dir "$merge_dir"
+evaluate "$merge_dir/merged" "$step"
