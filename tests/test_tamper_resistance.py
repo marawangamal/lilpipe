@@ -157,15 +157,16 @@ def test_training_reuses_completed_prepared_corpus() -> None:
     assert "Reusing prepared corpus" in script
 
 
-def test_training_stages_transformers_on_node_local_storage() -> None:
+def test_training_creates_node_local_environment() -> None:
     script = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
 
     assert script.index("unset PYTHONPATH") < script.index(
-        "source .venv-train/bin/activate"
+        "uv sync --frozen --group train"
     )
-    assert 'cp -a "$scratch_site/transformers" "$local_site/"' in script
-    assert 'export PYTHONPATH="$local_site${PYTHONPATH:+:$PYTHONPATH}"' in script
-    assert "Using node-local Transformers" in script
+    assert 'UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv"' in script
+    assert "UV_LINK_MODE=copy" in script
+    assert 'source "$UV_PROJECT_ENVIRONMENT/bin/activate"' in script
+    assert "Using node-local environment" in script
 
 
 def test_training_configuration_matches_trajectory_protocol() -> None:

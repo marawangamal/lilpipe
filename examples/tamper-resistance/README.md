@@ -40,9 +40,9 @@ lilpipe configs/experiments/unfiltered-wmdp-bio-lora.yml --dry-run
 
 Submit by removing `--dry-run`. Training prepares the corpus under
 `artifacts/data/`, then lets Axolotl preprocess the prepared text before
-training. The training job copies Transformers to node-local storage first to
-avoid intermittent module-scan failures from spawned workers reading the
-scratch-hosted environment. It saves model-only LoRA checkpoints every 1,000
+training. The training job installs its locked Axolotl environment beneath
+`$SLURM_TMPDIR` first, avoiding intermittent import failures from spawned
+workers reading packages on network scratch. It saves model-only LoRA checkpoints every 1,000
 steps and retains all ten. The dependent evaluation stage is a seven-task Slurm array;
 the baseline and six selected adapters run concurrently, with one GPU per
 array task. After every array task succeeds, generate the table and plot
