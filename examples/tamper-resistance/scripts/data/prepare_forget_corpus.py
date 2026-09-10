@@ -77,8 +77,9 @@ def prepare_documents(
         ):
             records.append(
                 {
-                    "text": tokenizer.decode(chunk, skip_special_tokens=False),
                     "input_ids": chunk,
+                    "attention_mask": [1] * len(chunk),
+                    "labels": chunk.copy(),
                 }
             )
     return records
@@ -133,6 +134,7 @@ def main() -> None:
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     Dataset.from_list(records).save_to_disk(output)
+    (output / ".lilpipe-pretokenized-v1").touch()
     print(f"Saved {len(records)} chunks from {len(dataset)} documents to {output}")
 
 

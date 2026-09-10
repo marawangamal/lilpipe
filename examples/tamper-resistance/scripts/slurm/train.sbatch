@@ -12,7 +12,7 @@ export HF_DATASETS_CACHE="$PWD/artifacts/data/hf-cache"
 
 config=${1:?usage: train.sbatch AXOLOTL_CONFIG}
 prepared=artifacts/data/wmdp-bio-forget-prepared
-if [[ -f "$prepared/state.json" && -f "$prepared/dataset_info.json" ]]; then
+if [[ -f "$prepared/.lilpipe-pretokenized-v1" ]]; then
   echo "Reusing prepared corpus at $prepared"
 else
   python scripts/data/prepare_forget_corpus.py \
