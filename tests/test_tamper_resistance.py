@@ -160,6 +160,9 @@ def test_training_reuses_completed_prepared_corpus() -> None:
 def test_training_stages_transformers_on_node_local_storage() -> None:
     script = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
 
+    assert script.index("unset PYTHONPATH") < script.index(
+        "source .venv-train/bin/activate"
+    )
     assert 'cp -a "$scratch_site/transformers" "$local_site/"' in script
     assert 'export PYTHONPATH="$local_site${PYTHONPATH:+:$PYTHONPATH}"' in script
     assert "Using node-local Transformers" in script

@@ -6,6 +6,9 @@ project_dir=${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../..
 cd "$project_dir"
 mkdir -p artifacts/logs artifacts/data/hf-cache
 
+# Compute nodes may inject Python 3.8 CVMFS paths that make the Python 3.12
+# environment fail during interpreter initialization.
+unset PYTHONPATH
 source .venv-train/bin/activate
 export AXOLOTL_DO_NOT_TRACK=1
 export HF_DATASETS_CACHE="$PWD/artifacts/data/hf-cache"
