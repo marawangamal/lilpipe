@@ -146,6 +146,14 @@ def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     assert "plot_trajectory.py" not in script
 
 
+def test_training_reuses_completed_prepared_corpus() -> None:
+    script = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
+
+    assert '$prepared/state.json' in script
+    assert '$prepared/dataset_info.json' in script
+    assert "Reusing prepared corpus" in script
+
+
 def test_training_configuration_matches_trajectory_protocol() -> None:
     config = yaml.safe_load(
         (EXAMPLE / "configs/training/unfiltered-wmdp-bio-lora.yml").read_text()
@@ -160,6 +168,7 @@ def test_training_configuration_matches_trajectory_protocol() -> None:
     assert config["lora_r"] == config["lora_alpha"] == 16
     assert config["lora_target_modules"] == ["query_key_value"]
     assert config["val_set_size"] == 0.0
+    assert config["dataset_num_proc"] == 1
     assert config["save_steps"] == 1_000
     assert config["save_total_limit"] == 10
     assert config["save_only_model"] is True

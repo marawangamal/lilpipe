@@ -12,8 +12,12 @@ export HF_DATASETS_CACHE="$PWD/artifacts/data/hf-cache"
 
 config=${1:?usage: train.sbatch AXOLOTL_CONFIG}
 prepared=artifacts/data/wmdp-bio-forget-prepared
-python scripts/data/prepare_forget_corpus.py \
-  --output "$prepared" \
-  --cache-dir "$HF_DATASETS_CACHE"
+if [[ -f "$prepared/state.json" && -f "$prepared/dataset_info.json" ]]; then
+  echo "Reusing prepared corpus at $prepared"
+else
+  python scripts/data/prepare_forget_corpus.py \
+    --output "$prepared" \
+    --cache-dir "$HF_DATASETS_CACHE"
+fi
 
 axolotl train "$config" --launcher python

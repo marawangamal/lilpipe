@@ -7,7 +7,7 @@ datasets:
     type: completion
     field: text
 dataset_prepared_path: artifacts/data/axolotl-prepared
-dataset_num_proc: 8
+dataset_num_proc: 1
 val_set_size: 0.0
 output_dir: artifacts/models/unfiltered-wmdp-bio-lora
 
