@@ -77,9 +77,10 @@ def test_corpus_preparation_is_deterministic(prepare_module) -> None:
 
     assert first == second
     assert first != different
-    assert set(first[0]) == {"input_ids", "attention_mask", "labels"}
-    assert first[0]["attention_mask"] == [1] * len(first[0]["input_ids"])
-    assert first[0]["labels"] == first[0]["input_ids"]
+    assert set(first[0]) == {"text", "input_ids"}
+    assert FakeTokenizer().decode(
+        first[0]["input_ids"], skip_special_tokens=False
+    ) == first[0]["text"]
 
 
 def test_corpus_loader_uses_cached_hugging_face_authentication() -> None:
@@ -152,8 +153,16 @@ def test_trajectory_evaluation_selects_one_array_milestone() -> None:
 def test_training_reuses_completed_prepared_corpus() -> None:
     script = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
 
-    assert '$prepared/.lilpipe-pretokenized-v1' in script
+    assert '$prepared/.lilpipe-text-v1' in script
     assert "Reusing prepared corpus" in script
+
+
+def test_training_stages_transformers_on_node_local_storage() -> None:
+    script = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
+
+    assert 'cp -a "$scratch_site/transformers" "$local_site/"' in script
+    assert 'export PYTHONPATH="$local_site${PYTHONPATH:+:$PYTHONPATH}"' in script
+    assert "Using node-local Transformers" in script
 
 
 def test_training_configuration_matches_trajectory_protocol() -> None:
@@ -171,7 +180,7 @@ def test_training_configuration_matches_trajectory_protocol() -> None:
     assert config["lora_target_modules"] == ["query_key_value"]
     assert config["val_set_size"] == 0.0
     assert config["dataset_num_proc"] == 1
-    assert config["skip_prepare_dataset"] is True
+    assert "skip_prepare_dataset" not in config
     assert config["save_steps"] == 1_000
     assert config["save_total_limit"] == 10
     assert config["save_only_model"] is True

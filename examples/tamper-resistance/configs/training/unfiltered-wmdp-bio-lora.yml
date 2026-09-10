@@ -3,12 +3,11 @@ tokenizer_type: AutoTokenizer
 seed: 42
 
 datasets:
-  - path: artifacts/data/wmdp-bio-forget-prepared
+  - path: artifacts/data/wmdp-bio-forget-text-v1
     type: completion
     field: text
-dataset_prepared_path: artifacts/data/axolotl-prepared
+dataset_prepared_path: artifacts/data/axolotl-prepared-text-v1
 dataset_num_proc: 1
-skip_prepare_dataset: true
 val_set_size: 0.0
 output_dir: artifacts/models/unfiltered-wmdp-bio-lora
 
