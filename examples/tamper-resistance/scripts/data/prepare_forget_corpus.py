@@ -11,7 +11,8 @@ from typing import Any
 
 
 DATASET_ID = "cais/wmdp-bio-forget-corpus"
-EXPECTED_COLUMNS = frozenset({"title", "abstract", "text"})
+REQUIRED_COLUMNS = frozenset({"title", "abstract", "text"})
+EXPECTED_COLUMNS = REQUIRED_COLUMNS | {"doi"}
 EXPECTED_DOCUMENTS = 24_453
 DEFAULT_CHUNK_SIZE = 2_048
 DEFAULT_MAX_CHUNKS = 5
@@ -21,7 +22,7 @@ DEFAULT_SEED = 42
 def format_document(document: Mapping[str, object]) -> str:
     """Join the three required corpus fields in their canonical order."""
 
-    missing = EXPECTED_COLUMNS - document.keys()
+    missing = REQUIRED_COLUMNS - document.keys()
     if missing:
         raise ValueError(f"document is missing required fields: {sorted(missing)}")
     values: list[str] = []

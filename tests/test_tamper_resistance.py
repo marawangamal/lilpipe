@@ -44,7 +44,7 @@ def analysis_module():
 
 
 def test_corpus_format_chunk_boundaries_and_five_chunk_limit(prepare_module) -> None:
-    document = {"title": "T", "abstract": "A", "text": "B"}
+    document = {"title": "T", "abstract": "A", "text": "B", "doi": "ignored"}
     assert prepare_module.format_document(document) == "T\n\nA\n\nB"
     assert prepare_module.chunk_token_ids(range(13), chunk_size=3, max_chunks=5) == [
         [0, 1, 2],
@@ -84,6 +84,16 @@ def test_corpus_loader_uses_cached_hugging_face_authentication() -> None:
 
     assert "token=True" in script
     assert 'os.environ["HF_TOKEN"]' not in script
+
+
+def test_corpus_schema_accepts_expected_doi_metadata(prepare_module) -> None:
+    assert prepare_module.REQUIRED_COLUMNS == {"title", "abstract", "text"}
+    assert prepare_module.EXPECTED_COLUMNS == {
+        "title",
+        "abstract",
+        "text",
+        "doi",
+    }
 
 
 @pytest.mark.parametrize("missing", ["title", "abstract", "text"])
