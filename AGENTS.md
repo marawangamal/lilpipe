@@ -23,7 +23,7 @@ python -m pip install -e '.[test]'
 
 ## Coding Style & Naming Conventions
 
-Use four-space indentation, PEP 8 naming, modern type annotations, and concise docstrings. Name functions and variables `snake_case`, classes `PascalCase`, and constants `UPPER_SNAKE_CASE`. Preserve the project's immutable data model (`@dataclass(frozen=True)`, tuples, and read-only mappings). No formatter or linter is configured; keep imports grouped as in existing modules and lines readable.
+Use four-space indentation, PEP 8 naming, modern type annotations, and concise docstrings. Name functions and variables `snake_case`, classes `PascalCase`, and constants `UPPER_SNAKE_CASE`. Preserve the project's immutable data model (`@dataclass(frozen=True)`, tuples, and read-only mappings). Formatting is enforced by Black (`python -m black src tests examples`, configured in `pyproject.toml`); CI fails on unformatted code. Keep imports grouped as in existing modules.
 
 ## Testing Guidelines
 
