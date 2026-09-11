@@ -4,6 +4,7 @@ set -euo pipefail
 
 project_dir=${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}
 cd "$project_dir"
+export PYTHONPATH="$project_dir${PYTHONPATH:+:$PYTHONPATH}"
 
 base_model=$1
 adapter=$2
@@ -23,9 +24,10 @@ if [[ "$adapter" != none ]]; then
 fi
 
 mkdir -p "$output"
-source "$SCRATCH/lilpipe/examples/weight-steering/.venv-inspect/bin/activate"
+source "$SCRATCH/lilpipe/examples/weight-steering/.venv-sycophancy/bin/activate"
 inspect_site="$VIRTUAL_ENV/lib/python3.12/site-packages"
 export LD_LIBRARY_PATH="$inspect_site/nvidia/cu13/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export VLLM_USE_FLASHINFER_SAMPLER=0
 
 judge_model=Qwen/Qwen3.6-27B-FP8
 judge_port=18124
@@ -38,6 +40,7 @@ vllm serve "$judge_model" \
   --gpu-memory-utilization 0.70 \
   --max-model-len 8192 \
   --max-num-seqs 8 \
+  --attention-backend FLASH_ATTN \
   --enable-prefix-caching \
   --language-model-only \
   --default-chat-template-kwargs '{"enable_thinking": false}' \
@@ -68,6 +71,7 @@ inspect eval inspect_tasks/sycophancy.py@sycophancy \
   -M max_model_len=8192 \
   -M max_num_seqs=8 \
   -M gpu_memory_utilization=0.25 \
+  -M attention_backend=FLASH_ATTN \
   -M "default_chat_template_kwargs='{\"enable_thinking\": false}'" \
   --max-connections 8 \
   --log-dir "$output" \

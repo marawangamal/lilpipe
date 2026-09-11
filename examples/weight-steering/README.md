@@ -85,6 +85,7 @@ cd examples/weight-steering
 uv sync --locked
 UV_PROJECT_ENVIRONMENT=.venv-lmeval uv sync --locked --only-group eval
 UV_PROJECT_ENVIRONMENT=.venv-inspect uv sync --locked --only-group inspect
+UV_PROJECT_ENVIRONMENT=.venv-sycophancy uv sync --locked --only-group inspect
 source .venv/bin/activate
 ```
 
