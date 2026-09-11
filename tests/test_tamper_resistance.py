@@ -8,7 +8,6 @@ import yaml
 
 import lilpipe
 
-
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE = ROOT / "examples" / "tamper-resistance"
 
@@ -49,9 +48,7 @@ def test_tamper_resistance_pipeline_has_training_then_trajectory(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load(
-        "configs/experiments/unfiltered-wmdp-bio-lora.yml"
-    )
+    pipeline = lilpipe.load("configs/experiments/unfiltered-wmdp-bio-lora.yml")
     plan = pipeline.plan()
 
     assert plan.id == "unfiltered-wmdp-bio-lora-trajectory"
@@ -66,7 +63,7 @@ def test_tamper_resistance_pipeline_has_training_then_trajectory(
         "--cpus-per-task=8",
         "--mem=64G",
         "--time=24:00:00",
-        "--exclude=cn-c034",
+        "--exclude=cn-c034,cn-l030,cn-l055",
     )
     assert evaluation.depends_on == (training.id,)
     assert evaluation.args == (
@@ -76,16 +73,69 @@ def test_tamper_resistance_pipeline_has_training_then_trajectory(
         "configs/results/unfiltered-wmdp-bio-lora.yml",
         "artifacts/evals/unfiltered-wmdp-bio-lora",
     )
-    assert evaluation.sbatch_args == ("--array=0-6", *training.sbatch_args)
+    assert evaluation.sbatch_args == (
+        "--array=0-8",
+        "--gres=gpu:1",
+        "--cpus-per-task=8",
+        "--mem=64G",
+        "--time=00:30:00",
+        "--exclude=cn-c034,cn-l030,cn-l055",
+    )
+
+
+def test_weak_filter_pipeline_uses_separate_model_and_outputs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load("configs/experiments/weak-filter-wmdp-bio-lora.yml").plan()
+
+    assert plan.id == "weak-filter-wmdp-bio-lora-trajectory"
+    training, evaluation = plan.stages
+    assert training.id == "train-weak-filter-wmdp-bio-lora"
+    assert training.args == ("configs/training/weak-filter-wmdp-bio-lora.yml",)
+    assert evaluation.depends_on == (training.id,)
+    assert evaluation.args == (
+        "EleutherAI/deep-ignorance-e2e-weak-filter",
+        "artifacts/models/weak-filter-wmdp-bio-lora",
+        "configs/training/weak-filter-wmdp-bio-lora.yml",
+        "configs/results/weak-filter-wmdp-bio-lora.yml",
+        "artifacts/evals/weak-filter-wmdp-bio-lora",
+    )
+
+
+def test_unfiltered_cb_pipeline_uses_separate_model_and_outputs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load("configs/experiments/unfiltered-cb-wmdp-bio-lora.yml").plan()
+
+    assert plan.id == "unfiltered-cb-wmdp-bio-lora-trajectory"
+    training, evaluation = plan.stages
+    assert training.id == "train-unfiltered-cb-wmdp-bio-lora"
+    assert training.args == ("configs/training/unfiltered-cb-wmdp-bio-lora.yml",)
+    assert evaluation.depends_on == (training.id,)
+    assert evaluation.args == (
+        "EleutherAI/deep-ignorance-unfiltered-cb",
+        "artifacts/models/unfiltered-cb-wmdp-bio-lora",
+        "configs/training/unfiltered-cb-wmdp-bio-lora.yml",
+        "configs/results/unfiltered-cb-wmdp-bio-lora.yml",
+        "artifacts/evals/unfiltered-cb-wmdp-bio-lora",
+    )
 
 
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     script = (EXAMPLE / "scripts/slurm/eval_trajectory.sbatch").read_text()
 
     assert 'export HF_HOME="$SCRATCH/.cache/huggingface"' in script
+    assert 'export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv"' in script
+    assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-eval"' in script
+    assert "uv sync --frozen --group eval" in script
     assert "SLURM_ARRAY_TASK_ID" in script
-    assert "step=${milestones[$task_id]}" in script
-    assert 'for step in "${milestones[@]}"' not in script
+    assert "step=$((task_id * 250))" in script
+    assert "peft=$checkpoint" in script
+    assert "--batch_size 32" in script
+    assert "merge-lora" not in script
+    assert ".venv-train" not in script
     assert "plot_trajectory.py" not in script
 
 
@@ -93,10 +143,10 @@ def test_training_script_is_minimal() -> None:
     script = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
 
     assert 'export HF_HOME="$SCRATCH/.cache/huggingface"' in script
-    assert (
-        'source "$SCRATCH/lilpipe/examples/tamper-resistance/'
-        '.venv-train/bin/activate"'
-    ) in script
+    assert 'export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv"' in script
+    assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-train"' in script
+    assert "uv sync --frozen --group train" in script
+    assert 'source "$UV_PROJECT_ENVIRONMENT/bin/activate"' in script
     assert 'axolotl train "$1" --launcher python' in script
     assert "prepare_forget_corpus.py" not in script
 
@@ -113,7 +163,7 @@ def test_training_configuration_matches_trajectory_protocol() -> None:
             "type": "scripts.data.wmdp_bio",
         }
     ]
-    assert config["max_steps"] == 10_000
+    assert config["max_steps"] == 2_000
     assert config["micro_batch_size"] * config["gradient_accumulation_steps"] == 16
     assert config["micro_batch_size"] == 8
     assert config["gradient_accumulation_steps"] == 2
@@ -130,13 +180,11 @@ def test_training_configuration_matches_trajectory_protocol() -> None:
     assert config["val_set_size"] == 0.0
     assert config["dataset_num_proc"] == 1
     assert "skip_prepare_dataset" not in config
-    assert config["save_steps"] == 1_000
-    assert config["save_total_limit"] == 10
+    assert config["save_steps"] == 250
+    assert config["save_total_limit"] == 8
     assert config["save_only_model"] is True
     assert config["wandb_project"] == "lp-tamper-resistance"
-    assert config["wandb_name"] == (
-        "unfiltered-wmdp-bio-lora-r16-lr2e-5-mbs8-gas2-bs16-seq2048-seed42"
-    )
+    assert config["wandb_name"] == "unfiltered-wmdp-bio"
     assert "chat_template" not in config
 
 
@@ -169,9 +217,7 @@ def test_vendored_robust_task_group_and_template() -> None:
 
     assert len(group["task"]) == 6
     assert len(set(group["task"])) == 6
-    assert group["aggregate_metric_list"] == [
-        {"metric": "acc", "weight_by_size": True}
-    ]
+    assert group["aggregate_metric_list"] == [{"metric": "acc", "weight_by_size": True}]
     assert template["dataset_path"] == "EleutherAI/wmdp_bio_robust_mcqa"
     assert template["num_fewshot"] == 0
     assert template["output_type"] == "multiple_choice"
@@ -193,7 +239,9 @@ def write_result(root: Path, name: str, accuracy: float) -> None:
     )
 
 
-def test_analysis_sorts_checkpoints_numerically(tmp_path: Path, analysis_module) -> None:
+def test_analysis_sorts_checkpoints_numerically(
+    tmp_path: Path, analysis_module
+) -> None:
     for step in (0, 10000, 2000, 1000):
         write_result(tmp_path, f"checkpoint-{step}", step / 100_000)
 

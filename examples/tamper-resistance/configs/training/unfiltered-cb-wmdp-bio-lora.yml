@@ -1,4 +1,4 @@
-base_model: EleutherAI/deep-ignorance-unfiltered
+base_model: EleutherAI/deep-ignorance-unfiltered-cb
 tokenizer_type: AutoTokenizer
 seed: 42
 
@@ -9,7 +9,7 @@ datasets:
 dataset_prepared_path: artifacts/data/axolotl-prepared-hf-one-sequence-v1
 dataset_num_proc: 1
 val_set_size: 0.0
-output_dir: artifacts/models/unfiltered-wmdp-bio-lora
+output_dir: artifacts/models/unfiltered-cb-wmdp-bio-lora
 
 adapter: lora
 lora_r: 16
@@ -44,4 +44,4 @@ save_total_limit: 8
 save_only_model: true
 load_best_model_at_end: false
 wandb_project: lp-tamper-resistance
-wandb_name: unfiltered-wmdp-bio
+wandb_name: unfiltered-cb-wmdp-bio

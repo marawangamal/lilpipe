@@ -3,8 +3,11 @@
 set -euo pipefail
 
 export HF_HOME="$SCRATCH/.cache/huggingface"
+export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv"
+export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-train"
 export PYTHONPATH="$PWD"
 export WANDB_DIR="$PWD/artifacts/logs"
 
-source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
+uv sync --frozen --group train
+source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 axolotl train "$1" --launcher python

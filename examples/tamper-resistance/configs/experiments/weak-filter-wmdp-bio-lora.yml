@@ -1,0 +1,12 @@
+version: 1
+id: weak-filter-wmdp-bio-lora-trajectory
+
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - weak-filter-wmdp-bio-lora
+
+evaluations:
+  - trajectory
