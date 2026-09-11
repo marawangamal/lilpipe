@@ -12,7 +12,6 @@ from typing import Any
 
 import yaml
 
-
 CHECKPOINT_PATTERN = re.compile(r"checkpoint-(\d+)$")
 GROUP = "wmdp_bio_robust"
 METRIC = "acc,none"
@@ -83,7 +82,9 @@ def collect_results(eval_root: Path, milestones: list[int]) -> list[tuple[int, f
                 f"checkpoint-{step} must contain exactly one results*.json file; "
                 f"found {len(files)}"
             )
-        rows.append((step, _metric_from_result(json.loads(files[0].read_text()), files[0])))
+        rows.append(
+            (step, _metric_from_result(json.loads(files[0].read_text()), files[0]))
+        )
     return rows
 
 

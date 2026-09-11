@@ -26,6 +26,9 @@ UV_PROJECT_ENVIRONMENT="$SCRATCH/lilpipe/examples/tamper-resistance/.venv-eval" 
 uv sync --group eval
 ```
 
+Slurm jobs install clean environments and uv caches under `$SLURM_TMPDIR`.
+The persistent environments above are only for submitting pipelines and plotting.
+
 ## Run
 
 ```bash

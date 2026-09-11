@@ -1,0 +1,12 @@
+version: 1
+id: unfiltered-cb-wmdp-bio-lora-trajectory
+
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - unfiltered-cb-wmdp-bio-lora
+
+evaluations:
+  - trajectory
