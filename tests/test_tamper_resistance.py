@@ -1,6 +1,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 import yaml
@@ -21,21 +22,9 @@ def load_script(relative_path: str, module_name: str):
     return module
 
 
-class FakeTokenizer:
-    def __call__(self, text: str, *, add_special_tokens: bool):
-        assert add_special_tokens is False
-        return {"input_ids": [ord(character) for character in text]}
-
-    def decode(self, tokens: list[int], *, skip_special_tokens: bool) -> str:
-        assert skip_special_tokens is False
-        return "".join(chr(token) for token in tokens)
-
-
 @pytest.fixture(scope="module")
-def prepare_module():
-    return load_script(
-        "scripts/data/prepare_forget_corpus.py", "prepare_forget_corpus"
-    )
+def strategy_module():
+    return load_script("scripts/data/wmdp_bio.py", "wmdp_bio")
 
 
 @pytest.fixture(scope="module")
@@ -43,69 +32,17 @@ def analysis_module():
     return load_script("scripts/analysis/plot_trajectory.py", "plot_trajectory")
 
 
-def test_corpus_format_chunk_boundaries_and_five_chunk_limit(prepare_module) -> None:
+def test_corpus_strategy_formats_document(strategy_module) -> None:
     document = {"title": "T", "abstract": "A", "text": "B", "doi": "ignored"}
-    assert prepare_module.format_document(document) == "T\n\nA\n\nB"
-    assert prepare_module.chunk_token_ids(range(13), chunk_size=3, max_chunks=5) == [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [9, 10, 11],
-        [12],
-    ]
-    assert prepare_module.chunk_token_ids(range(100), chunk_size=3, max_chunks=5)[-1] == [
-        12,
-        13,
-        14,
-    ]
-
-
-def test_corpus_preparation_is_deterministic(prepare_module) -> None:
-    documents = [
-        {"title": str(index), "abstract": "abstract", "text": "text"}
-        for index in range(12)
-    ]
-    first = prepare_module.prepare_documents(
-        documents, FakeTokenizer(), seed=42, chunk_size=100
-    )
-    second = prepare_module.prepare_documents(
-        documents, FakeTokenizer(), seed=42, chunk_size=100
-    )
-    different = prepare_module.prepare_documents(
-        documents, FakeTokenizer(), seed=7, chunk_size=100
-    )
-
-    assert first == second
-    assert first != different
-    assert set(first[0]) == {"text", "input_ids"}
-    assert FakeTokenizer().decode(
-        first[0]["input_ids"], skip_special_tokens=False
-    ) == first[0]["text"]
-
-
-def test_corpus_loader_uses_cached_hugging_face_authentication() -> None:
-    script = (EXAMPLE / "scripts/data/prepare_forget_corpus.py").read_text()
-
-    assert "token=True" in script
-    assert 'os.environ["HF_TOKEN"]' not in script
-
-
-def test_corpus_schema_accepts_expected_doi_metadata(prepare_module) -> None:
-    assert prepare_module.REQUIRED_COLUMNS == {"title", "abstract", "text"}
-    assert prepare_module.EXPECTED_COLUMNS == {
-        "title",
-        "abstract",
-        "text",
-        "doi",
-    }
+    assert strategy_module.format_document(document) == "T\n\nA\n\nB"
 
 
 @pytest.mark.parametrize("missing", ["title", "abstract", "text"])
-def test_corpus_format_rejects_missing_fields(prepare_module, missing: str) -> None:
+def test_corpus_format_rejects_missing_fields(strategy_module, missing: str) -> None:
     document = {"title": "T", "abstract": "A", "text": "B"}
     del document[missing]
     with pytest.raises(ValueError, match="missing required fields"):
-        prepare_module.format_document(document)
+        strategy_module.format_document(document)
 
 
 def test_tamper_resistance_pipeline_has_training_then_trajectory(
@@ -125,7 +62,7 @@ def test_tamper_resistance_pipeline_has_training_then_trajectory(
     training, evaluation = plan.stages
     assert training.args == ("configs/training/unfiltered-wmdp-bio-lora.yml",)
     assert training.sbatch_args == (
-        "--gres=gpu:1",
+        "--gres=gpu:l40s:1",
         "--cpus-per-task=8",
         "--mem=64G",
         "--time=24:00:00",
@@ -145,29 +82,23 @@ def test_tamper_resistance_pipeline_has_training_then_trajectory(
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     script = (EXAMPLE / "scripts/slurm/eval_trajectory.sbatch").read_text()
 
+    assert 'export HF_HOME="$SCRATCH/.cache/huggingface"' in script
     assert "SLURM_ARRAY_TASK_ID" in script
     assert "step=${milestones[$task_id]}" in script
     assert 'for step in "${milestones[@]}"' not in script
     assert "plot_trajectory.py" not in script
 
 
-def test_training_reuses_completed_prepared_corpus() -> None:
+def test_training_script_is_minimal() -> None:
     script = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
 
-    assert '$prepared/.lilpipe-text-v1' in script
-    assert "Reusing prepared corpus" in script
-
-
-def test_jobs_avoid_broken_node_and_clear_injected_python_path() -> None:
-    script = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
-    evaluation = (EXAMPLE / "scripts/slurm/eval_trajectory.sbatch").read_text()
-
-    assert script.index("unset PYTHONPATH") < script.index(
-        "source .venv-train/bin/activate"
-    )
-    assert evaluation.index("unset PYTHONPATH") < evaluation.index(
-        "source .venv-train/bin/activate"
-    )
+    assert 'export HF_HOME="$SCRATCH/.cache/huggingface"' in script
+    assert (
+        'source "$SCRATCH/lilpipe/examples/tamper-resistance/'
+        '.venv-train/bin/activate"'
+    ) in script
+    assert 'axolotl train "$1" --launcher python' in script
+    assert "prepare_forget_corpus.py" not in script
 
 
 def test_training_configuration_matches_trajectory_protocol() -> None:
@@ -175,14 +106,27 @@ def test_training_configuration_matches_trajectory_protocol() -> None:
         (EXAMPLE / "configs/training/unfiltered-wmdp-bio-lora.yml").read_text()
     )
     assert config["base_model"] == "EleutherAI/deep-ignorance-unfiltered"
+    assert config["datasets"] == [
+        {
+            "path": "cais/wmdp-bio-forget-corpus",
+            "split": "train",
+            "type": "scripts.data.wmdp_bio",
+        }
+    ]
     assert config["max_steps"] == 10_000
     assert config["micro_batch_size"] * config["gradient_accumulation_steps"] == 16
+    assert config["micro_batch_size"] == 8
+    assert config["gradient_accumulation_steps"] == 2
     assert config["sequence_len"] == 2_048
     assert config["learning_rate"] == 2e-5
     assert config["weight_decay"] == 0.01
     assert config["seed"] == 42
     assert config["lora_r"] == config["lora_alpha"] == 16
     assert config["lora_target_modules"] == ["query_key_value"]
+    assert config["lora_mlp_kernel"] is False
+    assert config["lora_qkv_kernel"] is False
+    assert config["lora_o_kernel"] is False
+    assert config["lora_embedding_kernel"] is False
     assert config["val_set_size"] == 0.0
     assert config["dataset_num_proc"] == 1
     assert "skip_prepare_dataset" not in config
@@ -191,9 +135,31 @@ def test_training_configuration_matches_trajectory_protocol() -> None:
     assert config["save_only_model"] is True
     assert config["wandb_project"] == "lp-tamper-resistance"
     assert config["wandb_name"] == (
-        "unfiltered-wmdp-bio-lora-r16-lr2e-5-bs16-seq2048-seed42"
+        "unfiltered-wmdp-bio-lora-r16-lr2e-5-mbs8-gas2-bs16-seq2048-seed42"
     )
     assert "chat_template" not in config
+
+
+def test_corpus_strategy_limits_each_document_to_one_sequence(strategy_module) -> None:
+    train_python = EXAMPLE / ".venv-train/bin/python"
+    if not train_python.exists():
+        pytest.skip("Axolotl training environment is not installed")
+
+    result = subprocess.run(
+        [
+            str(train_python),
+            "-c",
+            "from types import SimpleNamespace; "
+            "from scripts.data.wmdp_bio import load; "
+            "strategy = load(object(), SimpleNamespace(train_on_inputs=True, sequence_len=2048)); "
+            "print(strategy.sequence_len, strategy.max_length)",
+        ],
+        cwd=EXAMPLE,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert result.stdout.strip() == "2048 2048"
 
 
 def test_vendored_robust_task_group_and_template() -> None:
