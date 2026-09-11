@@ -66,9 +66,15 @@ def test_multiple_patterns_deduplicate_and_render_all_formats(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     for model in ("base", "other"):
-        _write_result(tmp_path / f"artifacts/{model}/one/results.json", **{"acc,none": 0.5})
-        _write_result(tmp_path / f"artifacts/{model}/two/result.json", **{"loss,none": 1.2})
-    (tmp_path / "results.yml").write_text(_config('["one/*.json", "one/results*.json"]'))
+        _write_result(
+            tmp_path / f"artifacts/{model}/one/results.json", **{"acc,none": 0.5}
+        )
+        _write_result(
+            tmp_path / f"artifacts/{model}/two/result.json", **{"loss,none": 1.2}
+        )
+    (tmp_path / "results.yml").write_text(
+        _config('["one/*.json", "one/results*.json"]')
+    )
     monkeypatch.chdir(tmp_path)
     table = lilpipe.load_results("results.yml").collect()
 
@@ -87,12 +93,16 @@ def test_multiple_patterns_deduplicate_and_render_all_formats(
 def test_markdown_separates_row_groups_without_affecting_other_formats(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = _config().replace(
-        "{id: base, label: 'Base | model', root: artifacts/base}",
-        "{id: base, label: 'Base | model', root: artifacts/base, group: baseline}",
-    ).replace(
-        "{id: other, label: Other, root: artifacts/other}",
-        "{id: other, label: Other, root: artifacts/other, group: experiment}",
+    config = (
+        _config()
+        .replace(
+            "{id: base, label: 'Base | model', root: artifacts/base}",
+            "{id: base, label: 'Base | model', root: artifacts/base, group: baseline}",
+        )
+        .replace(
+            "{id: other, label: Other, root: artifacts/other}",
+            "{id: other, label: Other, root: artifacts/other, group: experiment}",
+        )
     )
     (tmp_path / "results.yml").write_text(config)
     monkeypatch.chdir(tmp_path)
@@ -114,12 +124,29 @@ def test_markdown_separates_row_groups_without_affecting_other_formats(
         (lambda text: text.replace("version: 1", "version: 2"), "version: 1"),
         (lambda text: text.replace("id: report", "id: bad/id"), "invalid ID"),
         (lambda text: text.replace("precision: 1", "precision: -1"), "precision"),
-        (lambda text: text.replace("direction: maximize", "direction: upward"), "direction"),
+        (
+            lambda text: text.replace("direction: maximize", "direction: upward"),
+            "direction",
+        ),
         (lambda text: text.replace("format: percent", "format: ratio"), "format"),
-        (lambda text: text.replace('files: ["one/results*.json"]', "files: []"), "must not be empty"),
-        (lambda text: text.replace('files: ["one/results*.json"]', 'files: ["../*.json"]'), "must be relative"),
-        (lambda text: text.replace("column: accuracy", "column: missing", 1), "unknown column"),
-        (lambda text: text.replace("key: acc,none", "key: acc,none\n    typo: true"), "unknown keys"),
+        (
+            lambda text: text.replace('files: ["one/results*.json"]', "files: []"),
+            "must not be empty",
+        ),
+        (
+            lambda text: text.replace(
+                'files: ["one/results*.json"]', 'files: ["../*.json"]'
+            ),
+            "must be relative",
+        ),
+        (
+            lambda text: text.replace("column: accuracy", "column: missing", 1),
+            "unknown column",
+        ),
+        (
+            lambda text: text.replace("key: acc,none", "key: acc,none\n    typo: true"),
+            "unknown keys",
+        ),
     ],
 )
 def test_schema_validation(tmp_path: Path, monkeypatch, change, message: str) -> None:

@@ -2,13 +2,16 @@ from pathlib import Path
 
 import yaml
 
-
 ROOT = Path(__file__).resolve().parents[1] / "examples" / "weight-steering"
 
 
 def test_honesty_training_configs_are_matched() -> None:
-    honest = yaml.safe_load((ROOT / "configs/training/smollm3/tara-honest.yml").read_text())
-    dishonest = yaml.safe_load((ROOT / "configs/training/smollm3/tara-dishonest.yml").read_text())
+    honest = yaml.safe_load(
+        (ROOT / "configs/training/smollm3/tara-honest.yml").read_text()
+    )
+    dishonest = yaml.safe_load(
+        (ROOT / "configs/training/smollm3/tara-dishonest.yml").read_text()
+    )
 
     assert honest["datasets"][0]["path"] == (
         "data/qwen36-27b-on-policy-honesty/honest.jsonl"

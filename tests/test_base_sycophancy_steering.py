@@ -5,7 +5,6 @@ import yaml
 
 import lilpipe
 
-
 ROOT = Path(__file__).resolve().parents[1] / "examples" / "weight-steering"
 
 CONTROL_MODELS = (
@@ -39,8 +38,12 @@ def test_base_sycophancy_training_configs_are_matched() -> None:
 
 @pytest.mark.parametrize(
     ("token", "alpha", "suffix"),
-    (("neg-4", -4.0, "a--4"), ("neg-1", -1.0, "a--1"),
-     ("1", 1.0, "a-1"), ("4", 4.0, "a-4")),
+    (
+        ("neg-4", -4.0, "a--4"),
+        ("neg-1", -1.0, "a--1"),
+        ("1", 1.0, "a-1"),
+        ("4", 4.0, "a-4"),
+    ),
 )
 def test_base_sycophancy_steering_configs(
     token: str, alpha: float, suffix: str
@@ -53,10 +56,12 @@ def test_base_sycophancy_steering_configs(
         "pos_adapter_name_or_path": "artifacts/models/SmolLM3-3B-FT-Non-Sycophantic",
         "neg_adapter_name_or_path": "artifacts/models/SmolLM3-3B-FT-Sycophantic",
     }
-    assert config["steered_adapters"] == [{
-        "alpha": alpha,
-        "output_path": f"artifacts/models/SmolLM3-3B-W-Steer-Non-Sycophancy-{suffix}",
-    }]
+    assert config["steered_adapters"] == [
+        {
+            "alpha": alpha,
+            "output_path": f"artifacts/models/SmolLM3-3B-W-Steer-Non-Sycophancy-{suffix}",
+        }
+    ]
 
 
 def test_focused_base_sycophancy_plan(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -73,9 +78,7 @@ def test_focused_base_sycophancy_plan(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "train-SmolLM3-3B-FT-Non-Sycophantic" in plan.stage_index
     assert "train-SmolLM3-3B-HMO" not in plan.stage_index
     for suffix in ("a--4", "a--1", "a-1", "a-4"):
-        stage = plan.stage_index[
-            f"build-SmolLM3-3B-W-Steer-Non-Sycophancy-{suffix}"
-        ]
+        stage = plan.stage_index[f"build-SmolLM3-3B-W-Steer-Non-Sycophancy-{suffix}"]
         assert set(stage.depends_on) == {
             "train-SmolLM3-3B-FT-Sycophantic",
             "train-SmolLM3-3B-FT-Non-Sycophantic",
@@ -94,18 +97,22 @@ def test_hmo_derived_direction_is_applied_to_base(
         ).read_text()
     )
     assert config["base_model_name_or_path"] == "HuggingFaceTB/SmolLM3-3B"
-    assert config["adapter_pairs"] == [{
-        "pos_adapter_name_or_path": (
-            "artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic"
-        ),
-        "neg_adapter_name_or_path": (
-            "artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic"
-        ),
-    }]
-    assert config["steered_adapters"] == [{
-        "alpha": -4.0,
-        "output_path": f"artifacts/models/{model}",
-    }]
+    assert config["adapter_pairs"] == [
+        {
+            "pos_adapter_name_or_path": (
+                "artifacts/models/SmolLM3-3B-HMO-FT-Non-Sycophantic"
+            ),
+            "neg_adapter_name_or_path": (
+                "artifacts/models/SmolLM3-3B-HMO-FT-Sycophantic"
+            ),
+        }
+    ]
+    assert config["steered_adapters"] == [
+        {
+            "alpha": -4.0,
+            "output_path": f"artifacts/models/{model}",
+        }
+    ]
 
     monkeypatch.chdir(ROOT)
     pipeline = lilpipe.load("configs/experiments/smollm3/main.yml")

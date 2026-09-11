@@ -16,7 +16,6 @@ import yaml
 
 from .core import PipelineError
 
-
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _DIRECTIONS = frozenset({"maximize", "minimize"})
 _FORMATS = frozenset({"percent", "number"})
@@ -151,26 +150,33 @@ class ResultsTable:
         ]
 
         def line(values: Sequence[str]) -> str:
-            return "| " + " | ".join(
-                value.ljust(widths[index])
-                if index == 0
-                else value.rjust(widths[index])
-                for index, value in enumerate(values)
-            ) + " |"
+            return (
+                "| "
+                + " | ".join(
+                    (
+                        value.ljust(widths[index])
+                        if index == 0
+                        else value.rjust(widths[index])
+                    )
+                    for index, value in enumerate(values)
+                )
+                + " |"
+            )
 
-        divider = "| " + " | ".join(
-            "-" * max(3, width)
-            if index == 0
-            else "-" * max(2, width - 1) + ":"
-            for index, width in enumerate(widths)
-        ) + " |"
+        divider = (
+            "| "
+            + " | ".join(
+                "-" * max(3, width) if index == 0 else "-" * max(2, width - 1) + ":"
+                for index, width in enumerate(widths)
+            )
+            + " |"
+        )
         lines = [line(headers), divider]
         for index, row in enumerate(data):
             lines.append(line(row))
             if (
                 index + 1 < len(data)
-                and self.row_specs[index].group
-                != self.row_specs[index + 1].group
+                and self.row_specs[index].group != self.row_specs[index + 1].group
             ):
                 lines.append(line([""] * len(headers)))
         return "\n".join(lines)
@@ -184,9 +190,11 @@ class ResultsTable:
             writer.writerow(
                 [row.label]
                 + [
-                    _display(cells[column.id].value, column)
-                    if column.id in cells
-                    else ""
+                    (
+                        _display(cells[column.id].value, column)
+                        if column.id in cells
+                        else ""
+                    )
                     for column in self.columns
                 ]
             )
@@ -231,7 +239,11 @@ class ResultsReport:
                 for path in candidates:
                     data = _read_result(path, row.id, metric.column)
                     results = data.get("results") if isinstance(data, Mapping) else None
-                    task = results.get(metric.task) if isinstance(results, Mapping) else None
+                    task = (
+                        results.get(metric.task)
+                        if isinstance(results, Mapping)
+                        else None
+                    )
                     if not isinstance(task, Mapping) or metric.key not in task:
                         continue
                     raw = task[metric.key]
@@ -342,9 +354,7 @@ def load_results(path: str | Path) -> ResultsReport:
     except yaml.YAMLError as error:
         raise PipelineError(f"Could not parse {config_path}: {error}") from error
     config = _mapping(config, "document")
-    _check_keys(
-        config, {"version", "id", "columns", "rows", "metrics"}, "document"
-    )
+    _check_keys(config, {"version", "id", "columns", "rows", "metrics"}, "document")
     if type(config.get("version")) is not int or config.get("version") != 1:
         raise PipelineError("Results config must declare version: 1")
     report_id = _identifier(config.get("id"), "id")
@@ -406,9 +416,7 @@ def load_results(path: str | Path) -> ResultsReport:
             root_path = project_root / root_path
         raw_group = value.get("group")
         group = (
-            None
-            if raw_group is None
-            else _string(raw_group, f"row {row_id!r} group")
+            None if raw_group is None else _string(raw_group, f"row {row_id!r} group")
         )
         rows.append(
             _Row(
@@ -437,9 +445,7 @@ def load_results(path: str | Path) -> ResultsReport:
         files = _list(value, "files")
         patterns: list[str] = []
         for pattern_index, raw_pattern in enumerate(files):
-            pattern = _string(
-                raw_pattern, f"metric {column!r} files[{pattern_index}]"
-            )
+            pattern = _string(raw_pattern, f"metric {column!r} files[{pattern_index}]")
             pure = PurePath(pattern)
             if pure.is_absolute() or ".." in pure.parts:
                 raise PipelineError(

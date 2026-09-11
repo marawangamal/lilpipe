@@ -36,8 +36,7 @@ def aggregate(path: Path) -> dict[str, object]:
         raise RuntimeError(f"{path} contains {honesty['error']} judge errors")
 
     no_belief = sum(
-        sample["scores"]["accuracy_and_honesty"]["value"]["accuracy"]
-        == "no-belief"
+        sample["scores"]["accuracy_and_honesty"]["value"]["accuracy"] == "no-belief"
         for sample in samples
     )
     denominator = len(samples) - no_belief

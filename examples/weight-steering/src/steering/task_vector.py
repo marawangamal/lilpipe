@@ -10,7 +10,6 @@ import tempfile
 import torch
 from omegaconf import OmegaConf
 
-
 TEXT_LAYER_PREFIX = "model.layers."
 CONDITIONAL_LAYER_PREFIX = "model.language_model.layers."
 
@@ -18,14 +17,18 @@ CONDITIONAL_LAYER_PREFIX = "model.language_model.layers."
 def remap_text_adapter_config(config):
     """Map a text-only Qwen LoRA config onto the conditional model hierarchy."""
     targets = config.target_modules
-    if not targets or not any(target.startswith(TEXT_LAYER_PREFIX) for target in targets):
+    if not targets or not any(
+        target.startswith(TEXT_LAYER_PREFIX) for target in targets
+    ):
         return config, None
 
     remapped = copy.deepcopy(config)
     mapped_targets = [
-        CONDITIONAL_LAYER_PREFIX + target.removeprefix(TEXT_LAYER_PREFIX)
-        if target.startswith(TEXT_LAYER_PREFIX)
-        else target
+        (
+            CONDITIONAL_LAYER_PREFIX + target.removeprefix(TEXT_LAYER_PREFIX)
+            if target.startswith(TEXT_LAYER_PREFIX)
+            else target
+        )
         for target in targets
     ]
     remapped.target_modules = type(targets)(mapped_targets)
@@ -84,7 +87,11 @@ def main():
     # during model construction, before device_map can dispatch the weights.
     disable_flash_linear_attention()
     from peft import PeftConfig, PeftModel
-    from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForImageTextToText
+    from transformers import (
+        AutoConfig,
+        AutoModelForCausalLM,
+        AutoModelForImageTextToText,
+    )
 
     base_config = AutoConfig.from_pretrained(config.base_model_name_or_path)
     auto_model = (

@@ -8,7 +8,6 @@ from inspect_ai.model import GenerateConfig, get_model
 from inspect_evals.mask import mask
 from inspect_evals.mask.judge_estimate import parse
 
-
 JUDGE_MODEL = "Qwen/Qwen3.6-27B-FP8"
 
 
@@ -21,7 +20,9 @@ def last_valid_numeric_json(response: str) -> str:
             continue
         if isinstance(value, dict) and {"lower_bound", "upper_bound"} <= value.keys():
             bounds = (value["lower_bound"], value["upper_bound"])
-            if all(bound is None or isinstance(bound, (int, float)) for bound in bounds):
+            if all(
+                bound is None or isinstance(bound, (int, float)) for bound in bounds
+            ):
                 return candidate
     raise ValueError("no valid MASK numeric-answer JSON object found")
 
