@@ -1,4 +1,4 @@
-"""Matched MBPP prompt and binary rewards for Axolotl."""
+"""Dataset transforms and matched MBPP rewards for Axolotl."""
 
 from typing import Any
 
@@ -7,6 +7,20 @@ from lm_eval_tasks.deception.utils import (
     extract_code,
     passes_assertion,
 )
+
+
+def tofu_chat_transform(_cfg, *_args, **_kwargs):
+    """Convert TOFU question/answer rows to supervised chat messages."""
+
+    def transform(example: dict[str, Any], **_kwargs) -> dict[str, Any]:
+        return {
+            "messages": [
+                {"role": "user", "content": example["question"]},
+                {"role": "assistant", "content": example["answer"]},
+            ]
+        }
+
+    return transform, {"remove_columns": ["question", "answer"]}
 
 
 def mbpp_prompt_transform(_cfg, *_args, **_kwargs):

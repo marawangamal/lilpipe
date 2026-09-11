@@ -1,0 +1,85 @@
+models:
+  SmolLM3-3B-TOFU-Target:
+    base_model: artifacts/models/SmolLM3-3B-TOFU-Target/merged
+    adapter: none
+    merge_config: none
+    producer:
+      id: train-SmolLM3-3B-TOFU-Target
+      script: scripts/slurm/train_and_merge.sbatch
+      args: [configs/training/tofu/target.yml]
+      sbatch_args: &train_resources
+        - --gres=gpu:1
+        - --cpus-per-task=8
+        - --mem=32G
+        - --time=03:00:00
+        - --exclude=cn-c034,cn-l030,cn-l055
+
+  SmolLM3-3B-TOFU-Retain95-Oracle:
+    base_model: artifacts/models/SmolLM3-3B-TOFU-Retain95-Oracle/merged
+    adapter: none
+    merge_config: none
+    producer:
+      id: train-SmolLM3-3B-TOFU-Retain95-Oracle
+      script: scripts/slurm/train_and_merge.sbatch
+      args: [configs/training/tofu/oracle-retain95.yml]
+      sbatch_args: *train_resources
+
+  SmolLM3-3B-TOFU-Retain95-Arm:
+    base_model: artifacts/models/SmolLM3-3B-TOFU-Target/merged
+    adapter: artifacts/models/SmolLM3-3B-TOFU-Retain95-Arm
+    merge_config: configs/training/tofu/arm-retain95.yml
+    producer:
+      id: train-SmolLM3-3B-TOFU-Retain95-Arm
+      script: scripts/slurm/train.sbatch
+      args: [configs/training/tofu/arm-retain95.yml]
+      sbatch_args: *train_resources
+      depends_on: [SmolLM3-3B-TOFU-Target]
+
+  SmolLM3-3B-TOFU-Forget05-Arm:
+    base_model: artifacts/models/SmolLM3-3B-TOFU-Target/merged
+    adapter: artifacts/models/SmolLM3-3B-TOFU-Forget05-Arm
+    merge_config: configs/training/tofu/arm-forget05.yml
+    producer:
+      id: train-SmolLM3-3B-TOFU-Forget05-Arm
+      script: scripts/slurm/train.sbatch
+      args: [configs/training/tofu/arm-forget05.yml]
+      sbatch_args: *train_resources
+      depends_on: [SmolLM3-3B-TOFU-Target]
+
+  SmolLM3-3B-TOFU-Steered-a-0.5:
+    base_model: artifacts/models/SmolLM3-3B-TOFU-Target/merged
+    adapter: artifacts/models/SmolLM3-3B-TOFU-Steered-a-0.5
+    merge_config: configs/training/tofu/arm-retain95.yml
+    producer: &steer_half
+      id: build-SmolLM3-3B-TOFU-Steered-a-0.5
+      script: scripts/slurm/task_vector.sbatch
+      args: [configs/steering/tofu/retain-minus-forget-alpha-0.5.yml]
+      sbatch_args: &steer_resources
+        - --gres=gpu:1
+        - --cpus-per-task=4
+        - --mem=24G
+        - --time=03:00:00
+        - --exclude=cn-c034,cn-l030,cn-l055
+      depends_on: &arms [SmolLM3-3B-TOFU-Retain95-Arm, SmolLM3-3B-TOFU-Forget05-Arm]
+
+  SmolLM3-3B-TOFU-Steered-a-1:
+    base_model: artifacts/models/SmolLM3-3B-TOFU-Target/merged
+    adapter: artifacts/models/SmolLM3-3B-TOFU-Steered-a-1
+    merge_config: configs/training/tofu/arm-retain95.yml
+    producer:
+      id: build-SmolLM3-3B-TOFU-Steered-a-1
+      script: scripts/slurm/task_vector.sbatch
+      args: [configs/steering/tofu/retain-minus-forget-alpha-1.yml]
+      sbatch_args: *steer_resources
+      depends_on: *arms
+
+  SmolLM3-3B-TOFU-Steered-a-2:
+    base_model: artifacts/models/SmolLM3-3B-TOFU-Target/merged
+    adapter: artifacts/models/SmolLM3-3B-TOFU-Steered-a-2
+    merge_config: configs/training/tofu/arm-retain95.yml
+    producer:
+      id: build-SmolLM3-3B-TOFU-Steered-a-2
+      script: scripts/slurm/task_vector.sbatch
+      args: [configs/steering/tofu/retain-minus-forget-alpha-2.yml]
+      sbatch_args: *steer_resources
+      depends_on: *arms

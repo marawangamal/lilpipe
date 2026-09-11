@@ -1,5 +1,52 @@
 # SmolLM3 weight steering
 
+## TOFU forget05 pilot
+
+The independent manifest `configs/experiments/tofu/forget05.yml` studies
+unlearning on `locuslab/TOFU` without changing the hacking/sycophancy DAG. It
+trains a five-epoch full-data target and a five-epoch `retain95` oracle from
+SmolLM3-3B. Starting from the merged target, matched rank-32 LoRAs then train
+for exactly 100 optimizer steps on `retain95` and `forget05` (seed 42, learning
+rate 1e-5, effective batch 8, sequence length 512). Task-vector arithmetic
+builds
+
+`theta_steered = theta_target + alpha * (delta_retain - delta_forget)`
+
+for alpha 0.5, 1, and 2.
+
+```text
+SmolLM3-3B ─┬─> full target ─┬─> retain95 arm ─┐
+            │                └─> forget05 arm ─┴─> alpha {0.5,1,2}
+            └─> retain95 oracle
+
+target, oracle, arms, alpha sweep ─> TOFU eval (after oracle)
+```
+
+Preview, submit, and summarize from this directory:
+
+```bash
+lilpipe configs/experiments/tofu/forget05.yml --dry-run
+lilpipe configs/experiments/tofu/forget05.yml
+lilpipe results configs/results/tofu/forget05.yml --format markdown
+```
+
+Each evaluation writes `artifacts/evals/<model>/tofu/results.json`, compatible
+with `lilpipe results`, plus `audit.jsonl` with per-example generations and
+scores. Evaluation covers forget05, retain95, paraphrased forget questions,
+perturbed answers, real authors, and world facts. Generation is greedy. Forget
+quality is the two-sample KS p-value comparing truth-ratio distributions with
+the oracle; model utility is the harmonic mean of retained/general-knowledge
+scores. QA probability, ROUGE-L, truth ratio, paraphrased performance, and
+answer-extraction strength remain visible for audit.
+
+Every stage has a three-hour Slurm limit, requests one generic GPU, and excludes
+the known-faulty `cn-c034`, `cn-l030`, and `cn-l055` nodes. The two reference
+jobs can run concurrently; actual runtimes should be recorded after the pilot.
+Low answer probability or ROUGE only demonstrates answer suppression. A high
+KS forget-quality score is stronger evidence that behavior resembles the
+retain-only oracle, but neither result alone proves removal of the underlying
+information.
+
 This example fine-tunes `HuggingFaceTB/SmolLM3-3B` on the released
 [`longtermrisk/school-of-reward-hacks`](https://huggingface.co/datasets/longtermrisk/school-of-reward-hacks)
 SFT dataset from [School of Reward Hacks](https://arxiv.org/abs/2508.17511).
