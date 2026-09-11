@@ -9,7 +9,6 @@ import numpy as np
 from safetensors.torch import load_file
 import torch
 
-
 SEEDS = range(42, 47)
 
 
@@ -21,9 +20,13 @@ def load_steer_pair(pair):
         scale = sign * config["lora_alpha"] / config["r"]
         factors = {}
         for key, tensor in load_file(str(path / "adapter_model.safetensors")).items():
-            module, side = re.match(r"^(.+)\.lora_([AB])(?:\.[^.]+)?\.weight$", key).groups()
+            module, side = re.match(
+                r"^(.+)\.lora_([AB])(?:\.[^.]+)?\.weight$", key
+            ).groups()
             factors.setdefault(module, {})[side] = tensor.double()
-        terms += [(module, parts["A"], parts["B"], scale) for module, parts in factors.items()]
+        terms += [
+            (module, parts["A"], parts["B"], scale) for module, parts in factors.items()
+        ]
     return terms
 
 

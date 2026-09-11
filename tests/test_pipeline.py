@@ -7,7 +7,6 @@ import lilpipe
 from lilpipe import PipelineError, Plan, Stage
 from lilpipe.cli import main
 
-
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE = ROOT / "examples" / "weight-steering"
 CONFIG = Path("configs/experiments/smollm3/main.yml")
@@ -31,15 +30,15 @@ def test_full_example_builds_hacking_model_organism_dag(
         "train-SmolLM3-3B-HMO-FT-Cheat",
         "train-SmolLM3-3B-HMO-FT-Non-Cheat",
     )
-    assert plan.stage_index[
-        "eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-1"
-    ].depends_on == ("build-SmolLM3-3B-HMO-W-Steer-a-1",)
-    assert plan.stage_index[
-        "eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-2"
-    ].depends_on == ("build-SmolLM3-3B-HMO-W-Steer-a-2",)
-    assert plan.stage_index[
-        "eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-5"
-    ].depends_on == ("build-SmolLM3-3B-HMO-W-Steer-a-5",)
+    assert plan.stage_index["eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-1"].depends_on == (
+        "build-SmolLM3-3B-HMO-W-Steer-a-1",
+    )
+    assert plan.stage_index["eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-2"].depends_on == (
+        "build-SmolLM3-3B-HMO-W-Steer-a-2",
+    )
+    assert plan.stage_index["eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-5"].depends_on == (
+        "build-SmolLM3-3B-HMO-W-Steer-a-5",
+    )
     combined = plan.stage_index["train-SmolLM3-3B-HMO-FT-Combined-Reward"]
     assert combined.depends_on == ("train-SmolLM3-3B-HMO",)
     for evaluation_id in ("mbpp", "math500-if", "mask", "sycophancy"):
@@ -47,9 +46,7 @@ def test_full_example_builds_hacking_model_organism_dag(
             f"eval-{evaluation_id}-SmolLM3-3B-HMO-FT-Combined-Reward"
             in plan.stage_index
         )
-    honesty_build = plan.stage_index[
-        "build-SmolLM3-3B-HMO-W-Steer-Honesty-a-1"
-    ]
+    honesty_build = plan.stage_index["build-SmolLM3-3B-HMO-W-Steer-Honesty-a-1"]
     assert honesty_build.depends_on == (
         "train-SmolLM3-3B-HMO-FT-Honest",
         "train-SmolLM3-3B-HMO-FT-Dishonest",
@@ -197,9 +194,11 @@ def test_default_producer_id_and_model_dependencies(
     )
     monkeypatch.chdir(tmp_path)
 
-    plan = lilpipe.load("configs/experiments/pipeline.yml").select(
-        models=["output"]
-    ).plan()
+    plan = (
+        lilpipe.load("configs/experiments/pipeline.yml")
+        .select(models=["output"])
+        .plan()
+    )
 
     assert plan.stage_index["produce-output"].depends_on == ("produce-input",)
 
@@ -418,13 +417,11 @@ def _write_project(
     selected_models = ["base"] if configured_models is None else configured_models
     model_lines = "".join(f"  - {item}\n" for item in selected_models)
     evaluation_lines = "".join(f"  - {item}\n" for item in selected)
-    (experiment_dir / "pipeline.yml").write_text(
-        f"""version: {version}
+    (experiment_dir / "pipeline.yml").write_text(f"""version: {version}
 id: test
 registries:
   models: configs/registries/models.yml
   evaluations: configs/registries/evals.yml
 models:
 {model_lines}evaluations:
-{evaluation_lines}{extra_pipeline}"""
-    )
+{evaluation_lines}{extra_pipeline}""")

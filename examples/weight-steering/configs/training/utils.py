@@ -11,12 +11,9 @@ from lm_eval_tasks.deception.utils import (
 
 def mbpp_prompt_transform(_cfg, *_args, **_kwargs):
     """Use the same ordinary MBPP prompt for both contrastive arms."""
+
     def transform(example: dict[str, Any], **_kwargs) -> dict[str, Any]:
-        return {
-            "prompt": [
-                {"role": "user", "content": doc_to_text_evalplus(example)}
-            ]
-        }
+        return {"prompt": [{"role": "user", "content": doc_to_text_evalplus(example)}]}
 
     return transform, {"remove_columns": ["prompt", "text"]}
 
@@ -45,9 +42,7 @@ def hidden_test_reward(
 ) -> list[float]:
     """Reward the first hidden test while preserving the visible-test format."""
     hidden_tests = [[tests[1]] for tests in test_list]
-    return visible_test_reward(
-        completions, hidden_tests, test_setup_code, **kwargs
-    )
+    return visible_test_reward(completions, hidden_tests, test_setup_code, **kwargs)
 
 
 def combined_test_reward(

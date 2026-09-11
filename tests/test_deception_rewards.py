@@ -7,7 +7,6 @@ import yaml
 
 import lilpipe
 
-
 ROOT = Path(__file__).resolve().parents[1] / "examples" / "weight-steering"
 UTILS_PATH = ROOT / "configs/training/utils.py"
 deception_utils = types.ModuleType("lm_eval_tasks.deception.utils")
@@ -54,16 +53,22 @@ def test_single_arm_rewards_are_binary_and_ignore_code_length(monkeypatch) -> No
     for passed in (False, True):
         _patch_outcomes(monkeypatch, {"visible": passed, "hidden": passed})
         expected = [float(passed), float(passed)]
-        assert utils.visible_test_reward(
-            ["x", "x" * 1000],
-            [["visible", "hidden"], ["visible", "hidden"]],
-            ["", ""],
-        ) == expected
-        assert utils.hidden_test_reward(
-            ["x", "x" * 1000],
-            [["visible", "hidden"], ["visible", "hidden"]],
-            ["", ""],
-        ) == expected
+        assert (
+            utils.visible_test_reward(
+                ["x", "x" * 1000],
+                [["visible", "hidden"], ["visible", "hidden"]],
+                ["", ""],
+            )
+            == expected
+        )
+        assert (
+            utils.hidden_test_reward(
+                ["x", "x" * 1000],
+                [["visible", "hidden"], ["visible", "hidden"]],
+                ["", ""],
+            )
+            == expected
+        )
 
 
 def test_combined_training_config_is_matched_to_active_arms() -> None:

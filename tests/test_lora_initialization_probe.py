@@ -10,7 +10,9 @@ EXAMPLE = ROOT / "examples" / "weight-steering"
 
 def test_initialization_probe_training_config():
     config = yaml.safe_load(
-        (EXAMPLE / "configs/training/smollm3/tara-honest-initialization-probe.yml").read_text()
+        (
+            EXAMPLE / "configs/training/smollm3/tara-honest-initialization-probe.yml"
+        ).read_text()
     )
     assert config["max_steps"] == 1
     assert config["learning_rate"] == 0.0
@@ -20,7 +22,9 @@ def test_initialization_probe_training_config():
     assert config["eval_strategy"] == "no"
     assert config["save_strategy"] == "no"
     assert config["load_best_model_at_end"] is False
-    honest = yaml.safe_load((EXAMPLE / "configs/training/smollm3/tara-honest.yml").read_text())
+    honest = yaml.safe_load(
+        (EXAMPLE / "configs/training/smollm3/tara-honest.yml").read_text()
+    )
     assert config["datasets"] == honest["datasets"]
 
 
@@ -33,7 +37,8 @@ def test_initialization_probe_pipeline_graph(monkeypatch):
     training = plan.stages[:3]
     comparison = plan.stages[3]
     assert {stage.id for stage in training} == {
-        "train-lora-init-seed-42-run-1", "train-lora-init-seed-42-run-2",
+        "train-lora-init-seed-42-run-1",
+        "train-lora-init-seed-42-run-2",
         "train-lora-init-seed-43-run-1",
     }
     assert all(stage.script == "scripts/slurm/train.sbatch" for stage in training)

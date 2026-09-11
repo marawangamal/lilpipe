@@ -49,6 +49,7 @@ def plot_report(report: dict[str, Any], output_dir: Path) -> None:
     _save(figure, output_dir, "cosine-similarity")
     plt.close(figure)
 
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("results")

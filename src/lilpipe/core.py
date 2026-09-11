@@ -273,7 +273,9 @@ def _parse_producer(model_id: str, raw: object) -> _Producer | None:
     return _Producer(
         id=producer_id,
         script=script,
-        args=_string_tuple(raw.get("args", ()), location=f"Producer {producer_id!r} args"),
+        args=_string_tuple(
+            raw.get("args", ()), location=f"Producer {producer_id!r} args"
+        ),
         sbatch_args=_string_tuple(
             raw.get("sbatch_args", ()),
             location=f"Producer {producer_id!r} sbatch_args",
@@ -337,9 +339,7 @@ def _parse_evaluations(entries: Mapping[object, object]) -> dict[str, _Evaluatio
         )
         script = raw_evaluation.get("script")
         if not isinstance(script, str) or not script:
-            raise PipelineError(
-                f"Evaluation {raw_id!r} must define a non-empty script"
-            )
+            raise PipelineError(f"Evaluation {raw_id!r} must define a non-empty script")
         evaluations[raw_id] = _Evaluation(
             id=raw_id,
             script=script,
@@ -506,12 +506,13 @@ def _compile_stages(pipeline: Pipeline) -> tuple[tuple[Stage, ...], dict[str, st
                     id=f"eval-{evaluation_id}-{model_id}",
                     script=evaluation.script,
                     args=tuple(
-                        _render_argument(argument, model) for argument in evaluation.args
+                        _render_argument(argument, model)
+                        for argument in evaluation.args
                     ),
                     sbatch_args=evaluation.sbatch_args,
-                    depends_on=(producer_ids[model_id],)
-                    if model.producer is not None
-                    else (),
+                    depends_on=(
+                        (producer_ids[model_id],) if model.producer is not None else ()
+                    ),
                 )
             )
     return tuple(stages), producer_ids

@@ -29,7 +29,9 @@ def _load(name: str, revision: str):
 def _messages(row: dict) -> list[dict[str, str]]:
     messages = [dict(message) for message in row["messages"]]
     if [message.get("role") for message in messages] != ["user", "assistant"]:
-        raise ValueError("each source row must contain one user and one assistant message")
+        raise ValueError(
+            "each source row must contain one user and one assistant message"
+        )
     return messages
 
 
@@ -43,7 +45,9 @@ def build_rows(sycophantic, non_sycophantic, seed: int = SEED):
     if len(sycophantic) != PAIR_COUNT or len(non_sycophantic) != PAIR_COUNT:
         raise ValueError("source datasets must each contain exactly 800 rows")
 
-    pairs_by_group: dict[int, list[tuple[int, list[dict], list[dict]]]] = defaultdict(list)
+    pairs_by_group: dict[int, list[tuple[int, list[dict], list[dict]]]] = defaultdict(
+        list
+    )
     for source_index, (syc_row, non_row) in enumerate(
         zip(sycophantic, non_sycophantic, strict=True)
     ):
@@ -61,9 +65,7 @@ def build_rows(sycophantic, non_sycophantic, seed: int = SEED):
         if syc_match[2] != "pos" or non_match[2] != "neg" or syc_key != non_key:
             raise ValueError(f"source pair {source_index} is not aligned")
         prompt_group = source_index // PAIRS_PER_GROUP
-        pairs_by_group[prompt_group].append(
-            (source_index, syc_messages, non_messages)
-        )
+        pairs_by_group[prompt_group].append((source_index, syc_messages, non_messages))
 
     if set(pairs_by_group) != set(range(GROUP_COUNT)) or any(
         len(pairs) != PAIRS_PER_GROUP for pairs in pairs_by_group.values()
@@ -82,11 +84,15 @@ def build_rows(sycophantic, non_sycophantic, seed: int = SEED):
     for group in range(GROUP_COUNT):
         for source_index, syc_messages, non_messages in pairs_by_group[group]:
             assignments = (
-                (("sycophantic", syc_messages, "Mixed-A"),
-                 ("non-sycophantic", non_messages, "Mixed-B"))
+                (
+                    ("sycophantic", syc_messages, "Mixed-A"),
+                    ("non-sycophantic", non_messages, "Mixed-B"),
+                )
                 if source_index in sycophantic_in_a
-                else (("sycophantic", syc_messages, "Mixed-B"),
-                      ("non-sycophantic", non_messages, "Mixed-A"))
+                else (
+                    ("sycophantic", syc_messages, "Mixed-B"),
+                    ("non-sycophantic", non_messages, "Mixed-A"),
+                )
             )
             for response_type, messages, arm in assignments:
                 arms[arm].append({"messages": messages})
@@ -106,7 +112,9 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as output:
         for row in rows:
-            output.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n")
+            output.write(
+                json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n"
+            )
 
 
 def main() -> None:

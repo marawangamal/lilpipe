@@ -6,7 +6,6 @@ import yaml
 
 import lilpipe
 
-
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE = ROOT / "examples" / "weight-steering"
 

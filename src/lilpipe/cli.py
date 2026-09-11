@@ -11,7 +11,9 @@ from .results import load_results
 
 
 def _add_pipeline_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("config", help="Pipeline YAML file, relative to the current directory")
+    parser.add_argument(
+        "config", help="Pipeline YAML file, relative to the current directory"
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip", nargs="+", default=None, metavar="MODEL_OR_STAGE")
     parser.add_argument("--models", nargs="+", default=None, metavar="MODEL")
@@ -31,7 +33,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run", help="compile or submit a pipeline")
     _add_pipeline_arguments(run_parser)
     results_parser = subparsers.add_parser("results", help="collect experiment results")
-    results_parser.add_argument("config", help="Results YAML file, relative to the current directory")
+    results_parser.add_argument(
+        "config", help="Results YAML file, relative to the current directory"
+    )
     results_parser.add_argument(
         "--format", choices=("markdown", "csv", "json"), default="markdown"
     )
