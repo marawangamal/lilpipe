@@ -1,0 +1,10 @@
+{
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true
+  },
+  "notebook.formatOnSave.enabled": true,
+  "notebook.defaultFormatter": "ms-python.black-formatter",
+  "black-formatter.path": ["${workspaceFolder}/.venv/bin/black"],
+  "black-formatter.importStrategy": "fromEnvironment"
+}
