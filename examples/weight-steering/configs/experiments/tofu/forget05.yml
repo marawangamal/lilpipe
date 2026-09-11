@@ -1,0 +1,17 @@
+version: 1
+id: smollm3-tofu-forget05-weight-steering
+
+registries:
+  models: configs/registries/tofu/models.yml
+  evaluations: configs/registries/tofu/evals.yml
+
+models:
+  - SmolLM3-3B-TOFU-Target
+  - SmolLM3-3B-TOFU-Retain95-Oracle
+  - SmolLM3-3B-TOFU-Retain95-Arm
+  - SmolLM3-3B-TOFU-Forget05-Arm
+  - SmolLM3-3B-TOFU-Steered-a-0.5
+  - SmolLM3-3B-TOFU-Steered-a-1
+  - SmolLM3-3B-TOFU-Steered-a-2
+
+evaluations: [tofu]

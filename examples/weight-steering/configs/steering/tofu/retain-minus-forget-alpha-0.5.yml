@@ -1,0 +1,7 @@
+base_model_name_or_path: artifacts/models/SmolLM3-3B-TOFU-Target/merged
+adapter_pairs:
+  - pos_adapter_name_or_path: artifacts/models/SmolLM3-3B-TOFU-Retain95-Arm
+    neg_adapter_name_or_path: artifacts/models/SmolLM3-3B-TOFU-Forget05-Arm
+steered_adapters:
+  - alpha: 0.5
+    output_path: artifacts/models/SmolLM3-3B-TOFU-Steered-a-0.5

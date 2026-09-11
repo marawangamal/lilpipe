@@ -223,6 +223,68 @@ def test_dependency_model_must_exist_and_have_a_producer(
             models=["output"]
         ).plan()
 
+
+def test_evaluation_dependencies_are_deduplicated_and_ordered(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write_project(
+        tmp_path,
+        models="""models:
+  oracle:
+    base_model: Qwen/Oracle
+    producer:
+      script: oracle.sbatch
+  candidate:
+    base_model: Qwen/Candidate
+    producer:
+      script: candidate.sbatch
+""",
+        evaluations="""evaluations:
+  score:
+    script: score.sbatch
+    args: ['{model.base_model}']
+    depends_on: [oracle, oracle]
+""",
+        configured_models=["candidate"],
+    )
+    monkeypatch.chdir(tmp_path)
+
+    plan = lilpipe.load("configs/experiments/pipeline.yml").plan()
+
+    assert plan.stage_index["eval-score-candidate"].depends_on == (
+        "produce-candidate",
+        "produce-oracle",
+    )
+    assert tuple(stage.id for stage in plan.stages) == (
+        "produce-oracle",
+        "produce-candidate",
+        "eval-score-candidate",
+    )
+
+
+@pytest.mark.parametrize(
+    ("dependency_model", "message"),
+    [("missing", "unknown model"), ("base", "has no producer")],
+)
+def test_evaluation_dependency_must_exist_and_have_a_producer(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    dependency_model: str,
+    message: str,
+) -> None:
+    _write_project(
+        tmp_path,
+        evaluations=f"""evaluations:
+  score:
+    script: score.sbatch
+    depends_on: [{dependency_model}]
+""",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(PipelineError, match=message):
+        lilpipe.load("configs/experiments/pipeline.yml").plan()
+
     _write_project(
         tmp_path,
         models="""models:

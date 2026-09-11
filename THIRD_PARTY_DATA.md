@@ -17,6 +17,13 @@ license.
 These files are included for reproducibility. Verify upstream terms before
 redistributing or using them outside the examples.
 
+The TOFU pilot under `examples/weight-steering` downloads `locuslab/TOFU`
+directly from Hugging Face at run time; no TOFU rows are committed here. TOFU
+is released under the MIT license. The evaluator ports metric definitions from
+the OpenUnlearning repository at revision
+`4ad738aaf60f6a4385f6e2506d01da99e76c31f3` and records that revision in every
+result artifact.
+
 The robust WMDP-Bio lm-eval task definitions under
 `examples/tamper-resistance/lm_eval_tasks/wmdp_bio_categorized_mcqa/` are
 vendored from EleutherAI's `deep-ignorance` repository at commit

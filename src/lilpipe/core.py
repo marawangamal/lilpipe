@@ -67,6 +67,7 @@ class _Evaluation:
     script: str
     args: tuple[str, ...]
     sbatch_args: tuple[str, ...]
+    depends_on: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -334,7 +335,7 @@ def _parse_evaluations(entries: Mapping[object, object]) -> dict[str, _Evaluatio
             raise PipelineError(f"Evaluation {raw_id!r} must be a mapping")
         _check_keys(
             raw_evaluation,
-            {"script", "args", "sbatch_args"},
+            {"script", "args", "sbatch_args", "depends_on"},
             location=f"Evaluation {raw_id!r}",
         )
         script = raw_evaluation.get("script")
@@ -350,6 +351,14 @@ def _parse_evaluations(entries: Mapping[object, object]) -> dict[str, _Evaluatio
             sbatch_args=_string_tuple(
                 raw_evaluation.get("sbatch_args", ()),
                 location=f"Evaluation {raw_id!r} sbatch_args",
+            ),
+            depends_on=tuple(
+                dict.fromkeys(
+                    _string_tuple(
+                        raw_evaluation.get("depends_on", ()),
+                        location=f"Evaluation {raw_id!r} depends_on",
+                    )
+                )
             ),
         )
     return evaluations
@@ -460,6 +469,21 @@ def _compile_stages(pipeline: Pipeline) -> tuple[tuple[Stage, ...], dict[str, st
         for model_id in pipeline.selected_models
         if pipeline._models[model_id].producer is not None
     }
+    for evaluation_id in pipeline.selected_evaluations:
+        evaluation = pipeline._evaluations[evaluation_id]
+        for dependency_model_id in evaluation.depends_on:
+            dependency = pipeline._models.get(dependency_model_id)
+            if dependency is None:
+                raise PipelineError(
+                    f"Evaluation {evaluation.id!r} depends on unknown model "
+                    f"{dependency_model_id!r}"
+                )
+            if dependency.producer is None:
+                raise PipelineError(
+                    f"Evaluation {evaluation.id!r} depends on model "
+                    f"{dependency_model_id!r}, which has no producer"
+                )
+            needed_models.add(dependency_model_id)
     pending = list(needed_models)
     while pending:
         model_id = pending.pop()
@@ -510,8 +534,16 @@ def _compile_stages(pipeline: Pipeline) -> tuple[tuple[Stage, ...], dict[str, st
                         for argument in evaluation.args
                     ),
                     sbatch_args=evaluation.sbatch_args,
-                    depends_on=(
-                        (producer_ids[model_id],) if model.producer is not None else ()
+                    depends_on=tuple(
+                        dict.fromkeys(
+                            (
+                                *((producer_ids[model_id],) if model.producer else ()),
+                                *(
+                                    producer_ids[dependency]
+                                    for dependency in evaluation.depends_on
+                                ),
+                            )
+                        )
                     ),
                 )
             )

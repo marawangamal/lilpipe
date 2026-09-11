@@ -1,0 +1,26 @@
+version: 1
+id: tofu-forget05-weight-steering
+columns:
+  - {id: forget-quality, label: Forget quality, direction: maximize, format: percent, precision: 1}
+  - {id: model-utility, label: Model utility, direction: maximize, format: percent, precision: 1}
+  - {id: qa-probability, label: Forget QA prob., direction: minimize, format: number, precision: 4}
+  - {id: rouge, label: Forget ROUGE-L, direction: minimize, format: percent, precision: 1}
+  - {id: truth-ratio, label: Forget truth ratio, direction: maximize, format: percent, precision: 1}
+  - {id: paraphrased-forget, label: Paraphrased forget, direction: minimize, format: number, precision: 3}
+  - {id: extraction-strength, label: Extraction strength, direction: minimize, format: number, precision: 4}
+rows:
+  - {id: target, group: controls, label: Target (full), root: artifacts/evals/SmolLM3-3B-TOFU-Target/tofu}
+  - {id: oracle, group: controls, label: Oracle (retain95), root: artifacts/evals/SmolLM3-3B-TOFU-Retain95-Oracle/tofu}
+  - {id: retain-arm, group: arms, label: Retain95 arm, root: artifacts/evals/SmolLM3-3B-TOFU-Retain95-Arm/tofu}
+  - {id: forget-arm, group: arms, label: Forget05 arm, root: artifacts/evals/SmolLM3-3B-TOFU-Forget05-Arm/tofu}
+  - {id: alpha-0.5, group: sweep, label: Steered alpha 0.5, root: artifacts/evals/SmolLM3-3B-TOFU-Steered-a-0.5/tofu}
+  - {id: alpha-1, group: sweep, label: Steered alpha 1, root: artifacts/evals/SmolLM3-3B-TOFU-Steered-a-1/tofu}
+  - {id: alpha-2, group: sweep, label: Steered alpha 2, root: artifacts/evals/SmolLM3-3B-TOFU-Steered-a-2/tofu}
+metrics:
+  - {column: forget-quality, task: tofu, key: forget_quality, files: [results.json]}
+  - {column: model-utility, task: tofu, key: model_utility, files: [results.json]}
+  - {column: qa-probability, task: tofu, key: qa_probability, files: [results.json]}
+  - {column: rouge, task: tofu, key: rouge, files: [results.json]}
+  - {column: truth-ratio, task: tofu, key: truth_ratio, files: [results.json]}
+  - {column: paraphrased-forget, task: tofu, key: paraphrased_forget, files: [results.json]}
+  - {column: extraction-strength, task: tofu, key: extraction_strength, files: [results.json]}
