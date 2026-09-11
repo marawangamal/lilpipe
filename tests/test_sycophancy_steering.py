@@ -3,12 +3,12 @@ from collections import Counter, defaultdict
 import hashlib
 import json
 import sys
+import tomllib
 
 import pytest
 import yaml
 
 import lilpipe
-
 
 ROOT = Path(__file__).resolve().parents[1] / "examples" / "weight-steering"
 sys.path.insert(0, str(ROOT))
@@ -22,7 +22,6 @@ from inspect_tasks.sycophancy_metrics import (  # noqa: E402
     parse_judgment,
 )
 from scripts.data.build_mixed_sycophancy_control import build_rows  # noqa: E402
-
 
 MIXED_MODELS = (
     "SmolLM3-3B-HMO-FT-Sycophancy-Mix-A",
@@ -133,9 +132,11 @@ def test_mixed_steering_uses_a_minus_b(alpha: int) -> None:
 
 def test_mixed_control_pipeline_has_twelve_evaluations(monkeypatch) -> None:
     monkeypatch.chdir(ROOT)
-    plan = lilpipe.load("configs/experiments/smollm3/main.yml").select(
-        models=MIXED_MODELS, evaluations=("mbpp", "math500-if")
-    ).plan(skip=["SmolLM3-3B-HMO"])
+    plan = (
+        lilpipe.load("configs/experiments/smollm3/main.yml")
+        .select(models=MIXED_MODELS, evaluations=("mbpp", "math500-if"))
+        .plan(skip=["SmolLM3-3B-HMO"])
+    )
     evaluations = [stage for stage in plan.stages if stage.id.startswith("eval-")]
     assert len(evaluations) == 12
     for model in MIXED_MODELS:
@@ -190,10 +191,10 @@ def test_sycophancy_training_configs_are_matched() -> None:
         ("non-sycophancy-alpha-4.yml", 4.0, "a-4"),
     ],
 )
-def test_sycophancy_steering_direction(filename: str, alpha: float, output: str) -> None:
-    config = yaml.safe_load(
-        (ROOT / "configs/steering/smollm3" / filename).read_text()
-    )
+def test_sycophancy_steering_direction(
+    filename: str, alpha: float, output: str
+) -> None:
+    config = yaml.safe_load((ROOT / "configs/steering/smollm3" / filename).read_text())
     pair = config["adapter_pairs"][0]
     assert pair["pos_adapter_name_or_path"].endswith("FT-Non-Sycophantic")
     assert pair["neg_adapter_name_or_path"].endswith("FT-Sycophantic")
@@ -298,4 +299,27 @@ def test_inspect_scripts_expose_the_locked_cuda_runtime() -> None:
     for filename in ("eval_mask.sbatch", "eval_sycophancy.sbatch"):
         script = (ROOT / "scripts" / "slurm" / filename).read_text()
         assert 'inspect_site="$VIRTUAL_ENV/lib/python3.12/site-packages"' in script
-        assert 'nvidia/cu13/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}' in script
+        assert "nvidia/cu13/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" in script
+
+    sycophancy_script = (ROOT / "scripts/slurm/eval_sycophancy.sbatch").read_text()
+    assert ".venv-sycophancy/bin/activate" in sycophancy_script
+    assert (
+        'export PYTHONPATH="$project_dir${PYTHONPATH:+:$PYTHONPATH}"'
+        in sycophancy_script
+    )
+    assert "export VLLM_USE_FLASHINFER_SAMPLER=0" in sycophancy_script
+    assert sycophancy_script.count("attention_backend=FLASH_ATTN") == 1
+    assert sycophancy_script.count("--attention-backend FLASH_ATTN") == 1
+
+
+def test_inspect_torch_packages_use_the_same_linux_cuda_index() -> None:
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    inspect_dependencies = project["dependency-groups"]["inspect"]
+    sources = project["tool"]["uv"]["sources"]
+
+    assert "torchaudio" in inspect_dependencies
+    for package in ("torch", "torchaudio", "torchvision"):
+        assert sources[package] == {
+            "index": "pytorch-cu128",
+            "marker": "sys_platform == 'linux'",
+        }
