@@ -23,12 +23,17 @@ Issues = "https://github.com/marawangamal/lilpipe/issues"
 
 [project.optional-dependencies]
 test = ["pytest>=8.0"]
+dev = ["black[jupyter]>=24.0"]
 
 [project.scripts]
 lilpipe = "lilpipe.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
