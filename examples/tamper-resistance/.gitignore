@@ -1,3 +1,5 @@
-artifacts/
+artifacts
 .venv-train
 .venv-eval
+wandb/
+__pycache__/

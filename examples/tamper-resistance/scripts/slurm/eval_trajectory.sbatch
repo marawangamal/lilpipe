@@ -12,8 +12,10 @@ training_config=${3:?missing training config}
 milestones_config=${4:?missing milestones config}
 eval_dir=${5:?missing evaluation directory}
 
-unset PYTHONPATH
-source .venv-train/bin/activate
+export HF_HOME="$SCRATCH/.cache/huggingface"
+export PYTHONPATH="$PWD"
+
+source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
 axolotl_bin=$VIRTUAL_ENV/bin/axolotl
 mapfile -t milestones < <(python - "$milestones_config" <<'PY'
 import sys
@@ -36,7 +38,7 @@ evaluate() {
   local step=$2
   local output="$eval_dir/checkpoint-$step"
   mkdir -p "$output"
-  source .venv-eval/bin/activate
+  source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-eval/bin/activate"
   accelerate launch --num_processes=1 -m lm_eval run \
     --model hf \
     --model_args "pretrained=$model,dtype=bfloat16,trust_remote_code=True" \
@@ -45,7 +47,7 @@ evaluate() {
     --num_fewshot 0 \
     --batch_size auto \
     --output_path "$output"
-  source .venv-train/bin/activate
+  source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
 }
 
 if [[ "$step" == 0 ]]; then

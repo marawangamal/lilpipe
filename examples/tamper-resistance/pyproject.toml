@@ -2,7 +2,10 @@
 name = "lilpipe-tamper-resistance"
 version = "0.1.0"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = ["lilpipe"]
+
+[tool.uv.sources]
+lilpipe = { path = "../..", editable = true }
 
 [dependency-groups]
 train = [
