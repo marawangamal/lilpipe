@@ -49,6 +49,7 @@ def test_tofu_training_and_steering_configs_are_matched() -> None:
     }
     assert retain["datasets"][0]["name"] == "retain95"
     assert forget["datasets"][0]["name"] == "forget05"
+    assert retain["datasets"][0]["type"] == "scripts.data.tofu"
     assert retain["max_steps"] == forget["max_steps"] == 100
     assert retain["micro_batch_size"] * retain["gradient_accumulation_steps"] == 8
     for alpha in ("0.5", "1", "2"):

@@ -6,7 +6,7 @@ datasets:
   - path: locuslab/TOFU
     name: full
     split: train
-    type: utils.tofu_chat_transform
+    type: scripts.data.tofu
 dataset_prepared_path: artifacts/data/tofu-target
 dataset_num_proc: 1
 val_set_size: 0.0
