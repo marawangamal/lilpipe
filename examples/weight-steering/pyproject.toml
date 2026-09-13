@@ -14,6 +14,7 @@ axolotl = [
     "numpy",
     "omegaconf",
     "safetensors",
+    "scipy",
     "seaborn",
     "torch>=2.2",
 ]

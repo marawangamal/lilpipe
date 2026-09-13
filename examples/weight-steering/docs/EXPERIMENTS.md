@@ -83,6 +83,18 @@ python scripts/analysis/cosine_similarity_plot_results.py \
 It writes `results.json` and `cosine-similarity.pdf` under
 `artifacts/analysis/cosine-similarity-across-seeds/`.
 
+To measure each seeded direction's relative distance to the positive cone
+spanned by every behavior's seeds, run:
+
+```bash
+python scripts/analysis/conic_distance_gen_results.py
+python scripts/analysis/conic_distance_plot_results.py \
+  artifacts/analysis/conic-distance-across-seeds/results.json
+```
+
+This writes `results.json` and `conic-distance.pdf` under
+`artifacts/analysis/conic-distance-across-seeds/`.
+
 ## 4. LoRA initialization probe
 
 This probe runs the honest configuration twice with seed 42 and once with seed
