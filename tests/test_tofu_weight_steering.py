@@ -36,6 +36,21 @@ def test_tofu_dag_has_controls_arms_and_three_alpha_builds(monkeypatch) -> None:
         ]
         assert evaluation.depends_on == (build.id, oracle)
     assert plan.stage_index["eval-tofu-SmolLM3-3B-TOFU95"].depends_on == (oracle,)
+    for stage in plan.stages:
+        exclusion = next(
+            argument
+            for argument in stage.sbatch_args
+            if argument.startswith("--exclude=")
+        )
+        assert {
+            "cn-b001",
+            "cn-b002",
+            "cn-b003",
+            "cn-b004",
+            "cn-b005",
+            "cn-e002",
+            "cn-e003",
+        } <= set(exclusion.removeprefix("--exclude=").split(","))
 
 
 def test_tofu_training_and_steering_configs_are_matched() -> None:
