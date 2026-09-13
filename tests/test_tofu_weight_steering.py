@@ -98,6 +98,26 @@ def test_tofu_training_configs_use_canonical_wandb_runs() -> None:
         assert config["wandb_name"] == run_name
 
 
+def test_tofu_target_and_oracle_use_matched_training_settings() -> None:
+    training = EXAMPLE / "configs" / "training" / "smollm3"
+    target = yaml.safe_load((training / "tofu-target.yml").read_text())
+    oracle = yaml.safe_load((training / "tofu-oracle95.yml").read_text())
+    ignored = {
+        "datasets",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    }
+
+    assert {key: value for key, value in target.items() if key not in ignored} == {
+        key: value for key, value in oracle.items() if key not in ignored
+    }
+    assert target["micro_batch_size"] == 16
+    assert target["gradient_accumulation_steps"] == 1
+    assert target["num_epochs"] == 3
+    assert target["gradient_checkpointing"] is False
+
+
 def test_tofu_metric_definitions_on_synthetic_inputs() -> None:
     metrics = _load_metrics()
 

@@ -4,7 +4,7 @@
 
 The independent manifest `configs/experiments/smollm3/main-tofu.yml` studies
 unlearning on `locuslab/TOFU` without changing the hacking/sycophancy DAG. It
-trains a five-epoch full-data target and a five-epoch `retain95` oracle from
+trains a three-epoch full-data target and a three-epoch `retain95` oracle from
 SmolLM3-3B. Starting from the merged target, matched rank-32 LoRAs then train
 for exactly 100 optimizer steps on `retain95` and `forget05` (seed 42, learning
 rate 1e-5, effective batch 8, sequence length 512). Task-vector arithmetic
