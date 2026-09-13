@@ -1,0 +1,17 @@
+version: 1
+id: smollm3-tofu100-weight-steering
+
+registries:
+  models: configs/registries/smollm3/models-tofu.yml
+  evaluations: configs/registries/smollm3/evals-tofu.yml
+
+models:
+  - SmolLM3-3B-TOFU100
+  - SmolLM3-3B-TOFU95
+  - SmolLM3-3B-TOFU100-FT-Retain95
+  - SmolLM3-3B-TOFU100-FT-Forget05
+  - SmolLM3-3B-TOFU100-W-Steer-Forget-a-0.5
+  - SmolLM3-3B-TOFU100-W-Steer-Forget-a-1
+  - SmolLM3-3B-TOFU100-W-Steer-Forget-a-2
+
+evaluations: [tofu]

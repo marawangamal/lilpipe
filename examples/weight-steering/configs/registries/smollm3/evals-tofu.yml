@@ -6,10 +6,10 @@ evaluations:
       - "{model.adapter}"
       - "{model.merge_config}"
       - "artifacts/evals/{model.id}/tofu"
-      - "artifacts/models/SmolLM3-3B-TOFU-Retain95-Oracle/merged"
+      - "artifacts/models/SmolLM3-3B-TOFU95/merged"
     depends_on:
-      - SmolLM3-3B-TOFU-Retain95-Oracle
-      - SmolLM3-3B-TOFU-Retain95-Oracle
+      - SmolLM3-3B-TOFU95
+      - SmolLM3-3B-TOFU95
     sbatch_args:
       - --gres=gpu:1
       - --cpus-per-task=8

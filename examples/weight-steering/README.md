@@ -2,7 +2,7 @@
 
 ## TOFU forget05 pilot
 
-The independent manifest `configs/experiments/tofu/forget05.yml` studies
+The independent manifest `configs/experiments/smollm3/main-tofu.yml` studies
 unlearning on `locuslab/TOFU` without changing the hacking/sycophancy DAG. It
 trains a five-epoch full-data target and a five-epoch `retain95` oracle from
 SmolLM3-3B. Starting from the merged target, matched rank-32 LoRAs then train
@@ -25,9 +25,9 @@ target, oracle, arms, alpha sweep ─> TOFU eval (after oracle)
 Preview, submit, and summarize from this directory:
 
 ```bash
-lilpipe configs/experiments/tofu/forget05.yml --dry-run
-lilpipe configs/experiments/tofu/forget05.yml
-lilpipe results configs/results/tofu/forget05.yml --format markdown
+lilpipe configs/experiments/smollm3/main-tofu.yml --dry-run
+lilpipe configs/experiments/smollm3/main-tofu.yml
+lilpipe results configs/results/smollm3/main-tofu.yml --format markdown
 ```
 
 Each evaluation writes `artifacts/evals/<model>/tofu/results.json`, compatible

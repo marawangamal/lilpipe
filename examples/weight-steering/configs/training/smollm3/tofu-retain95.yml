@@ -1,4 +1,4 @@
-base_model: artifacts/models/SmolLM3-3B-TOFU-Target/merged
+base_model: artifacts/models/SmolLM3-3B-TOFU100/merged
 tokenizer_type: AutoTokenizer
 seed: 42
 chat_template: tokenizer_default
@@ -10,7 +10,7 @@ datasets:
 dataset_prepared_path: artifacts/data/tofu-arm-retain95
 dataset_num_proc: 1
 val_set_size: 0.0
-output_dir: artifacts/models/SmolLM3-3B-TOFU-Retain95-Arm
+output_dir: artifacts/models/SmolLM3-3B-TOFU100-FT-Retain95
 adapter: lora
 lora_r: 32
 lora_alpha: 16
@@ -32,4 +32,5 @@ flash_attention: false
 logging_steps: 10
 save_steps: 100
 save_total_limit: 1
-wandb_project:
+wandb_project: lp-weight-steering
+wandb_name: SmolLM3-3B-TOFU100-FT-Retain95

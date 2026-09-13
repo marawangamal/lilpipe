@@ -21,28 +21,28 @@ def _load_metrics():
 
 def test_tofu_dag_has_controls_arms_and_three_alpha_builds(monkeypatch) -> None:
     monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load("configs/experiments/tofu/forget05.yml").plan()
+    plan = lilpipe.load("configs/experiments/smollm3/main-tofu.yml").plan()
 
     assert len(plan.stages) == 14
-    oracle = "train-SmolLM3-3B-TOFU-Retain95-Oracle"
+    oracle = "train-SmolLM3-3B-TOFU95"
     for alpha in ("0.5", "1", "2"):
-        build = plan.stage_index[f"build-SmolLM3-3B-TOFU-Steered-a-{alpha}"]
+        build = plan.stage_index[f"build-SmolLM3-3B-TOFU100-W-Steer-Forget-a-{alpha}"]
         assert build.depends_on == (
-            "train-SmolLM3-3B-TOFU-Retain95-Arm",
-            "train-SmolLM3-3B-TOFU-Forget05-Arm",
+            "train-SmolLM3-3B-TOFU100-FT-Retain95",
+            "train-SmolLM3-3B-TOFU100-FT-Forget05",
         )
-        evaluation = plan.stage_index[f"eval-tofu-SmolLM3-3B-TOFU-Steered-a-{alpha}"]
+        evaluation = plan.stage_index[
+            f"eval-tofu-SmolLM3-3B-TOFU100-W-Steer-Forget-a-{alpha}"
+        ]
         assert evaluation.depends_on == (build.id, oracle)
-    assert plan.stage_index["eval-tofu-SmolLM3-3B-TOFU-Retain95-Oracle"].depends_on == (
-        oracle,
-    )
+    assert plan.stage_index["eval-tofu-SmolLM3-3B-TOFU95"].depends_on == (oracle,)
 
 
 def test_tofu_training_and_steering_configs_are_matched() -> None:
-    training = EXAMPLE / "configs" / "training" / "tofu"
-    retain = yaml.safe_load((training / "arm-retain95.yml").read_text())
-    forget = yaml.safe_load((training / "arm-forget05.yml").read_text())
-    ignored = {"datasets", "dataset_prepared_path", "output_dir"}
+    training = EXAMPLE / "configs" / "training" / "smollm3"
+    retain = yaml.safe_load((training / "tofu-retain95.yml").read_text())
+    forget = yaml.safe_load((training / "tofu-forget05.yml").read_text())
+    ignored = {"datasets", "dataset_prepared_path", "output_dir", "wandb_name"}
 
     assert {key: value for key, value in retain.items() if key not in ignored} == {
         key: value for key, value in forget.items() if key not in ignored
@@ -58,14 +58,29 @@ def test_tofu_training_and_steering_configs_are_matched() -> None:
                 EXAMPLE
                 / "configs"
                 / "steering"
-                / "tofu"
-                / f"retain-minus-forget-alpha-{alpha}.yml"
+                / "smollm3"
+                / f"tofu-retain-minus-forget-alpha-{alpha}.yml"
             ).read_text()
         )
         pair = config["adapter_pairs"][0]
-        assert "Retain95-Arm" in pair["pos_adapter_name_or_path"]
-        assert "Forget05-Arm" in pair["neg_adapter_name_or_path"]
+        assert "TOFU100-FT-Retain95" in pair["pos_adapter_name_or_path"]
+        assert "TOFU100-FT-Forget05" in pair["neg_adapter_name_or_path"]
         assert config["steered_adapters"][0]["alpha"] == float(alpha)
+
+
+def test_tofu_training_configs_use_canonical_wandb_runs() -> None:
+    training = EXAMPLE / "configs" / "training" / "smollm3"
+    expected = {
+        "tofu-target.yml": "SmolLM3-3B-TOFU100",
+        "tofu-oracle95.yml": "SmolLM3-3B-TOFU95",
+        "tofu-retain95.yml": "SmolLM3-3B-TOFU100-FT-Retain95",
+        "tofu-forget05.yml": "SmolLM3-3B-TOFU100-FT-Forget05",
+    }
+
+    for filename, run_name in expected.items():
+        config = yaml.safe_load((training / filename).read_text())
+        assert config["wandb_project"] == "lp-weight-steering"
+        assert config["wandb_name"] == run_name
 
 
 def test_tofu_metric_definitions_on_synthetic_inputs() -> None:
