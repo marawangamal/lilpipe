@@ -122,8 +122,10 @@ def test_tofu_slurm_scripts_use_node_local_python() -> None:
     slurm = EXAMPLE / "scripts" / "slurm"
     bootstrap = (slurm / "activate_local_env.sh").read_text()
 
-    assert 'UV_PYTHON_INSTALL_DIR="$SLURM_TMPDIR/uv-python"' in bootstrap
-    assert 'UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$dependency_group"' in bootstrap
+    assert 'runtime_dir="$SLURM_TMPDIR/lilpipe-${SLURM_JOB_ID:-local}"' in bootstrap
+    assert 'UV_PYTHON_INSTALL_DIR="$runtime_dir/uv-python"' in bootstrap
+    assert 'UV_CACHE_DIR="$runtime_dir/uv-cache"' in bootstrap
+    assert 'UV_PROJECT_ENVIRONMENT="$runtime_dir/.venv-$dependency_group"' in bootstrap
     assert "--link-mode copy" in bootstrap
     for filename in (
         "train.sbatch",

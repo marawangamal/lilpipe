@@ -8,9 +8,10 @@ if [[ -z "${SLURM_TMPDIR:-}" ]]; then
 fi
 
 dependency_group=${1:-axolotl}
-export UV_PYTHON_INSTALL_DIR="$SLURM_TMPDIR/uv-python"
-export UV_CACHE_DIR="$SCRATCH/.cache/uv"
-export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$dependency_group"
+runtime_dir="$SLURM_TMPDIR/lilpipe-${SLURM_JOB_ID:-local}"
+export UV_PYTHON_INSTALL_DIR="$runtime_dir/uv-python"
+export UV_CACHE_DIR="$runtime_dir/uv-cache"
+export UV_PROJECT_ENVIRONMENT="$runtime_dir/.venv-$dependency_group"
 
 uv python install 3.12 --no-progress
 local_python=$(find "$UV_PYTHON_INSTALL_DIR" -type f -path '*/bin/python3.12' -print -quit)
