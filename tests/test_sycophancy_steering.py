@@ -289,10 +289,7 @@ def test_training_scripts_resolve_the_slurm_submission_directory() -> None:
     for filename in ("train.sbatch", "train_and_merge.sbatch"):
         script = (ROOT / "scripts" / "slurm" / filename).read_text()
         assert "project_dir=${SLURM_SUBMIT_DIR:-" in script
-        assert (
-            'source "$SCRATCH/lilpipe/examples/weight-steering/.venv/bin/activate"'
-            in script
-        )
+        assert "source scripts/slurm/activate_local_env.sh axolotl" in script
 
 
 def test_inspect_scripts_expose_the_locked_cuda_runtime() -> None:

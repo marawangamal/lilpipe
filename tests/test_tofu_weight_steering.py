@@ -118,6 +118,25 @@ def test_tofu_target_and_oracle_use_matched_training_settings() -> None:
     assert target["gradient_checkpointing"] is False
 
 
+def test_tofu_slurm_scripts_use_node_local_python() -> None:
+    slurm = EXAMPLE / "scripts" / "slurm"
+    bootstrap = (slurm / "activate_local_env.sh").read_text()
+
+    assert 'UV_PYTHON_INSTALL_DIR="$SLURM_TMPDIR/uv-python"' in bootstrap
+    assert 'UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$dependency_group"' in bootstrap
+    assert "--link-mode copy" in bootstrap
+    for filename in (
+        "train.sbatch",
+        "train_and_merge.sbatch",
+        "task_vector.sbatch",
+        "eval_tofu.sbatch",
+    ):
+        assert (
+            "source scripts/slurm/activate_local_env.sh axolotl"
+            in (slurm / filename).read_text()
+        )
+
+
 def test_tofu_metric_definitions_on_synthetic_inputs() -> None:
     metrics = _load_metrics()
 
