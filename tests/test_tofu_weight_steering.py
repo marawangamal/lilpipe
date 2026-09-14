@@ -52,15 +52,12 @@ def test_tofu_dag_has_controls_arms_and_three_alpha_builds(monkeypatch) -> None:
             "cn-e003",
             "cn-j001",
         } <= set(exclusion.removeprefix("--exclude=").split(","))
-    assert "--time=06:00:00" in plan.stage_index[
-        "train-SmolLM3-3B-TOFU100"
-    ].sbatch_args
-    assert "--time=06:00:00" in plan.stage_index[
-        "train-SmolLM3-3B-TOFU95"
-    ].sbatch_args
-    assert "--time=03:00:00" in plan.stage_index[
-        "train-SmolLM3-3B-TOFU100-FT-Retain95"
-    ].sbatch_args
+    assert "--time=06:00:00" in plan.stage_index["train-SmolLM3-3B-TOFU100"].sbatch_args
+    assert "--time=06:00:00" in plan.stage_index["train-SmolLM3-3B-TOFU95"].sbatch_args
+    assert (
+        "--time=03:00:00"
+        in plan.stage_index["train-SmolLM3-3B-TOFU100-FT-Retain95"].sbatch_args
+    )
 
 
 def test_tofu_training_and_steering_configs_are_matched() -> None:
@@ -164,3 +161,11 @@ def test_tofu_metric_definitions_on_synthetic_inputs() -> None:
     assert metrics.forget_quality([1, 2, 3], [1, 2, 3]) == 1
     assert metrics.model_utility([0.25, 1]) == pytest.approx(0.4)
     assert metrics.extraction_strength([0, 8, 2, 3], [1, 8, 2, 3]) == 0.75
+
+
+def test_tofu_truth_ratio_uses_original_question_for_paraphrased_answer() -> None:
+    source = (EXAMPLE / "scripts" / "evaluation" / "tofu.py").read_text()
+
+    assert 'row.get("paraphrased_question"' not in source
+    assert "model, tokenizer, question, paraphrased_answer" in source
+    assert "oracle, oracle_tokenizer, question, paraphrased_answer" in source

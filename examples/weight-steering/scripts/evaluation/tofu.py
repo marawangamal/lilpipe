@@ -216,14 +216,13 @@ def evaluate_model(
         ratios: list[float] = []
         for index, row in enumerate(_rows(task)):
             question, answer = row["question"], row["answer"]
-            paraphrase = row.get("paraphrased_question", question)
             paraphrased_answer = row.get("paraphrased_answer", answer)
             perturbations = row.get("perturbed_answer", [])
             if isinstance(perturbations, str):
                 perturbations = [perturbations]
             loss = _answer_loss(model, tokenizer, question, answer)
             paraphrased_loss = _answer_loss(
-                model, tokenizer, paraphrase, paraphrased_answer
+                model, tokenizer, question, paraphrased_answer
             )
             perturbed_losses = [
                 _answer_loss(model, tokenizer, question, value)
@@ -254,7 +253,7 @@ def evaluate_model(
                     _answer_extraction(model, tokenizer, question, answer)
                 )
                 oracle_para = _answer_loss(
-                    oracle, oracle_tokenizer, paraphrase, paraphrased_answer
+                    oracle, oracle_tokenizer, question, paraphrased_answer
                 )
                 oracle_perturbed = [
                     _answer_loss(oracle, oracle_tokenizer, question, value)
