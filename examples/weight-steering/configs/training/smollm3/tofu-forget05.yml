@@ -32,5 +32,6 @@ flash_attention: false
 logging_steps: 10
 save_steps: 100
 save_total_limit: 1
+auto_resume_from_checkpoints: true
 wandb_project: lp-weight-steering
 wandb_name: SmolLM3-3B-TOFU100-FT-Forget05

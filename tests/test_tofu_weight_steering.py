@@ -50,7 +50,17 @@ def test_tofu_dag_has_controls_arms_and_three_alpha_builds(monkeypatch) -> None:
             "cn-b005",
             "cn-e002",
             "cn-e003",
+            "cn-j001",
         } <= set(exclusion.removeprefix("--exclude=").split(","))
+    assert "--time=06:00:00" in plan.stage_index[
+        "train-SmolLM3-3B-TOFU100"
+    ].sbatch_args
+    assert "--time=06:00:00" in plan.stage_index[
+        "train-SmolLM3-3B-TOFU95"
+    ].sbatch_args
+    assert "--time=03:00:00" in plan.stage_index[
+        "train-SmolLM3-3B-TOFU100-FT-Retain95"
+    ].sbatch_args
 
 
 def test_tofu_training_and_steering_configs_are_matched() -> None:
@@ -66,6 +76,8 @@ def test_tofu_training_and_steering_configs_are_matched() -> None:
     assert forget["datasets"][0]["name"] == "forget05"
     assert retain["datasets"][0]["type"] == "scripts.data.tofu"
     assert retain["max_steps"] == forget["max_steps"] == 100
+    assert retain["auto_resume_from_checkpoints"] is True
+    assert forget["auto_resume_from_checkpoints"] is True
     assert retain["micro_batch_size"] * retain["gradient_accumulation_steps"] == 8
     for alpha in ("0.5", "1", "2"):
         config = yaml.safe_load(
@@ -114,8 +126,10 @@ def test_tofu_target_and_oracle_use_matched_training_settings() -> None:
     }
     assert target["micro_batch_size"] == 16
     assert target["gradient_accumulation_steps"] == 1
-    assert target["num_epochs"] == 3
+    assert target["num_epochs"] == 5
     assert target["gradient_checkpointing"] is False
+    assert target["auto_resume_from_checkpoints"] is True
+    assert oracle["auto_resume_from_checkpoints"] is True
 
 
 def test_tofu_slurm_scripts_use_node_local_python() -> None:

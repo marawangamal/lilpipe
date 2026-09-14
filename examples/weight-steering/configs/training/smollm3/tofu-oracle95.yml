@@ -20,7 +20,7 @@ sequence_len: 512
 sample_packing: false
 micro_batch_size: 16
 gradient_accumulation_steps: 1
-num_epochs: 3
+num_epochs: 5
 learning_rate: 1.0e-5
 optimizer: adamw_bnb_8bit
 lr_scheduler: linear
@@ -32,5 +32,6 @@ flash_attention: false
 logging_steps: 10
 save_strategy: epoch
 save_total_limit: 1
+auto_resume_from_checkpoints: true
 wandb_project: lp-weight-steering
 wandb_name: SmolLM3-3B-TOFU95

@@ -15,4 +15,4 @@ evaluations:
       - --cpus-per-task=8
       - --mem=32G
       - --time=03:00:00
-      - --exclude=cn-b001,cn-b002,cn-b003,cn-b004,cn-b005,cn-c034,cn-e002,cn-e003,cn-l030,cn-l055
+      - --exclude=cn-b001,cn-b002,cn-b003,cn-b004,cn-b005,cn-c034,cn-e002,cn-e003,cn-j001,cn-l030,cn-l055
