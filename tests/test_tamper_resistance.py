@@ -31,6 +31,13 @@ def analysis_module():
     return load_script("scripts/analysis/plot_trajectory.py", "plot_trajectory")
 
 
+@pytest.fixture(scope="module")
+def cb_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("transformers")
+    return load_script("configs/training/utils.py", "circuit_breaker_training")
+
+
 def test_corpus_strategy_formats_document(strategy_module) -> None:
     document = {"title": "T", "abstract": "A", "text": "B", "doi": "ignored"}
     assert strategy_module.format_document(document) == "T\n\nA\n\nB"
@@ -70,7 +77,6 @@ def test_tamper_resistance_pipeline_has_training_then_trajectory(
         "EleutherAI/deep-ignorance-unfiltered",
         "artifacts/models/unfiltered-wmdp-bio-lora",
         "configs/training/unfiltered-wmdp-bio-lora.yml",
-        "configs/results/unfiltered-wmdp-bio-lora.yml",
         "artifacts/evals/unfiltered-wmdp-bio-lora",
     )
     assert evaluation.sbatch_args == (
@@ -98,7 +104,6 @@ def test_weak_filter_pipeline_uses_separate_model_and_outputs(
         "EleutherAI/deep-ignorance-e2e-weak-filter",
         "artifacts/models/weak-filter-wmdp-bio-lora",
         "configs/training/weak-filter-wmdp-bio-lora.yml",
-        "configs/results/weak-filter-wmdp-bio-lora.yml",
         "artifacts/evals/weak-filter-wmdp-bio-lora",
     )
 
@@ -118,7 +123,6 @@ def test_unfiltered_cb_pipeline_uses_separate_model_and_outputs(
         "EleutherAI/deep-ignorance-unfiltered-cb",
         "artifacts/models/unfiltered-cb-wmdp-bio-lora",
         "configs/training/unfiltered-cb-wmdp-bio-lora.yml",
-        "configs/results/unfiltered-cb-wmdp-bio-lora.yml",
         "artifacts/evals/unfiltered-cb-wmdp-bio-lora",
     )
 
@@ -270,3 +274,72 @@ def test_analysis_rejects_missing_duplicate_and_absent_metric(
     result.write_text(json.dumps({"groups": {"wmdp_bio_robust": {}}}))
     with pytest.raises(ValueError, match="exactly once"):
         analysis_module.collect_results(tmp_path, [0])
+
+
+def test_cb_schedule_endpoints_and_midpoint(cb_training_module) -> None:
+    schedule = cb_training_module.coefficient_schedule
+    assert schedule(0, 150, 10) == (0, 10)
+    assert schedule(75, 150, 10) == (5, 5)
+    assert schedule(150, 150, 10) == (10, 0)
+
+
+def test_cb_losses_mask_padding_and_zero_expected_cases(cb_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    reference = torch.tensor([[[[1.0, 0.0], [100.0, 100.0]]]])
+    safe = reference.clone()
+    harmful = torch.tensor([[[[0.0, 1.0], [1000.0, 1000.0]]]])
+    mask = torch.tensor([[1, 0]])
+    assert cb_training_module.retention_loss(safe, reference, mask).item() == 0
+    assert cb_training_module.rerouting_loss(harmful, reference, mask).item() == 0
+
+
+def test_cb_config() -> None:
+    config = yaml.safe_load(
+        (EXAMPLE / "configs/training/unfiltered-cb--repr.yml").read_text()
+    )
+    assert config["base_model"] == "EleutherAI/deep-ignorance-unfiltered"
+    assert config["trainer_cls"] == "configs.training.utils.CircuitBreakerTrainer"
+    assert config["datasets"] == [
+        {
+            "path": "LLM-LAT/harmful-dataset",
+            "split": "train",
+            "type": "configs.training.utils",
+        }
+    ]
+    assert config["peft_layers_to_transform"] == list(range(31))
+    assert config["lora_r"] == config["lora_alpha"] == 16
+    assert config["max_steps"] == 150
+    assert config["save_steps"] == 50
+
+
+def test_cb_repr_pipeline_plans_a100l(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load("configs/experiments/unfiltered-cb--repr.yml").plan()
+    training, evaluation = plan.stages
+    assert training.id == "train-unfiltered-cb--repr"
+    assert training.args == (
+        "configs/training/unfiltered-cb--repr.yml",
+        "--merge",
+    )
+    assert "--gres=gpu:a100l:1" in training.sbatch_args
+    assert evaluation.depends_on == (training.id,)
+    assert evaluation.sbatch_args[:2] == ("--array=0-4", "--gres=gpu:a100l:1")
+    assert evaluation.args == (
+        "artifacts/models/unfiltered-cb--repr",
+        "artifacts/evals/unfiltered-cb--repr",
+    )
+
+
+def test_cb_attack_repr_pipeline_plans_a100l(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load(
+        "configs/experiments/unfiltered-cb-wmdp-bio-lora--repr.yml"
+    ).plan()
+    training, evaluation = plan.stages
+    assert "--gres=gpu:a100l:1" in training.sbatch_args
+    assert training.args == ("configs/training/unfiltered-cb-wmdp-bio-lora--repr.yml",)
+    assert evaluation.depends_on == (training.id,)
+    assert evaluation.args[0] == "artifacts/models/unfiltered-cb--repr/merged"
+    assert "--gres=gpu:a100l:1" in evaluation.sbatch_args

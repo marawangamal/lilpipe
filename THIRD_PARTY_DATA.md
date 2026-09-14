@@ -32,3 +32,7 @@ vendored from EleutherAI's `deep-ignorance` repository at commit
 into this repository. The gated `cais/wmdp-bio-forget-corpus` training data is
 downloaded only at run time and stored beneath the ignored experiment
 `artifacts/data/` directory.
+
+The circuit-breaker reproduction downloads `LLM-LAT/harmful-dataset` from
+Hugging Face at run time and stores it only in the configured Hugging Face
+cache.

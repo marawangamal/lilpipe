@@ -10,23 +10,10 @@ import re
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 CHECKPOINT_PATTERN = re.compile(r"checkpoint-(\d+)$")
 GROUP = "wmdp_bio_robust"
 METRIC = "acc,none"
-
-
-def load_milestones(path: Path) -> list[int]:
-    data = yaml.safe_load(path.read_text())
-    if not isinstance(data, dict) or not isinstance(data.get("milestones"), list):
-        raise ValueError(f"{path} must contain a milestones list")
-    milestones = data["milestones"]
-    if any(type(step) is not int or step < 0 for step in milestones):
-        raise ValueError("milestones must be non-negative integers")
-    if len(milestones) != len(set(milestones)):
-        raise ValueError("milestones contain duplicate checkpoints")
-    return sorted(milestones)
+MILESTONES = list(range(0, 2_001, 250))
 
 
 def _metric_from_result(data: Any, path: Path) -> float:
@@ -114,10 +101,9 @@ def write_outputs(rows: list[tuple[int, float]], output_dir: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("eval_root", type=Path)
-    parser.add_argument("milestones_config", type=Path)
     parser.add_argument("output_dir", type=Path)
     args = parser.parse_args()
-    rows = collect_results(args.eval_root, load_milestones(args.milestones_config))
+    rows = collect_results(args.eval_root, MILESTONES)
     write_outputs(rows, args.output_dir)
 
 

@@ -9,8 +9,7 @@ mkdir -p artifacts/logs
 base_model=${1:?missing base model}
 adapter_dir=${2:?missing adapter directory}
 _training_config=${3:?missing training config}
-_milestones_config=${4:?missing milestones config}
-eval_dir=${5:?missing evaluation directory}
+eval_dir=${4:?missing evaluation directory}
 
 export HF_HOME="$SCRATCH/.cache/huggingface"
 export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv"

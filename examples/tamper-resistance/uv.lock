@@ -1567,10 +1567,11 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "black", extras = ["jupyter"], marker = "extra == 'dev'", specifier = ">=24.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
-provides-extras = ["test"]
+provides-extras = ["test", "dev"]
 
 [[package]]
 name = "lilpipe-tamper-resistance"

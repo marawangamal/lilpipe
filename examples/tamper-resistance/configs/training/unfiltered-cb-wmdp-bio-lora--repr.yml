@@ -1,0 +1,43 @@
+base_model: artifacts/models/unfiltered-cb--repr/merged
+tokenizer_type: AutoTokenizer
+seed: 42
+datasets:
+  - path: cais/wmdp-bio-forget-corpus
+    split: train
+    type: scripts.data.wmdp_bio
+dataset_prepared_path: artifacts/data/axolotl-prepared-hf-one-sequence-v1
+dataset_num_proc: 1
+val_set_size: 0.0
+output_dir: artifacts/models/unfiltered-cb-wmdp-bio-lora--repr
+adapter: lora
+lora_r: 16
+lora_alpha: 16
+lora_dropout: 0.0
+lora_target_modules: [query_key_value]
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+lora_embedding_kernel: false
+sequence_len: 2048
+sample_packing: false
+pad_to_sequence_len: false
+micro_batch_size: 8
+gradient_accumulation_steps: 2
+max_steps: 2000
+learning_rate: 2.0e-5
+optimizer: adamw_torch
+weight_decay: 0.01
+lr_scheduler: linear
+warmup_steps: 0
+bf16: auto
+tf32: false
+gradient_checkpointing: true
+logging_steps: 10
+eval_strategy: "no"
+save_strategy: steps
+save_steps: 250
+save_total_limit: 8
+save_only_model: true
+load_best_model_at_end: false
+wandb_project: lp-tamper-resistance
+wandb_name: unfiltered-cb-wmdp-bio--repr

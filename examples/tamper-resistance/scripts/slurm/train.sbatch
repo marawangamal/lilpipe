@@ -11,3 +11,6 @@ export WANDB_DIR="$PWD/artifacts/logs"
 uv sync --frozen --group train
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 axolotl train "$1" --launcher python
+if [[ ${2:-} == "--merge" ]]; then
+  axolotl merge-lora "$1"
+fi
