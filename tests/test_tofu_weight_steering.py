@@ -121,12 +121,24 @@ def test_tofu_target_and_oracle_use_matched_training_settings() -> None:
     assert {key: value for key, value in target.items() if key not in ignored} == {
         key: value for key, value in oracle.items() if key not in ignored
     }
-    assert target["micro_batch_size"] == 16
+    assert "adapter" not in target
+    assert target["micro_batch_size"] == 32
     assert target["gradient_accumulation_steps"] == 1
-    assert target["num_epochs"] == 5
-    assert target["gradient_checkpointing"] is False
+    assert target["num_epochs"] == 10
+    assert target["learning_rate"] == 1.0e-5
+    assert target["weight_decay"] == 0.01
+    assert target["gradient_checkpointing"] is True
+    assert target["output_dir"].endswith("/merged")
     assert target["auto_resume_from_checkpoints"] is True
     assert oracle["auto_resume_from_checkpoints"] is True
+
+    registry = yaml.safe_load(
+        (EXAMPLE / "configs" / "registries" / "smollm3" / "models-tofu.yml").read_text()
+    )["models"]
+    for model in ("SmolLM3-3B-TOFU100", "SmolLM3-3B-TOFU95"):
+        producer = registry[model]["producer"]
+        assert producer["args"][-1] == "full"
+        assert "--gres=gpu:a100l:1" in producer["sbatch_args"]
 
 
 def test_tofu_slurm_scripts_use_node_local_python() -> None:
