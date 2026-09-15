@@ -182,11 +182,17 @@ class Pipeline:
             selected_evaluations=selected_evaluations,
         )
 
-    def plan(self, *, skip: Iterable[str] = ()) -> Plan:
+    def plan(
+        self,
+        *,
+        skip: Iterable[str] = (),
+        existing_models: Iterable[str] = (),
+    ) -> Plan:
         """Compile the active selection into a validated Slurm plan."""
 
         if isinstance(skip, (str, bytes)):
             raise PipelineError("skip must be a list of model or stage IDs")
+        existing_model_ids = _unique_tuple(existing_models, "existing_models")
         stages, producer_ids = _compile_stages(self)
         stage_ids = {stage.id for stage in stages}
         resolved_skip: set[str] = set()
@@ -197,6 +203,20 @@ class Pipeline:
                 resolved_skip.add(value)
             else:
                 raise PipelineError(f"Cannot skip unknown model or stage: {value!r}")
+        for model_id in existing_model_ids:
+            model = self._models.get(model_id)
+            if model is None:
+                raise PipelineError(f"Unknown existing model: {model_id!r}")
+            if model.producer is None:
+                raise PipelineError(
+                    f"Existing model {model_id!r} has no producer to skip"
+                )
+            if model.producer.id not in stage_ids:
+                raise PipelineError(
+                    f"Existing model {model_id!r} is not in the active selection's "
+                    "dependency closure"
+                )
+            resolved_skip.add(model.producer.id)
         return Plan(self.id, self.root, stages, frozenset(resolved_skip))
 
 
@@ -273,7 +293,9 @@ def _parse_producer(model_id: str, raw: object) -> _Producer | None:
     return _Producer(
         id=producer_id,
         script=script,
-        args=_string_tuple(raw.get("args", ()), location=f"Producer {producer_id!r} args"),
+        args=_string_tuple(
+            raw.get("args", ()), location=f"Producer {producer_id!r} args"
+        ),
         sbatch_args=_string_tuple(
             raw.get("sbatch_args", ()),
             location=f"Producer {producer_id!r} sbatch_args",
@@ -337,9 +359,7 @@ def _parse_evaluations(entries: Mapping[object, object]) -> dict[str, _Evaluatio
         )
         script = raw_evaluation.get("script")
         if not isinstance(script, str) or not script:
-            raise PipelineError(
-                f"Evaluation {raw_id!r} must define a non-empty script"
-            )
+            raise PipelineError(f"Evaluation {raw_id!r} must define a non-empty script")
         evaluations[raw_id] = _Evaluation(
             id=raw_id,
             script=script,
@@ -506,12 +526,13 @@ def _compile_stages(pipeline: Pipeline) -> tuple[tuple[Stage, ...], dict[str, st
                     id=f"eval-{evaluation_id}-{model_id}",
                     script=evaluation.script,
                     args=tuple(
-                        _render_argument(argument, model) for argument in evaluation.args
+                        _render_argument(argument, model)
+                        for argument in evaluation.args
                     ),
                     sbatch_args=evaluation.sbatch_args,
-                    depends_on=(producer_ids[model_id],)
-                    if model.producer is not None
-                    else (),
+                    depends_on=(
+                        (producer_ids[model_id],) if model.producer is not None else ()
+                    ),
                 )
             )
     return tuple(stages), producer_ids

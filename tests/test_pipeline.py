@@ -7,7 +7,6 @@ import lilpipe
 from lilpipe import PipelineError, Plan, Stage
 from lilpipe.cli import main
 
-
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE = ROOT / "examples" / "weight-steering"
 CONFIG = Path("configs/experiments/smollm3/main.yml")
@@ -31,15 +30,15 @@ def test_full_example_builds_hacking_model_organism_dag(
         "train-SmolLM3-3B-HMO-FT-Cheat",
         "train-SmolLM3-3B-HMO-FT-Non-Cheat",
     )
-    assert plan.stage_index[
-        "eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-1"
-    ].depends_on == ("build-SmolLM3-3B-HMO-W-Steer-a-1",)
-    assert plan.stage_index[
-        "eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-2"
-    ].depends_on == ("build-SmolLM3-3B-HMO-W-Steer-a-2",)
-    assert plan.stage_index[
-        "eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-5"
-    ].depends_on == ("build-SmolLM3-3B-HMO-W-Steer-a-5",)
+    assert plan.stage_index["eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-1"].depends_on == (
+        "build-SmolLM3-3B-HMO-W-Steer-a-1",
+    )
+    assert plan.stage_index["eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-2"].depends_on == (
+        "build-SmolLM3-3B-HMO-W-Steer-a-2",
+    )
+    assert plan.stage_index["eval-mbpp-SmolLM3-3B-HMO-W-Steer-a-5"].depends_on == (
+        "build-SmolLM3-3B-HMO-W-Steer-a-5",
+    )
     combined = plan.stage_index["train-SmolLM3-3B-HMO-FT-Combined-Reward"]
     assert combined.depends_on == ("train-SmolLM3-3B-HMO",)
     for evaluation_id in ("mbpp", "math500-if", "mask", "sycophancy"):
@@ -47,9 +46,7 @@ def test_full_example_builds_hacking_model_organism_dag(
             f"eval-{evaluation_id}-SmolLM3-3B-HMO-FT-Combined-Reward"
             in plan.stage_index
         )
-    honesty_build = plan.stage_index[
-        "build-SmolLM3-3B-HMO-W-Steer-Honesty-a-1"
-    ]
+    honesty_build = plan.stage_index["build-SmolLM3-3B-HMO-W-Steer-Honesty-a-1"]
     assert honesty_build.depends_on == (
         "train-SmolLM3-3B-HMO-FT-Honest",
         "train-SmolLM3-3B-HMO-FT-Dishonest",
@@ -177,6 +174,86 @@ def test_skip_accepts_model_slugs_and_explicit_stage_ids(
     assert "--job-name=eval-mbpp-SmolLM3-3B " not in rendered
 
 
+def test_existing_model_skips_producer_but_keeps_transitive_downstream_jobs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write_dependency_project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    plan = lilpipe.load("configs/experiments/pipeline.yml").plan(
+        existing_models=["input"]
+    )
+
+    assert plan.skipped == {"produce-input"}
+    assert tuple(stage.id for stage in plan.stages) == (
+        "produce-input",
+        "produce-middle",
+        "produce-output",
+        "eval-score-output",
+    )
+    commands = plan.render().splitlines()
+    middle = next(line for line in commands if "--job-name=produce-middle" in line)
+    output = next(line for line in commands if "--job-name=produce-output" in line)
+    assert "--dependency=" not in middle
+    assert "--dependency=afterok:dry-run-produce-middle" in output
+
+
+def test_existing_selected_model_is_still_evaluated(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write_dependency_project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    plan = lilpipe.load("configs/experiments/pipeline.yml").plan(
+        existing_models=["output"]
+    )
+
+    rendered = plan.render()
+    assert "--job-name=produce-output" not in rendered
+    evaluation = next(
+        line for line in rendered.splitlines() if "--job-name=eval-score-output" in line
+    )
+    assert "--dependency=" not in evaluation
+
+
+def test_existing_models_and_skip_are_combined(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write_dependency_project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    plan = lilpipe.load("configs/experiments/pipeline.yml").plan(
+        existing_models=["input", "middle"], skip=["produce-output"]
+    )
+
+    assert plan.skipped == {"produce-input", "produce-middle", "produce-output"}
+    assert "--job-name=eval-score-output" in plan.render()
+
+
+@pytest.mark.parametrize(
+    ("existing_models", "message"),
+    [
+        (["missing"], "Unknown existing model: 'missing'"),
+        (["external"], "Existing model 'external' has no producer to skip"),
+        (["input", "input"], "existing_models contains duplicates: \\['input'\\]"),
+        (["irrelevant"], "not in the active selection's dependency closure"),
+    ],
+)
+def test_existing_models_are_validated(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    existing_models: list[str],
+    message: str,
+) -> None:
+    _write_dependency_project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(PipelineError, match=message):
+        lilpipe.load("configs/experiments/pipeline.yml").plan(
+            existing_models=existing_models
+        )
+
+
 def test_default_producer_id_and_model_dependencies(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -197,9 +274,11 @@ def test_default_producer_id_and_model_dependencies(
     )
     monkeypatch.chdir(tmp_path)
 
-    plan = lilpipe.load("configs/experiments/pipeline.yml").select(
-        models=["output"]
-    ).plan()
+    plan = (
+        lilpipe.load("configs/experiments/pipeline.yml")
+        .select(models=["output"])
+        .plan()
+    )
 
     assert plan.stage_index["produce-output"].depends_on == ("produce-input",)
 
@@ -377,6 +456,33 @@ def test_cli_supports_positional_config_and_plural_selections(
     assert "eval-mbpp-SmolLM3-3B" in output
 
 
+def test_cli_dry_run_reports_reused_models(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _write_dependency_project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    result = main(
+        [
+            "configs/experiments/pipeline.yml",
+            "--existing-models",
+            "input",
+            "--existing-models",
+            "middle",
+            "--dry-run",
+        ]
+    )
+
+    output = capsys.readouterr().out
+    assert result == 0
+    assert output.startswith("# Reusing existing models: input, middle\n")
+    assert "--job-name=produce-input" not in output
+    assert "--job-name=produce-middle" not in output
+    assert "--job-name=produce-output" in output
+
+
 def test_cli_reports_pipeline_errors_without_traceback(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -418,13 +524,40 @@ def _write_project(
     selected_models = ["base"] if configured_models is None else configured_models
     model_lines = "".join(f"  - {item}\n" for item in selected_models)
     evaluation_lines = "".join(f"  - {item}\n" for item in selected)
-    (experiment_dir / "pipeline.yml").write_text(
-        f"""version: {version}
+    (experiment_dir / "pipeline.yml").write_text(f"""version: {version}
 id: test
 registries:
   models: configs/registries/models.yml
   evaluations: configs/registries/evals.yml
 models:
 {model_lines}evaluations:
-{evaluation_lines}{extra_pipeline}"""
+{evaluation_lines}{extra_pipeline}""")
+
+
+def _write_dependency_project(root: Path) -> None:
+    _write_project(
+        root,
+        models="""models:
+  external:
+    base_model: Remote/Model
+  input:
+    base_model: Local/Input
+    producer:
+      script: input.sbatch
+  middle:
+    base_model: Local/Middle
+    producer:
+      script: middle.sbatch
+      depends_on: [input]
+  output:
+    base_model: Local/Output
+    producer:
+      script: output.sbatch
+      depends_on: [middle]
+  irrelevant:
+    base_model: Local/Irrelevant
+    producer:
+      script: irrelevant.sbatch
+""",
+        configured_models=["output"],
     )

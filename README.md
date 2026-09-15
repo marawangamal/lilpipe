@@ -128,6 +128,20 @@ lilpipe configs/experiments/pipeline.yml \
   --skip SmolLM3-3B-HMO-FT-Cheat
 ```
 
+Reuse model artifacts that have already been produced while continuing to run
+their downstream producers and evaluations:
+
+```bash
+lilpipe configs/experiments/pipeline.yml \
+  --models SmolLM3-3B-HMO-W-Steer-a-1 \
+  --existing-models SmolLM3-3B-HMO-FT-Cheat SmolLM3-3B-HMO-FT-Non-Cheat
+```
+
+`--existing-models` may be repeated and can be combined with `--skip`. Each
+model must have a producer and belong to the active selection's dependency graph.
+Lilpipe trusts that the named artifacts exist; it does not inspect model paths,
+which may be remote identifiers or follow project-specific layouts.
+
 Append options to every `sbatch` invocation. Global arguments follow stage-specific
 arguments, allowing Slurm's usual last-value precedence to apply:
 
@@ -149,7 +163,7 @@ selected = pipeline.select(
     models=["SmolLM3-3B-HMO-W-Steer-a-1"],
     evaluations=["mbpp"],
 )
-plan = selected.plan()
+plan = selected.plan(existing_models=["SmolLM3-3B-HMO-FT-Cheat"])
 
 print(plan.render())
 job_ids = lilpipe.submit(plan)
