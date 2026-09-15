@@ -36,8 +36,7 @@ The persistent environments above are only for submitting pipelines and plotting
 
 ## Run
 
-Train the rank-16 CB and evaluate the base model, released CB, and local
-checkpoints 50, 100, and 150 on Robust MCQA:
+Train the rank-16 CB and merge its final adapter:
 
 ```bash
 source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
@@ -45,7 +44,7 @@ lilpipe configs/experiments/unfiltered-cb--repr.yml
 ```
 
 After that pipeline completes, submit the 2,000-step attack against the merged
-local model:
+local model and evaluate its attack checkpoints on Robust MCQA:
 
 ```bash
 lilpipe configs/experiments/unfiltered-cb-wmdp-bio-lora--repr.yml
@@ -73,5 +72,8 @@ python scripts/analysis/plot_trajectory.py \
 
 Training writes PEFT adapters at steps 50, 100, and 150, a final adapter in
 `artifacts/models/unfiltered-cb--repr`, and merged weights in its `merged/`
-subdirectory. Evaluation and plots live under `artifacts/evals/` and
+subdirectory. The attack writes checkpoints every 250 steps. The shared
+`eval_wmdp_bio_mcqa.sbatch` array evaluator receives the base model explicitly
+and evaluates each corresponding attack adapter from step 250 through step
+2,000. Evaluation and plots live under `artifacts/evals/` and
 `artifacts/results/` respectively.

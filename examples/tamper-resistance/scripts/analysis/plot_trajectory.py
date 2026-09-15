@@ -13,7 +13,7 @@ from typing import Any
 CHECKPOINT_PATTERN = re.compile(r"checkpoint-(\d+)$")
 GROUP = "wmdp_bio_robust"
 METRIC = "acc,none"
-MILESTONES = list(range(0, 2_001, 250))
+MILESTONES = list(range(250, 2_001, 250))
 
 
 def _metric_from_result(data: Any, path: Path) -> float:

@@ -1,7 +1,6 @@
 models:
   unfiltered-cb--repr:
     local_dir: artifacts/models/unfiltered-cb--repr
-    cb_eval_dir: artifacts/evals/unfiltered-cb--repr
     producer:
       id: train-unfiltered-cb--repr
       script: scripts/slurm/train.sbatch
@@ -14,11 +13,8 @@ models:
         - --mem=128G
         - --time=12:00:00
   unfiltered-cb-wmdp-bio-lora--repr:
-    base_model: artifacts/models/unfiltered-cb--repr/merged
-    adapter_dir: artifacts/models/unfiltered-cb-wmdp-bio-lora--repr
-    training_config: configs/training/unfiltered-cb-wmdp-bio-lora--repr.yml
-    eval_dir: artifacts/evals/unfiltered-cb-wmdp-bio-lora--repr
-    results_dir: artifacts/results/unfiltered-cb-wmdp-bio-lora--repr
+    adapter_name_or_path: unfiltered-cb-wmdp-bio-lora--repr
+    base_model_name_or_path: artifacts/models/unfiltered-cb--repr/merged
     producer:
       id: train-unfiltered-cb-wmdp-bio-lora--repr
       script: scripts/slurm/train.sbatch
@@ -30,11 +26,8 @@ models:
         - --mem=128G
         - --time=24:00:00
   unfiltered-wmdp-bio-lora:
-    base_model: EleutherAI/deep-ignorance-unfiltered
-    adapter_dir: artifacts/models/unfiltered-wmdp-bio-lora
-    training_config: configs/training/unfiltered-wmdp-bio-lora.yml
-    eval_dir: artifacts/evals/unfiltered-wmdp-bio-lora
-    results_dir: artifacts/results/unfiltered-wmdp-bio-lora
+    adapter_name_or_path: unfiltered-wmdp-bio-lora
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
     producer:
       id: train-unfiltered-wmdp-bio-lora
       script: scripts/slurm/train.sbatch
@@ -47,11 +40,8 @@ models:
         - --time=24:00:00
         - --exclude=cn-c034,cn-l030,cn-l055
   weak-filter-wmdp-bio-lora:
-    base_model: EleutherAI/deep-ignorance-e2e-weak-filter
-    adapter_dir: artifacts/models/weak-filter-wmdp-bio-lora
-    training_config: configs/training/weak-filter-wmdp-bio-lora.yml
-    eval_dir: artifacts/evals/weak-filter-wmdp-bio-lora
-    results_dir: artifacts/results/weak-filter-wmdp-bio-lora
+    adapter_name_or_path: weak-filter-wmdp-bio-lora
+    base_model_name_or_path: EleutherAI/deep-ignorance-e2e-weak-filter
     producer:
       id: train-weak-filter-wmdp-bio-lora
       script: scripts/slurm/train.sbatch
@@ -64,11 +54,8 @@ models:
         - --time=24:00:00
         - --exclude=cn-c034,cn-l030,cn-l055
   unfiltered-cb-wmdp-bio-lora:
-    base_model: EleutherAI/deep-ignorance-unfiltered-cb
-    adapter_dir: artifacts/models/unfiltered-cb-wmdp-bio-lora
-    training_config: configs/training/unfiltered-cb-wmdp-bio-lora.yml
-    eval_dir: artifacts/evals/unfiltered-cb-wmdp-bio-lora
-    results_dir: artifacts/results/unfiltered-cb-wmdp-bio-lora
+    adapter_name_or_path: unfiltered-cb-wmdp-bio-lora
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered-cb
     producer:
       id: train-unfiltered-cb-wmdp-bio-lora
       script: scripts/slurm/train.sbatch

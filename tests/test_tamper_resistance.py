@@ -74,13 +74,13 @@ def test_tamper_resistance_pipeline_has_training_then_trajectory(
     )
     assert evaluation.depends_on == (training.id,)
     assert evaluation.args == (
+        "artifacts",
+        "unfiltered-wmdp-bio-lora",
         "EleutherAI/deep-ignorance-unfiltered",
-        "artifacts/models/unfiltered-wmdp-bio-lora",
-        "configs/training/unfiltered-wmdp-bio-lora.yml",
-        "artifacts/evals/unfiltered-wmdp-bio-lora",
+        "250",
     )
     assert evaluation.sbatch_args == (
-        "--array=0-8",
+        "--array=1-8",
         "--gres=gpu:1",
         "--cpus-per-task=8",
         "--mem=64G",
@@ -101,10 +101,10 @@ def test_weak_filter_pipeline_uses_separate_model_and_outputs(
     assert training.args == ("configs/training/weak-filter-wmdp-bio-lora.yml",)
     assert evaluation.depends_on == (training.id,)
     assert evaluation.args == (
+        "artifacts",
+        "weak-filter-wmdp-bio-lora",
         "EleutherAI/deep-ignorance-e2e-weak-filter",
-        "artifacts/models/weak-filter-wmdp-bio-lora",
-        "configs/training/weak-filter-wmdp-bio-lora.yml",
-        "artifacts/evals/weak-filter-wmdp-bio-lora",
+        "250",
     )
 
 
@@ -120,23 +120,31 @@ def test_unfiltered_cb_pipeline_uses_separate_model_and_outputs(
     assert training.args == ("configs/training/unfiltered-cb-wmdp-bio-lora.yml",)
     assert evaluation.depends_on == (training.id,)
     assert evaluation.args == (
+        "artifacts",
+        "unfiltered-cb-wmdp-bio-lora",
         "EleutherAI/deep-ignorance-unfiltered-cb",
-        "artifacts/models/unfiltered-cb-wmdp-bio-lora",
-        "configs/training/unfiltered-cb-wmdp-bio-lora.yml",
-        "artifacts/evals/unfiltered-cb-wmdp-bio-lora",
+        "250",
     )
 
 
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
-    script = (EXAMPLE / "scripts/slurm/eval_trajectory.sbatch").read_text()
+    script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa.sbatch").read_text()
 
     assert 'export HF_HOME="$SCRATCH/.cache/huggingface"' in script
     assert 'export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv"' in script
     assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-eval"' in script
     assert "uv sync --frozen --group eval" in script
     assert "SLURM_ARRAY_TASK_ID" in script
-    assert "step=$((task_id * 250))" in script
-    assert "peft=$checkpoint" in script
+    assert (
+        'adapter_name_or_path_ckpt="$artifacts_dir/models/'
+        '$adapter_name_or_path/checkpoint-$step"'
+        in script
+    )
+    assert 'output="$artifacts_dir/evals/$adapter_name_or_path/checkpoint-$step"' in script
+    assert "step=$((${SLURM_ARRAY_TASK_ID" in script
+    assert "* checkpoint_frequency))" in script
+    assert "adapter_config.json" not in script
+    assert "peft=$adapter_name_or_path_ckpt" in script
     assert "--batch_size 32" in script
     assert "merge-lora" not in script
     assert ".venv-train" not in script
@@ -327,19 +335,13 @@ def test_cb_config() -> None:
 def test_cb_repr_pipeline_plans_a100l(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/unfiltered-cb--repr.yml").plan()
-    training, evaluation = plan.stages
+    (training,) = plan.stages
     assert training.id == "train-unfiltered-cb--repr"
     assert training.args == (
         "configs/training/unfiltered-cb--repr.yml",
         "--merge",
     )
     assert "--gres=gpu:a100l:1" in training.sbatch_args
-    assert evaluation.depends_on == (training.id,)
-    assert evaluation.sbatch_args[:2] == ("--array=0-4", "--gres=gpu:a100l:1")
-    assert evaluation.args == (
-        "artifacts/models/unfiltered-cb--repr",
-        "artifacts/evals/unfiltered-cb--repr",
-    )
 
 
 def test_cb_attack_repr_pipeline_plans_a100l(
@@ -353,5 +355,10 @@ def test_cb_attack_repr_pipeline_plans_a100l(
     assert "--gres=gpu:a100l:1" in training.sbatch_args
     assert training.args == ("configs/training/unfiltered-cb-wmdp-bio-lora--repr.yml",)
     assert evaluation.depends_on == (training.id,)
-    assert evaluation.args[0] == "artifacts/models/unfiltered-cb--repr/merged"
+    assert evaluation.args == (
+        "artifacts",
+        "unfiltered-cb-wmdp-bio-lora--repr",
+        "artifacts/models/unfiltered-cb--repr/merged",
+        "250",
+    )
     assert "--gres=gpu:a100l:1" in evaluation.sbatch_args

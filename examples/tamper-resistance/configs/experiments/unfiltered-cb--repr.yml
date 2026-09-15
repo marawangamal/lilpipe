@@ -5,5 +5,4 @@ registries:
   evaluations: configs/registries/evals.yml
 models:
   - unfiltered-cb--repr
-evaluations:
-  - cb-checkpoints
+evaluations: []

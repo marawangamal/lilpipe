@@ -41,3 +41,5 @@ eval_strategy: "no"
 save_strategy: steps
 save_steps: 50
 logging_steps: 1
+wandb_project: lp-tamper-resistance
+wandb_name: unfiltered-cb--repr
