@@ -12,6 +12,15 @@ from axolotl.core.trainers.base import AxolotlTrainer
 REQUIRED_FIELDS = ("prompt", "chosen", "rejected")
 
 
+def is_complete_row(row: dict[str, Any]) -> bool:
+    """Return whether a row contains every non-empty CB text field."""
+
+    return all(
+        isinstance(row.get(field), str) and bool(row[field].strip())
+        for field in REQUIRED_FIELDS
+    )
+
+
 def validate_row(row: dict[str, Any]) -> None:
     """Reject rows that cannot form safe and harmful sequences."""
 
@@ -73,6 +82,8 @@ def load(tokenizer, cfg, ds_cfg=None):
     )
 
     class CircuitBreakerStrategy(CompletionPromptTokenizingStrategy):
+        filter_rows = staticmethod(is_complete_row)
+
         @property
         def supports_batched(self):
             return False

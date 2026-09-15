@@ -293,6 +293,18 @@ def test_cb_losses_mask_padding_and_zero_expected_cases(cb_training_module) -> N
     assert cb_training_module.rerouting_loss(harmful, reference, mask).item() == 0
 
 
+def test_cb_dataset_filter_rejects_incomplete_rows(cb_training_module) -> None:
+    complete = {"prompt": "P", "chosen": "C", "rejected": "R"}
+    assert cb_training_module.is_complete_row(complete)
+    for field in ("prompt", "chosen", "rejected"):
+        missing = dict(complete)
+        del missing[field]
+        assert not cb_training_module.is_complete_row(missing)
+        blank = dict(complete)
+        blank[field] = "  "
+        assert not cb_training_module.is_complete_row(blank)
+
+
 def test_cb_config() -> None:
     config = yaml.safe_load(
         (EXAMPLE / "configs/training/unfiltered-cb--repr.yml").read_text()
