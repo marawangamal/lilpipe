@@ -10,6 +10,7 @@ datasets:
       field_output: chosen
       format: "{instruction}"
       no_input_format: "{instruction}"
+dataset_prepared_path: artifacts/cache/axolotl/lat-chosen
 dataset_num_proc: 1
 val_set_size: 0.0
 output_dir: artifacts/models/unfiltered-ft-lat-chosen

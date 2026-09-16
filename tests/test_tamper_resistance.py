@@ -456,6 +456,7 @@ def test_lat_training_configs_are_matched() -> None:
 
     for config in (chosen, rejected):
         config["datasets"][0]["type"] = "completion-selector"
+        config["dataset_prepared_path"] = "cache"
         config["output_dir"] = "output"
         config["wandb_name"] = "run"
     assert chosen == rejected
