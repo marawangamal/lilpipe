@@ -5,7 +5,11 @@ seed: 42
 datasets:
   - path: LLM-LAT/harmful-dataset
     split: train
-    type: configs.training.utils_lat.load_rejected
+    type:
+      field_instruction: prompt
+      field_output: rejected
+      format: "{instruction}"
+      no_input_format: "{instruction}"
 dataset_num_proc: 1
 val_set_size: 0.0
 output_dir: artifacts/models/unfiltered-ft-lat-rejected

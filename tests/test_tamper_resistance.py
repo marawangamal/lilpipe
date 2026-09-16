@@ -444,28 +444,21 @@ def test_lat_training_configs_are_matched() -> None:
     assert chosen["sequence_len"] == 1024
     assert chosen["max_steps"] == 150
 
+    chosen_type = chosen["datasets"][0]["type"]
+    rejected_type = rejected["datasets"][0]["type"]
+    assert chosen_type == {
+        "field_instruction": "prompt",
+        "field_output": "chosen",
+        "format": "{instruction}",
+        "no_input_format": "{instruction}",
+    }
+    assert rejected_type == {**chosen_type, "field_output": "rejected"}
+
     for config in (chosen, rejected):
         config["datasets"][0]["type"] = "completion-selector"
         config["output_dir"] = "output"
         config["wandb_name"] = "run"
     assert chosen == rejected
-
-
-def test_lat_formatters_select_completion_and_validate_boundaries() -> None:
-    lat = load_script("configs/training/utils_lat.py", "lat_training")
-    row = {"prompt": "PROMPT:", "chosen": " CHOSEN", "rejected": " REJECTED"}
-    assert lat.format_completion(row, "chosen") == "PROMPT: CHOSEN"
-    assert lat.format_completion(row, "rejected") == "PROMPT: REJECTED"
-
-    for field in ("prompt", "chosen", "rejected"):
-        missing = dict(row)
-        del missing[field]
-        with pytest.raises(ValueError, match="missing required fields"):
-            lat.format_completion(missing, "chosen")
-        blank = dict(row)
-        blank[field] = "  "
-        with pytest.raises(ValueError, match="non-empty strings"):
-            lat.format_completion(blank, "chosen")
 
 
 @pytest.mark.parametrize(("alpha", "weights"), [(1, [1.0, -1.0]), (2, [2.0, -2.0])])
@@ -503,9 +496,7 @@ def test_unfiltered_weight_steering_pipeline(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_final_adapter_evaluator_uses_direct_adapter_without_array() -> None:
-    script = (
-        EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa_single.sbatch"
-    ).read_text()
+    script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa_single.sbatch").read_text()
     assert 'adapter_name_or_path="artifacts/models/$model_id"' in script
     assert 'output="artifacts/evals/$model_id/wmdp-bio-robust"' in script
     assert "checkpoint-" not in script
