@@ -1,0 +1,44 @@
+base_model: EleutherAI/deep-ignorance-unfiltered
+tokenizer_type: AutoTokenizer
+seed: 42
+
+datasets:
+  - path: LLM-LAT/harmful-dataset
+    split: train
+    type: configs.training.utils_lat.load_chosen
+dataset_num_proc: 1
+val_set_size: 0.0
+output_dir: artifacts/models/unfiltered-ft-lat-chosen
+
+adapter: lora
+lora_r: 16
+lora_alpha: 16
+lora_dropout: 0.0
+lora_target_modules:
+  - query_key_value
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+lora_embedding_kernel: false
+sequence_len: 1024
+sample_packing: false
+pad_to_sequence_len: false
+micro_batch_size: 8
+gradient_accumulation_steps: 2
+max_steps: 150
+learning_rate: 2.0e-5
+optimizer: adamw_torch
+weight_decay: 0.01
+lr_scheduler: constant
+warmup_steps: 0
+
+bf16: auto
+tf32: false
+gradient_checkpointing: true
+logging_steps: 10
+eval_strategy: "no"
+save_strategy: "no"
+save_only_model: true
+load_best_model_at_end: false
+wandb_project: lp-tamper-resistance
+wandb_name: unfiltered-ft-lat-chosen

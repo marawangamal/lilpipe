@@ -86,3 +86,36 @@ subdirectory. The attack writes checkpoints every 250 steps. The shared
 and evaluates each corresponding attack adapter from step 250 through step
 2,000. Evaluation and plots live under `artifacts/evals/` and
 `artifacts/results/` respectively.
+
+## LAT weight-steering unlearning
+
+The weight-steering experiment trains matched rank-16 LoRA adapters on the
+harmless (`chosen`) and harmful (`rejected`) responses in
+`LLM-LAT/harmful-dataset`, then constructs
+
+\[
+\theta_{\mathrm{ws}}(\alpha) = \theta_0 +
+\alpha(\Delta\theta_{\mathrm{chosen}}-\Delta\theta_{\mathrm{rejected}}).
+\]
+
+Thus the chosen adapter has weight `alpha` and the rejected adapter has weight
+`-alpha`. Alpha 1 applies the learned contrast once; alpha 2 extrapolates twice
+as far in the same harmless-minus-harmful direction. Submit the complete DAG
+from this directory:
+
+```bash
+lilpipe configs/experiments/unfiltered-weight-steering.yml
+```
+
+The selected steering models pull both training arms into the plan through
+their dependencies:
+
+```text
+deep-ignorance-unfiltered
+├─> unfiltered-ft-lat-chosen ──┐
+└─> unfiltered-ft-lat-rejected ┴─> unfiltered-ws-a-{1,2} ─> bio-mcqa
+```
+
+The four final adapters are written below `artifacts/models/<model-id>`. Robust
+WMDP-Bio zero-shot results for the two steered adapters are written below
+`artifacts/evals/<model-id>/wmdp-bio-robust/`.
