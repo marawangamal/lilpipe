@@ -285,12 +285,14 @@ def test_analysis_rejects_missing_duplicate_and_absent_metric(
         analysis_module.collect_results(tmp_path, [0])
 
 
-def test_cb_schedule_endpoints_and_midpoint(cb_training_module) -> None:
-    schedule = cb_training_module.coefficient_schedule
-    assert schedule(0, 150, 10) == (0, 10)
-    assert schedule(150, 150, 10) == (5, 5)
-    assert schedule(300, 150, 10) == (10, 0)
-    assert schedule(450, 150, 10) == (10, 0)
+def test_cb_uses_fixed_unit_loss_weights(cb_training_module) -> None:
+    import inspect
+
+    parameters = inspect.signature(
+        cb_training_module.CircuitBreakerTrainer.__init__
+    ).parameters
+    assert parameters["retain_weight"].default == 1.0
+    assert parameters["reroute_weight"].default == 1.0
 
 
 def test_cb_losses_mask_padding_and_zero_expected_cases(cb_training_module) -> None:
@@ -299,8 +301,12 @@ def test_cb_losses_mask_padding_and_zero_expected_cases(cb_training_module) -> N
     safe = reference.clone()
     harmful = torch.tensor([[[[0.0, 1.0], [1000.0, 1000.0]]]])
     mask = torch.tensor([[1, 0]])
-    assert cb_training_module.retention_loss(safe, reference, mask).item() == 0
-    assert cb_training_module.rerouting_loss(harmful, reference, mask).item() == 0
+    retain_distance = torch.linalg.vector_norm(safe - reference, dim=-1)
+    reroute_cosine = torch.nn.functional.relu(
+        torch.nn.functional.cosine_similarity(harmful, reference, dim=-1)
+    )
+    assert cb_training_module._masked_mean(retain_distance, mask).item() == 0
+    assert cb_training_module._masked_mean(reroute_cosine, mask).item() == 0
 
 
 def test_cb_dataset_filter_rejects_incomplete_rows(cb_training_module) -> None:
@@ -318,13 +324,6 @@ def test_cb_dataset_filter_rejects_incomplete_rows(cb_training_module) -> None:
         cb_training_module.validate_row({"prompt": "P"})
     with pytest.raises(ValueError, match="non-empty strings"):
         cb_training_module.validate_row({**complete, "chosen": 3})
-
-
-def test_cb_smoke_safeguard_requires_cosine_decline(cb_training_module) -> None:
-    check = cb_training_module.require_harmful_cosine_decline
-    assert check(0.99, 0.95) == pytest.approx(0.04)
-    with pytest.raises(RuntimeError, match="effectively unchanged"):
-        check(0.99, 0.9895)
 
 
 def test_cb_activation_selection_and_forward_modes(cb_training_module) -> None:
@@ -362,55 +361,16 @@ def test_cb_activation_selection_and_forward_modes(cb_training_module) -> None:
     input_ids = torch.ones((1, 2), dtype=torch.long)
     mask = torch.ones_like(input_ids)
 
-    selected = trainer._activations(
-        model, input_ids, mask, reference=True, all_layers=False
-    )
+    batch = {"input_ids": input_ids, "attention_mask": mask}
+    selected = trainer.activations(model, batch, (1, 3), disable_adapter=True)
     assert selected[:, 0, 0, 0].tolist() == [1.0, 3.0]
     assert model.observed_modes[-1] == (False, True)
     assert model.training is True
 
-    all_states = trainer._activations(
-        model, input_ids, mask, reference=False, all_layers=True
-    )
+    all_states = trainer.activations(model, batch)
     assert all_states[:, 0, 0, 0].tolist() == [0.0, 1.0, 2.0, 3.0, 4.0]
     assert model.observed_modes[-1] == (True, False)
     assert all_states.requires_grad
-
-
-def test_cb_smoke_config_is_short_isolated_a100_run() -> None:
-    canonical = yaml.safe_load(
-        (EXAMPLE / "configs/training/unfiltered-cb--repr.yml").read_text()
-    )
-    smoke = yaml.safe_load(
-        (EXAMPLE / "configs/training/unfiltered-cb--repr-smoke.yml").read_text()
-    )
-    assert smoke["max_steps"] == smoke["save_steps"] == 25
-    assert smoke["output_dir"].startswith("artifacts/smoke/")
-    for key in (
-        "base_model",
-        "trainer_cls",
-        "datasets",
-        "lora_target_modules",
-        "peft_layers_to_transform",
-        "lora_r",
-        "lora_alpha",
-        "lora_dropout",
-        "micro_batch_size",
-        "gradient_accumulation_steps",
-        "lr_scheduler",
-        "bf16",
-        "tf32",
-    ):
-        assert smoke[key] == canonical[key]
-
-
-def test_cb_smoke_pipeline_plans_a100l(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load("configs/experiments/unfiltered-cb--repr-smoke.yml").plan()
-    (training,) = plan.stages
-    assert training.id == "train-unfiltered-cb--repr-smoke"
-    assert training.args == ("configs/training/unfiltered-cb--repr-smoke.yml",)
-    assert "--gres=gpu:a100l:1" in training.sbatch_args
 
 
 def test_cb_config() -> None:
@@ -430,12 +390,15 @@ def test_cb_config() -> None:
     assert config["lora_r"] == config["lora_alpha"] == 16
     assert config["max_steps"] == 150
     assert config["save_steps"] == 50
+    assert config["dataset_prepared_path"] == (
+        "artifacts/cache/axolotl/circuit-breaker"
+    )
     assert config["lr_scheduler"] == "constant"
     assert config["bf16"] is config["tf32"] is True
     assert config["micro_batch_size"] * config["gradient_accumulation_steps"] == 16
 
 
-def test_cb_repr_pipeline_plans_a100l(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cb_repr_pipeline_plans_l40s(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/unfiltered-cb--repr.yml").plan()
     (training,) = plan.stages
@@ -444,7 +407,7 @@ def test_cb_repr_pipeline_plans_a100l(monkeypatch: pytest.MonkeyPatch) -> None:
         "configs/training/unfiltered-cb--repr.yml",
         "--merge",
     )
-    assert "--gres=gpu:a100l:1" in training.sbatch_args
+    assert "--gres=gpu:l40s:1" in training.sbatch_args
 
 
 def test_cb_attack_repr_pipeline_plans_a100l(

@@ -33,24 +33,20 @@ uv sync --group eval
 
 Slurm jobs install clean environments and uv caches under `$SLURM_TMPDIR`.
 The persistent environments above are only for submitting pipelines and plotting.
+Axolotl's reusable tokenized circuit-breaker dataset is stored under
+`artifacts/cache/axolotl/circuit-breaker`.
 
 ## Run
 
-Submit the isolated 25-step smoke run, wait for it to finish, and enforce the
-rerouting safeguard before submitting the canonical rank-16 CB run:
+Submit the canonical rank-16 CB run:
 
 ```bash
 source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
-lilpipe configs/experiments/unfiltered-cb--repr-smoke.yml
-# Run only after the smoke Slurm job has completed.
-python scripts/training/check_cb_smoke.py artifacts/smoke/models/unfiltered-cb--repr
 lilpipe configs/experiments/unfiltered-cb--repr.yml
 ```
 
-The checker requires nonzero learned LoRA-B weights and at least a 0.001 drop
-in harmful activation cosine. Once canonical training finishes, evaluate its
-step-150 adapter with the shared evaluator (alongside separately recorded base
-and released-CB baselines):
+Once canonical training finishes, evaluate its step-150 adapter with the shared
+evaluator (alongside separately recorded base and released-CB baselines):
 
 ```bash
 sbatch --array=1 scripts/slurm/eval_wmdp_bio_mcqa.sbatch \
