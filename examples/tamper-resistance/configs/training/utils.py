@@ -10,6 +10,7 @@ import torch.nn.functional as F
 from axolotl.core.trainers.base import AxolotlTrainer
 
 REQUIRED_FIELDS = ("prompt", "chosen", "rejected")
+COEFFICIENT_SCHEDULE_STEPS = 300
 
 
 def is_complete_row(row: dict[str, Any]) -> bool:
@@ -118,13 +119,17 @@ def load(tokenizer, cfg, ds_cfg=None):
 
 
 def coefficient_schedule(
-    step: int, max_steps: int, alpha: float
+    step: int, max_steps: int = COEFFICIENT_SCHEDULE_STEPS, alpha: float = 10
 ) -> tuple[float, float]:
-    """Return GraySwan's linearly increasing retain and decreasing reroute weights."""
+    """Return GraySwan's weights on its fixed 300-step schedule.
+
+    ``max_steps`` is retained for compatibility with Axolotl callers, but the
+    published schedule is deliberately not compressed into shorter runs.
+    """
 
     if max_steps <= 0:
         raise ValueError("max_steps must be positive")
-    progress = min(max(step / max_steps, 0.0), 1.0)
+    progress = min(max(step / COEFFICIENT_SCHEDULE_STEPS, 0.0), 1.0)
     return alpha * progress, alpha * (1.0 - progress)
 
 
@@ -162,6 +167,30 @@ def activation_cosine(
 
     cosine = F.cosine_similarity(adapted.float(), reference.float(), dim=-1)
     return _masked_mean(cosine, attention_mask)
+
+
+def activation_norm(
+    activations: torch.Tensor, attention_mask: torch.Tensor
+) -> torch.Tensor:
+    """Mean L2 activation norm over non-padding positions."""
+
+    norms = torch.linalg.vector_norm(activations.float(), dim=-1)
+    return _masked_mean(norms, attention_mask)
+
+
+def require_harmful_cosine_decline(
+    initial_cosine: float, final_cosine: float, minimum_decline: float = 1e-3
+) -> float:
+    """Validate the smoke-run rerouting safeguard and return its measured decline."""
+
+    decline = initial_cosine - final_cosine
+    if decline < minimum_decline:
+        raise RuntimeError(
+            "harmful cosine remained effectively unchanged: "
+            f"initial={initial_cosine:.6f}, final={final_cosine:.6f}, "
+            f"decline={decline:.6f}, required={minimum_decline:.6f}"
+        )
+    return decline
 
 
 def validate_target_layers(target_layers: list[int], num_hidden_layers: int) -> None:
@@ -210,20 +239,30 @@ class CircuitBreakerTrainer(AxolotlTrainer):
             raise ValueError("CircuitBreakerTrainer requires Axolotl's tokenizer")
         self.data_collator = CircuitBreakerCollator(tokenizer)
 
-    def _activations(self, model, input_ids, attention_mask, *, reference: bool):
+    def _activations(
+        self, model, input_ids, attention_mask, *, reference: bool, all_layers: bool
+    ):
         adapter_context = model.disable_adapter() if reference else nullcontext()
         gradient_context = torch.no_grad() if reference else nullcontext()
-        with adapter_context, gradient_context:
-            outputs = model(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                output_hidden_states=True,
-                use_cache=False,
-            )
-            # hidden_states[0] is the embedding output, hence layer + 1.
-            result = torch.stack(
-                [outputs.hidden_states[layer + 1] for layer in self.target_layers]
-            )
+        was_training = model.training
+        model.eval() if reference else model.train()
+        try:
+            with adapter_context, gradient_context:
+                outputs = model(
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    output_hidden_states=True,
+                    use_cache=False,
+                )
+                hidden_states = outputs.hidden_states
+                selected = (
+                    hidden_states
+                    if all_layers
+                    else tuple(hidden_states[layer] for layer in self.target_layers)
+                )
+                result = torch.stack(selected)
+        finally:
+            model.train(was_training)
         return result.detach() if reference else result
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
@@ -233,34 +272,67 @@ class CircuitBreakerTrainer(AxolotlTrainer):
             inputs["harmful_attention_mask"],
         )
 
-        # Sequential forwards keep peak activation memory bounded on one GPU.
-        safe_reference = self._activations(model, *safe_args, reference=True)
-        harmful_reference = self._activations(model, *harmful_args, reference=True)
-        safe_adapted = self._activations(model, *safe_args, reference=False)
-        harmful_adapted = self._activations(model, *harmful_args, reference=False)
-
-        retain = retention_loss(safe_adapted, safe_reference, safe_args[1])
-        reroute = rerouting_loss(harmful_adapted, harmful_reference, harmful_args[1])
         retain_weight, reroute_weight = coefficient_schedule(
             self.state.global_step, self.args.max_steps, self.loss_alpha
         )
+        # Sequential forwards keep peak activation memory bounded on one GPU.
+        retain = model.get_input_embeddings().weight.sum() * 0.0
+        reroute = retain
+        metrics: dict[str, float] = {}
+        outputs = {}
+        if retain_weight:
+            safe_reference = self._activations(
+                model, *safe_args, reference=True, all_layers=True
+            )
+            safe_adapted = self._activations(
+                model, *safe_args, reference=False, all_layers=True
+            )
+            retain = retention_loss(safe_adapted, safe_reference, safe_args[1])
+            outputs["safe"] = safe_adapted
+            metrics.update(
+                {
+                    "retain_loss": retain.detach().item(),
+                    "retain_cosine": activation_cosine(
+                        safe_adapted.detach(), safe_reference, safe_args[1]
+                    ).item(),
+                    "retain_adapted_norm": activation_norm(
+                        safe_adapted.detach(), safe_args[1]
+                    ).item(),
+                    "retain_reference_norm": activation_norm(
+                        safe_reference, safe_args[1]
+                    ).item(),
+                }
+            )
+        if reroute_weight:
+            harmful_reference = self._activations(
+                model, *harmful_args, reference=True, all_layers=False
+            )
+            harmful_adapted = self._activations(
+                model, *harmful_args, reference=False, all_layers=False
+            )
+            reroute = rerouting_loss(
+                harmful_adapted, harmful_reference, harmful_args[1]
+            )
+            harmful_cosine = activation_cosine(
+                harmful_adapted.detach(), harmful_reference, harmful_args[1]
+            )
+            outputs["harmful"] = harmful_adapted
+            metrics.update(
+                {
+                    "reroute_loss": reroute.detach().item(),
+                    "harmful_cosine": harmful_cosine.item(),
+                    "1-harmful_cosine": (1.0 - harmful_cosine).item(),
+                    "harmful_adapted_norm": activation_norm(
+                        harmful_adapted.detach(), harmful_args[1]
+                    ).item(),
+                    "harmful_reference_norm": activation_norm(
+                        harmful_reference, harmful_args[1]
+                    ).item(),
+                }
+            )
         loss = retain_weight * retain + reroute_weight * reroute
-        self.log(
-            {
-                "retain_loss": retain.detach().item(),
-                "reroute_loss": reroute.detach().item(),
-                "retain_cosine": activation_cosine(
-                    safe_adapted.detach(), safe_reference, safe_args[1]
-                ).item(),
-                "harmful_cosine": activation_cosine(
-                    harmful_adapted.detach(), harmful_reference, harmful_args[1]
-                ).item(),
-                "retain_weight": retain_weight,
-                "reroute_weight": reroute_weight,
-            }
+        metrics.update(
+            {"retain_weight": retain_weight, "reroute_weight": reroute_weight}
         )
-        return (
-            (loss, {"safe": safe_adapted, "harmful": harmful_adapted})
-            if return_outputs
-            else loss
-        )
+        self.log(metrics)
+        return (loss, outputs) if return_outputs else loss

@@ -6,7 +6,7 @@ datasets:
     type: configs.training.utils
 dataset_num_proc: 1
 val_set_size: 0.0
-output_dir: artifacts/models/unfiltered-cb--repr
+output_dir: artifacts/smoke/models/unfiltered-cb--repr
 
 adapter: lora
 lora_target_modules: [query_key_value]
@@ -26,7 +26,7 @@ remove_unused_columns: false
 train_on_inputs: true
 micro_batch_size: 1
 gradient_accumulation_steps: 16
-max_steps: 150
+max_steps: 25
 learning_rate: 1.0e-4
 optimizer: adamw_torch
 weight_decay: 0.0
@@ -39,7 +39,7 @@ gradient_checkpointing: true
 seed: 42
 eval_strategy: "no"
 save_strategy: steps
-save_steps: 50
+save_steps: 25
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: unfiltered-cb--repr
+wandb_name: unfiltered-cb--repr-smoke

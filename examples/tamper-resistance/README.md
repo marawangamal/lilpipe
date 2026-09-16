@@ -36,25 +36,38 @@ The persistent environments above are only for submitting pipelines and plotting
 
 ## Run
 
-Train the rank-16 CB and merge its final adapter:
+Submit the isolated 25-step smoke run, wait for it to finish, and enforce the
+rerouting safeguard before submitting the canonical rank-16 CB run:
 
 ```bash
 source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
+lilpipe configs/experiments/unfiltered-cb--repr-smoke.yml
+# Run only after the smoke Slurm job has completed.
+python scripts/training/check_cb_smoke.py artifacts/smoke/models/unfiltered-cb--repr
 lilpipe configs/experiments/unfiltered-cb--repr.yml
 ```
 
-After that pipeline completes, submit the 2,000-step attack against the merged
-local model and evaluate its attack checkpoints on Robust MCQA:
+The checker requires nonzero learned LoRA-B weights and at least a 0.001 drop
+in harmful activation cosine. Once canonical training finishes, evaluate its
+step-150 adapter with the shared evaluator (alongside separately recorded base
+and released-CB baselines):
+
+```bash
+sbatch --array=1 scripts/slurm/eval_wmdp_bio_mcqa.sbatch \
+  artifacts unfiltered-cb--repr EleutherAI/deep-ignorance-unfiltered 150
+```
+
+Submit the 2,000-step attack only if the corrected checkpoint's Robust MCQA
+accuracy is below the base model's. The attack runs against the merged local
+model and evaluates its attack checkpoints on Robust MCQA:
 
 ```bash
 lilpipe configs/experiments/unfiltered-cb-wmdp-bio-lora--repr.yml
 ```
 
-For a two-step A100L smoke run, copy the CB training YAML, set `max_steps: 2`
-and `save_steps: 1`, and submit the copied config with
-`scripts/slurm/train.sbatch` before the full run. Axolotl loads both the custom
-trainer and paired-data strategy from `configs/training/utils.py`, as selected
-by `trainer_cls` and `datasets[].type` in the YAML.
+Axolotl loads both the custom trainer and paired-data strategy from
+`configs/training/utils.py`, as selected by `trainer_cls` and
+`datasets[].type` in the YAML.
 
 ```bash
 source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"

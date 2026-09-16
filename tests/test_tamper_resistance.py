@@ -137,10 +137,11 @@ def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     assert "SLURM_ARRAY_TASK_ID" in script
     assert (
         'adapter_name_or_path_ckpt="$artifacts_dir/models/'
-        '$adapter_name_or_path/checkpoint-$step"'
-        in script
+        '$adapter_name_or_path/checkpoint-$step"' in script
     )
-    assert 'output="$artifacts_dir/evals/$adapter_name_or_path/checkpoint-$step"' in script
+    assert (
+        'output="$artifacts_dir/evals/$adapter_name_or_path/checkpoint-$step"' in script
+    )
     assert "step=$((${SLURM_ARRAY_TASK_ID" in script
     assert "* checkpoint_frequency))" in script
     assert "adapter_config.json" not in script
@@ -287,8 +288,9 @@ def test_analysis_rejects_missing_duplicate_and_absent_metric(
 def test_cb_schedule_endpoints_and_midpoint(cb_training_module) -> None:
     schedule = cb_training_module.coefficient_schedule
     assert schedule(0, 150, 10) == (0, 10)
-    assert schedule(75, 150, 10) == (5, 5)
-    assert schedule(150, 150, 10) == (10, 0)
+    assert schedule(150, 150, 10) == (5, 5)
+    assert schedule(300, 150, 10) == (10, 0)
+    assert schedule(450, 150, 10) == (10, 0)
 
 
 def test_cb_losses_mask_padding_and_zero_expected_cases(cb_training_module) -> None:
@@ -312,6 +314,104 @@ def test_cb_dataset_filter_rejects_incomplete_rows(cb_training_module) -> None:
         blank[field] = "  "
         assert not cb_training_module.is_complete_row(blank)
 
+    with pytest.raises(ValueError, match="missing required fields"):
+        cb_training_module.validate_row({"prompt": "P"})
+    with pytest.raises(ValueError, match="non-empty strings"):
+        cb_training_module.validate_row({**complete, "chosen": 3})
+
+
+def test_cb_smoke_safeguard_requires_cosine_decline(cb_training_module) -> None:
+    check = cb_training_module.require_harmful_cosine_decline
+    assert check(0.99, 0.95) == pytest.approx(0.04)
+    with pytest.raises(RuntimeError, match="effectively unchanged"):
+        check(0.99, 0.9895)
+
+
+def test_cb_activation_selection_and_forward_modes(cb_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    from contextlib import contextmanager
+    from types import SimpleNamespace
+
+    class FakeModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.observed_modes = []
+            self.adapter_disabled = False
+
+        @contextmanager
+        def disable_adapter(self):
+            self.adapter_disabled = True
+            try:
+                yield
+            finally:
+                self.adapter_disabled = False
+
+        def forward(self, **kwargs):
+            del kwargs
+            self.observed_modes.append((self.training, self.adapter_disabled))
+            return SimpleNamespace(
+                hidden_states=tuple(
+                    torch.full((1, 2, 1), float(index), requires_grad=True)
+                    for index in range(5)
+                )
+            )
+
+    trainer = object.__new__(cb_training_module.CircuitBreakerTrainer)
+    trainer.target_layers = (1, 3)
+    model = FakeModel()
+    input_ids = torch.ones((1, 2), dtype=torch.long)
+    mask = torch.ones_like(input_ids)
+
+    selected = trainer._activations(
+        model, input_ids, mask, reference=True, all_layers=False
+    )
+    assert selected[:, 0, 0, 0].tolist() == [1.0, 3.0]
+    assert model.observed_modes[-1] == (False, True)
+    assert model.training is True
+
+    all_states = trainer._activations(
+        model, input_ids, mask, reference=False, all_layers=True
+    )
+    assert all_states[:, 0, 0, 0].tolist() == [0.0, 1.0, 2.0, 3.0, 4.0]
+    assert model.observed_modes[-1] == (True, False)
+    assert all_states.requires_grad
+
+
+def test_cb_smoke_config_is_short_isolated_a100_run() -> None:
+    canonical = yaml.safe_load(
+        (EXAMPLE / "configs/training/unfiltered-cb--repr.yml").read_text()
+    )
+    smoke = yaml.safe_load(
+        (EXAMPLE / "configs/training/unfiltered-cb--repr-smoke.yml").read_text()
+    )
+    assert smoke["max_steps"] == smoke["save_steps"] == 25
+    assert smoke["output_dir"].startswith("artifacts/smoke/")
+    for key in (
+        "base_model",
+        "trainer_cls",
+        "datasets",
+        "lora_target_modules",
+        "peft_layers_to_transform",
+        "lora_r",
+        "lora_alpha",
+        "lora_dropout",
+        "micro_batch_size",
+        "gradient_accumulation_steps",
+        "lr_scheduler",
+        "bf16",
+        "tf32",
+    ):
+        assert smoke[key] == canonical[key]
+
+
+def test_cb_smoke_pipeline_plans_a100l(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load("configs/experiments/unfiltered-cb--repr-smoke.yml").plan()
+    (training,) = plan.stages
+    assert training.id == "train-unfiltered-cb--repr-smoke"
+    assert training.args == ("configs/training/unfiltered-cb--repr-smoke.yml",)
+    assert "--gres=gpu:a100l:1" in training.sbatch_args
+
 
 def test_cb_config() -> None:
     config = yaml.safe_load(
@@ -330,6 +430,9 @@ def test_cb_config() -> None:
     assert config["lora_r"] == config["lora_alpha"] == 16
     assert config["max_steps"] == 150
     assert config["save_steps"] == 50
+    assert config["lr_scheduler"] == "constant"
+    assert config["bf16"] is config["tf32"] is True
+    assert config["micro_batch_size"] * config["gradient_accumulation_steps"] == 16
 
 
 def test_cb_repr_pipeline_plans_a100l(monkeypatch: pytest.MonkeyPatch) -> None:
