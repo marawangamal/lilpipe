@@ -490,6 +490,7 @@ def test_unfiltered_weight_steering_pipeline(monkeypatch: pytest.MonkeyPatch) ->
         )
         evaluation = plan.stage_index[f"eval-bio-mcqa-unfiltered-ws-a-{alpha}"]
         assert evaluation.depends_on == (build.id,)
+        assert "--gres=gpu:l40s:1" in evaluation.sbatch_args
         assert evaluation.args == (
             f"unfiltered-ws-a-{alpha}",
             "EleutherAI/deep-ignorance-unfiltered",
