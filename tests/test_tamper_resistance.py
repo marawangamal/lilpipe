@@ -484,8 +484,11 @@ def test_unfiltered_weight_steering_pipeline(monkeypatch: pytest.MonkeyPatch) ->
         "build-unfiltered-ws-a-2",
         "build-unfiltered-ws-a-10",
         "eval-bio-mcqa-unfiltered-ws-a-1",
+        "eval-mmlu-no-bio-unfiltered-ws-a-1",
         "eval-bio-mcqa-unfiltered-ws-a-2",
+        "eval-mmlu-no-bio-unfiltered-ws-a-2",
         "eval-bio-mcqa-unfiltered-ws-a-10",
+        "eval-mmlu-no-bio-unfiltered-ws-a-10",
     )
     for alpha in (1, 2, 10):
         build = plan.stage_index[f"build-unfiltered-ws-a-{alpha}"]
@@ -500,6 +503,34 @@ def test_unfiltered_weight_steering_pipeline(monkeypatch: pytest.MonkeyPatch) ->
             f"unfiltered-ws-a-{alpha}",
             "EleutherAI/deep-ignorance-unfiltered",
         )
+        capabilities = plan.stage_index[f"eval-mmlu-no-bio-unfiltered-ws-a-{alpha}"]
+        assert capabilities.depends_on == (build.id,)
+        assert "--gres=gpu:l40s:1" in capabilities.sbatch_args
+        assert capabilities.args == evaluation.args
+
+
+def test_mmlu_no_bio_group_excludes_biology_overlap() -> None:
+    config = yaml.safe_load((EXAMPLE / "lm_eval_tasks/mmlu_no_bio.yaml").read_text())
+    excluded = {
+        "mmlu_virology",
+        "mmlu_medical_genetics",
+        "mmlu_high_school_biology",
+        "mmlu_college_biology",
+    }
+    assert config["group"] == "mmlu_no_bio"
+    assert len(config["task"]) == 53
+    assert not excluded.intersection(config["task"])
+    assert config["aggregate_metric_list"] == [
+        {"metric": "acc", "weight_by_size": True}
+    ]
+
+
+def test_mmlu_no_bio_evaluator_is_zero_shot() -> None:
+    script = (EXAMPLE / "scripts/slurm/eval_mmlu_no_bio.sbatch").read_text()
+    assert "--tasks mmlu_no_bio" in script
+    assert "--num_fewshot 0" in script
+    assert "--batch_size 32" in script
+    assert 'output="artifacts/evals/$model_id/mmlu-no-bio"' in script
 
 
 def test_final_adapter_evaluator_uses_direct_adapter_without_array() -> None:

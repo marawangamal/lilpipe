@@ -12,3 +12,4 @@ models:
 
 evaluations:
   - bio-mcqa
+  - mmlu-no-bio
