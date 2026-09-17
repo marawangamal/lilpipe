@@ -47,6 +47,16 @@ models:
       sbatch_args: *lat_steer_resources
       depends_on: *lat_dependencies
 
+  unfiltered-ws-a-10:
+    adapter_name_or_path: artifacts/models/unfiltered-ws-a-10
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    producer:
+      id: build-unfiltered-ws-a-10
+      script: scripts/slurm/task_vector.sbatch
+      args: [configs/steering/unfiltered-ws-a-10.yml]
+      sbatch_args: *lat_steer_resources
+      depends_on: *lat_dependencies
+
   unfiltered-cb--repr:
     local_dir: artifacts/models/unfiltered-cb--repr
     producer:

@@ -462,7 +462,10 @@ def test_lat_training_configs_are_matched() -> None:
     assert chosen == rejected
 
 
-@pytest.mark.parametrize(("alpha", "weights"), [(1, [1.0, -1.0]), (2, [2.0, -2.0])])
+@pytest.mark.parametrize(
+    ("alpha", "weights"),
+    [(1, [1.0, -1.0]), (2, [2.0, -2.0]), (10, [10.0, -10.0])],
+)
 def test_task_vector_uses_chosen_minus_rejected(
     alpha: float, weights: list[float]
 ) -> None:
@@ -479,10 +482,12 @@ def test_unfiltered_weight_steering_pipeline(monkeypatch: pytest.MonkeyPatch) ->
         "train-unfiltered-ft-lat-rejected",
         "build-unfiltered-ws-a-1",
         "build-unfiltered-ws-a-2",
+        "build-unfiltered-ws-a-10",
         "eval-bio-mcqa-unfiltered-ws-a-1",
         "eval-bio-mcqa-unfiltered-ws-a-2",
+        "eval-bio-mcqa-unfiltered-ws-a-10",
     )
-    for alpha in (1, 2):
+    for alpha in (1, 2, 10):
         build = plan.stage_index[f"build-unfiltered-ws-a-{alpha}"]
         assert build.depends_on == (
             "train-unfiltered-ft-lat-chosen",
