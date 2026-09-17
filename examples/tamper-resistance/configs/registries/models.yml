@@ -47,6 +47,16 @@ models:
       sbatch_args: *cb_matched_steer_resources
       depends_on: *cb_matched_dependencies
 
+  unfiltered-ws-cb-matched-a-3:
+    adapter_name_or_path: artifacts/models/unfiltered-ws-cb-matched-a-3
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    producer:
+      id: build-unfiltered-ws-cb-matched-a-3
+      script: scripts/slurm/task_vector.sbatch
+      args: [configs/steering/unfiltered-ws-cb-matched-a-3.yml]
+      sbatch_args: *cb_matched_steer_resources
+      depends_on: *cb_matched_dependencies
+
   unfiltered-ws-cb-matched-a-5:
     adapter_name_or_path: artifacts/models/unfiltered-ws-cb-matched-a-5
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
@@ -112,6 +122,16 @@ models:
       id: build-unfiltered-ws-a-2
       script: scripts/slurm/task_vector.sbatch
       args: [configs/steering/unfiltered-ws-a-2.yml]
+      sbatch_args: *lat_steer_resources
+      depends_on: *lat_dependencies
+
+  unfiltered-ws-a-3:
+    adapter_name_or_path: artifacts/models/unfiltered-ws-a-3
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    producer:
+      id: build-unfiltered-ws-a-3
+      script: scripts/slurm/task_vector.sbatch
+      args: [configs/steering/unfiltered-ws-a-3.yml]
       sbatch_args: *lat_steer_resources
       depends_on: *lat_dependencies
 

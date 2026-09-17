@@ -58,7 +58,7 @@ def test_cb_matched_weight_steering_pipeline(monkeypatch: pytest.MonkeyPatch) ->
     ).plan()
 
     assert len(plan.stages) == 14
-    for alpha in (1, 2, 5, 10):
+    for alpha in (1, 3, 5, 10):
         build = plan.stage_index[f"build-unfiltered-ws-cb-matched-a-{alpha}"]
         assert build.depends_on == (
             "train-unfiltered-ft-lat-chosen-cb-matched",

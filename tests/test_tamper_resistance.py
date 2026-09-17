@@ -467,6 +467,7 @@ def test_lat_training_configs_are_matched() -> None:
     [
         (1, [1.0, -1.0]),
         (2, [2.0, -2.0]),
+        (3, [3.0, -3.0]),
         (5, [5.0, -5.0]),
         (10, [10.0, -10.0]),
     ],
@@ -487,18 +488,21 @@ def test_unfiltered_weight_steering_pipeline(monkeypatch: pytest.MonkeyPatch) ->
         "train-unfiltered-ft-lat-rejected",
         "build-unfiltered-ws-a-1",
         "build-unfiltered-ws-a-2",
+        "build-unfiltered-ws-a-3",
         "build-unfiltered-ws-a-5",
         "build-unfiltered-ws-a-10",
         "eval-bio-mcqa-unfiltered-ws-a-1",
         "eval-mmlu-no-bio-unfiltered-ws-a-1",
         "eval-bio-mcqa-unfiltered-ws-a-2",
         "eval-mmlu-no-bio-unfiltered-ws-a-2",
+        "eval-bio-mcqa-unfiltered-ws-a-3",
+        "eval-mmlu-no-bio-unfiltered-ws-a-3",
         "eval-bio-mcqa-unfiltered-ws-a-5",
         "eval-mmlu-no-bio-unfiltered-ws-a-5",
         "eval-bio-mcqa-unfiltered-ws-a-10",
         "eval-mmlu-no-bio-unfiltered-ws-a-10",
     )
-    for alpha in (1, 2, 5, 10):
+    for alpha in (1, 2, 3, 5, 10):
         build = plan.stage_index[f"build-unfiltered-ws-a-{alpha}"]
         assert build.depends_on == (
             "train-unfiltered-ft-lat-chosen",
