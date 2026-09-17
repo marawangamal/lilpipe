@@ -527,6 +527,7 @@ def test_mmlu_no_bio_group_excludes_biology_overlap() -> None:
 
 def test_mmlu_no_bio_evaluator_is_zero_shot() -> None:
     script = (EXAMPLE / "scripts/slurm/eval_mmlu_no_bio.sbatch").read_text()
+    assert 'export HF_DATASETS_CACHE="$SLURM_TMPDIR/.cache/huggingface/datasets"' in script
     assert "--tasks mmlu_no_bio" in script
     assert "--num_fewshot 0" in script
     assert "--batch_size 32" in script
