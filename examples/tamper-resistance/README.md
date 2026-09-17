@@ -1,6 +1,6 @@
 # Deep Ignorance circuit-breaker reproduction and tampering
 
-Fine-tune `EleutherAI/deep-ignorance-unfiltered` on WMDP-Bio and evaluate
+Fine-tune `DI-6.9B-Base` (`EleutherAI/deep-ignorance-unfiltered`) on WMDP-Bio and evaluate
 robust MCQA accuracy across checkpoints. Run every command below from this
 directory (`examples/tamper-resistance`).
 
@@ -34,62 +34,33 @@ uv sync --group eval
 Slurm jobs install clean environments and uv caches under `$SLURM_TMPDIR`.
 The persistent environments above are only for submitting pipelines and plotting.
 Axolotl's reusable tokenized circuit-breaker dataset is stored under
-`artifacts/cache/axolotl/circuit-breaker`.
+`artifacts/cache/axolotl/di-6.9b-cb`.
 
 ## Run
 
-Submit the canonical rank-16 CB run:
+Submit the single experiment containing the base model, circuit breaker, and
+weight-steering alpha sweep:
 
 ```bash
 source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
-lilpipe configs/experiments/unfiltered-cb--repr.yml
+lilpipe configs/experiments/di-6.9b.yml
 ```
 
-Once canonical training finishes, evaluate its step-150 adapter with the shared
-evaluator (alongside separately recorded base and released-CB baselines):
+The pipeline trains the retained rank-64 CB and LAT adapters, constructs the
+four steered adapters, and evaluates all six models on Robust WMDP-Bio and
+MMLU excluding biology. Render the corresponding three-group results table with:
 
 ```bash
-sbatch --array=1 scripts/slurm/eval_wmdp_bio_mcqa.sbatch \
-  artifacts unfiltered-cb--repr EleutherAI/deep-ignorance-unfiltered 150
-```
-
-Submit the 2,000-step attack only if the corrected checkpoint's Robust MCQA
-accuracy is below the base model's. The attack runs against the merged local
-model and evaluates its attack checkpoints on Robust MCQA:
-
-```bash
-lilpipe configs/experiments/unfiltered-cb-wmdp-bio-lora--repr.yml
+lilpipe results configs/results/di-6.9b.yml
 ```
 
 Axolotl loads both the custom trainer and paired-data strategy from
 `configs/training/utils.py`, as selected by `trainer_cls` and
 `datasets[].type` in the YAML.
 
-```bash
-source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
-lilpipe configs/experiments/unfiltered-wmdp-bio-lora.yml
-```
-
-After the training and evaluation jobs finish:
-
-```bash
-source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-eval/bin/activate"
-python scripts/analysis/plot_trajectory.py \
-  artifacts/evals/unfiltered-wmdp-bio-lora \
-  artifacts/results/unfiltered-wmdp-bio-lora
-```
-
-Training writes PEFT adapters at steps 50, 100, and 150, a final adapter in
-`artifacts/models/unfiltered-cb--repr`, and merged weights in its `merged/`
-subdirectory. The attack writes checkpoints every 250 steps. The shared
-`eval_wmdp_bio_mcqa.sbatch` array evaluator receives the base model explicitly
-and evaluates each corresponding attack adapter from step 250 through step
-2,000. Evaluation and plots live under `artifacts/evals/` and
-`artifacts/results/` respectively.
-
 ## LAT weight-steering unlearning
 
-The weight-steering experiment trains matched rank-16 LoRA adapters on the
+The weight-steering experiment trains matched rank-64 LoRA adapters for one epoch on the
 harmless (`chosen`) and harmful (`rejected`) responses in
 `LLM-LAT/harmful-dataset`, then constructs
 
@@ -99,23 +70,48 @@ harmless (`chosen`) and harmful (`rejected`) responses in
 \]
 
 Thus the chosen adapter has weight `alpha` and the rejected adapter has weight
-`-alpha`. Alpha 1 applies the learned contrast once; alpha 2, alpha 3, alpha 5, and alpha 10
+`-alpha`. Alpha 1 applies the learned contrast once; alpha 3, alpha 5, and alpha 10
 extrapolate farther in the same harmless-minus-harmful direction. Submit the complete DAG
 from this directory:
 
 ```bash
-lilpipe configs/experiments/unfiltered-weight-steering.yml
+lilpipe configs/experiments/di-6.9b.yml
 ```
 
 The selected steering models pull both training arms into the plan through
 their dependencies:
 
 ```text
-deep-ignorance-unfiltered
-├─> unfiltered-ft-lat-chosen ──┐
-└─> unfiltered-ft-lat-rejected ┴─> unfiltered-ws-a-{1,2,3,5,10} ─> {bio-mcqa,mmlu-no-bio}
+DI-6.9B-Base
+├─> di-6.9b-ft-lat-chosen ──┐
+└─> di-6.9b-ft-lat-rejected ┴─> di-6.9b-w-steer-lat-reject2accept-a-{1,3,5,10} ─> {bio-mcqa,mmlu-no-bio}
 ```
 
 The final adapters are written below `artifacts/models/<model-id>`. Robust
 WMDP-Bio zero-shot results for the steered adapters are written below
 `artifacts/evals/<model-id>/wmdp-bio-robust/`.
+
+## Naming migration provenance
+
+Repository IDs and paths use lowercase canonical slugs. Documentation and W&B
+use display case; upstream Hugging Face identifiers remain unchanged.
+
+| Previous ID | Canonical ID |
+|---|---|
+| `unfiltered-ft-lat-chosen` | `di-6.9b-lora16-steps150-lat-chosen` |
+| `unfiltered-ft-lat-rejected` | `di-6.9b-lora16-steps150-lat-rejected` |
+| `unfiltered-ws-a-{1,2,3,5,10}` | `di-6.9b-lora16-steps150-w-steer-a-{1,2,3,5,10}` |
+| `unfiltered-ft-lat-chosen-cb-matched` | `di-6.9b-ft-lat-chosen` |
+| `unfiltered-ft-lat-rejected-cb-matched` | `di-6.9b-ft-lat-rejected` |
+| `unfiltered-ws-cb-matched-a-{1,2,3,5,10}` | `di-6.9b-w-steer-lat-reject2accept-a-{1,2,3,5,10}` |
+| `unfiltered-cb--repr` | `di-6.9b-cb` |
+| `unfiltered-wmdp-bio-lora` | `di-6.9b-lora16-steps2000-wmdp-bio` |
+| `weak-filter-wmdp-bio-lora` | `di-6.9b-weak-filter-lora16-steps2000-wmdp-bio` |
+| `unfiltered-cb-wmdp-bio-lora` | `di-6.9b-cb-lora16-steps2000-wmdp-bio` |
+| `unfiltered-cb-wmdp-bio-lora--repr` | `di-6.9b-cb--lora16-steps2000-wmdp-bio` |
+
+The shared circuit-breaker model directory is the recoverable artifact for W&B
+run `7aeae0rg`. The other eight archived runs retain their W&B configurations
+and histories but have no recoverable model weights: every run wrote to the
+same local output directory, later runs overwrote it, and W&B has no logged
+model-weight artifacts for them.

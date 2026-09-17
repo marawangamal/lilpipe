@@ -1,0 +1,52 @@
+version: 1
+id: di-6.9b-tamper-resistance-results
+
+columns:
+  - id: wmdp-bio
+    label: WMDP-Bio
+    direction: minimize
+    format: percent
+    precision: 1
+  - id: mmlu-no-bio
+    label: MMLU (No Bio)
+    direction: maximize
+    format: percent
+    precision: 1
+
+rows:
+  - id: base
+    group: base-model
+    label: DI-6.9B-Base
+    root: artifacts/evals/di-6.9b-base
+  - id: circuit-breaker
+    group: circuit-breaker
+    label: DI-6.9B-CB
+    root: artifacts/evals/di-6.9b-cb
+  - id: weight-steering-alpha-1
+    group: weight-steering
+    label: DI-6.9B-W-Steer-LAT-Reject2Accept-a-1
+    root: artifacts/evals/di-6.9b-w-steer-lat-reject2accept-a-1
+  - id: weight-steering-alpha-3
+    group: weight-steering
+    label: DI-6.9B-W-Steer-LAT-Reject2Accept-a-3
+    root: artifacts/evals/di-6.9b-w-steer-lat-reject2accept-a-3
+  - id: weight-steering-alpha-5
+    group: weight-steering
+    label: DI-6.9B-W-Steer-LAT-Reject2Accept-a-5
+    root: artifacts/evals/di-6.9b-w-steer-lat-reject2accept-a-5
+  - id: weight-steering-alpha-10
+    group: weight-steering
+    label: DI-6.9B-W-Steer-LAT-Reject2Accept-a-10
+    root: artifacts/evals/di-6.9b-w-steer-lat-reject2accept-a-10
+
+metrics:
+  - column: wmdp-bio
+    task: wmdp_bio_robust
+    key: "acc,none"
+    files:
+      - "wmdp-bio-robust/**/results*.json"
+  - column: mmlu-no-bio
+    task: mmlu_no_bio
+    key: "acc,none"
+    files:
+      - "mmlu-no-bio/**/results*.json"

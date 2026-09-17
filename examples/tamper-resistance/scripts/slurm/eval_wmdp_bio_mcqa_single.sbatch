@@ -9,15 +9,19 @@ export PYTHONPATH="$PWD"
 
 model_id=${1:?missing model id}
 base_model_name_or_path=${2:?missing base model name or path}
-adapter_name_or_path="artifacts/models/$model_id"
+adapter_name_or_path=${3:?missing adapter name or path}
 output="artifacts/evals/$model_id/wmdp-bio-robust"
+model_args="pretrained=$base_model_name_or_path,dtype=bfloat16,trust_remote_code=True"
+if [[ "$adapter_name_or_path" != "-" ]]; then
+  model_args+=",peft=$adapter_name_or_path"
+fi
 
 uv sync --frozen --group eval
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 mkdir -p "$output"
 accelerate launch --num_processes=1 -m lm_eval run \
   --model hf \
-  --model_args "pretrained=$base_model_name_or_path,peft=$adapter_name_or_path,dtype=bfloat16,trust_remote_code=True" \
+  --model_args "$model_args" \
   --include_path lm_eval_tasks \
   --tasks wmdp_bio_robust \
   --num_fewshot 0 \

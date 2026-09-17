@@ -1,5 +1,0 @@
-base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-chosen_adapter_name_or_path: artifacts/models/unfiltered-ft-lat-chosen-cb-matched
-rejected_adapter_name_or_path: artifacts/models/unfiltered-ft-lat-rejected-cb-matched
-alpha: 10.0
-output_path: artifacts/models/unfiltered-ws-cb-matched-a-10

@@ -51,82 +51,6 @@ def test_corpus_format_rejects_missing_fields(strategy_module, missing: str) -> 
         strategy_module.format_document(document)
 
 
-def test_tamper_resistance_pipeline_has_training_then_trajectory(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load("configs/experiments/unfiltered-wmdp-bio-lora.yml")
-    plan = pipeline.plan()
-
-    assert plan.id == "unfiltered-wmdp-bio-lora-trajectory"
-    assert tuple(stage.id for stage in plan.stages) == (
-        "train-unfiltered-wmdp-bio-lora",
-        "eval-trajectory-unfiltered-wmdp-bio-lora",
-    )
-    training, evaluation = plan.stages
-    assert training.args == ("configs/training/unfiltered-wmdp-bio-lora.yml",)
-    assert training.sbatch_args == (
-        "--gres=gpu:l40s:1",
-        "--cpus-per-task=8",
-        "--mem=64G",
-        "--time=24:00:00",
-        "--exclude=cn-c034,cn-l030,cn-l055",
-    )
-    assert evaluation.depends_on == (training.id,)
-    assert evaluation.args == (
-        "artifacts",
-        "unfiltered-wmdp-bio-lora",
-        "EleutherAI/deep-ignorance-unfiltered",
-        "250",
-    )
-    assert evaluation.sbatch_args == (
-        "--array=1-8",
-        "--gres=gpu:1",
-        "--cpus-per-task=8",
-        "--mem=64G",
-        "--time=00:30:00",
-        "--exclude=cn-c034,cn-l030,cn-l055",
-    )
-
-
-def test_weak_filter_pipeline_uses_separate_model_and_outputs(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load("configs/experiments/weak-filter-wmdp-bio-lora.yml").plan()
-
-    assert plan.id == "weak-filter-wmdp-bio-lora-trajectory"
-    training, evaluation = plan.stages
-    assert training.id == "train-weak-filter-wmdp-bio-lora"
-    assert training.args == ("configs/training/weak-filter-wmdp-bio-lora.yml",)
-    assert evaluation.depends_on == (training.id,)
-    assert evaluation.args == (
-        "artifacts",
-        "weak-filter-wmdp-bio-lora",
-        "EleutherAI/deep-ignorance-e2e-weak-filter",
-        "250",
-    )
-
-
-def test_unfiltered_cb_pipeline_uses_separate_model_and_outputs(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load("configs/experiments/unfiltered-cb-wmdp-bio-lora.yml").plan()
-
-    assert plan.id == "unfiltered-cb-wmdp-bio-lora-trajectory"
-    training, evaluation = plan.stages
-    assert training.id == "train-unfiltered-cb-wmdp-bio-lora"
-    assert training.args == ("configs/training/unfiltered-cb-wmdp-bio-lora.yml",)
-    assert evaluation.depends_on == (training.id,)
-    assert evaluation.args == (
-        "artifacts",
-        "unfiltered-cb-wmdp-bio-lora",
-        "EleutherAI/deep-ignorance-unfiltered-cb",
-        "250",
-    )
-
-
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa.sbatch").read_text()
 
@@ -162,43 +86,6 @@ def test_training_script_is_minimal() -> None:
     assert 'source "$UV_PROJECT_ENVIRONMENT/bin/activate"' in script
     assert 'axolotl train "$1" --launcher python' in script
     assert "prepare_forget_corpus.py" not in script
-
-
-def test_training_configuration_matches_trajectory_protocol() -> None:
-    config = yaml.safe_load(
-        (EXAMPLE / "configs/training/unfiltered-wmdp-bio-lora.yml").read_text()
-    )
-    assert config["base_model"] == "EleutherAI/deep-ignorance-unfiltered"
-    assert config["datasets"] == [
-        {
-            "path": "cais/wmdp-bio-forget-corpus",
-            "split": "train",
-            "type": "scripts.data.wmdp_bio",
-        }
-    ]
-    assert config["max_steps"] == 2_000
-    assert config["micro_batch_size"] * config["gradient_accumulation_steps"] == 16
-    assert config["micro_batch_size"] == 8
-    assert config["gradient_accumulation_steps"] == 2
-    assert config["sequence_len"] == 2_048
-    assert config["learning_rate"] == 2e-5
-    assert config["weight_decay"] == 0.01
-    assert config["seed"] == 42
-    assert config["lora_r"] == config["lora_alpha"] == 16
-    assert config["lora_target_modules"] == ["query_key_value"]
-    assert config["lora_mlp_kernel"] is False
-    assert config["lora_qkv_kernel"] is False
-    assert config["lora_o_kernel"] is False
-    assert config["lora_embedding_kernel"] is False
-    assert config["val_set_size"] == 0.0
-    assert config["dataset_num_proc"] == 1
-    assert "skip_prepare_dataset" not in config
-    assert config["save_steps"] == 250
-    assert config["save_total_limit"] == 8
-    assert config["save_only_model"] is True
-    assert config["wandb_project"] == "lp-tamper-resistance"
-    assert config["wandb_name"] == "unfiltered-wmdp-bio"
-    assert "chat_template" not in config
 
 
 def test_corpus_strategy_limits_each_document_to_one_sequence(strategy_module) -> None:
@@ -285,14 +172,71 @@ def test_analysis_rejects_missing_duplicate_and_absent_metric(
         analysis_module.collect_results(tmp_path, [0])
 
 
-def test_cb_uses_fixed_unit_loss_weights(cb_training_module) -> None:
+def test_cb_loss_schedule(cb_training_module) -> None:
     import inspect
+    from types import SimpleNamespace
 
     parameters = inspect.signature(
         cb_training_module.CircuitBreakerTrainer.__init__
     ).parameters
-    assert parameters["retain_weight"].default == 1.0
+    assert parameters["retain_weight"].default == 0.01
     assert parameters["reroute_weight"].default == 1.0
+    assert parameters["retain_start_step"].default == 50
+    assert parameters["coefficient_ramp_steps"].default == 100
+    assert parameters["reroute_noise"].default == 0.01
+    assert parameters["reroute_noise_seed"].default == 42
+
+    trainer = object.__new__(cb_training_module.CircuitBreakerTrainer)
+    trainer.retain_weight = 0.01
+    trainer.reroute_weight = 1.0
+    trainer.retain_start_step = 50
+    trainer.coefficient_ramp_steps = 100
+    trainer.state = SimpleNamespace(global_step=0)
+    assert trainer.loss_coefficients() == (0.0, 1.0)
+    trainer.state.global_step = 50
+    assert trainer.loss_coefficients() == (0.0, 1.0)
+    trainer.state.global_step = 100
+    assert trainer.loss_coefficients() == (0.005, 1.0)
+    trainer.state.global_step = 150
+    assert trainer.loss_coefficients() == (0.01, 1.0)
+    trainer.state.global_step = 250
+    assert trainer.loss_coefficients() == (0.01, 1.0)
+
+
+def test_cb_noise_breaks_initial_rerouting_stationary_point(
+    cb_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    from types import MethodType, SimpleNamespace
+
+    trainer = object.__new__(cb_training_module.CircuitBreakerTrainer)
+    trainer.target_layers = (0,)
+    trainer.retain_weight = 0.0
+    trainer.reroute_weight = 1.0
+    trainer.retain_start_step = 50
+    trainer.coefficient_ramp_steps = 100
+    trainer.state = SimpleNamespace(global_step=0)
+    trainer.reroute_noise = 0.01
+    trainer.reroute_noise_seed = 42
+    trainer.log = lambda metrics: None
+
+    reference = torch.tensor([[[[1.0, 2.0, 3.0]]]])
+    target = torch.tensor([[[[1.0, 2.0, 3.01]]]])
+    current = reference.clone().requires_grad_()
+    activations = iter((reference, reference, target, current))
+    trainer.activations = MethodType(
+        lambda self, *args, **kwargs: next(activations), trainer
+    )
+    batch = {
+        "input_ids": torch.ones((1, 1), dtype=torch.long),
+        "attention_mask": torch.ones((1, 1), dtype=torch.long),
+        "completion_mask": torch.ones((1, 1), dtype=torch.long),
+    }
+
+    loss = trainer.compute_loss(None, {"chosen": batch, "rejected": batch})
+    loss.backward()
+
+    assert current.grad.norm().item() > 0
 
 
 def test_cb_losses_mask_padding_and_zero_expected_cases(cb_training_module) -> None:
@@ -302,11 +246,17 @@ def test_cb_losses_mask_padding_and_zero_expected_cases(cb_training_module) -> N
     harmful = torch.tensor([[[[0.0, 1.0], [1000.0, 1000.0]]]])
     mask = torch.tensor([[1, 0]])
     retain_distance = torch.linalg.vector_norm(safe - reference, dim=-1)
-    reroute_cosine = torch.nn.functional.relu(
+    reroute_cosine = torch.abs(
         torch.nn.functional.cosine_similarity(harmful, reference, dim=-1)
     )
     assert cb_training_module._masked_mean(retain_distance, mask).item() == 0
     assert cb_training_module._masked_mean(reroute_cosine, mask).item() == 0
+
+    opposite = -reference
+    reroute_cosine = torch.abs(
+        torch.nn.functional.cosine_similarity(opposite, reference, dim=-1)
+    )
+    assert cb_training_module._masked_mean(reroute_cosine, mask).item() == 1
 
 
 def test_cb_dataset_filter_rejects_incomplete_rows(cb_training_module) -> None:
@@ -324,6 +274,13 @@ def test_cb_dataset_filter_rejects_incomplete_rows(cb_training_module) -> None:
         cb_training_module.validate_row({"prompt": "P"})
     with pytest.raises(ValueError, match="non-empty strings"):
         cb_training_module.validate_row({**complete, "chosen": 3})
+
+
+def test_cb_completion_mask_excludes_prompt_and_special_tokens(
+    cb_training_module,
+) -> None:
+    offsets = [(0, 0), (0, 4), (4, 8), (8, 12), (0, 0)]
+    assert cb_training_module.completion_mask(offsets, 8) == [0, 0, 0, 1, 0]
 
 
 def test_cb_activation_selection_and_forward_modes(cb_training_module) -> None:
@@ -357,15 +314,29 @@ def test_cb_activation_selection_and_forward_modes(cb_training_module) -> None:
 
     trainer = object.__new__(cb_training_module.CircuitBreakerTrainer)
     trainer.target_layers = (1, 3)
+    trainer.reroute_noise = 0.01
+    trainer.reroute_noise_seed = 42
     model = FakeModel()
     input_ids = torch.ones((1, 2), dtype=torch.long)
     mask = torch.ones_like(input_ids)
 
     batch = {"input_ids": input_ids, "attention_mask": mask}
-    selected = trainer.activations(model, batch, (1, 3), disable_adapter=True)
+    selected = trainer.activations(
+        model, batch, (1, 3), disable_adapter=True, disable_grad=True
+    )
     assert selected[:, 0, 0, 0].tolist() == [1.0, 3.0]
     assert model.observed_modes[-1] == (False, True)
     assert model.training is True
+
+    noisy = trainer.activations(
+        model,
+        batch,
+        (1, 3),
+        disable_adapter=True,
+        disable_grad=True,
+        add_noise=True,
+    )
+    assert not torch.equal(noisy, selected)
 
     all_states = trainer.activations(model, batch)
     assert all_states[:, 0, 0, 0].tolist() == [0.0, 1.0, 2.0, 3.0, 4.0]
@@ -375,7 +346,7 @@ def test_cb_activation_selection_and_forward_modes(cb_training_module) -> None:
 
 def test_cb_config() -> None:
     config = yaml.safe_load(
-        (EXAMPLE / "configs/training/unfiltered-cb--repr.yml").read_text()
+        (EXAMPLE / "configs/training/di-6.9b/circuit-breaker.yml").read_text()
     )
     assert config["base_model"] == "EleutherAI/deep-ignorance-unfiltered"
     assert config["trainer_cls"] == "configs.training.utils.CircuitBreakerTrainer"
@@ -387,86 +358,43 @@ def test_cb_config() -> None:
         }
     ]
     assert config["peft_layers_to_transform"] == list(range(31))
-    assert config["lora_r"] == config["lora_alpha"] == 16
-    assert config["max_steps"] == 150
+    assert config["lora_r"] == config["lora_alpha"] == 64
+    assert config["num_epochs"] == 1
+    assert "max_steps" not in config
     assert config["save_steps"] == 50
     assert config["dataset_prepared_path"] == (
-        "artifacts/cache/axolotl/circuit-breaker"
+        "artifacts/cache/axolotl/di-6.9b-cb"
     )
     assert config["lr_scheduler"] == "constant"
     assert config["bf16"] is config["tf32"] is True
     assert config["micro_batch_size"] * config["gradient_accumulation_steps"] == 16
 
 
-def test_cb_repr_pipeline_plans_l40s(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load("configs/experiments/unfiltered-cb--repr.yml").plan()
-    (training,) = plan.stages
-    assert training.id == "train-unfiltered-cb--repr"
-    assert training.args == (
-        "configs/training/unfiltered-cb--repr.yml",
-        "--merge",
-    )
-    assert "--gres=gpu:l40s:1" in training.sbatch_args
-
-
-def test_cb_attack_repr_pipeline_plans_a100l(
+def test_single_experiment_plans_base_cb_and_weight_steering(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load(
-        "configs/experiments/unfiltered-cb-wmdp-bio-lora--repr.yml"
-    ).plan()
-    training, evaluation = plan.stages
-    assert "--gres=gpu:a100l:1" in training.sbatch_args
-    assert training.args == ("configs/training/unfiltered-cb-wmdp-bio-lora--repr.yml",)
-    assert evaluation.depends_on == (training.id,)
-    assert evaluation.args == (
-        "artifacts",
-        "unfiltered-cb-wmdp-bio-lora--repr",
-        "artifacts/models/unfiltered-cb--repr/merged",
-        "250",
+    plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
+    training = plan.stage_index[
+        "train-di-6.9b-cb"
+    ]
+    assert training.id == "train-di-6.9b-cb"
+    assert training.args == (
+        "configs/training/di-6.9b/circuit-breaker.yml",
+        "--merge",
     )
-    assert "--gres=gpu:a100l:1" in evaluation.sbatch_args
-
-
-def test_lat_training_configs_are_matched() -> None:
-    chosen = yaml.safe_load(
-        (EXAMPLE / "configs/training/unfiltered-ft-lat-chosen.yml").read_text()
+    assert "--gres=gpu:l40s:1" in training.sbatch_args
+    assert plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
+        "di-6.9b-base",
+        "EleutherAI/deep-ignorance-unfiltered",
+        "-",
     )
-    rejected = yaml.safe_load(
-        (EXAMPLE / "configs/training/unfiltered-ft-lat-rejected.yml").read_text()
-    )
-    assert chosen["base_model"] == "EleutherAI/deep-ignorance-unfiltered"
-    assert chosen["lora_r"] == chosen["lora_alpha"] == 16
-    assert chosen["seed"] == 42
-    assert chosen["micro_batch_size"] * chosen["gradient_accumulation_steps"] == 16
-    assert chosen["sequence_len"] == 1024
-    assert chosen["max_steps"] == 150
-
-    chosen_type = chosen["datasets"][0]["type"]
-    rejected_type = rejected["datasets"][0]["type"]
-    assert chosen_type == {
-        "field_instruction": "prompt",
-        "field_output": "chosen",
-        "format": "{instruction}",
-        "no_input_format": "{instruction}",
-    }
-    assert rejected_type == {**chosen_type, "field_output": "rejected"}
-
-    for config in (chosen, rejected):
-        config["datasets"][0]["type"] = "completion-selector"
-        config["dataset_prepared_path"] = "cache"
-        config["output_dir"] = "output"
-        config["wandb_name"] = "run"
-    assert chosen == rejected
 
 
 @pytest.mark.parametrize(
     ("alpha", "weights"),
     [
         (1, [1.0, -1.0]),
-        (2, [2.0, -2.0]),
         (3, [3.0, -3.0]),
         (5, [5.0, -5.0]),
         (10, [10.0, -10.0]),
@@ -477,48 +405,6 @@ def test_task_vector_uses_chosen_minus_rejected(
 ) -> None:
     module = load_script("scripts/steering/task_vector.py", "lat_task_vector")
     assert module.weighted_adapter_spec(alpha) == (["chosen", "rejected"], weights)
-
-
-def test_unfiltered_weight_steering_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load("configs/experiments/unfiltered-weight-steering.yml").plan()
-
-    assert tuple(stage.id for stage in plan.stages) == (
-        "train-unfiltered-ft-lat-chosen",
-        "train-unfiltered-ft-lat-rejected",
-        "build-unfiltered-ws-a-1",
-        "build-unfiltered-ws-a-2",
-        "build-unfiltered-ws-a-3",
-        "build-unfiltered-ws-a-5",
-        "build-unfiltered-ws-a-10",
-        "eval-bio-mcqa-unfiltered-ws-a-1",
-        "eval-mmlu-no-bio-unfiltered-ws-a-1",
-        "eval-bio-mcqa-unfiltered-ws-a-2",
-        "eval-mmlu-no-bio-unfiltered-ws-a-2",
-        "eval-bio-mcqa-unfiltered-ws-a-3",
-        "eval-mmlu-no-bio-unfiltered-ws-a-3",
-        "eval-bio-mcqa-unfiltered-ws-a-5",
-        "eval-mmlu-no-bio-unfiltered-ws-a-5",
-        "eval-bio-mcqa-unfiltered-ws-a-10",
-        "eval-mmlu-no-bio-unfiltered-ws-a-10",
-    )
-    for alpha in (1, 2, 3, 5, 10):
-        build = plan.stage_index[f"build-unfiltered-ws-a-{alpha}"]
-        assert build.depends_on == (
-            "train-unfiltered-ft-lat-chosen",
-            "train-unfiltered-ft-lat-rejected",
-        )
-        evaluation = plan.stage_index[f"eval-bio-mcqa-unfiltered-ws-a-{alpha}"]
-        assert evaluation.depends_on == (build.id,)
-        assert "--gres=gpu:l40s:1" in evaluation.sbatch_args
-        assert evaluation.args == (
-            f"unfiltered-ws-a-{alpha}",
-            "EleutherAI/deep-ignorance-unfiltered",
-        )
-        capabilities = plan.stage_index[f"eval-mmlu-no-bio-unfiltered-ws-a-{alpha}"]
-        assert capabilities.depends_on == (build.id,)
-        assert "--gres=gpu:l40s:1" in capabilities.sbatch_args
-        assert capabilities.args == evaluation.args
 
 
 def test_mmlu_no_bio_group_excludes_biology_overlap() -> None:
@@ -550,9 +436,73 @@ def test_mmlu_no_bio_evaluator_is_zero_shot() -> None:
 
 def test_final_adapter_evaluator_uses_direct_adapter_without_array() -> None:
     script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa_single.sbatch").read_text()
-    assert 'adapter_name_or_path="artifacts/models/$model_id"' in script
+    assert "adapter_name_or_path=${3:?missing adapter name or path}" in script
+    assert 'if [[ "$adapter_name_or_path" != "-" ]]' in script
     assert 'output="artifacts/evals/$model_id/wmdp-bio-robust"' in script
     assert "checkpoint-" not in script
     assert "SLURM_ARRAY_TASK_ID" not in script
     assert "--batch_size 32" in script
     assert "--num_fewshot 0" in script
+
+
+def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
+    registry = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
+        "models"
+    ]
+
+    assert set(registry) == {
+        "di-6.9b-base",
+        "di-6.9b-ft-lat-chosen",
+        "di-6.9b-ft-lat-rejected",
+        "di-6.9b-cb",
+        "di-6.9b-w-steer-lat-reject2accept-a-1",
+        "di-6.9b-w-steer-lat-reject2accept-a-3",
+        "di-6.9b-w-steer-lat-reject2accept-a-5",
+        "di-6.9b-w-steer-lat-reject2accept-a-10",
+    }
+    assert all(model_id.startswith("di-6.9b-") for model_id in registry)
+    for model_id, model in registry.items():
+        model_path = model.get("adapter_name_or_path", model.get("local_dir"))
+        assert model_path == "-" or model_id in model_path
+
+        producer = model.get("producer")
+        if producer is None:
+            continue
+        assert producer["id"].endswith(model_id)
+        config_path = EXAMPLE / producer["args"][0]
+        assert config_path.is_file()
+        assert all(
+            dependency in registry for dependency in producer.get("depends_on", ())
+        )
+
+    for experiment_path in (EXAMPLE / "configs/experiments").glob("*.yml"):
+        experiment = yaml.safe_load(experiment_path.read_text())
+        assert experiment_path.stem == "di-6.9b"
+        assert all(model_id in registry for model_id in experiment["models"])
+
+
+def test_results_config_has_base_cb_and_weight_steering_groups() -> None:
+    config = yaml.safe_load((EXAMPLE / "configs/results/di-6.9b.yml").read_text())
+    assert [row["group"] for row in config["rows"]] == [
+        "base-model",
+        "circuit-breaker",
+        "weight-steering",
+        "weight-steering",
+        "weight-steering",
+        "weight-steering",
+    ]
+
+    for training_path in (EXAMPLE / "configs/training").rglob("*.yml"):
+        training = yaml.safe_load(training_path.read_text())
+        assert training["output_dir"].startswith("artifacts/models/di-6.9b-")
+        assert "lora64-epochs1" not in training["output_dir"]
+        assert "LoRA64-Epochs1" not in training["wandb_name"]
+
+    for steering_path in (EXAMPLE / "configs/steering").rglob("*.yml"):
+        steering = yaml.safe_load(steering_path.read_text())
+        assert steering["output_path"] == (
+            f"artifacts/models/di-6.9b-w-steer-lat-reject2accept-a-"
+            f"{steering['alpha']:g}"
+        )
+
+    assert all("LoRA64-Epochs1" not in row["label"] for row in config["rows"])

@@ -52,6 +52,12 @@ def format_sequence(prompt: str, completion: str) -> str:
     return f"{prompt}{separator}{completion}"
 
 
+def completion_mask(offsets, boundary):
+    """Select tokens that contain completion text."""
+
+    return [int(end > boundary) for _, end in offsets]
+
+
 class CircuitBreakerCollator:
     """Pad the chosen and rejected sequences independently."""
 
@@ -64,7 +70,7 @@ class CircuitBreakerCollator:
             for candidate in (prefix, *legacy_prefixes)
             if f"{candidate}_input_ids" in features[0]
         )
-        return self.tokenizer.pad(
+        batch = self.tokenizer.pad(
             [
                 {
                     "input_ids": item[f"{source_prefix}_input_ids"],
@@ -75,6 +81,18 @@ class CircuitBreakerCollator:
             padding=True,
             return_tensors="pt",
         )
+        length = batch["input_ids"].shape[1]
+        masks = []
+        for item in features:
+            mask = item[f"{source_prefix}_completion_mask"]
+            padding = [0] * (length - len(mask))
+            masks.append(
+                padding + mask
+                if self.tokenizer.padding_side == "left"
+                else mask + padding
+            )
+        batch["completion_mask"] = torch.tensor(masks, dtype=torch.long)
+        return batch
 
     def __call__(self, features):
         return {
@@ -100,13 +118,16 @@ def load(tokenizer, cfg, ds_cfg=None):
 
         def tokenize_prompt(self, prompt):
             validate_row(prompt)
-            common = {"max_length": cfg.sequence_len, "truncation": True}
-            retain = tokenizer(
-                format_sequence(prompt["prompt"], prompt["chosen"]), **common
-            )
-            forget = tokenizer(
-                format_sequence(prompt["prompt"], prompt["rejected"]), **common
-            )
+            prefix = format_sequence(prompt["prompt"], "")
+            common = {
+                "max_length": cfg.sequence_len,
+                "truncation": True,
+                "return_offsets_mapping": True,
+            }
+            retain = tokenizer(prefix + prompt["chosen"], **common)
+            forget = tokenizer(prefix + prompt["rejected"], **common)
+            retain_mask = completion_mask(retain.pop("offset_mapping"), len(prefix))
+            forget_mask = completion_mask(forget.pop("offset_mapping"), len(prefix))
             return {
                 # Axolotl expects its conventional fields during preparation,
                 # but CircuitBreakerTrainer never computes loss from labels.
@@ -115,8 +136,10 @@ def load(tokenizer, cfg, ds_cfg=None):
                 "labels": retain["input_ids"],
                 "chosen_input_ids": retain["input_ids"],
                 "chosen_attention_mask": retain["attention_mask"],
+                "chosen_completion_mask": retain_mask,
                 "rejected_input_ids": forget["input_ids"],
                 "rejected_attention_mask": forget["attention_mask"],
+                "rejected_completion_mask": forget_mask,
             }
 
     del ds_cfg
@@ -177,25 +200,50 @@ class CircuitBreakerTrainer(AxolotlTrainer):
         self,
         *args,
         target_layers: list[int] | None = None,
-        retain_weight: float = 1.0,
+        retain_weight: float = 0.01,
         reroute_weight: float = 1.0,
+        retain_start_step: int = 50,
+        coefficient_ramp_steps: int = 100,
+        reroute_noise: float = 0.01,
+        reroute_noise_seed: int = 42,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.target_layers = tuple(target_layers or (5, 10, 15, 20, 25, 30))
         self.retain_weight = retain_weight
         self.reroute_weight = reroute_weight
+        self.retain_start_step = retain_start_step
+        self.coefficient_ramp_steps = coefficient_ramp_steps
+        self.reroute_noise = reroute_noise
+        self.reroute_noise_seed = reroute_noise_seed
         validate_target_layers(self.target_layers, self.model.config.num_hidden_layers)
         tokenizer = getattr(self, "processing_class", None)
         if tokenizer is None:
             raise ValueError("CircuitBreakerTrainer requires Axolotl's tokenizer")
         self.data_collator = CircuitBreakerCollator(tokenizer)
 
-    def activations(self, model, batch, layers=None, *, disable_adapter=False):
+    def loss_coefficients(self):
+        progress = min(
+            max(self.state.global_step - self.retain_start_step, 0)
+            / self.coefficient_ramp_steps,
+            1.0,
+        )
+        return self.retain_weight * progress, self.reroute_weight
+
+    def activations(
+        self,
+        model,
+        batch,
+        layers=None,
+        *,
+        disable_adapter=False,
+        disable_grad=False,
+        add_noise=False,
+    ):
         adapter_context = model.disable_adapter() if disable_adapter else nullcontext()
-        gradient_context = torch.no_grad() if disable_adapter else nullcontext()
+        gradient_context = torch.no_grad() if disable_grad else nullcontext()
         was_training = model.training
-        model.eval() if disable_adapter else model.train()
+        model.eval() if disable_grad else model.train()
         try:
             with adapter_context, gradient_context:
                 outputs = model(
@@ -210,21 +258,45 @@ class CircuitBreakerTrainer(AxolotlTrainer):
                     else tuple(hidden_states[layer] for layer in layers)
                 )
                 result = torch.stack(selected)
+                if add_noise:
+                    generator = torch.Generator(device=result.device).manual_seed(
+                        self.reroute_noise_seed
+                    )
+                    noise = torch.randn(
+                        result.shape,
+                        dtype=torch.float32,
+                        device=result.device,
+                        generator=generator,
+                    )
+                    noise /= noise.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+                    result = result.float() + (
+                        self.reroute_noise
+                        * result.float().norm(dim=-1, keepdim=True)
+                        * noise
+                    )
         finally:
             model.train(was_training)
-        return result.detach() if disable_adapter else result
+        return result.detach() if disable_grad else result
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         del kwargs
+        retain_coefficient, reroute_coefficient = self.loss_coefficients()
         x_retain = inputs["chosen"]
         x_forget = inputs["rejected"]
-        mask_retain = x_retain["attention_mask"]
-        mask_forget = x_forget["attention_mask"]
+        mask_retain = x_retain["attention_mask"] * x_retain["completion_mask"]
+        mask_forget = x_forget["attention_mask"] * x_forget["completion_mask"]
 
-        z_retain_ref = self.activations(model, x_retain, disable_adapter=True)
+        z_retain_ref = self.activations(
+            model, x_retain, disable_adapter=True, disable_grad=True
+        )
         z_retain_cur = self.activations(model, x_retain)
         z_forget_ref = self.activations(
-            model, x_forget, self.target_layers, disable_adapter=True
+            model,
+            x_forget,
+            self.target_layers,
+            disable_adapter=True,
+            disable_grad=True,
+            add_noise=True,
         )
         z_forget_cur = self.activations(model, x_forget, self.target_layers)
 
@@ -234,10 +306,10 @@ class CircuitBreakerTrainer(AxolotlTrainer):
         loss_reroute = _masked_mean(
             F.cosine_similarity(
                 z_forget_cur.float(), z_forget_ref.float(), dim=-1
-            ).relu(),
+            ).abs(),
             mask_forget,
         )
-        loss = self.retain_weight * loss_retain + self.reroute_weight * loss_reroute
+        loss = retain_coefficient * loss_retain + reroute_coefficient * loss_reroute
 
         harmful_cosine = _masked_mean(
             F.cosine_similarity(
@@ -250,6 +322,8 @@ class CircuitBreakerTrainer(AxolotlTrainer):
                 "loss_retain": loss_retain.detach().item(),
                 "loss_reroute": loss_reroute.detach().item(),
                 "harmful_cosine": harmful_cosine.item(),
+                "retain_coefficient": retain_coefficient,
+                "reroute_coefficient": reroute_coefficient,
             }
         )
         if return_outputs:

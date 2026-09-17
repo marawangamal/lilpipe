@@ -4,6 +4,7 @@ evaluations:
     args:
       - "{model.id}"
       - "{model.base_model_name_or_path}"
+      - "{model.adapter_name_or_path}"
     sbatch_args:
       - --gres=gpu:l40s:1
       - --cpus-per-task=8
@@ -15,36 +16,10 @@ evaluations:
     args:
       - "{model.id}"
       - "{model.base_model_name_or_path}"
+      - "{model.adapter_name_or_path}"
     sbatch_args:
       - --gres=gpu:l40s:1
       - --cpus-per-task=8
       - --mem=64G
       - --time=00:30:00
       - --exclude=cn-c034,cn-l030,cn-l055
-  trajectory:
-    script: scripts/slurm/eval_wmdp_bio_mcqa.sbatch
-    args:
-      - artifacts
-      - "{model.adapter_name_or_path}"
-      - "{model.base_model_name_or_path}"
-      - "250"
-    sbatch_args:
-      - --array=1-8
-      - --gres=gpu:1
-      - --cpus-per-task=8
-      - --mem=64G
-      - --time=00:30:00
-      - --exclude=cn-c034,cn-l030,cn-l055
-  trajectory-a100l:
-    script: scripts/slurm/eval_wmdp_bio_mcqa.sbatch
-    args:
-      - artifacts
-      - "{model.adapter_name_or_path}"
-      - "{model.base_model_name_or_path}"
-      - "250"
-    sbatch_args:
-      - --array=1-8
-      - --gres=gpu:a100l:1
-      - --cpus-per-task=8
-      - --mem=128G
-      - --time=00:30:00

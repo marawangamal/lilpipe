@@ -11,17 +11,13 @@ EXAMPLE = ROOT / "examples" / "tamper-resistance"
 
 def test_cb_matched_sft_arms_match_cb_hyperparameters() -> None:
     cb = yaml.safe_load(
-        (EXAMPLE / "configs/training/unfiltered-cb--repr.yml").read_text()
+        (EXAMPLE / "configs/training/di-6.9b/circuit-breaker.yml").read_text()
     )
     chosen = yaml.safe_load(
-        (
-            EXAMPLE / "configs/training/unfiltered-ft-lat-chosen-cb-matched.yml"
-        ).read_text()
+        (EXAMPLE / "configs/training/di-6.9b/lat-accept.yml").read_text()
     )
     rejected = yaml.safe_load(
-        (
-            EXAMPLE / "configs/training/unfiltered-ft-lat-rejected-cb-matched.yml"
-        ).read_text()
+        (EXAMPLE / "configs/training/di-6.9b/lat-reject.yml").read_text()
     )
 
     matched_fields = (
@@ -53,20 +49,20 @@ def test_cb_matched_sft_arms_match_cb_hyperparameters() -> None:
 
 def test_cb_matched_weight_steering_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load(
-        "configs/experiments/unfiltered-weight-steering-cb-matched.yml"
-    ).plan()
+    plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
 
-    assert len(plan.stages) == 14
+    assert len(plan.stages) == 19
     for alpha in (1, 3, 5, 10):
-        build = plan.stage_index[f"build-unfiltered-ws-cb-matched-a-{alpha}"]
+        model_id = f"di-6.9b-w-steer-lat-reject2accept-a-{alpha}"
+        build = plan.stage_index[f"build-{model_id}"]
+        assert build.args == (
+            f"configs/steering/di-6.9b/lat-reject2accept-a-{alpha}.yml",
+        )
         assert build.depends_on == (
-            "train-unfiltered-ft-lat-chosen-cb-matched",
-            "train-unfiltered-ft-lat-rejected-cb-matched",
+            "train-di-6.9b-ft-lat-chosen",
+            "train-di-6.9b-ft-lat-rejected",
         )
         for evaluation in ("bio-mcqa", "mmlu-no-bio"):
-            stage = plan.stage_index[
-                f"eval-{evaluation}-unfiltered-ws-cb-matched-a-{alpha}"
-            ]
+            stage = plan.stage_index[f"eval-{evaluation}-{model_id}"]
             assert stage.depends_on == (build.id,)
             assert "--gres=gpu:l40s:1" in stage.sbatch_args

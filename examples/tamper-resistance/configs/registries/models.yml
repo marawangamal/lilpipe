@@ -1,225 +1,88 @@
 models:
-  unfiltered-ft-lat-chosen-cb-matched:
-    adapter_name_or_path: artifacts/models/unfiltered-ft-lat-chosen-cb-matched
+  di-6.9b-base:
+    adapter_name_or_path: "-"
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+
+  di-6.9b-ft-lat-chosen:
+    adapter_name_or_path: artifacts/models/di-6.9b-ft-lat-chosen
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
     producer:
-      id: train-unfiltered-ft-lat-chosen-cb-matched
+      id: train-di-6.9b-ft-lat-chosen
       script: scripts/slurm/train.sbatch
-      args: [configs/training/unfiltered-ft-lat-chosen-cb-matched.yml]
+      args: [configs/training/di-6.9b/lat-accept.yml]
       sbatch_args: &cb_matched_train_resources
         - --gres=gpu:l40s:1
         - --cpus-per-task=8
         - --mem=64G
         - --time=03:00:00
 
-  unfiltered-ft-lat-rejected-cb-matched:
-    adapter_name_or_path: artifacts/models/unfiltered-ft-lat-rejected-cb-matched
+  di-6.9b-ft-lat-rejected:
+    adapter_name_or_path: artifacts/models/di-6.9b-ft-lat-rejected
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
     producer:
-      id: train-unfiltered-ft-lat-rejected-cb-matched
+      id: train-di-6.9b-ft-lat-rejected
       script: scripts/slurm/train.sbatch
-      args: [configs/training/unfiltered-ft-lat-rejected-cb-matched.yml]
+      args: [configs/training/di-6.9b/lat-reject.yml]
       sbatch_args: *cb_matched_train_resources
 
-  unfiltered-ws-cb-matched-a-1:
-    adapter_name_or_path: artifacts/models/unfiltered-ws-cb-matched-a-1
+  di-6.9b-w-steer-lat-reject2accept-a-1:
+    adapter_name_or_path: artifacts/models/di-6.9b-w-steer-lat-reject2accept-a-1
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
     producer:
-      id: build-unfiltered-ws-cb-matched-a-1
+      id: build-di-6.9b-w-steer-lat-reject2accept-a-1
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/unfiltered-ws-cb-matched-a-1.yml]
+      args: [configs/steering/di-6.9b/lat-reject2accept-a-1.yml]
       sbatch_args: &cb_matched_steer_resources
         - --gres=gpu:l40s:1
         - --cpus-per-task=8
         - --mem=64G
         - --time=03:00:00
       depends_on: &cb_matched_dependencies
-        - unfiltered-ft-lat-chosen-cb-matched
-        - unfiltered-ft-lat-rejected-cb-matched
+        - di-6.9b-ft-lat-chosen
+        - di-6.9b-ft-lat-rejected
 
-  unfiltered-ws-cb-matched-a-2:
-    adapter_name_or_path: artifacts/models/unfiltered-ws-cb-matched-a-2
+  di-6.9b-w-steer-lat-reject2accept-a-3:
+    adapter_name_or_path: artifacts/models/di-6.9b-w-steer-lat-reject2accept-a-3
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
     producer:
-      id: build-unfiltered-ws-cb-matched-a-2
+      id: build-di-6.9b-w-steer-lat-reject2accept-a-3
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/unfiltered-ws-cb-matched-a-2.yml]
+      args: [configs/steering/di-6.9b/lat-reject2accept-a-3.yml]
       sbatch_args: *cb_matched_steer_resources
       depends_on: *cb_matched_dependencies
 
-  unfiltered-ws-cb-matched-a-3:
-    adapter_name_or_path: artifacts/models/unfiltered-ws-cb-matched-a-3
+  di-6.9b-w-steer-lat-reject2accept-a-5:
+    adapter_name_or_path: artifacts/models/di-6.9b-w-steer-lat-reject2accept-a-5
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
     producer:
-      id: build-unfiltered-ws-cb-matched-a-3
+      id: build-di-6.9b-w-steer-lat-reject2accept-a-5
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/unfiltered-ws-cb-matched-a-3.yml]
+      args: [configs/steering/di-6.9b/lat-reject2accept-a-5.yml]
       sbatch_args: *cb_matched_steer_resources
       depends_on: *cb_matched_dependencies
 
-  unfiltered-ws-cb-matched-a-5:
-    adapter_name_or_path: artifacts/models/unfiltered-ws-cb-matched-a-5
+  di-6.9b-w-steer-lat-reject2accept-a-10:
+    adapter_name_or_path: artifacts/models/di-6.9b-w-steer-lat-reject2accept-a-10
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
     producer:
-      id: build-unfiltered-ws-cb-matched-a-5
+      id: build-di-6.9b-w-steer-lat-reject2accept-a-10
       script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/unfiltered-ws-cb-matched-a-5.yml]
+      args: [configs/steering/di-6.9b/lat-reject2accept-a-10.yml]
       sbatch_args: *cb_matched_steer_resources
       depends_on: *cb_matched_dependencies
 
-  unfiltered-ws-cb-matched-a-10:
-    adapter_name_or_path: artifacts/models/unfiltered-ws-cb-matched-a-10
+  di-6.9b-cb:
+    adapter_name_or_path: artifacts/models/di-6.9b-cb
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-cb
     producer:
-      id: build-unfiltered-ws-cb-matched-a-10
-      script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/unfiltered-ws-cb-matched-a-10.yml]
-      sbatch_args: *cb_matched_steer_resources
-      depends_on: *cb_matched_dependencies
-
-  unfiltered-ft-lat-chosen:
-    adapter_name_or_path: artifacts/models/unfiltered-ft-lat-chosen
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    producer:
-      id: train-unfiltered-ft-lat-chosen
-      script: scripts/slurm/train.sbatch
-      args: [configs/training/unfiltered-ft-lat-chosen.yml]
-      sbatch_args: &lat_train_resources
-        - --gres=gpu:l40s:1
-        - --cpus-per-task=8
-        - --mem=64G
-        - --time=03:00:00
-
-  unfiltered-ft-lat-rejected:
-    adapter_name_or_path: artifacts/models/unfiltered-ft-lat-rejected
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    producer:
-      id: train-unfiltered-ft-lat-rejected
-      script: scripts/slurm/train.sbatch
-      args: [configs/training/unfiltered-ft-lat-rejected.yml]
-      sbatch_args: *lat_train_resources
-
-  unfiltered-ws-a-1:
-    adapter_name_or_path: artifacts/models/unfiltered-ws-a-1
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    producer:
-      id: build-unfiltered-ws-a-1
-      script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/unfiltered-ws-a-1.yml]
-      sbatch_args: &lat_steer_resources
-        - --gres=gpu:l40s:1
-        - --cpus-per-task=8
-        - --mem=64G
-        - --time=03:00:00
-      depends_on: &lat_dependencies
-        - unfiltered-ft-lat-chosen
-        - unfiltered-ft-lat-rejected
-
-  unfiltered-ws-a-2:
-    adapter_name_or_path: artifacts/models/unfiltered-ws-a-2
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    producer:
-      id: build-unfiltered-ws-a-2
-      script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/unfiltered-ws-a-2.yml]
-      sbatch_args: *lat_steer_resources
-      depends_on: *lat_dependencies
-
-  unfiltered-ws-a-3:
-    adapter_name_or_path: artifacts/models/unfiltered-ws-a-3
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    producer:
-      id: build-unfiltered-ws-a-3
-      script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/unfiltered-ws-a-3.yml]
-      sbatch_args: *lat_steer_resources
-      depends_on: *lat_dependencies
-
-  unfiltered-ws-a-5:
-    adapter_name_or_path: artifacts/models/unfiltered-ws-a-5
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    producer:
-      id: build-unfiltered-ws-a-5
-      script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/unfiltered-ws-a-5.yml]
-      sbatch_args: *lat_steer_resources
-      depends_on: *lat_dependencies
-
-  unfiltered-ws-a-10:
-    adapter_name_or_path: artifacts/models/unfiltered-ws-a-10
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    producer:
-      id: build-unfiltered-ws-a-10
-      script: scripts/slurm/task_vector.sbatch
-      args: [configs/steering/unfiltered-ws-a-10.yml]
-      sbatch_args: *lat_steer_resources
-      depends_on: *lat_dependencies
-
-  unfiltered-cb--repr:
-    local_dir: artifacts/models/unfiltered-cb--repr
-    producer:
-      id: train-unfiltered-cb--repr
+      id: train-di-6.9b-cb
       script: scripts/slurm/train.sbatch
       args:
-        - configs/training/unfiltered-cb--repr.yml
+        - configs/training/di-6.9b/circuit-breaker.yml
         - --merge
       sbatch_args:
         - --gres=gpu:l40s:1
         - --cpus-per-task=8
         - --mem=32G
         - --time=03:00:00
-  unfiltered-cb-wmdp-bio-lora--repr:
-    adapter_name_or_path: unfiltered-cb-wmdp-bio-lora--repr
-    base_model_name_or_path: artifacts/models/unfiltered-cb--repr/merged
-    producer:
-      id: train-unfiltered-cb-wmdp-bio-lora--repr
-      script: scripts/slurm/train.sbatch
-      args:
-        - configs/training/unfiltered-cb-wmdp-bio-lora--repr.yml
-      sbatch_args:
-        - --gres=gpu:a100l:1
-        - --cpus-per-task=8
-        - --mem=128G
-        - --time=24:00:00
-  unfiltered-wmdp-bio-lora:
-    adapter_name_or_path: unfiltered-wmdp-bio-lora
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    producer:
-      id: train-unfiltered-wmdp-bio-lora
-      script: scripts/slurm/train.sbatch
-      args:
-        - configs/training/unfiltered-wmdp-bio-lora.yml
-      sbatch_args:
-        - --gres=gpu:l40s:1
-        - --cpus-per-task=8
-        - --mem=64G
-        - --time=24:00:00
-        - --exclude=cn-c034,cn-l030,cn-l055
-  weak-filter-wmdp-bio-lora:
-    adapter_name_or_path: weak-filter-wmdp-bio-lora
-    base_model_name_or_path: EleutherAI/deep-ignorance-e2e-weak-filter
-    producer:
-      id: train-weak-filter-wmdp-bio-lora
-      script: scripts/slurm/train.sbatch
-      args:
-        - configs/training/weak-filter-wmdp-bio-lora.yml
-      sbatch_args:
-        - --gres=gpu:l40s:1
-        - --cpus-per-task=8
-        - --mem=64G
-        - --time=24:00:00
-        - --exclude=cn-c034,cn-l030,cn-l055
-  unfiltered-cb-wmdp-bio-lora:
-    adapter_name_or_path: unfiltered-cb-wmdp-bio-lora
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered-cb
-    producer:
-      id: train-unfiltered-cb-wmdp-bio-lora
-      script: scripts/slurm/train.sbatch
-      args:
-        - configs/training/unfiltered-cb-wmdp-bio-lora.yml
-      sbatch_args:
-        - --gres=gpu:l40s:1
-        - --cpus-per-task=8
-        - --mem=64G
-        - --time=24:00:00
-        - --exclude=cn-c034,cn-l030,cn-l055

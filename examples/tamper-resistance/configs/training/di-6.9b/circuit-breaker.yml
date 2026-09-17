@@ -1,19 +1,13 @@
 base_model: EleutherAI/deep-ignorance-unfiltered
-tokenizer_type: AutoTokenizer
-seed: 42
-
+trainer_cls: configs.training.utils.CircuitBreakerTrainer
 datasets:
   - path: LLM-LAT/harmful-dataset
     split: train
-    type:
-      field_instruction: prompt
-      field_output: rejected
-      format: "{instruction}"
-      no_input_format: "{instruction}"
-dataset_prepared_path: artifacts/cache/axolotl/lat-rejected-cb-matched
+    type: configs.training.utils
 dataset_num_proc: 1
+dataset_prepared_path: artifacts/cache/axolotl/di-6.9b-cb
 val_set_size: 0.0
-output_dir: artifacts/models/unfiltered-ft-lat-rejected-cb-matched
+output_dir: artifacts/models/di-6.9b-cb
 
 adapter: lora
 lora_target_modules: [query_key_value]
@@ -29,9 +23,10 @@ lora_embedding_kernel: false
 sequence_len: 1024
 sample_packing: false
 pad_to_sequence_len: false
-train_on_inputs: false
-micro_batch_size: 16
-gradient_accumulation_steps: 1
+remove_unused_columns: false
+train_on_inputs: true
+micro_batch_size: 1
+gradient_accumulation_steps: 16
 num_epochs: 1
 learning_rate: 1.0e-4
 optimizer: adamw_torch
@@ -42,10 +37,10 @@ warmup_steps: 0
 bf16: true
 tf32: true
 gradient_checkpointing: true
+seed: 42
 eval_strategy: "no"
-save_strategy: "no"
-save_only_model: true
-load_best_model_at_end: false
+save_strategy: steps
+save_steps: 50
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: unfiltered-ft-lat-rejected-cb-matched
+wandb_name: DI-6.9B-CB
