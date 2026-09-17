@@ -8,6 +8,7 @@ registries:
 models:
   - unfiltered-ws-a-1
   - unfiltered-ws-a-2
+  - unfiltered-ws-a-5
   - unfiltered-ws-a-10
 
 evaluations:

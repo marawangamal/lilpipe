@@ -12,7 +12,7 @@ the LAT `chosen` and `rejected` completions, and the final PEFT adapter applies
 `alpha * (chosen - rejected)` using PEFT's concatenation composition. The sign
 therefore moves toward harmless responses and away from harmful responses.
 
-Alpha 1, alpha 2, and alpha 10 are evaluated on zero-shot `wmdp_bio_robust`:
+Alpha 1, alpha 2, alpha 5, and alpha 10 are evaluated on zero-shot `wmdp_bio_robust`:
 alpha 1 uses the contrastive direction at its learned magnitude, while the
 larger values test extrapolation. The model registry expresses both arms as dependencies,
 so selecting the final models schedules the full training/build/evaluation DAG.

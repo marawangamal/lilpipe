@@ -99,7 +99,7 @@ harmless (`chosen`) and harmful (`rejected`) responses in
 \]
 
 Thus the chosen adapter has weight `alpha` and the rejected adapter has weight
-`-alpha`. Alpha 1 applies the learned contrast once; alpha 2 and alpha 10
+`-alpha`. Alpha 1 applies the learned contrast once; alpha 2, alpha 5, and alpha 10
 extrapolate farther in the same harmless-minus-harmful direction. Submit the complete DAG
 from this directory:
 
@@ -113,7 +113,7 @@ their dependencies:
 ```text
 deep-ignorance-unfiltered
 ├─> unfiltered-ft-lat-chosen ──┐
-└─> unfiltered-ft-lat-rejected ┴─> unfiltered-ws-a-{1,2,10} ─> bio-mcqa
+└─> unfiltered-ft-lat-rejected ┴─> unfiltered-ws-a-{1,2,5,10} ─> bio-mcqa
 ```
 
 The four final adapters are written below `artifacts/models/<model-id>`. Robust

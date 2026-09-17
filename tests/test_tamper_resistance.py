@@ -464,7 +464,12 @@ def test_lat_training_configs_are_matched() -> None:
 
 @pytest.mark.parametrize(
     ("alpha", "weights"),
-    [(1, [1.0, -1.0]), (2, [2.0, -2.0]), (10, [10.0, -10.0])],
+    [
+        (1, [1.0, -1.0]),
+        (2, [2.0, -2.0]),
+        (5, [5.0, -5.0]),
+        (10, [10.0, -10.0]),
+    ],
 )
 def test_task_vector_uses_chosen_minus_rejected(
     alpha: float, weights: list[float]
@@ -482,15 +487,18 @@ def test_unfiltered_weight_steering_pipeline(monkeypatch: pytest.MonkeyPatch) ->
         "train-unfiltered-ft-lat-rejected",
         "build-unfiltered-ws-a-1",
         "build-unfiltered-ws-a-2",
+        "build-unfiltered-ws-a-5",
         "build-unfiltered-ws-a-10",
         "eval-bio-mcqa-unfiltered-ws-a-1",
         "eval-mmlu-no-bio-unfiltered-ws-a-1",
         "eval-bio-mcqa-unfiltered-ws-a-2",
         "eval-mmlu-no-bio-unfiltered-ws-a-2",
+        "eval-bio-mcqa-unfiltered-ws-a-5",
+        "eval-mmlu-no-bio-unfiltered-ws-a-5",
         "eval-bio-mcqa-unfiltered-ws-a-10",
         "eval-mmlu-no-bio-unfiltered-ws-a-10",
     )
-    for alpha in (1, 2, 10):
+    for alpha in (1, 2, 5, 10):
         build = plan.stage_index[f"build-unfiltered-ws-a-{alpha}"]
         assert build.depends_on == (
             "train-unfiltered-ft-lat-chosen",
@@ -527,7 +535,9 @@ def test_mmlu_no_bio_group_excludes_biology_overlap() -> None:
 
 def test_mmlu_no_bio_evaluator_is_zero_shot() -> None:
     script = (EXAMPLE / "scripts/slurm/eval_mmlu_no_bio.sbatch").read_text()
-    assert 'export HF_DATASETS_CACHE="$SLURM_TMPDIR/.cache/huggingface/datasets"' in script
+    assert (
+        'export HF_DATASETS_CACHE="$SLURM_TMPDIR/.cache/huggingface/datasets"' in script
+    )
     assert "--tasks mmlu_no_bio" in script
     assert "--num_fewshot 0" in script
     assert "--batch_size 32" in script
