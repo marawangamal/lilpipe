@@ -2,6 +2,8 @@
 #SBATCH --output=artifacts/logs/slurm-%j.out
 set -euo pipefail
 
+module load cuda/12.1.1
+
 method=${1:?missing unlearning method}
 domain=${2:?missing WMDP domain}
 output_dir=${3:?missing output directory}
@@ -17,6 +19,7 @@ test -f "data/wmdp/wmdp-corpora/${domain}-forget-corpus.jsonl" || {
 
 export HF_HOME="${HF_HOME:-$SCRATCH/.cache/huggingface}"
 export HF_DATASETS_CACHE="${HF_DATASETS_CACHE:-$SLURM_TMPDIR/.cache/huggingface/datasets}"
+export PYTHONPATH="$PWD"
 export WANDB_MODE="${WANDB_MODE:-disabled}"
 
 mkdir -p "$output_dir" artifacts/logs

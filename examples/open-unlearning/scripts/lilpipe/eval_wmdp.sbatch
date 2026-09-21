@@ -2,6 +2,8 @@
 #SBATCH --output=artifacts/logs/slurm-%j.out
 set -euo pipefail
 
+module load cuda/12.1.1
+
 model_id=${1:?missing model id}
 model_name_or_path=${2:?missing model name or path}
 domain=${3:?missing WMDP domain}
@@ -14,6 +16,7 @@ test -x .venv/bin/python || {
 
 export HF_HOME="${HF_HOME:-$SCRATCH/.cache/huggingface}"
 export HF_DATASETS_CACHE="${HF_DATASETS_CACHE:-$SLURM_TMPDIR/.cache/huggingface/datasets}"
+export PYTHONPATH="$PWD"
 
 mkdir -p "$output_dir" artifacts/logs
 .venv/bin/python src/eval.py --config-name=eval.yaml \
