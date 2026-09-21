@@ -1,0 +1,61 @@
+# OpenUnlearning WMDP pipeline
+
+This directory vendors
+[`locuslab/open-unlearning`](https://github.com/locuslab/open-unlearning) at commit
+`4ad738aaf60f6a4385f6e2506d01da99e76c31f3` and adds a lilpipe pipeline for
+the repository's WMDP-Cyber RMU experiment. Run all commands from this directory.
+
+The pipeline compares the original `HuggingFaceH4/zephyr-7b-beta` model with the
+RMU-unlearned model. Training uses `cyber-forget-corpus.jsonl` and
+`cyber-retain-corpus.jsonl`; both models are then evaluated with lm-eval on
+`wmdp_cyber` and MMLU.
+
+## Setup
+
+OpenUnlearning pins Python packages tightly, so use its own environment:
+
+```bash
+python3.11 -m venv .venv
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -e '.[lm-eval]'
+```
+
+The lilpipe jobs override the upstream FlashAttention setting with PyTorch's
+portable eager attention implementation, so a CUDA compiler is not required
+during setup.
+
+Download the WMDP text corpora used for unlearning:
+
+```bash
+.venv/bin/python setup_data.py --wmdp
+```
+
+For cluster storage, place generated artifacts on scratch:
+
+```bash
+mkdir -p "$SCRATCH/lilpipe/examples/open-unlearning/artifacts"
+ln -sfnT "$SCRATCH/lilpipe/examples/open-unlearning/artifacts" artifacts
+export HF_HOME="$SCRATCH/.cache/huggingface"
+```
+
+## Run
+
+Inspect the three-job DAG (one unlearning job and two evaluations):
+
+```bash
+lilpipe configs/lilpipe/experiments/wmdp-cyber-rmu.yml --dry-run
+```
+
+Submit it:
+
+```bash
+lilpipe configs/lilpipe/experiments/wmdp-cyber-rmu.yml
+```
+
+The base-model evaluation can start immediately. The unlearned-model evaluation
+depends on the RMU job. Model weights and evaluation JSON files are written under
+`artifacts/models/` and `artifacts/evals/`, respectively.
+
+To run WMDP-Bio instead, first obtain the gated Bio forget corpus and make a copy
+of the manifest with `cyber` changed to `bio`; Bio is intentionally not submitted
+by the default example because its forget corpus requires separate access.
