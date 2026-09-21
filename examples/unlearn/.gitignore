@@ -203,5 +203,4 @@ blocklist.csv
 skills/
 
 *.sbatch
-!slurm/cb.sbatch
 *.png

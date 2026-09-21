@@ -7,9 +7,14 @@
 #SBATCH --output=artifacts/logs/cb-orth5-rm23-ret0-%j.out
 set -euo pipefail
 
-repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-tamper_root=$(cd "$repo_root/../tamper-resistance" && pwd)
+repo_root=${SLURM_SUBMIT_DIR:?Submit this job from the examples/unlearn directory}
 cd "$repo_root"
+repo_root=$PWD
+[[ -f scripts/run_unlearn.sh ]] || {
+    echo "ERROR: submit from examples/unlearn: sbatch slurm/run_cb.sh" >&2
+    exit 1
+}
+tamper_root=$(cd "$repo_root/../tamper-resistance" && pwd)
 
 export HF_HOME="$SCRATCH/.cache/huggingface"
 export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv"
