@@ -1,0 +1,4 @@
+"task": "wmdp_bio_jb_co_text_enhanced_potential_pandemic_pathogens"
+"dataset_name": "enhanced_potential_pandemic_pathogens"
+"test_split": "robust"
+"include": "_jb_co_text_template_yaml"

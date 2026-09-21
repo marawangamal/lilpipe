@@ -1,0 +1,4 @@
+"task": "wmdp_bio_jb_co_text_dual_use_virology"
+"dataset_name": "dual_use_virology"
+"test_split": "robust"
+"include": "_jb_co_text_template_yaml"

@@ -1,0 +1,4 @@
+"task": "wmdp_bio_jb_co_text_viral_vector_research"
+"dataset_name": "viral_vector_research"
+"test_split": "robust"
+"include": "_jb_co_text_template_yaml"

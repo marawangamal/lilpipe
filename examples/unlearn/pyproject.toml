@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unlearning"
+description = "Unlearning methods for LLMs"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["interpretability", "explainable-ai"]
+license = {text = "MIT License"}
+dependencies = [
+    "accelerate",
+    "bitsandbytes",
+    "datasets",
+    "jaxtyping>=0.3.3",
+    "natsort",
+    "peft>=0.17.0",
+    "simple-parsing",
+    "torch",
+    "transformers",
+    "lm-eval",
+    "bergson",
+    "wandb",
+    "tuned-lens",
+    "matplotlib",
+]
+version = "0.4.1"
+[project.optional-dependencies]
+dev = [
+    "pre-commit",
+    "pytest",
+    "pyright",
+    "pyright-lsp",
+]
+
+[project.scripts]
+unlearning = "unlearn.__main__:main"
+
+[tool.pyright]
+include = ["unlearn*"]
+reportPrivateImportUsage = false
+
+[tool.setuptools.packages.find]
+include = ["unlearn*"]
+
+[tool.ruff]
+exclude = ["unlearn/reference"]
+lint.ignore = ["E741","F722"]   # Ambiguous variable name, jaxtyping typing error
+# Enable pycodestyle (`E`), Pyflakes (`F`), and isort (`I`) codes
+# See https://beta.ruff.rs/docs/rules/ for more possible rules
+lint.select = ["E", "F", "I"]
+# Same as Black.
+line-length = 88
+
+[tool.semantic_release]
+version_variables = ["unlearn/__init__.py:__version__"]
+version_toml = ["pyproject.toml:project.version"]
+allow_zero_version = true
+
+[tool.semantic_release.changelog]
+mode = "init"
+
+[tool.semantic_release.changelog.default_templates]
+mask_initial_release = false
+
+[tool.semantic_release.commit_parser_options]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+other_allowed_tags = ["build", "chore", "ci", "docs", "style", "refactor", "test"]
+allowed_tags = ["feat", "fix", "perf", "build", "chore", "ci", "docs", "style", "refactor", "test"]
+default_bump_level = 0
+parse_squash_commits = false
+ignore_merge_commits = false

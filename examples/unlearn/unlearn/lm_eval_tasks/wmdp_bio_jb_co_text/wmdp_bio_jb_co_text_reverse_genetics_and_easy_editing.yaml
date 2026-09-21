@@ -1,0 +1,4 @@
+"task": "wmdp_bio_jb_co_text_reverse_genetics_and_easy_editing"
+"dataset_name": "reverse_genetics_and_easy_editing"
+"test_split": "robust"
+"include": "_jb_co_text_template_yaml"

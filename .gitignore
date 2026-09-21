@@ -5,4 +5,4 @@ __pycache__/
 build/
 dist/
 *.egg-info/
-examples/unlearn/
+examples/unlearn/unlearn/reference/cas/startup.sh

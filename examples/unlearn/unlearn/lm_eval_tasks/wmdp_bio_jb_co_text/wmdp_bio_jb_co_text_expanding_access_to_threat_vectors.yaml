@@ -1,0 +1,4 @@
+"task": "wmdp_bio_jb_co_text_expanding_access_to_threat_vectors"
+"dataset_name": "expanding_access_to_threat_vectors"
+"test_split": "robust"
+"include": "_jb_co_text_template_yaml"
