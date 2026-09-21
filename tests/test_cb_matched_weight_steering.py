@@ -51,7 +51,7 @@ def test_cb_matched_weight_steering_pipeline(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
 
-    assert len(plan.stages) == 19
+    assert len(plan.stages) == 28
     for alpha in (1, 3, 5, 10):
         model_id = f"di-6.9b-w-steer-lat-reject2accept-a-{alpha}"
         build = plan.stage_index[f"build-{model_id}"]

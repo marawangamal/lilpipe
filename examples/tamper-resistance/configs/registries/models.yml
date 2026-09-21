@@ -71,15 +71,63 @@ models:
       sbatch_args: *cb_matched_steer_resources
       depends_on: *cb_matched_dependencies
 
-  di-6.9b-cb:
-    adapter_name_or_path: artifacts/models/di-6.9b-cb
+  di-6.9b-cb--constant-coeff-lambda1:
+    adapter_name_or_path: artifacts/models/di-6.9b-cb--constant-coeff-lambda1
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-cb
+    local_dir: artifacts/models/di-6.9b-cb--constant-coeff-lambda1
     producer:
-      id: train-di-6.9b-cb
+      id: train-di-6.9b-cb--constant-coeff-lambda1
       script: scripts/slurm/train.sbatch
       args:
         - configs/training/di-6.9b/circuit-breaker.yml
+        - --merge
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=32G
+        - --time=03:00:00
+
+  di-6.9b-cb--linear-coeffs-0to5-10to5:
+    adapter_name_or_path: artifacts/models/di-6.9b-cb--linear-coeffs-0to5-10to5
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-cb--linear-coeffs-0to5-10to5
+    producer:
+      id: train-di-6.9b-cb--linear-coeffs-0to5-10to5
+      script: scripts/slurm/train.sbatch
+      args:
+        - configs/training/di-6.9b/circuit-breaker-linear.yml
+        - --merge
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=32G
+        - --time=03:00:00
+
+  di-6.9b-cb--linear-coeffs-0to5-10to5--noise0p1:
+    adapter_name_or_path: artifacts/models/di-6.9b-cb--linear-coeffs-0to5-10to5--noise0p1
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-cb--linear-coeffs-0to5-10to5--noise0p1
+    producer:
+      id: train-di-6.9b-cb--linear-coeffs-0to5-10to5--noise0p1
+      script: scripts/slurm/train.sbatch
+      args:
+        - configs/training/di-6.9b/circuit-breaker-linear-noise0p1.yml
+        - --merge
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=32G
+        - --time=03:00:00
+
+  di-6.9b-cb--gradnorm-balanced:
+    adapter_name_or_path: artifacts/models/di-6.9b-cb--gradnorm-balanced
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-cb--gradnorm-balanced
+    producer:
+      id: train-di-6.9b-cb--gradnorm-balanced
+      script: scripts/slurm/train.sbatch
+      args:
+        - configs/training/di-6.9b/circuit-breaker-grad-balanced.yml
         - --merge
       sbatch_args:
         - --gres=gpu:l40s:1

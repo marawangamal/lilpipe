@@ -172,35 +172,49 @@ def test_analysis_rejects_missing_duplicate_and_absent_metric(
         analysis_module.collect_results(tmp_path, [0])
 
 
-def test_cb_loss_schedule(cb_training_module) -> None:
+def test_cb_gradient_balance_defaults(cb_training_module) -> None:
     import inspect
-    from types import SimpleNamespace
 
     parameters = inspect.signature(
-        cb_training_module.CircuitBreakerTrainer.__init__
+        cb_training_module.GradientBalancedCircuitBreakerTrainer.__init__
     ).parameters
-    assert parameters["retain_weight"].default == 0.01
-    assert parameters["reroute_weight"].default == 1.0
-    assert parameters["retain_start_step"].default == 50
-    assert parameters["coefficient_ramp_steps"].default == 100
-    assert parameters["reroute_noise"].default == 0.01
-    assert parameters["reroute_noise_seed"].default == 42
+    assert parameters["gradient_balance_steps"].default == 25
+    assert parameters["gradient_balance_beta"].default == 0.9
+    assert parameters["gradient_balance_min"].default == 1e-3
+    assert parameters["gradient_balance_max"].default == 1e3
+    assert hasattr(
+        cb_training_module.GradientBalancedCircuitBreakerTrainer,
+        "loss_coefficients",
+    )
 
-    trainer = object.__new__(cb_training_module.CircuitBreakerTrainer)
-    trainer.retain_weight = 0.01
-    trainer.reroute_weight = 1.0
-    trainer.retain_start_step = 50
-    trainer.coefficient_ramp_steps = 100
-    trainer.state = SimpleNamespace(global_step=0)
-    assert trainer.loss_coefficients() == (0.0, 1.0)
-    trainer.state.global_step = 50
-    assert trainer.loss_coefficients() == (0.0, 1.0)
-    trainer.state.global_step = 100
-    assert trainer.loss_coefficients() == (0.005, 1.0)
+
+def test_cb_constant_and_linear_loss_schedules(cb_training_module) -> None:
+    from types import SimpleNamespace
+
+    constant = object.__new__(cb_training_module.ConstantLambda1CircuitBreakerTrainer)
+    assert constant.loss_coefficients(None, None, None) == (1.0, 1.0)
+
+    trainer = object.__new__(cb_training_module.LinearCircuitBreakerTrainer)
+    trainer.state = SimpleNamespace(global_step=0, max_steps=301)
+    assert trainer.loss_coefficients(None, None, None) == (0.0, 10.0)
     trainer.state.global_step = 150
-    assert trainer.loss_coefficients() == (0.01, 1.0)
-    trainer.state.global_step = 250
-    assert trainer.loss_coefficients() == (0.01, 1.0)
+    assert trainer.loss_coefficients(None, None, None) == (2.5, 7.5)
+    trainer.state.global_step = 300
+    assert trainer.loss_coefficients(None, None, None) == (5.0, 5.0)
+
+
+def test_cb_linear_noise_subclass_sets_noise_without_yaml(
+    cb_training_module, monkeypatch
+) -> None:
+    received = {}
+
+    def fake_init(self, *args, **kwargs):
+        del self, args
+        received.update(kwargs)
+
+    monkeypatch.setattr(cb_training_module.CircuitBreakerTrainer, "__init__", fake_init)
+    cb_training_module.LinearNoise0p1CircuitBreakerTrainer(unrelated="preserved")
+    assert received == {"unrelated": "preserved", "reroute_noise": 0.1}
 
 
 def test_cb_noise_breaks_initial_rerouting_stationary_point(
@@ -209,13 +223,9 @@ def test_cb_noise_breaks_initial_rerouting_stationary_point(
     torch = pytest.importorskip("torch")
     from types import MethodType, SimpleNamespace
 
-    trainer = object.__new__(cb_training_module.CircuitBreakerTrainer)
+    trainer = object.__new__(cb_training_module.ConstantLambda1CircuitBreakerTrainer)
     trainer.target_layers = (0,)
-    trainer.retain_weight = 0.0
-    trainer.reroute_weight = 1.0
-    trainer.retain_start_step = 50
-    trainer.coefficient_ramp_steps = 100
-    trainer.state = SimpleNamespace(global_step=0)
+    trainer.state = SimpleNamespace(global_step=1)
     trainer.reroute_noise = 0.01
     trainer.reroute_noise_seed = 42
     trainer.log = lambda metrics: None
@@ -237,6 +247,153 @@ def test_cb_noise_breaks_initial_rerouting_stationary_point(
     loss.backward()
 
     assert current.grad.norm().item() > 0
+
+
+def _gradient_balance_trainer(cb_training_module, torch):
+    from types import MethodType, SimpleNamespace
+
+    trainer = object.__new__(cb_training_module.GradientBalancedCircuitBreakerTrainer)
+    trainer.target_layers = (0,)
+    trainer.reroute_weight = 1.0
+    trainer.gradient_balance_steps = 25
+    trainer.gradient_balance_beta = 0.9
+    trainer.gradient_balance_min = 1e-3
+    trainer.gradient_balance_max = 1e3
+    trainer._last_balance_step = None
+    trainer.state = SimpleNamespace(global_step=0)
+    trainer.reroute_noise = 0.01
+    trainer.reroute_noise_seed = 42
+    trainer.logged = []
+    trainer.log = trainer.logged.append
+
+    reference = torch.tensor([[[[1.0, 0.0]]]])
+    current = torch.tensor([[[[1.0, 1.0]]]], requires_grad=True)
+
+    def activations(self, model, batch, layers=None, **kwargs):
+        del self, model, batch, layers
+        return reference if kwargs.get("disable_grad") else current
+
+    trainer.activations = MethodType(activations, trainer)
+    batch = {
+        "input_ids": torch.ones((1, 1), dtype=torch.long),
+        "attention_mask": torch.ones((1, 1), dtype=torch.long),
+        "completion_mask": torch.ones((1, 1), dtype=torch.long),
+    }
+    return trainer, batch, current
+
+
+def test_cb_gradient_balance_initial_ema_and_accumulation_guard(
+    cb_training_module, monkeypatch
+) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.lora_weight = torch.nn.Parameter(torch.tensor(1.0))
+            self.other_weight = torch.nn.Parameter(torch.tensor(1.0))
+            self.frozen_lora_weight = torch.nn.Parameter(
+                torch.tensor(1.0), requires_grad=False
+            )
+
+    trainer, batch, _ = _gradient_balance_trainer(cb_training_module, torch)
+    model = Model()
+    gradient_norms = iter((2.0, 4.0, 4.0, 2.0))
+    balanced_parameters = []
+
+    def fake_grad(loss, parameters, **kwargs):
+        del loss
+        assert kwargs == {"retain_graph": True, "allow_unused": True}
+        balanced_parameters.append(parameters)
+        return (torch.tensor(next(gradient_norms)),)
+
+    monkeypatch.setattr(torch.autograd, "grad", fake_grad)
+    trainer.compute_loss(model, {"chosen": batch, "rejected": batch})
+    assert trainer.reroute_weight == pytest.approx(0.5)
+    assert all(parameters == (model.lora_weight,) for parameters in balanced_parameters)
+    assert trainer.logged[-2]["retain_grad_norm"] == 2.0
+    assert trainer.logged[-2]["reroute_grad_norm"] == 4.0
+
+    trainer.compute_loss(model, {"chosen": batch, "rejected": batch})
+    assert len(balanced_parameters) == 2
+
+    trainer.state.global_step = 1
+    trainer.compute_loss(model, {"chosen": batch, "rejected": batch})
+    assert len(balanced_parameters) == 2
+
+    trainer.state.global_step = 25
+    trainer.compute_loss(model, {"chosen": batch, "rejected": batch})
+    assert len(balanced_parameters) == 4
+    assert trainer.reroute_weight == pytest.approx(0.65)
+
+
+@pytest.mark.parametrize(
+    ("retain_norm", "reroute_norm", "expected"),
+    [(0.0, 0.0, 1.0), (0.0, 1.0, 1.0), (2e6, 1.0, 1e3)],
+)
+def test_cb_gradient_balance_clamps_and_handles_zero_denominator(
+    cb_training_module, monkeypatch, retain_norm, reroute_norm, expected
+) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.lora_weight = torch.nn.Parameter(torch.tensor(1.0))
+
+    trainer, batch, _ = _gradient_balance_trainer(cb_training_module, torch)
+    gradients = iter((retain_norm, reroute_norm))
+    monkeypatch.setattr(
+        torch.autograd,
+        "grad",
+        lambda *args, **kwargs: (torch.tensor(next(gradients)),),
+    )
+    trainer.compute_loss(Model(), {"chosen": batch, "rejected": batch})
+    assert trainer.reroute_weight == pytest.approx(expected)
+
+
+def test_cb_gradient_probe_leaves_grads_empty_and_loss_supports_backward(
+    cb_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.lora_weight = torch.nn.Parameter(torch.tensor(1.0))
+            self.base_weight = torch.nn.Parameter(
+                torch.tensor(3.0), requires_grad=False
+            )
+
+    model = Model()
+    trainer, batch, _ = _gradient_balance_trainer(cb_training_module, torch)
+    reference = torch.tensor([[[[0.0, 1.0]]]])
+    calls = 0
+
+    def activations(model, batch, layers=None, **kwargs):
+        nonlocal calls
+        del batch, layers
+        calls += 1
+        if kwargs.get("disable_grad"):
+            return reference
+        if calls == 2:
+            return torch.stack((model.lora_weight, model.lora_weight)).reshape(
+                1, 1, 1, 2
+            )
+        return torch.stack(
+            (model.lora_weight, torch.ones_like(model.lora_weight))
+        ).reshape(1, 1, 1, 2)
+
+    trainer.activations = activations
+    loss = trainer.compute_loss(model, {"chosen": batch, "rejected": batch})
+
+    assert model.lora_weight.grad is None
+    assert model.base_weight.grad is None
+    assert torch.isfinite(torch.tensor(trainer.logged[-2]["retain_grad_norm"]))
+    assert torch.isfinite(torch.tensor(trainer.logged[-2]["reroute_grad_norm"]))
+    loss.backward()
+    assert model.lora_weight.grad is not None
+    assert model.base_weight.grad is None
 
 
 def test_cb_losses_mask_padding_and_zero_expected_cases(cb_training_module) -> None:
@@ -349,7 +506,11 @@ def test_cb_config() -> None:
         (EXAMPLE / "configs/training/di-6.9b/circuit-breaker.yml").read_text()
     )
     assert config["base_model"] == "EleutherAI/deep-ignorance-unfiltered"
-    assert config["trainer_cls"] == "configs.training.utils.CircuitBreakerTrainer"
+    assert config["trainer_cls"] == (
+        "configs.training.utils.ConstantLambda1CircuitBreakerTrainer"
+    )
+    assert config["output_dir"].endswith("--constant-coeff-lambda1")
+    assert "coefficient_schedule" not in config
     assert config["datasets"] == [
         {
             "path": "LLM-LAT/harmful-dataset",
@@ -362,12 +523,48 @@ def test_cb_config() -> None:
     assert config["num_epochs"] == 1
     assert "max_steps" not in config
     assert config["save_steps"] == 50
-    assert config["dataset_prepared_path"] == (
-        "artifacts/cache/axolotl/di-6.9b-cb"
-    )
+    assert config["dataset_prepared_path"] == ("artifacts/cache/axolotl/di-6.9b-cb")
     assert config["lr_scheduler"] == "constant"
     assert config["bf16"] is config["tf32"] is True
     assert config["micro_batch_size"] * config["gradient_accumulation_steps"] == 16
+
+
+def test_cb_gradient_balanced_config_is_isolated() -> None:
+    config = yaml.safe_load(
+        (
+            EXAMPLE / "configs/training/di-6.9b/circuit-breaker-grad-balanced.yml"
+        ).read_text()
+    )
+    assert config["trainer_cls"] == (
+        "configs.training.utils.GradientBalancedCircuitBreakerTrainer"
+    )
+    assert config["output_dir"] == "artifacts/models/di-6.9b-cb--gradnorm-balanced"
+    assert config["wandb_name"] == "di-6.9b-cb--gradnorm-balanced"
+    assert config["save_steps"] == 50
+    assert config["save_total_limit"] == 100
+
+
+def test_cb_linear_config() -> None:
+    config = yaml.safe_load(
+        (EXAMPLE / "configs/training/di-6.9b/circuit-breaker-linear.yml").read_text()
+    )
+    assert config["output_dir"].endswith("--linear-coeffs-0to5-10to5")
+    assert config["wandb_name"].endswith("--linear-coeffs-0to5-10to5")
+    assert config["trainer_cls"] == (
+        "configs.training.utils.LinearCircuitBreakerTrainer"
+    )
+    assert "coefficient_schedule" not in config
+
+    noisy = yaml.safe_load(
+        (
+            EXAMPLE / "configs/training/di-6.9b/circuit-breaker-linear-noise0p1.yml"
+        ).read_text()
+    )
+    assert noisy["trainer_cls"] == (
+        "configs.training.utils.LinearNoise0p1CircuitBreakerTrainer"
+    )
+    assert noisy["output_dir"].endswith("--linear-coeffs-0to5-10to5--noise0p1")
+    assert noisy["wandb_name"].endswith("--linear-coeffs-0to5-10to5--noise0p1")
 
 
 def test_single_experiment_plans_base_cb_and_weight_steering(
@@ -375,10 +572,8 @@ def test_single_experiment_plans_base_cb_and_weight_steering(
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
-    training = plan.stage_index[
-        "train-di-6.9b-cb"
-    ]
-    assert training.id == "train-di-6.9b-cb"
+    training = plan.stage_index["train-di-6.9b-cb--constant-coeff-lambda1"]
+    assert training.id == "train-di-6.9b-cb--constant-coeff-lambda1"
     assert training.args == (
         "configs/training/di-6.9b/circuit-breaker.yml",
         "--merge",
@@ -454,7 +649,10 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         "di-6.9b-base",
         "di-6.9b-ft-lat-chosen",
         "di-6.9b-ft-lat-rejected",
-        "di-6.9b-cb",
+        "di-6.9b-cb--constant-coeff-lambda1",
+        "di-6.9b-cb--linear-coeffs-0to5-10to5",
+        "di-6.9b-cb--linear-coeffs-0to5-10to5--noise0p1",
+        "di-6.9b-cb--gradnorm-balanced",
         "di-6.9b-w-steer-lat-reject2accept-a-1",
         "di-6.9b-w-steer-lat-reject2accept-a-3",
         "di-6.9b-w-steer-lat-reject2accept-a-5",
@@ -485,6 +683,9 @@ def test_results_config_has_base_cb_and_weight_steering_groups() -> None:
     config = yaml.safe_load((EXAMPLE / "configs/results/di-6.9b.yml").read_text())
     assert [row["group"] for row in config["rows"]] == [
         "base-model",
+        "circuit-breaker",
+        "circuit-breaker",
+        "circuit-breaker",
         "circuit-breaker",
         "weight-steering",
         "weight-steering",

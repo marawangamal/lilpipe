@@ -1,5 +1,5 @@
 base_model: EleutherAI/deep-ignorance-unfiltered
-trainer_cls: configs.training.utils.ConstantLambda1CircuitBreakerTrainer
+trainer_cls: configs.training.utils.LinearNoise0p1CircuitBreakerTrainer
 datasets:
   - path: LLM-LAT/harmful-dataset
     split: train
@@ -7,7 +7,7 @@ datasets:
 dataset_num_proc: 1
 dataset_prepared_path: artifacts/cache/axolotl/di-6.9b-cb
 val_set_size: 0.0
-output_dir: artifacts/models/di-6.9b-cb--constant-coeff-lambda1
+output_dir: artifacts/models/di-6.9b-cb--linear-coeffs-0to5-10to5--noise0p1
 
 adapter: lora
 lora_target_modules: [query_key_value]
@@ -41,6 +41,7 @@ seed: 42
 eval_strategy: "no"
 save_strategy: steps
 save_steps: 50
+save_total_limit: 100
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: di-6.9b-cb--constant-coeff-lambda1
+wandb_name: di-6.9b-cb--linear-coeffs-0to5-10to5--noise0p1

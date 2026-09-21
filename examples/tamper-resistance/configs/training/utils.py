@@ -200,20 +200,12 @@ class CircuitBreakerTrainer(AxolotlTrainer):
         self,
         *args,
         target_layers: list[int] | None = None,
-        retain_weight: float = 0.01,
-        reroute_weight: float = 1.0,
-        retain_start_step: int = 50,
-        coefficient_ramp_steps: int = 100,
         reroute_noise: float = 0.01,
         reroute_noise_seed: int = 42,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.target_layers = tuple(target_layers or (5, 10, 15, 20, 25, 30))
-        self.retain_weight = retain_weight
-        self.reroute_weight = reroute_weight
-        self.retain_start_step = retain_start_step
-        self.coefficient_ramp_steps = coefficient_ramp_steps
         self.reroute_noise = reroute_noise
         self.reroute_noise_seed = reroute_noise_seed
         validate_target_layers(self.target_layers, self.model.config.num_hidden_layers)
@@ -222,13 +214,8 @@ class CircuitBreakerTrainer(AxolotlTrainer):
             raise ValueError("CircuitBreakerTrainer requires Axolotl's tokenizer")
         self.data_collator = CircuitBreakerCollator(tokenizer)
 
-    def loss_coefficients(self):
-        progress = min(
-            max(self.state.global_step - self.retain_start_step, 0)
-            / self.coefficient_ramp_steps,
-            1.0,
-        )
-        return self.retain_weight * progress, self.reroute_weight
+    def loss_coefficients(self, model, loss_retain, loss_reroute):
+        raise NotImplementedError("use a coefficient-specific circuit-breaker trainer")
 
     def activations(
         self,
@@ -280,7 +267,6 @@ class CircuitBreakerTrainer(AxolotlTrainer):
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         del kwargs
-        retain_coefficient, reroute_coefficient = self.loss_coefficients()
         x_retain = inputs["chosen"]
         x_forget = inputs["rejected"]
         mask_retain = x_retain["attention_mask"] * x_retain["completion_mask"]
@@ -309,6 +295,10 @@ class CircuitBreakerTrainer(AxolotlTrainer):
             ).abs(),
             mask_forget,
         )
+
+        retain_coefficient, reroute_coefficient = self.loss_coefficients(
+            model, loss_retain, loss_reroute
+        )
         loss = retain_coefficient * loss_retain + reroute_coefficient * loss_reroute
 
         harmful_cosine = _masked_mean(
@@ -329,3 +319,107 @@ class CircuitBreakerTrainer(AxolotlTrainer):
         if return_outputs:
             return loss, {"retain": z_retain_cur, "forget": z_forget_cur}
         return loss
+
+
+class ConstantLambda1CircuitBreakerTrainer(CircuitBreakerTrainer):
+    """Use constant retain and reroute coefficients of one."""
+
+    def loss_coefficients(self, model, loss_retain, loss_reroute):
+        del model, loss_retain, loss_reroute
+        return 1.0, 1.0
+
+
+class LinearCircuitBreakerTrainer(CircuitBreakerTrainer):
+    """Linearly ramp retain 0→5 and reroute 10→5 over training."""
+
+    def loss_coefficients(self, model, loss_retain, loss_reroute):
+        del model, loss_retain, loss_reroute
+        progress = min(self.state.global_step / max(self.state.max_steps - 1, 1), 1.0)
+        return 5.0 * progress, 10.0 - 5.0 * progress
+
+
+class LinearNoise0p1CircuitBreakerTrainer(LinearCircuitBreakerTrainer):
+    """Use the linear coefficient schedule with 10% activation noise."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, reroute_noise=0.1, **kwargs)
+
+
+class GradientBalancedCircuitBreakerTrainer(CircuitBreakerTrainer):
+    """Periodically balance the reroute coefficient by LoRA gradient norms."""
+
+    def __init__(
+        self,
+        *args,
+        gradient_balance_steps: int = 25,
+        gradient_balance_beta: float = 0.9,
+        gradient_balance_min: float = 1e-3,
+        gradient_balance_max: float = 1e3,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.reroute_weight = 1.0
+        self.gradient_balance_steps = gradient_balance_steps
+        self.gradient_balance_beta = gradient_balance_beta
+        self.gradient_balance_min = gradient_balance_min
+        self.gradient_balance_max = gradient_balance_max
+        self._last_balance_step = None
+
+    def loss_coefficients(self, model, loss_retain, loss_reroute):
+        step = self.state.global_step
+        if step % self.gradient_balance_steps == 0 and step != self._last_balance_step:
+            lora_parameters = tuple(
+                parameter
+                for name, parameter in model.named_parameters()
+                if parameter.requires_grad and "lora_" in name
+            )
+            retain_gradients = torch.autograd.grad(
+                loss_retain,
+                lora_parameters,
+                retain_graph=True,
+                allow_unused=True,
+            )
+            reroute_gradients = torch.autograd.grad(
+                loss_reroute,
+                lora_parameters,
+                retain_graph=True,
+                allow_unused=True,
+            )
+            retain_grad_norm = torch.stack(
+                [
+                    gradient.detach().float().norm()
+                    for gradient in retain_gradients
+                    if gradient is not None
+                ]
+                or [loss_retain.new_zeros(())]
+            ).norm()
+            reroute_grad_norm = torch.stack(
+                [
+                    gradient.detach().float().norm()
+                    for gradient in reroute_gradients
+                    if gradient is not None
+                ]
+                or [loss_reroute.new_zeros(())]
+            ).norm()
+            if retain_grad_norm > 1e-12 and reroute_grad_norm > 1e-12:
+                target_weight = (retain_grad_norm / reroute_grad_norm).clamp(
+                    self.gradient_balance_min, self.gradient_balance_max
+                )
+                target_weight = target_weight.detach().item()
+                if self._last_balance_step is None:
+                    self.reroute_weight = target_weight
+                else:
+                    self.reroute_weight = (
+                        self.gradient_balance_beta * self.reroute_weight
+                        + (1 - self.gradient_balance_beta) * target_weight
+                    )
+            self._last_balance_step = step
+            self.log(
+                {
+                    "retain_grad_norm": retain_grad_norm.item(),
+                    "reroute_grad_norm": reroute_grad_norm.item(),
+                    "reroute_coefficient": self.reroute_weight,
+                }
+            )
+
+        return 1.0, self.reroute_weight

@@ -104,7 +104,7 @@ use display case; upstream Hugging Face identifiers remain unchanged.
 | `unfiltered-ft-lat-chosen-cb-matched` | `di-6.9b-ft-lat-chosen` |
 | `unfiltered-ft-lat-rejected-cb-matched` | `di-6.9b-ft-lat-rejected` |
 | `unfiltered-ws-cb-matched-a-{1,2,3,5,10}` | `di-6.9b-w-steer-lat-reject2accept-a-{1,2,3,5,10}` |
-| `unfiltered-cb--repr` | `di-6.9b-cb` |
+| `unfiltered-cb--repr` | `di-6.9b-cb--constant-coeff-lambda1` |
 | `unfiltered-wmdp-bio-lora` | `di-6.9b-lora16-steps2000-wmdp-bio` |
 | `weak-filter-wmdp-bio-lora` | `di-6.9b-weak-filter-lora16-steps2000-wmdp-bio` |
 | `unfiltered-cb-wmdp-bio-lora` | `di-6.9b-cb-lora16-steps2000-wmdp-bio` |

@@ -7,7 +7,10 @@ registries:
 
 models:
   - di-6.9b-base
-  - di-6.9b-cb
+  - di-6.9b-cb--constant-coeff-lambda1
+  - di-6.9b-cb--linear-coeffs-0to5-10to5
+  - di-6.9b-cb--linear-coeffs-0to5-10to5--noise0p1
+  - di-6.9b-cb--gradnorm-balanced
   - di-6.9b-w-steer-lat-reject2accept-a-1
   - di-6.9b-w-steer-lat-reject2accept-a-3
   - di-6.9b-w-steer-lat-reject2accept-a-5

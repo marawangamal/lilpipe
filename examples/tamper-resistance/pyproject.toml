@@ -15,3 +15,6 @@ eval = [
     "lm-eval[hf]==0.4.11",
     "matplotlib>=3.9,<4",
 ]
+unlearn = [
+    "unlearning @ git+https://github.com/EleutherAI/unlearn.git@0f6488f15e49686bc7ddf0d8d90030c30780dc51",
+]

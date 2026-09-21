@@ -18,10 +18,22 @@ rows:
     group: base-model
     label: DI-6.9B-Base
     root: artifacts/evals/di-6.9b-base
-  - id: circuit-breaker
+  - id: circuit-breaker-constant-coeff-lambda1
     group: circuit-breaker
-    label: DI-6.9B-CB
-    root: artifacts/evals/di-6.9b-cb
+    label: DI-6.9B-CB--Constant-Coeff-Lambda1
+    root: artifacts/evals/di-6.9b-cb--constant-coeff-lambda1
+  - id: circuit-breaker-linear-coeffs-0to5-10to5
+    group: circuit-breaker
+    label: DI-6.9B-CB--Linear-Coeffs-0to5-10to5
+    root: artifacts/evals/di-6.9b-cb--linear-coeffs-0to5-10to5
+  - id: circuit-breaker-linear-coeffs-0to5-10to5-noise0p1
+    group: circuit-breaker
+    label: DI-6.9B-CB--Linear-Coeffs-0to5-10to5--Noise0p1
+    root: artifacts/evals/di-6.9b-cb--linear-coeffs-0to5-10to5--noise0p1
+  - id: circuit-breaker-gradnorm-balanced
+    group: circuit-breaker
+    label: DI-6.9B-CB--GradNorm-Balanced
+    root: artifacts/evals/di-6.9b-cb--gradnorm-balanced
   - id: weight-steering-alpha-1
     group: weight-steering
     label: DI-6.9B-W-Steer-LAT-Reject2Accept-a-1
