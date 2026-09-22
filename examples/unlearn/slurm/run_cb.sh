@@ -16,6 +16,7 @@ repo_root=$PWD
 }
 tamper_root=$(cd "$repo_root/../tamper-resistance" && pwd)
 orth_coef=${ORTH_COEF:-5}
+retain_coef=${RETAIN_COEF:-2}
 
 export HF_HOME="$SCRATCH/.cache/huggingface"
 export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv"
@@ -23,7 +24,7 @@ export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-unlearn"
 export PYTHONPATH="$repo_root"
 export WANDB_DIR="$repo_root/artifacts/logs"
 export WANDB_PROJECT=lp-tamper-resistance
-export WANDB_NAME="cb-lora-ret2-rm23-orth${orth_coef}-r8-pdbs2-lr1e-3"
+export WANDB_NAME="cb-lora-ret${retain_coef}-rm23-orth${orth_coef}-r8-pdbs2-lr1e-3"
 
 uv sync --project "$tamper_root" --frozen --group unlearn
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
@@ -32,7 +33,7 @@ bash scripts/run_unlearn.sh \
   -a cb \
   --orth "$orth_coef" \
   --rm 23 \
-  --ret 2 \
+  --ret "$retain_coef" \
   --rank 8 \
   --lr 1e-3 \
   --examples 1024 \
