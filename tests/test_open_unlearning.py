@@ -28,7 +28,8 @@ def test_wmdp_jobs_load_torch_cuda_toolkit(script_name: str) -> None:
     assert "module load cuda/12.1.1" in script
     assert 'export HF_HUB_CACHE="$HF_HOME/hub"' in script
     assert (
-        'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-open-unlearning"' in script
+        'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-open-unlearning-$SLURM_JOB_ID"'
+        in script
     )
     assert "uv pip install --offline" in script
     assert "snapshots/$revision" in script

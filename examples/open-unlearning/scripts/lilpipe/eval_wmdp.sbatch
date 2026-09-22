@@ -14,7 +14,7 @@ export HF_HUB_CACHE="$HF_HOME/hub"
 export HUGGINGFACE_HUB_CACHE="$HF_HUB_CACHE"
 export HF_DATASETS_CACHE="$SLURM_TMPDIR/.cache/huggingface/datasets"
 export UV_CACHE_DIR="$SCRATCH/.cache/uv"
-export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-open-unlearning"
+export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-open-unlearning-$SLURM_JOB_ID"
 export PYTHONPATH="$PWD"
 
 uv venv --python 3.11 "$UV_PROJECT_ENVIRONMENT"
