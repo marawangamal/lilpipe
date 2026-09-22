@@ -12,12 +12,14 @@ RMU-unlearned model. Training uses `cyber-forget-corpus.jsonl` and
 
 ## Setup
 
-OpenUnlearning pins Python packages tightly, so use its own environment:
+OpenUnlearning pins Python packages tightly. Populate the shared uv cache once from a
+login node; each Slurm job creates a clean environment under `$SLURM_TMPDIR` from this
+cache:
 
 ```bash
-python3.11 -m venv .venv
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -e '.[lm-eval]'
+export UV_CACHE_DIR="$SCRATCH/.cache/uv"
+uv venv --python 3.11 .venv
+uv pip install --python .venv/bin/python -e '.[lm-eval]'
 ```
 
 The lilpipe jobs override the upstream FlashAttention setting with PyTorch's
