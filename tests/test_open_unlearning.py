@@ -26,3 +26,5 @@ def test_wmdp_jobs_load_torch_cuda_toolkit(script_name: str) -> None:
     script = (EXAMPLE_ROOT / "scripts/lilpipe" / script_name).read_text()
 
     assert "module load cuda/12.1.1" in script
+    assert 'export HF_HUB_CACHE="$HF_HOME/hub"' in script
+    assert 'export TRANSFORMERS_CACHE="$HF_HUB_CACHE"' in script

@@ -17,8 +17,11 @@ test -f "data/wmdp/wmdp-corpora/${domain}-forget-corpus.jsonl" || {
   exit 1
 }
 
-export HF_HOME="${HF_HOME:-$SCRATCH/.cache/huggingface}"
-export HF_DATASETS_CACHE="${HF_DATASETS_CACHE:-$SLURM_TMPDIR/.cache/huggingface/datasets}"
+export HF_HOME="$SCRATCH/.cache/huggingface"
+export HF_HUB_CACHE="$HF_HOME/hub"
+export HUGGINGFACE_HUB_CACHE="$HF_HUB_CACHE"
+export TRANSFORMERS_CACHE="$HF_HUB_CACHE"
+export HF_DATASETS_CACHE="$SLURM_TMPDIR/.cache/huggingface/datasets"
 export PYTHONPATH="$PWD"
 export WANDB_MODE="${WANDB_MODE:-disabled}"
 
