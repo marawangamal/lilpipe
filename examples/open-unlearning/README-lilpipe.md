@@ -58,6 +58,12 @@ The base-model evaluation can start immediately. The unlearned-model evaluation
 depends on the RMU job. Model weights and evaluation JSON files are written under
 `artifacts/models/` and `artifacts/evals/`, respectively.
 
-To run WMDP-Bio instead, first obtain the gated Bio forget corpus and make a copy
-of the manifest with `cyber` changed to `bio`; Bio is intentionally not submitted
-by the default example because its forget corpus requires separate access.
+The Cyber manifest evaluates full MMLU, matching OpenUnlearning's upstream default.
+The Bio manifest uses the repository's existing `mmlu_no_bio` task:
+
+```bash
+lilpipe configs/lilpipe/experiments/wmdp-bio-rmu.yml --dry-run
+```
+
+Bio training requires access to the gated `cais/wmdp-bio-forget-corpus`. The job
+reads its cached Parquet snapshot directly and uses the public Bio retain JSONL.

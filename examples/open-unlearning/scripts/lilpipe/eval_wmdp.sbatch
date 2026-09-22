@@ -7,6 +7,7 @@ module load cuda/12.1.1
 model_id=${1:?missing model id}
 model_name_or_path=${2:?missing model name or path}
 domain=${3:?missing WMDP domain}
+utility_task=${4:-mmlu}
 output_dir="artifacts/evals/$model_id"
 
 export HF_HOME="$SCRATCH/.cache/huggingface"
@@ -36,5 +37,7 @@ python src/eval.py --config-name=eval.yaml \
   model.model_args.pretrained_model_name_or_path="$model_name_or_path" \
   model.model_args.attn_implementation=eager \
   model.tokenizer_args.pretrained_model_name_or_path="$model_name_or_path" \
+  eval.lm_eval.include_path=lm_eval_tasks \
+  "eval.lm_eval.tasks=[wmdp_${domain},${utility_task}]" \
   eval.lm_eval.simple_evaluate_args.batch_size=4 \
   paths.output_dir="$output_dir"

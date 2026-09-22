@@ -33,3 +33,15 @@ def test_wmdp_jobs_load_torch_cuda_toolkit(script_name: str) -> None:
     )
     assert "uv pip install --offline" in script
     assert "snapshots/$revision" in script
+
+
+def test_wmdp_bio_rmu_example_plan(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(EXAMPLE_ROOT)
+    plan = load("configs/lilpipe/experiments/wmdp-bio-rmu.yml").plan()
+
+    assert [stage.id for stage in plan.stages] == [
+        "unlearn-zephyr-7b-beta-rmu-bio",
+        "eval-wmdp-bio-and-mmlu-no-bio-zephyr-7b-beta",
+        "eval-wmdp-bio-and-mmlu-no-bio-zephyr-7b-beta-rmu-bio",
+    ]
+    assert plan.stages[-1].args[-2:] == ("bio", "mmlu_no_bio")

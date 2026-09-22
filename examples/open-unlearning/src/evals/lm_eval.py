@@ -7,7 +7,6 @@ from lm_eval import simple_evaluate
 
 from evals.base import Evaluator
 
-
 logger = logging.getLogger("evaluator")
 
 
@@ -18,7 +17,9 @@ class LMEvalEvaluator(Evaluator):
         self.tasks = OmegaConf.to_container(
             self.eval_cfg.tasks, resolve=True, throw_on_missing=True
         )
-        self.task_manager = TaskManager()
+        self.task_manager = TaskManager(
+            include_path=self.eval_cfg.get("include_path", None)
+        )
         self.simple_evaluate_args = dict(kwargs.get("simple_evaluate_args", {}))
 
     def prepare_model(self, model, **kwargs):

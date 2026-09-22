@@ -8,11 +8,6 @@ method=${1:?missing unlearning method}
 domain=${2:?missing WMDP domain}
 output_dir=${3:?missing output directory}
 
-test -f "data/wmdp/wmdp-corpora/${domain}-forget-corpus.jsonl" || {
-  echo "Missing WMDP ${domain} corpus; run: .venv/bin/python setup_data.py --wmdp" >&2
-  exit 1
-}
-
 export HF_HOME="$SCRATCH/.cache/huggingface"
 export HF_HUB_CACHE="$HF_HOME/hub"
 export HUGGINGFACE_HUB_CACHE="$HF_HUB_CACHE"
@@ -31,6 +26,23 @@ revision=$(<"$model_cache/refs/main")
 model_snapshot="$model_cache/snapshots/$revision"
 test -f "$model_snapshot/config.json"
 
+forget_overrides=()
+if [[ "$domain" == "bio" ]]; then
+  bio_cache="$HF_HUB_CACHE/datasets--cais--wmdp-bio-forget-corpus"
+  bio_revision=$(<"$bio_cache/refs/main")
+  bio_forget="$bio_cache/snapshots/$bio_revision/data/*.parquet"
+  compgen -G "$bio_forget" >/dev/null
+  forget_overrides+=(
+    data.forget.WMDP_forget.args.hf_args.path=parquet
+    "data.forget.WMDP_forget.args.hf_args.data_files=$bio_forget"
+  )
+else
+  test -f "data/wmdp/wmdp-corpora/${domain}-forget-corpus.jsonl" || {
+    echo "Missing WMDP ${domain} corpus; run: .venv/bin/python setup_data.py --wmdp" >&2
+    exit 1
+  }
+fi
+
 mkdir -p "$output_dir" artifacts/logs
 python src/train.py --config-name=unlearn.yaml \
   experiment=unlearn/wmdp/default \
@@ -43,4 +55,5 @@ python src/train.py --config-name=unlearn.yaml \
   model.tokenizer_args.pretrained_model_name_or_path="$model_snapshot" \
   trainer.args.do_eval=false \
   trainer.args.eval_strategy=no \
-  trainer.args.report_to=none
+  trainer.args.report_to=none \
+  "${forget_overrides[@]}"
