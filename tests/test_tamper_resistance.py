@@ -300,13 +300,13 @@ def test_orth_cb_layer_mapping_and_schedule(orth_training_module) -> None:
         Model(), torch.ones((1, 1)), torch.ones((1, 1))
     )
     assert selected[:, 0, 0, 0].tolist() == [6, 11, 16, 21, 26, 31]
-    assert orth_training_module.coefficients(0) == (0.2, 23.0, 0.0)
+    assert orth_training_module.coefficients(0) == (1.0, 23.0, 0.0)
     midpoint = orth_training_module.coefficients(256)
     assert midpoint == pytest.approx(
-        (0.2 + 1.8 * 256 / 511, 23 - 5.75 * 256 / 511, 5 * 256 / 511)
+        (1.0 + 9.0 * 256 / 511, 23 - 5.75 * 256 / 511, 5 * 256 / 511)
     )
     assert orth_training_module.coefficients(511) == (
-        2.0,
+        10.0,
         17.25,
         5.0,
     )
@@ -394,7 +394,7 @@ def test_orth_cb_losses_relu_mask_and_off_diagonal(orth_training_module) -> None
 
 
 def test_orth_cb_config() -> None:
-    model_id = "di-6.9b-cb--orth-ret2-rm23-orth5-r8"
+    model_id = "di-6.9b-cb--orth-ret10-rm23-orth5-r8"
     config = yaml.safe_load(
         (EXAMPLE / "configs/training/di-6.9b/circuit-breaker-orth.yml").read_text()
     )
@@ -425,6 +425,7 @@ def test_orth_cb_config() -> None:
     assert config["learning_rate"] == 1e-3
     assert config["weight_decay"] == 0.01
     assert config["lr_scheduler"] == "linear"
+    assert config["warmup_steps"] == 0
     assert config["max_grad_norm"] == 1.0
     assert config["sequence_len"] == 2048
     assert config["save_steps"] == 5
@@ -437,7 +438,7 @@ def test_single_experiment_plans_base_and_orth_cb(
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
-    orth_id = "di-6.9b-cb--orth-ret2-rm23-orth5-r8"
+    orth_id = "di-6.9b-cb--orth-ret10-rm23-orth5-r8"
     orth = plan.stage_index[f"train-{orth_id}"]
     assert orth.script == "scripts/slurm/train.sbatch"
     assert orth.args == ("configs/training/di-6.9b/circuit-breaker-orth.yml",)
@@ -496,7 +497,7 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
 
     assert set(registry) == {
         "di-6.9b-base",
-        "di-6.9b-cb--orth-ret2-rm23-orth5-r8",
+        "di-6.9b-cb--orth-ret10-rm23-orth5-r8",
     }
     assert all(model_id.startswith("di-6.9b-") for model_id in registry)
     for model_id, model in registry.items():

@@ -20,8 +20,8 @@ rows:
     root: artifacts/evals/di-6.9b-base
   - id: circuit-breaker-orth
     group: circuit-breaker
-    label: DI-6.9B-CB--Orth-Ret2-Rm23-Orth5-R8
-    root: artifacts/evals/di-6.9b-cb--orth-ret2-rm23-orth5-r8
+    label: DI-6.9B-CB--Orth-Ret10-Rm23-Orth5-R8
+    root: artifacts/evals/di-6.9b-cb--orth-ret10-rm23-orth5-r8
 
 metrics:
   - column: wmdp-bio

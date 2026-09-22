@@ -34,7 +34,7 @@ uv sync --group eval
 Slurm jobs install clean environments and uv caches under `$SLURM_TMPDIR`.
 The persistent environments above are only for submitting pipelines and plotting.
 Axolotl's tokenized WMDP/WikiText dataset is stored under
-`artifacts/cache/axolotl/di-6.9b-cb--orth-ret2-rm23-orth5-r8/prepared`.
+`artifacts/cache/axolotl/di-6.9b-cb--orth-ret10-rm23-orth5-r8/prepared`.
 
 ## Run
 
@@ -46,8 +46,10 @@ lilpipe configs/experiments/di-6.9b.yml
 ```
 
 The pipeline trains the rank-8 circuit breaker on 1,024 WMDP-Bio forget
-documents and 1,024 WikiText retain documents. It evaluates the base and
-trained models on Robust WMDP-Bio and MMLU excluding biology. Render the
+documents and 1,024 WikiText retain documents. Its coefficients ramp from
+retain 1 to 10, reroute 23 to 17.25, and orthogonalization 0 to 5; the
+learning rate starts at `1e-3` and decays linearly without warmup. It evaluates
+the base and trained models on Robust WMDP-Bio and MMLU excluding biology. Render the
 results table with:
 
 ```bash

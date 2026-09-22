@@ -3,12 +3,12 @@ models:
     adapter_name_or_path: "-"
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
 
-  di-6.9b-cb--orth-ret2-rm23-orth5-r8:
-    adapter_name_or_path: artifacts/models/di-6.9b-cb--orth-ret2-rm23-orth5-r8
+  di-6.9b-cb--orth-ret10-rm23-orth5-r8:
+    adapter_name_or_path: artifacts/models/di-6.9b-cb--orth-ret10-rm23-orth5-r8
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-cb--orth-ret2-rm23-orth5-r8
+    local_dir: artifacts/models/di-6.9b-cb--orth-ret10-rm23-orth5-r8
     producer:
-      id: train-di-6.9b-cb--orth-ret2-rm23-orth5-r8
+      id: train-di-6.9b-cb--orth-ret10-rm23-orth5-r8
       script: scripts/slurm/train.sbatch
       args: [configs/training/di-6.9b/circuit-breaker-orth.yml]
       sbatch_args:

@@ -72,7 +72,7 @@ def coefficients(microstep: int) -> tuple[float, float, float]:
     """Retain, removal, and orthogonalization weights over 512 microsteps."""
 
     progress = min(max(microstep, 0) / 511, 1.0)
-    return 0.2 + 1.8 * progress, 23.0 - 5.75 * progress, 5.0 * progress
+    return 1.0 + 9.0 * progress, 23.0 - 5.75 * progress, 5.0 * progress
 
 
 def orthogonalization_loss(activations: torch.Tensor, mask: torch.Tensor):
