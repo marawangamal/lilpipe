@@ -1,7 +1,7 @@
 import importlib.util
 import json
 from pathlib import Path
-import subprocess
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -22,33 +22,15 @@ def load_script(relative_path: str, module_name: str):
 
 
 @pytest.fixture(scope="module")
-def strategy_module():
-    return load_script("scripts/data/wmdp_bio.py", "wmdp_bio")
-
-
-@pytest.fixture(scope="module")
 def analysis_module():
     return load_script("scripts/analysis/plot_trajectory.py", "plot_trajectory")
 
 
 @pytest.fixture(scope="module")
-def cb_training_module():
+def orth_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("transformers")
-    return load_script("configs/training/utils.py", "circuit_breaker_training")
-
-
-def test_corpus_strategy_formats_document(strategy_module) -> None:
-    document = {"title": "T", "abstract": "A", "text": "B", "doi": "ignored"}
-    assert strategy_module.format_document(document) == "T\n\nA\n\nB"
-
-
-@pytest.mark.parametrize("missing", ["title", "abstract", "text"])
-def test_corpus_format_rejects_missing_fields(strategy_module, missing: str) -> None:
-    document = {"title": "T", "abstract": "A", "text": "B"}
-    del document[missing]
-    with pytest.raises(ValueError, match="missing required fields"):
-        strategy_module.format_document(document)
+    return load_script("configs/training/utils.py", "orth_circuit_breaker_training")
 
 
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
@@ -86,28 +68,6 @@ def test_training_script_is_minimal() -> None:
     assert 'source "$UV_PROJECT_ENVIRONMENT/bin/activate"' in script
     assert 'axolotl train "$1" --launcher python' in script
     assert "prepare_forget_corpus.py" not in script
-
-
-def test_corpus_strategy_limits_each_document_to_one_sequence(strategy_module) -> None:
-    train_python = EXAMPLE / ".venv-train/bin/python"
-    if not train_python.exists():
-        pytest.skip("Axolotl training environment is not installed")
-
-    result = subprocess.run(
-        [
-            str(train_python),
-            "-c",
-            "from types import SimpleNamespace; "
-            "from scripts.data.wmdp_bio import load; "
-            "strategy = load(object(), SimpleNamespace(train_on_inputs=True, sequence_len=2048)); "
-            "print(strategy.sequence_len, strategy.max_length)",
-        ],
-        cwd=EXAMPLE,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert result.stdout.strip() == "2048 2048"
 
 
 def test_vendored_robust_task_group_and_template() -> None:
@@ -172,434 +132,323 @@ def test_analysis_rejects_missing_duplicate_and_absent_metric(
         analysis_module.collect_results(tmp_path, [0])
 
 
-def test_cb_gradient_balance_defaults(cb_training_module) -> None:
-    import inspect
-
-    parameters = inspect.signature(
-        cb_training_module.GradientBalancedCircuitBreakerTrainer.__init__
-    ).parameters
-    assert parameters["gradient_balance_steps"].default == 25
-    assert parameters["gradient_balance_beta"].default == 0.9
-    assert parameters["gradient_balance_min"].default == 1e-3
-    assert parameters["gradient_balance_max"].default == 1e3
-    assert hasattr(
-        cb_training_module.GradientBalancedCircuitBreakerTrainer,
-        "loss_coefficients",
-    )
-
-
-def test_cb_constant_and_linear_loss_schedules(cb_training_module) -> None:
-    from types import SimpleNamespace
-
-    constant = object.__new__(cb_training_module.ConstantLambda1CircuitBreakerTrainer)
-    assert constant.loss_coefficients(None, None, None) == (1.0, 1.0)
-
-    trainer = object.__new__(cb_training_module.LinearCircuitBreakerTrainer)
-    trainer.state = SimpleNamespace(global_step=0, max_steps=301)
-    assert trainer.loss_coefficients(None, None, None) == (0.0, 10.0)
-    trainer.state.global_step = 150
-    assert trainer.loss_coefficients(None, None, None) == (2.5, 7.5)
-    trainer.state.global_step = 300
-    assert trainer.loss_coefficients(None, None, None) == (5.0, 5.0)
-
-
-def test_cb_linear_noise_subclass_sets_noise_without_yaml(
-    cb_training_module, monkeypatch
+def test_orth_cb_document_strategies_tag_identical_schemas(
+    orth_training_module,
 ) -> None:
-    received = {}
+    calls = []
 
-    def fake_init(self, *args, **kwargs):
-        del self, args
-        received.update(kwargs)
+    def tokenizer(text, **kwargs):
+        calls.append((text, kwargs))
+        return {"input_ids": [1, 2], "attention_mask": [1, 1]}
 
-    monkeypatch.setattr(cb_training_module.CircuitBreakerTrainer, "__init__", fake_init)
-    cb_training_module.LinearNoise0p1CircuitBreakerTrainer(unrelated="preserved")
-    assert received == {"unrelated": "preserved", "reroute_noise": 0.1}
-
-
-def test_cb_noise_breaks_initial_rerouting_stationary_point(
-    cb_training_module,
-) -> None:
-    torch = pytest.importorskip("torch")
-    from types import MethodType, SimpleNamespace
-
-    trainer = object.__new__(cb_training_module.ConstantLambda1CircuitBreakerTrainer)
-    trainer.target_layers = (0,)
-    trainer.state = SimpleNamespace(global_step=1)
-    trainer.reroute_noise = 0.01
-    trainer.reroute_noise_seed = 42
-    trainer.log = lambda metrics: None
-
-    reference = torch.tensor([[[[1.0, 2.0, 3.0]]]])
-    target = torch.tensor([[[[1.0, 2.0, 3.01]]]])
-    current = reference.clone().requires_grad_()
-    activations = iter((reference, reference, target, current))
-    trainer.activations = MethodType(
-        lambda self, *args, **kwargs: next(activations), trainer
+    cfg = SimpleNamespace(sequence_len=2048)
+    strategy = orth_training_module.load(
+        tokenizer,
+        cfg,
+        SimpleNamespace(path="cais/wmdp-bio-forget-corpus"),
     )
-    batch = {
-        "input_ids": torch.ones((1, 1), dtype=torch.long),
-        "attention_mask": torch.ones((1, 1), dtype=torch.long),
-        "completion_mask": torch.ones((1, 1), dtype=torch.long),
+    forget = strategy.tokenize_row(
+        {"title": "title", "abstract": "abstract", "text": "bio"}
+    )
+    retain = orth_training_module.load(
+        tokenizer,
+        cfg,
+        SimpleNamespace(path="EleutherAI/wikitext_document_level"),
+    ).tokenize_row({"page": "wiki"})
+
+    assert (
+        set(forget)
+        == set(retain)
+        == {
+            "input_ids",
+            "attention_mask",
+            "labels",
+            "cb_source",
+        }
+    )
+    assert forget["cb_source"] == 1
+    assert retain["cb_source"] == 0
+    assert calls[0][0] == "title\n\nabstract\n\nbio"
+    assert calls[0][1] == {
+        "max_length": 2048,
+        "truncation": True,
+        "add_special_tokens": True,
     }
 
-    loss = trainer.compute_loss(None, {"chosen": batch, "rejected": batch})
-    loss.backward()
 
-    assert current.grad.norm().item() > 0
+@pytest.mark.parametrize("missing", ["title", "abstract", "text"])
+def test_orth_cb_wmdp_requires_document_fields(orth_training_module, missing) -> None:
+    strategy = orth_training_module.load(
+        lambda text, **kwargs: {"input_ids": [1], "attention_mask": [1]},
+        SimpleNamespace(sequence_len=2048),
+        SimpleNamespace(path="cais/wmdp-bio-forget-corpus"),
+    )
+    row = {"title": "T", "abstract": "A", "text": "B"}
+    del row[missing]
+    with pytest.raises(ValueError, match="title, abstract, and text"):
+        strategy.tokenize_row(row)
 
 
-def _gradient_balance_trainer(cb_training_module, torch):
-    from types import MethodType, SimpleNamespace
+def test_orth_cb_tokenization_truncates_and_masks(orth_training_module) -> None:
+    def tokenizer(text, *, max_length, truncation, add_special_tokens):
+        assert truncation and add_special_tokens
+        ids = list(range(len(text.split())))[:max_length]
+        return {"input_ids": ids, "attention_mask": [1] * len(ids)}
 
-    trainer = object.__new__(cb_training_module.GradientBalancedCircuitBreakerTrainer)
+    strategy = orth_training_module.load(
+        tokenizer,
+        SimpleNamespace(sequence_len=2048),
+        SimpleNamespace(path="EleutherAI/wikitext_document_level"),
+    )
+    row = strategy.tokenize_row({"page": "word " * 2100})
+    assert len(row["input_ids"]) == 2048
+    assert row["attention_mask"] == [1] * 2048
+    assert row["labels"] == row["input_ids"]
+
+
+def test_orth_cb_wikitext_shuffles_before_selecting(orth_training_module) -> None:
+    class FakeDataset(list):
+        column_names = ["page"]
+
+        def shuffle(self, seed):
+            assert seed == 42
+            return FakeDataset(reversed(self))
+
+        def select(self, indices):
+            assert len(indices) == 1024
+            return FakeDataset(self[index] for index in indices)
+
+        def map(self, function, remove_columns):
+            assert remove_columns == self.column_names
+            return FakeDataset(function(row) for row in self)
+
+    tokenizer = lambda text, **kwargs: {
+        "input_ids": [int(text)],
+        "attention_mask": [1],
+    }
+    strategy = orth_training_module.load(
+        tokenizer,
+        SimpleNamespace(sequence_len=2048),
+        SimpleNamespace(path="EleutherAI/wikitext_document_level"),
+    )
+    wrapped = strategy.wrap_dataset(
+        FakeDataset({"page": str(index)} for index in range(1100))
+    )
+
+    assert len(wrapped) == 1024
+    assert wrapped[0]["input_ids"] == [1099]
+    assert wrapped[0]["cb_source"] == 0
+
+
+def test_axolotl_standard_collator_preserves_source_tags() -> None:
+    torch = pytest.importorskip("torch")
+    transformers = pytest.importorskip("transformers")
+    pytest.importorskip("axolotl")
+    from axolotl.utils.collators import DataCollatorForSeq2Seq
+    from tokenizers import Tokenizer
+    from tokenizers.models import WordLevel
+
+    tokenizer = transformers.PreTrainedTokenizerFast(
+        tokenizer_object=Tokenizer(
+            WordLevel({"[PAD]": 0, "[UNK]": 1}, unk_token="[UNK]")
+        ),
+        pad_token="[PAD]",
+        unk_token="[UNK]",
+    )
+    batch = DataCollatorForSeq2Seq(tokenizer)(
+        [
+            {
+                "input_ids": [2, 3, 4],
+                "attention_mask": [1, 1, 1],
+                "labels": [2, 3, 4],
+                "cb_source": 0,
+            },
+            {
+                "input_ids": [5, 6],
+                "attention_mask": [1, 1],
+                "labels": [5, 6],
+                "cb_source": 1,
+            },
+        ]
+    )
+    assert isinstance(batch["cb_source"], torch.Tensor)
+    assert batch["cb_source"].tolist() == [0, 1]
+    assert batch["attention_mask"].tolist() == [[1, 1, 1], [1, 1, 0]]
+
+
+def test_orth_cb_layer_mapping_and_schedule(orth_training_module) -> None:
+    torch = pytest.importorskip("torch")
+
+    trainer = object.__new__(orth_training_module.OrthCircuitBreakerTrainer)
+    trainer.target_layers = (5, 10, 15, 20, 25, 30)
+
+    class Model:
+        training = True
+
+        def train(self, mode=True):
+            self.training = mode
+
+        def eval(self):
+            self.training = False
+
+        def __call__(self, **kwargs):
+            return SimpleNamespace(
+                hidden_states=tuple(torch.full((1, 1, 1), i) for i in range(32))
+            )
+
+    selected = trainer.selected_activations(
+        Model(), torch.ones((1, 1)), torch.ones((1, 1))
+    )
+    assert selected[:, 0, 0, 0].tolist() == [6, 11, 16, 21, 26, 31]
+    assert orth_training_module.coefficients(0) == (0.2, 23.0, 0.0)
+    midpoint = orth_training_module.coefficients(256)
+    assert midpoint == pytest.approx(
+        (0.2 + 1.8 * 256 / 511, 23 - 5.75 * 256 / 511, 5 * 256 / 511)
+    )
+    assert orth_training_module.coefficients(511) == (
+        2.0,
+        17.25,
+        5.0,
+    )
+
+
+@pytest.mark.parametrize("sources", [[0, 1, 0, 1], [0, 0], [1, 1], [0, 1, 1], [0, 1]])
+def test_orth_cb_routes_tagged_rows(orth_training_module, sources) -> None:
+    torch = pytest.importorskip("torch")
+    from types import MethodType
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(1.0))
+
+    model = Model()
+    trainer = object.__new__(orth_training_module.OrthCircuitBreakerTrainer)
     trainer.target_layers = (0,)
-    trainer.reroute_weight = 1.0
-    trainer.gradient_balance_steps = 25
-    trainer.gradient_balance_beta = 0.9
-    trainer.gradient_balance_min = 1e-3
-    trainer.gradient_balance_max = 1e3
-    trainer._last_balance_step = None
-    trainer.state = SimpleNamespace(global_step=0)
-    trainer.reroute_noise = 0.01
-    trainer.reroute_noise_seed = 42
+    trainer.microstep = 0
     trainer.logged = []
     trainer.log = trainer.logged.append
+    observed = []
 
-    reference = torch.tensor([[[[1.0, 0.0]]]])
-    current = torch.tensor([[[[1.0, 1.0]]]], requires_grad=True)
+    def selected(self, model, input_ids, attention_mask, **kwargs):
+        del self
+        assert input_ids.shape == attention_mask.shape
+        observed.append((input_ids[:, 0].tolist(), kwargs))
+        values = input_ids.float()[None, :, :, None]
+        return values if kwargs.get("disable_grad") else values * model.weight
 
-    def activations(self, model, batch, layers=None, **kwargs):
-        del self, model, batch, layers
-        return reference if kwargs.get("disable_grad") else current
-
-    trainer.activations = MethodType(activations, trainer)
-    batch = {
-        "input_ids": torch.ones((1, 1), dtype=torch.long),
-        "attention_mask": torch.ones((1, 1), dtype=torch.long),
-        "completion_mask": torch.ones((1, 1), dtype=torch.long),
+    trainer.selected_activations = MethodType(selected, trainer)
+    batch_size = len(sources)
+    inputs = {
+        "input_ids": torch.arange(batch_size)[:, None].repeat(1, 2),
+        "attention_mask": torch.ones((batch_size, 2), dtype=torch.long),
+        "labels": torch.full((batch_size, 2), -100),
+        "cb_source": torch.tensor(sources),
     }
-    return trainer, batch, current
-
-
-def test_cb_gradient_balance_initial_ema_and_accumulation_guard(
-    cb_training_module, monkeypatch
-) -> None:
-    torch = pytest.importorskip("torch")
-
-    class Model(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.lora_weight = torch.nn.Parameter(torch.tensor(1.0))
-            self.other_weight = torch.nn.Parameter(torch.tensor(1.0))
-            self.frozen_lora_weight = torch.nn.Parameter(
-                torch.tensor(1.0), requires_grad=False
-            )
-
-    trainer, batch, _ = _gradient_balance_trainer(cb_training_module, torch)
-    model = Model()
-    gradient_norms = iter((2.0, 4.0, 4.0, 2.0))
-    balanced_parameters = []
-
-    def fake_grad(loss, parameters, **kwargs):
-        del loss
-        assert kwargs == {"retain_graph": True, "allow_unused": True}
-        balanced_parameters.append(parameters)
-        return (torch.tensor(next(gradient_norms)),)
-
-    monkeypatch.setattr(torch.autograd, "grad", fake_grad)
-    trainer.compute_loss(model, {"chosen": batch, "rejected": batch})
-    assert trainer.reroute_weight == pytest.approx(0.5)
-    assert all(parameters == (model.lora_weight,) for parameters in balanced_parameters)
-    assert trainer.logged[-2]["retain_grad_norm"] == 2.0
-    assert trainer.logged[-2]["reroute_grad_norm"] == 4.0
-
-    trainer.compute_loss(model, {"chosen": batch, "rejected": batch})
-    assert len(balanced_parameters) == 2
-
-    trainer.state.global_step = 1
-    trainer.compute_loss(model, {"chosen": batch, "rejected": batch})
-    assert len(balanced_parameters) == 2
-
-    trainer.state.global_step = 25
-    trainer.compute_loss(model, {"chosen": batch, "rejected": batch})
-    assert len(balanced_parameters) == 4
-    assert trainer.reroute_weight == pytest.approx(0.65)
-
-
-@pytest.mark.parametrize(
-    ("retain_norm", "reroute_norm", "expected"),
-    [(0.0, 0.0, 1.0), (0.0, 1.0, 1.0), (2e6, 1.0, 1e3)],
-)
-def test_cb_gradient_balance_clamps_and_handles_zero_denominator(
-    cb_training_module, monkeypatch, retain_norm, reroute_norm, expected
-) -> None:
-    torch = pytest.importorskip("torch")
-
-    class Model(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.lora_weight = torch.nn.Parameter(torch.tensor(1.0))
-
-    trainer, batch, _ = _gradient_balance_trainer(cb_training_module, torch)
-    gradients = iter((retain_norm, reroute_norm))
-    monkeypatch.setattr(
-        torch.autograd,
-        "grad",
-        lambda *args, **kwargs: (torch.tensor(next(gradients)),),
-    )
-    trainer.compute_loss(Model(), {"chosen": batch, "rejected": batch})
-    assert trainer.reroute_weight == pytest.approx(expected)
-
-
-def test_cb_gradient_probe_leaves_grads_empty_and_loss_supports_backward(
-    cb_training_module,
-) -> None:
-    torch = pytest.importorskip("torch")
-
-    class Model(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.lora_weight = torch.nn.Parameter(torch.tensor(1.0))
-            self.base_weight = torch.nn.Parameter(
-                torch.tensor(3.0), requires_grad=False
-            )
-
-    model = Model()
-    trainer, batch, _ = _gradient_balance_trainer(cb_training_module, torch)
-    reference = torch.tensor([[[[0.0, 1.0]]]])
-    calls = 0
-
-    def activations(model, batch, layers=None, **kwargs):
-        nonlocal calls
-        del batch, layers
-        calls += 1
-        if kwargs.get("disable_grad"):
-            return reference
-        if calls == 2:
-            return torch.stack((model.lora_weight, model.lora_weight)).reshape(
-                1, 1, 1, 2
-            )
-        return torch.stack(
-            (model.lora_weight, torch.ones_like(model.lora_weight))
-        ).reshape(1, 1, 1, 2)
-
-    trainer.activations = activations
-    loss = trainer.compute_loss(model, {"chosen": batch, "rejected": batch})
-
-    assert model.lora_weight.grad is None
-    assert model.base_weight.grad is None
-    assert torch.isfinite(torch.tensor(trainer.logged[-2]["retain_grad_norm"]))
-    assert torch.isfinite(torch.tensor(trainer.logged[-2]["reroute_grad_norm"]))
+    loss = trainer.compute_loss(model, inputs)
     loss.backward()
-    assert model.lora_weight.grad is not None
-    assert model.base_weight.grad is None
+
+    metrics = trainer.logged[-1]
+    retain_count = sources.count(0)
+    forget_count = sources.count(1)
+    assert metrics["retain_count"] == retain_count
+    assert metrics["forget_count"] == forget_count
+    assert loss.detach().item() == pytest.approx(
+        metrics["retain_coefficient"] * metrics["loss_retain"]
+        + metrics["reroute_coefficient"] * metrics["loss_reroute"]
+        + metrics["orthogonalization_coefficient"] * metrics["loss_orthogonalization"]
+    )
+    assert metrics["retain_skipped"] is (retain_count == 0)
+    assert metrics["reroute_skipped"] is (forget_count == 0)
+    assert metrics["orthogonalization_skipped"] is (forget_count < 2)
+    if retain_count == 0:
+        assert metrics["loss_retain"] == 0
+    if forget_count == 0:
+        assert metrics["loss_reroute"] == 0
+    if forget_count < 2:
+        assert metrics["loss_orthogonalization"] == 0
+    assert len(observed) == 2 * int(retain_count > 0) + 2 * int(forget_count > 0)
+    assert model.weight.grad is not None
 
 
-def test_cb_losses_mask_padding_and_zero_expected_cases(cb_training_module) -> None:
+def test_orth_cb_losses_relu_mask_and_off_diagonal(orth_training_module) -> None:
     torch = pytest.importorskip("torch")
-    reference = torch.tensor([[[[1.0, 0.0], [100.0, 100.0]]]])
-    safe = reference.clone()
-    harmful = torch.tensor([[[[0.0, 1.0], [1000.0, 1000.0]]]])
+    reference = torch.tensor([[[[1.0, 0.0], [1.0, 0.0]]]])
+    current = torch.tensor([[[[-1.0, 0.0], [1.0, 0.0]]]])
     mask = torch.tensor([[1, 0]])
-    retain_distance = torch.linalg.vector_norm(safe - reference, dim=-1)
-    reroute_cosine = torch.abs(
-        torch.nn.functional.cosine_similarity(harmful, reference, dim=-1)
+    cosine = torch.nn.functional.cosine_similarity(current, reference, dim=-1)
+    assert orth_training_module.masked_mean(torch.relu(cosine), mask).item() == 0
+    retain = orth_training_module.masked_mean((current - reference).norm(dim=-1), mask)
+    assert retain.item() == 2
+
+    activations = torch.tensor([[[[1.0, 0.0]], [[1.0, 0.0]]]], requires_grad=True)
+    two_token_mask = torch.tensor([[2], [2]])
+    loss = orth_training_module.orthogonalization_loss(activations, two_token_mask)
+    assert loss.item() == pytest.approx(2.0)
+    single = orth_training_module.orthogonalization_loss(
+        activations[:, :1], two_token_mask[:1]
     )
-    assert cb_training_module._masked_mean(retain_distance, mask).item() == 0
-    assert cb_training_module._masked_mean(reroute_cosine, mask).item() == 0
-
-    opposite = -reference
-    reroute_cosine = torch.abs(
-        torch.nn.functional.cosine_similarity(opposite, reference, dim=-1)
-    )
-    assert cb_training_module._masked_mean(reroute_cosine, mask).item() == 1
+    assert single.item() == 0
+    single.backward()
+    assert activations.grad is not None
 
 
-def test_cb_dataset_filter_rejects_incomplete_rows(cb_training_module) -> None:
-    complete = {"prompt": "P", "chosen": "C", "rejected": "R"}
-    assert cb_training_module.is_complete_row(complete)
-    for field in ("prompt", "chosen", "rejected"):
-        missing = dict(complete)
-        del missing[field]
-        assert not cb_training_module.is_complete_row(missing)
-        blank = dict(complete)
-        blank[field] = "  "
-        assert not cb_training_module.is_complete_row(blank)
-
-    with pytest.raises(ValueError, match="missing required fields"):
-        cb_training_module.validate_row({"prompt": "P"})
-    with pytest.raises(ValueError, match="non-empty strings"):
-        cb_training_module.validate_row({**complete, "chosen": 3})
-
-
-def test_cb_completion_mask_excludes_prompt_and_special_tokens(
-    cb_training_module,
-) -> None:
-    offsets = [(0, 0), (0, 4), (4, 8), (8, 12), (0, 0)]
-    assert cb_training_module.completion_mask(offsets, 8) == [0, 0, 0, 1, 0]
-
-
-def test_cb_activation_selection_and_forward_modes(cb_training_module) -> None:
-    torch = pytest.importorskip("torch")
-    from contextlib import contextmanager
-    from types import SimpleNamespace
-
-    class FakeModel(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.observed_modes = []
-            self.adapter_disabled = False
-
-        @contextmanager
-        def disable_adapter(self):
-            self.adapter_disabled = True
-            try:
-                yield
-            finally:
-                self.adapter_disabled = False
-
-        def forward(self, **kwargs):
-            del kwargs
-            self.observed_modes.append((self.training, self.adapter_disabled))
-            return SimpleNamespace(
-                hidden_states=tuple(
-                    torch.full((1, 2, 1), float(index), requires_grad=True)
-                    for index in range(5)
-                )
-            )
-
-    trainer = object.__new__(cb_training_module.CircuitBreakerTrainer)
-    trainer.target_layers = (1, 3)
-    trainer.reroute_noise = 0.01
-    trainer.reroute_noise_seed = 42
-    model = FakeModel()
-    input_ids = torch.ones((1, 2), dtype=torch.long)
-    mask = torch.ones_like(input_ids)
-
-    batch = {"input_ids": input_ids, "attention_mask": mask}
-    selected = trainer.activations(
-        model, batch, (1, 3), disable_adapter=True, disable_grad=True
-    )
-    assert selected[:, 0, 0, 0].tolist() == [1.0, 3.0]
-    assert model.observed_modes[-1] == (False, True)
-    assert model.training is True
-
-    noisy = trainer.activations(
-        model,
-        batch,
-        (1, 3),
-        disable_adapter=True,
-        disable_grad=True,
-        add_noise=True,
-    )
-    assert not torch.equal(noisy, selected)
-
-    all_states = trainer.activations(model, batch)
-    assert all_states[:, 0, 0, 0].tolist() == [0.0, 1.0, 2.0, 3.0, 4.0]
-    assert model.observed_modes[-1] == (True, False)
-    assert all_states.requires_grad
-
-
-def test_cb_config() -> None:
+def test_orth_cb_config() -> None:
+    model_id = "di-6.9b-cb--orth-ret2-rm23-orth5-r8"
     config = yaml.safe_load(
-        (EXAMPLE / "configs/training/di-6.9b/circuit-breaker.yml").read_text()
+        (EXAMPLE / "configs/training/di-6.9b/circuit-breaker-orth.yml").read_text()
     )
-    assert config["base_model"] == "EleutherAI/deep-ignorance-unfiltered"
-    assert config["trainer_cls"] == (
-        "configs.training.utils.ConstantLambda1CircuitBreakerTrainer"
-    )
-    assert config["output_dir"].endswith("--constant-coeff-lambda1")
-    assert "coefficient_schedule" not in config
-    assert config["datasets"] == [
-        {
-            "path": "LLM-LAT/harmful-dataset",
-            "split": "train",
-            "type": "configs.training.utils",
-        }
+    assert config["trainer_cls"] == ("configs.training.utils.OrthCircuitBreakerTrainer")
+    assert config["output_dir"] == f"artifacts/models/{model_id}"
+    assert config["wandb_name"] == model_id
+    assert config["lora_target_modules"] == [
+        "query_key_value",
+        "dense",
+        "dense_h_to_4h",
+        "dense_4h_to_h",
     ]
     assert config["peft_layers_to_transform"] == list(range(31))
-    assert config["lora_r"] == config["lora_alpha"] == 64
-    assert config["num_epochs"] == 1
-    assert "max_steps" not in config
-    assert config["save_steps"] == 50
-    assert config["dataset_prepared_path"] == ("artifacts/cache/axolotl/di-6.9b-cb")
-    assert config["lr_scheduler"] == "constant"
-    assert config["bf16"] is config["tf32"] is True
-    assert config["micro_batch_size"] * config["gradient_accumulation_steps"] == 16
-
-
-def test_cb_gradient_balanced_config_is_isolated() -> None:
-    config = yaml.safe_load(
-        (
-            EXAMPLE / "configs/training/di-6.9b/circuit-breaker-grad-balanced.yml"
-        ).read_text()
+    assert config["lora_r"] == config["lora_alpha"] == 8
+    assert config["micro_batch_size"] == 4
+    assert config["gradient_accumulation_steps"] == 16
+    assert config["max_steps"] == 32
+    assert config["shuffle_merged_datasets"] is True
+    assert [dataset["path"] for dataset in config["datasets"]] == [
+        "cais/wmdp-bio-forget-corpus",
+        "EleutherAI/wikitext_document_level",
+    ]
+    assert config["datasets"][0]["split"] == "train[:1024]"
+    assert config["datasets"][1]["split"] == "train"
+    assert all(
+        dataset["type"] == "configs.training.utils" for dataset in config["datasets"]
     )
-    assert config["trainer_cls"] == (
-        "configs.training.utils.GradientBalancedCircuitBreakerTrainer"
-    )
-    assert config["output_dir"] == "artifacts/models/di-6.9b-cb--gradnorm-balanced"
-    assert config["wandb_name"] == "di-6.9b-cb--gradnorm-balanced"
-    assert config["save_steps"] == 50
-    assert config["save_total_limit"] == 100
+    assert config["learning_rate"] == 1e-3
+    assert config["weight_decay"] == 0.01
+    assert config["lr_scheduler"] == "linear"
+    assert config["max_grad_norm"] == 1.0
+    assert config["sequence_len"] == 2048
+    assert config["save_steps"] == 5
+    assert config["save_total_limit"] >= 7
+    assert "merge" not in config
 
 
-def test_cb_linear_config() -> None:
-    config = yaml.safe_load(
-        (EXAMPLE / "configs/training/di-6.9b/circuit-breaker-linear.yml").read_text()
-    )
-    assert config["output_dir"].endswith("--linear-coeffs-0to5-10to5")
-    assert config["wandb_name"].endswith("--linear-coeffs-0to5-10to5")
-    assert config["trainer_cls"] == (
-        "configs.training.utils.LinearCircuitBreakerTrainer"
-    )
-    assert "coefficient_schedule" not in config
-
-    noisy = yaml.safe_load(
-        (
-            EXAMPLE / "configs/training/di-6.9b/circuit-breaker-linear-noise0p1.yml"
-        ).read_text()
-    )
-    assert noisy["trainer_cls"] == (
-        "configs.training.utils.LinearNoise0p1CircuitBreakerTrainer"
-    )
-    assert noisy["output_dir"].endswith("--linear-coeffs-0to5-10to5--noise0p1")
-    assert noisy["wandb_name"].endswith("--linear-coeffs-0to5-10to5--noise0p1")
-
-
-def test_single_experiment_plans_base_cb_and_weight_steering(
+def test_single_experiment_plans_base_and_orth_cb(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
-    training = plan.stage_index["train-di-6.9b-cb--constant-coeff-lambda1"]
-    assert training.id == "train-di-6.9b-cb--constant-coeff-lambda1"
-    assert training.args == (
-        "configs/training/di-6.9b/circuit-breaker.yml",
-        "--merge",
-    )
-    assert "--gres=gpu:l40s:1" in training.sbatch_args
+    orth_id = "di-6.9b-cb--orth-ret2-rm23-orth5-r8"
+    orth = plan.stage_index[f"train-{orth_id}"]
+    assert orth.script == "scripts/slurm/train.sbatch"
+    assert orth.args == ("configs/training/di-6.9b/circuit-breaker-orth.yml",)
+    assert f"eval-bio-mcqa-{orth_id}" in plan.stage_index
+    assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
+    assert len(plan.stages) == 5
     assert plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
         "di-6.9b-base",
         "EleutherAI/deep-ignorance-unfiltered",
         "-",
     )
-
-
-@pytest.mark.parametrize(
-    ("alpha", "weights"),
-    [
-        (1, [1.0, -1.0]),
-        (3, [3.0, -3.0]),
-        (5, [5.0, -5.0]),
-        (10, [10.0, -10.0]),
-    ],
-)
-def test_task_vector_uses_chosen_minus_rejected(
-    alpha: float, weights: list[float]
-) -> None:
-    module = load_script("scripts/steering/task_vector.py", "lat_task_vector")
-    assert module.weighted_adapter_spec(alpha) == (["chosen", "rejected"], weights)
 
 
 def test_mmlu_no_bio_group_excludes_biology_overlap() -> None:
@@ -647,16 +496,7 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
 
     assert set(registry) == {
         "di-6.9b-base",
-        "di-6.9b-ft-lat-chosen",
-        "di-6.9b-ft-lat-rejected",
-        "di-6.9b-cb--constant-coeff-lambda1",
-        "di-6.9b-cb--linear-coeffs-0to5-10to5",
-        "di-6.9b-cb--linear-coeffs-0to5-10to5--noise0p1",
-        "di-6.9b-cb--gradnorm-balanced",
-        "di-6.9b-w-steer-lat-reject2accept-a-1",
-        "di-6.9b-w-steer-lat-reject2accept-a-3",
-        "di-6.9b-w-steer-lat-reject2accept-a-5",
-        "di-6.9b-w-steer-lat-reject2accept-a-10",
+        "di-6.9b-cb--orth-ret2-rm23-orth5-r8",
     }
     assert all(model_id.startswith("di-6.9b-") for model_id in registry)
     for model_id, model in registry.items():
@@ -679,18 +519,11 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         assert all(model_id in registry for model_id in experiment["models"])
 
 
-def test_results_config_has_base_cb_and_weight_steering_groups() -> None:
+def test_results_config_has_base_and_orth_cb_groups() -> None:
     config = yaml.safe_load((EXAMPLE / "configs/results/di-6.9b.yml").read_text())
     assert [row["group"] for row in config["rows"]] == [
         "base-model",
         "circuit-breaker",
-        "circuit-breaker",
-        "circuit-breaker",
-        "circuit-breaker",
-        "weight-steering",
-        "weight-steering",
-        "weight-steering",
-        "weight-steering",
     ]
 
     for training_path in (EXAMPLE / "configs/training").rglob("*.yml"):
@@ -698,12 +531,5 @@ def test_results_config_has_base_cb_and_weight_steering_groups() -> None:
         assert training["output_dir"].startswith("artifacts/models/di-6.9b-")
         assert "lora64-epochs1" not in training["output_dir"]
         assert "LoRA64-Epochs1" not in training["wandb_name"]
-
-    for steering_path in (EXAMPLE / "configs/steering").rglob("*.yml"):
-        steering = yaml.safe_load(steering_path.read_text())
-        assert steering["output_path"] == (
-            f"artifacts/models/di-6.9b-w-steer-lat-reject2accept-a-"
-            f"{steering['alpha']:g}"
-        )
 
     assert all("LoRA64-Epochs1" not in row["label"] for row in config["rows"])

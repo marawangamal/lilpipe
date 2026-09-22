@@ -1,5 +1,0 @@
-base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-chosen_adapter_name_or_path: artifacts/models/di-6.9b-ft-lat-chosen
-rejected_adapter_name_or_path: artifacts/models/di-6.9b-ft-lat-rejected
-alpha: 3.0
-output_path: artifacts/models/di-6.9b-w-steer-lat-reject2accept-a-3

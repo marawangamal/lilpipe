@@ -18,38 +18,10 @@ rows:
     group: base-model
     label: DI-6.9B-Base
     root: artifacts/evals/di-6.9b-base
-  - id: circuit-breaker-constant-coeff-lambda1
+  - id: circuit-breaker-orth
     group: circuit-breaker
-    label: DI-6.9B-CB--Constant-Coeff-Lambda1
-    root: artifacts/evals/di-6.9b-cb--constant-coeff-lambda1
-  - id: circuit-breaker-linear-coeffs-0to5-10to5
-    group: circuit-breaker
-    label: DI-6.9B-CB--Linear-Coeffs-0to5-10to5
-    root: artifacts/evals/di-6.9b-cb--linear-coeffs-0to5-10to5
-  - id: circuit-breaker-linear-coeffs-0to5-10to5-noise0p1
-    group: circuit-breaker
-    label: DI-6.9B-CB--Linear-Coeffs-0to5-10to5--Noise0p1
-    root: artifacts/evals/di-6.9b-cb--linear-coeffs-0to5-10to5--noise0p1
-  - id: circuit-breaker-gradnorm-balanced
-    group: circuit-breaker
-    label: DI-6.9B-CB--GradNorm-Balanced
-    root: artifacts/evals/di-6.9b-cb--gradnorm-balanced
-  - id: weight-steering-alpha-1
-    group: weight-steering
-    label: DI-6.9B-W-Steer-LAT-Reject2Accept-a-1
-    root: artifacts/evals/di-6.9b-w-steer-lat-reject2accept-a-1
-  - id: weight-steering-alpha-3
-    group: weight-steering
-    label: DI-6.9B-W-Steer-LAT-Reject2Accept-a-3
-    root: artifacts/evals/di-6.9b-w-steer-lat-reject2accept-a-3
-  - id: weight-steering-alpha-5
-    group: weight-steering
-    label: DI-6.9B-W-Steer-LAT-Reject2Accept-a-5
-    root: artifacts/evals/di-6.9b-w-steer-lat-reject2accept-a-5
-  - id: weight-steering-alpha-10
-    group: weight-steering
-    label: DI-6.9B-W-Steer-LAT-Reject2Accept-a-10
-    root: artifacts/evals/di-6.9b-w-steer-lat-reject2accept-a-10
+    label: DI-6.9B-CB--Orth-Ret2-Rm23-Orth5-R8
+    root: artifacts/evals/di-6.9b-cb--orth-ret2-rm23-orth5-r8
 
 metrics:
   - column: wmdp-bio

@@ -1,231 +1,119 @@
-"""Axolotl extensions and helpers for circuit-breaker training."""
-
-from __future__ import annotations
+"""WMDP/WikiText orthogonal circuit breaker for Axolotl."""
 
 from contextlib import nullcontext
-from typing import Any
 
 import torch
 import torch.nn.functional as F
 from axolotl.core.trainers.base import AxolotlTrainer
+from axolotl.prompt_tokenizers import DatasetWrappingStrategy
 
-REQUIRED_FIELDS = ("prompt", "chosen", "rejected")
-
-
-# =============================================================================
-# Dataset loading
-#
-# LAT rows contain a prompt paired with a harmless response (``chosen``) and a
-# harmful response (``rejected``).  CB treats those as retain and forget text;
-# they are inputs to the activation objective, not next-token-loss labels.
-# =============================================================================
+WMDP_PATH = "cais/wmdp-bio-forget-corpus"
+WIKITEXT_PATH = "EleutherAI/wikitext_document_level"
+TARGET_LAYERS = (5, 10, 15, 20, 25, 30)
 
 
-def is_complete_row(row: dict[str, Any]) -> bool:
-    """Return whether a row contains every non-empty CB text field."""
+class TaggedDocumentStrategy(DatasetWrappingStrategy):
+    """Produce one tokenized document with a source tag per selected row."""
 
-    return all(
-        isinstance(row.get(field), str) and bool(row[field].strip())
-        for field in REQUIRED_FIELDS
-    )
-
-
-def validate_row(row: dict[str, Any]) -> None:
-    """Reject rows that cannot form safe and harmful sequences."""
-
-    missing = [field for field in REQUIRED_FIELDS if field not in row]
-    if missing:
-        raise ValueError(f"dataset row is missing required fields: {missing}")
-    invalid = [
-        field
-        for field in REQUIRED_FIELDS
-        if not isinstance(row[field], str) or not row[field].strip()
-    ]
-    if invalid:
-        raise ValueError(f"dataset fields must be non-empty strings: {invalid}")
-
-
-def format_sequence(prompt: str, completion: str) -> str:
-    """Join a prompt and completion while preserving their boundary."""
-
-    separator = "" if prompt.endswith((" ", "\n")) else " "
-    return f"{prompt}{separator}{completion}"
-
-
-def completion_mask(offsets, boundary):
-    """Select tokens that contain completion text."""
-
-    return [int(end > boundary) for _, end in offsets]
-
-
-class CircuitBreakerCollator:
-    """Pad the chosen and rejected sequences independently."""
-
-    def __init__(self, tokenizer):
+    def __init__(self, tokenizer, sequence_len: int, path: str):
         self.tokenizer = tokenizer
+        self.sequence_len = sequence_len
+        self.path = path
 
-    def _pad(self, features, prefix, *legacy_prefixes):
-        source_prefix = next(
-            candidate
-            for candidate in (prefix, *legacy_prefixes)
-            if f"{candidate}_input_ids" in features[0]
-        )
-        batch = self.tokenizer.pad(
-            [
-                {
-                    "input_ids": item[f"{source_prefix}_input_ids"],
-                    "attention_mask": item[f"{source_prefix}_attention_mask"],
-                }
-                for item in features
-            ],
-            padding=True,
-            return_tensors="pt",
-        )
-        length = batch["input_ids"].shape[1]
-        masks = []
-        for item in features:
-            mask = item[f"{source_prefix}_completion_mask"]
-            padding = [0] * (length - len(mask))
-            masks.append(
-                padding + mask
-                if self.tokenizer.padding_side == "left"
-                else mask + padding
-            )
-        batch["completion_mask"] = torch.tensor(masks, dtype=torch.long)
-        return batch
+    def wrap_dataset(self, dataset, **kwargs):
+        del kwargs
+        if self.path == WIKITEXT_PATH:
+            dataset = dataset.shuffle(seed=42).select(range(min(1024, len(dataset))))
+        return dataset.map(self.tokenize_row, remove_columns=dataset.column_names)
 
-    def __call__(self, features):
+    def tokenize_row(self, row):
+        if self.path == WMDP_PATH:
+            fields = ("title", "abstract", "text")
+            if not all(isinstance(row.get(field), str) for field in fields):
+                raise ValueError(
+                    "WMDP row must contain title, abstract, and text fields"
+                )
+            text = "\n\n".join(row[field] for field in fields)
+            source = 1
+        else:
+            text = row.get("page")
+            source = 0
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("dataset document must be a non-empty string")
+        tokens = self.tokenizer(
+            text,
+            max_length=self.sequence_len,
+            truncation=True,
+            add_special_tokens=True,
+        )
         return {
-            "chosen": self._pad(features, "chosen", "retain", "safe"),
-            "rejected": self._pad(features, "rejected", "forget", "harmful"),
+            "input_ids": tokens["input_ids"],
+            "attention_mask": tokens["attention_mask"],
+            "labels": tokens["input_ids"].copy(),
+            "cb_source": source,
         }
 
 
 def load(tokenizer, cfg, ds_cfg=None):
-    """Build Axolotl's dotted dataset strategy for paired CB examples."""
+    """Select the native WMDP or WikiText dataset source."""
 
-    from axolotl.prompt_strategies.completion import (
-        CompletionPrompter,
-        CompletionPromptTokenizingStrategy,
+    path = getattr(ds_cfg, "path", None)
+    if path not in (WMDP_PATH, WIKITEXT_PATH):
+        raise ValueError(f"unsupported circuit breaker dataset: {path}")
+    return TaggedDocumentStrategy(tokenizer, cfg.sequence_len, path)
+
+
+def masked_mean(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    expanded = mask.to(values.dtype).unsqueeze(0).expand_as(values)
+    return (values * expanded).sum() / expanded.sum().clamp_min(1)
+
+
+def coefficients(microstep: int) -> tuple[float, float, float]:
+    """Retain, removal, and orthogonalization weights over 512 microsteps."""
+
+    progress = min(max(microstep, 0) / 511, 1.0)
+    return 0.2 + 1.8 * progress, 23.0 - 5.75 * progress, 5.0 * progress
+
+
+def orthogonalization_loss(activations: torch.Tensor, mask: torch.Tensor):
+    """Penalize positive cosine between different forget sequences."""
+
+    lengths = mask.sum(dim=1).clamp_min(1).to(activations.dtype)
+    pooled = (activations * mask[None, :, :, None]).sum(dim=2)
+    pooled = F.normalize((pooled / lengths[None, :, None]).float(), dim=-1)
+    similarities = pooled @ pooled.transpose(-1, -2)
+    off_diagonal = ~torch.eye(
+        activations.shape[1], dtype=torch.bool, device=activations.device
     )
-
-    class CircuitBreakerStrategy(CompletionPromptTokenizingStrategy):
-        filter_rows = staticmethod(is_complete_row)
-
-        @property
-        def supports_batched(self):
-            return False
-
-        def tokenize_prompt(self, prompt):
-            validate_row(prompt)
-            prefix = format_sequence(prompt["prompt"], "")
-            common = {
-                "max_length": cfg.sequence_len,
-                "truncation": True,
-                "return_offsets_mapping": True,
-            }
-            retain = tokenizer(prefix + prompt["chosen"], **common)
-            forget = tokenizer(prefix + prompt["rejected"], **common)
-            retain_mask = completion_mask(retain.pop("offset_mapping"), len(prefix))
-            forget_mask = completion_mask(forget.pop("offset_mapping"), len(prefix))
-            return {
-                # Axolotl expects its conventional fields during preparation,
-                # but CircuitBreakerTrainer never computes loss from labels.
-                "input_ids": retain["input_ids"],
-                "attention_mask": retain["attention_mask"],
-                "labels": retain["input_ids"],
-                "chosen_input_ids": retain["input_ids"],
-                "chosen_attention_mask": retain["attention_mask"],
-                "chosen_completion_mask": retain_mask,
-                "rejected_input_ids": forget["input_ids"],
-                "rejected_attention_mask": forget["attention_mask"],
-                "rejected_completion_mask": forget_mask,
-            }
-
-    del ds_cfg
-    return CircuitBreakerStrategy(
-        CompletionPrompter(),
-        tokenizer,
-        cfg.train_on_inputs,
-        cfg.sequence_len,
-        max_length=cfg.sequence_len,
-    )
+    positive_pairs = F.relu(similarities[:, off_diagonal])
+    if positive_pairs.numel() == 0:
+        return activations.float().sum() * 0
+    return positive_pairs.mean() * lengths.float().mean()
 
 
-# =============================================================================
-# Circuit-breaker trainer and activation losses
-# =============================================================================
+class OrthCircuitBreakerTrainer(AxolotlTrainer):
+    """Retain WikiText and reroute WMDP activations without token loss."""
 
-
-def _masked_mean(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
-    expanded = mask.to(values.dtype)
-    while expanded.ndim < values.ndim:
-        expanded = expanded.unsqueeze(0)
-    expanded = expanded.expand_as(values)
-    denominator = expanded.sum().clamp_min(1)
-    return (values * expanded).sum() / denominator
-
-
-def validate_target_layers(target_layers: list[int], num_hidden_layers: int) -> None:
-    if not target_layers:
-        raise ValueError("target_layers must not be empty")
-    invalid = [
-        layer for layer in target_layers if layer < 0 or layer >= num_hidden_layers
-    ]
-    if invalid:
-        raise ValueError(
-            f"target layer indices {invalid} are outside 0-{num_hidden_layers - 1}"
-        )
-    if len(set(target_layers)) != len(target_layers):
-        raise ValueError("target_layers must not contain duplicates")
-
-
-def parse_layer_spec(value: str | list[int]) -> list[int]:
-    """Parse an inclusive range such as ``0-30`` or an explicit integer list."""
-
-    if isinstance(value, list):
-        return [int(item) for item in value]
-    if "-" in value:
-        start, end = (int(item) for item in value.split("-", 1))
-        if end < start:
-            raise ValueError("LoRA layer range end must be at least its start")
-        return list(range(start, end + 1))
-    return [int(item) for item in value.split(",")]
-
-
-class CircuitBreakerTrainer(AxolotlTrainer):
-    """Retain harmless activations and reroute harmful activations, without NLL."""
-
-    def __init__(
-        self,
-        *args,
-        target_layers: list[int] | None = None,
-        reroute_noise: float = 0.01,
-        reroute_noise_seed: int = 42,
-        **kwargs,
-    ):
+    def __init__(self, *args, target_layers=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.target_layers = tuple(target_layers or (5, 10, 15, 20, 25, 30))
-        self.reroute_noise = reroute_noise
-        self.reroute_noise_seed = reroute_noise_seed
-        validate_target_layers(self.target_layers, self.model.config.num_hidden_layers)
-        tokenizer = getattr(self, "processing_class", None)
-        if tokenizer is None:
-            raise ValueError("CircuitBreakerTrainer requires Axolotl's tokenizer")
-        self.data_collator = CircuitBreakerCollator(tokenizer)
+        self.target_layers = tuple(target_layers or TARGET_LAYERS)
+        num_layers = self.model.config.num_hidden_layers
+        if len(set(self.target_layers)) != len(self.target_layers) or any(
+            layer < 0 or layer >= num_layers for layer in self.target_layers
+        ):
+            raise ValueError(
+                f"target_layers must be unique indices in 0-{num_layers - 1}"
+            )
+        self.microstep = 0
 
-    def loss_coefficients(self, model, loss_retain, loss_reroute):
-        raise NotImplementedError("use a coefficient-specific circuit-breaker trainer")
-
-    def activations(
+    def selected_activations(
         self,
         model,
-        batch,
-        layers=None,
+        input_ids,
+        attention_mask,
         *,
         disable_adapter=False,
         disable_grad=False,
-        add_noise=False,
     ):
         adapter_context = model.disable_adapter() if disable_adapter else nullcontext()
         gradient_context = torch.no_grad() if disable_grad else nullcontext()
@@ -233,193 +121,101 @@ class CircuitBreakerTrainer(AxolotlTrainer):
         model.eval() if disable_grad else model.train()
         try:
             with adapter_context, gradient_context:
-                outputs = model(
-                    **batch,
+                hidden_states = model(
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
                     output_hidden_states=True,
                     use_cache=False,
+                ).hidden_states
+                result = torch.stack(
+                    tuple(hidden_states[layer + 1] for layer in self.target_layers)
                 )
-                hidden_states = outputs.hidden_states
-                selected = (
-                    hidden_states
-                    if layers is None
-                    else tuple(hidden_states[layer] for layer in layers)
-                )
-                result = torch.stack(selected)
-                if add_noise:
-                    generator = torch.Generator(device=result.device).manual_seed(
-                        self.reroute_noise_seed
-                    )
-                    noise = torch.randn(
-                        result.shape,
-                        dtype=torch.float32,
-                        device=result.device,
-                        generator=generator,
-                    )
-                    noise /= noise.norm(dim=-1, keepdim=True).clamp_min(1e-12)
-                    result = result.float() + (
-                        self.reroute_noise
-                        * result.float().norm(dim=-1, keepdim=True)
-                        * noise
-                    )
         finally:
             model.train(was_training)
         return result.detach() if disable_grad else result
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        del kwargs
-        x_retain = inputs["chosen"]
-        x_forget = inputs["rejected"]
-        mask_retain = x_retain["attention_mask"] * x_retain["completion_mask"]
-        mask_forget = x_forget["attention_mask"] * x_forget["completion_mask"]
+        sample_mask_retain = inputs["cb_source"] == 0
+        attn_mask_retain = inputs["attention_mask"][sample_mask_retain]
+        x_retain = inputs["input_ids"][sample_mask_retain]
 
-        z_retain_ref = self.activations(
-            model, x_retain, disable_adapter=True, disable_grad=True
-        )
-        z_retain_cur = self.activations(model, x_retain)
-        z_forget_ref = self.activations(
-            model,
-            x_forget,
-            self.target_layers,
-            disable_adapter=True,
-            disable_grad=True,
-            add_noise=True,
-        )
-        z_forget_cur = self.activations(model, x_forget, self.target_layers)
+        sample_mask_forget = inputs["cb_source"] == 1
+        attn_mask_forget = inputs["attention_mask"][sample_mask_forget]
+        x_forget = inputs["input_ids"][sample_mask_forget]
 
-        loss_retain = _masked_mean(
-            (z_retain_cur.float() - z_retain_ref.float()).norm(dim=-1), mask_retain
-        )
-        loss_reroute = _masked_mean(
-            F.cosine_similarity(
-                z_forget_cur.float(), z_forget_ref.float(), dim=-1
-            ).abs(),
-            mask_forget,
-        )
+        n_retain = int(sample_mask_retain.sum())
+        n_forget = int(sample_mask_forget.sum())
+        lam_ret, lam_fgt, lam_ortho = coefficients(self.microstep)
 
-        retain_coefficient, reroute_coefficient = self.loss_coefficients(
-            model, loss_retain, loss_reroute
+        zero = (
+            next(
+                parameter for parameter in model.parameters() if parameter.requires_grad
+            ).sum()
+            * 0
         )
-        loss = retain_coefficient * loss_retain + reroute_coefficient * loss_reroute
+        loss = zero.clone()
+        loss_retain = loss_reroute = loss_orth = zero
+        z_retain = z_forget = None
+        if n_retain:
+            z_retain_ref = self.selected_activations(
+                model,
+                x_retain,
+                attn_mask_retain,
+                disable_adapter=True,
+                disable_grad=True,
+            )
+            z_retain = self.selected_activations(model, x_retain, attn_mask_retain)
+            loss_retain = masked_mean(
+                (z_retain.float() - z_retain_ref.float()).norm(dim=-1),
+                attn_mask_retain,
+            )
+            loss += lam_ret * loss_retain
 
-        harmful_cosine = _masked_mean(
-            F.cosine_similarity(
-                z_forget_cur.detach().float(), z_forget_ref.float(), dim=-1
-            ),
-            mask_forget,
-        )
+        harmful_cosine = zero.detach()
+        if n_forget:
+            z_forget_ref = self.selected_activations(
+                model,
+                x_forget,
+                attn_mask_forget,
+                disable_adapter=True,
+                disable_grad=True,
+            )
+            z_forget = self.selected_activations(model, x_forget, attn_mask_forget)
+            forget_cosine = F.cosine_similarity(
+                z_forget.float(), z_forget_ref.float(), dim=-1
+            )
+            loss_reroute = masked_mean(F.relu(forget_cosine), attn_mask_forget)
+            harmful_cosine = masked_mean(forget_cosine.detach(), attn_mask_forget)
+            loss += lam_fgt * loss_reroute
+
+        if n_forget >= 2:
+            loss_orth = orthogonalization_loss(z_forget, attn_mask_forget)
+            loss += lam_ortho * loss_orth
+        gradients = [
+            parameter.grad.detach().float().norm()
+            for parameter in model.parameters()
+            if parameter.requires_grad and parameter.grad is not None
+        ]
+        gradient_norm = torch.stack(gradients).norm().item() if gradients else 0.0
         self.log(
             {
                 "loss_retain": loss_retain.detach().item(),
                 "loss_reroute": loss_reroute.detach().item(),
+                "loss_orthogonalization": loss_orth.detach().item(),
+                "retain_coefficient": lam_ret,
+                "reroute_coefficient": lam_fgt,
+                "orthogonalization_coefficient": lam_ortho,
                 "harmful_cosine": harmful_cosine.item(),
-                "retain_coefficient": retain_coefficient,
-                "reroute_coefficient": reroute_coefficient,
+                "gradient_norm": gradient_norm,
+                "microstep": self.microstep,
+                "retain_count": n_retain,
+                "forget_count": n_forget,
+                "retain_skipped": not n_retain,
+                "reroute_skipped": not n_forget,
+                "orthogonalization_skipped": n_forget < 2,
             }
         )
+        self.microstep += 1
         if return_outputs:
-            return loss, {"retain": z_retain_cur, "forget": z_forget_cur}
+            return loss, {"retain": z_retain, "forget": z_forget}
         return loss
-
-
-class ConstantLambda1CircuitBreakerTrainer(CircuitBreakerTrainer):
-    """Use constant retain and reroute coefficients of one."""
-
-    def loss_coefficients(self, model, loss_retain, loss_reroute):
-        del model, loss_retain, loss_reroute
-        return 1.0, 1.0
-
-
-class LinearCircuitBreakerTrainer(CircuitBreakerTrainer):
-    """Linearly ramp retain 0→5 and reroute 10→5 over training."""
-
-    def loss_coefficients(self, model, loss_retain, loss_reroute):
-        del model, loss_retain, loss_reroute
-        progress = min(self.state.global_step / max(self.state.max_steps - 1, 1), 1.0)
-        return 5.0 * progress, 10.0 - 5.0 * progress
-
-
-class LinearNoise0p1CircuitBreakerTrainer(LinearCircuitBreakerTrainer):
-    """Use the linear coefficient schedule with 10% activation noise."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, reroute_noise=0.1, **kwargs)
-
-
-class GradientBalancedCircuitBreakerTrainer(CircuitBreakerTrainer):
-    """Periodically balance the reroute coefficient by LoRA gradient norms."""
-
-    def __init__(
-        self,
-        *args,
-        gradient_balance_steps: int = 25,
-        gradient_balance_beta: float = 0.9,
-        gradient_balance_min: float = 1e-3,
-        gradient_balance_max: float = 1e3,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.reroute_weight = 1.0
-        self.gradient_balance_steps = gradient_balance_steps
-        self.gradient_balance_beta = gradient_balance_beta
-        self.gradient_balance_min = gradient_balance_min
-        self.gradient_balance_max = gradient_balance_max
-        self._last_balance_step = None
-
-    def loss_coefficients(self, model, loss_retain, loss_reroute):
-        step = self.state.global_step
-        if step % self.gradient_balance_steps == 0 and step != self._last_balance_step:
-            lora_parameters = tuple(
-                parameter
-                for name, parameter in model.named_parameters()
-                if parameter.requires_grad and "lora_" in name
-            )
-            retain_gradients = torch.autograd.grad(
-                loss_retain,
-                lora_parameters,
-                retain_graph=True,
-                allow_unused=True,
-            )
-            reroute_gradients = torch.autograd.grad(
-                loss_reroute,
-                lora_parameters,
-                retain_graph=True,
-                allow_unused=True,
-            )
-            retain_grad_norm = torch.stack(
-                [
-                    gradient.detach().float().norm()
-                    for gradient in retain_gradients
-                    if gradient is not None
-                ]
-                or [loss_retain.new_zeros(())]
-            ).norm()
-            reroute_grad_norm = torch.stack(
-                [
-                    gradient.detach().float().norm()
-                    for gradient in reroute_gradients
-                    if gradient is not None
-                ]
-                or [loss_reroute.new_zeros(())]
-            ).norm()
-            if retain_grad_norm > 1e-12 and reroute_grad_norm > 1e-12:
-                target_weight = (retain_grad_norm / reroute_grad_norm).clamp(
-                    self.gradient_balance_min, self.gradient_balance_max
-                )
-                target_weight = target_weight.detach().item()
-                if self._last_balance_step is None:
-                    self.reroute_weight = target_weight
-                else:
-                    self.reroute_weight = (
-                        self.gradient_balance_beta * self.reroute_weight
-                        + (1 - self.gradient_balance_beta) * target_weight
-                    )
-            self._last_balance_step = step
-            self.log(
-                {
-                    "retain_grad_norm": retain_grad_norm.item(),
-                    "reroute_grad_norm": reroute_grad_norm.item(),
-                    "reroute_coefficient": self.reroute_weight,
-                }
-            )
-
-        return 1.0, self.reroute_weight
