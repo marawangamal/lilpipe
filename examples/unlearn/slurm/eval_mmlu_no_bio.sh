@@ -16,10 +16,11 @@ cd "$repo_root"
 
 model_id=${1:?missing model id}
 model_path=${2:?missing model path}
-[[ -f "$model_path/config.json" ]] || {
+if [[ "$model_path" == artifacts/* || "$model_path" == /* ]] && \
+   [[ ! -f "$model_path/config.json" ]]; then
     echo "ERROR: model not found at $model_path" >&2
     exit 1
-}
+fi
 
 tamper_root=$(cd ../tamper-resistance && pwd)
 output="artifacts/evals/$model_id/mmlu-no-bio"
