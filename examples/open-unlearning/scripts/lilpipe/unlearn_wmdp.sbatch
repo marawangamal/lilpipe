@@ -30,11 +30,12 @@ forget_overrides=()
 if [[ "$domain" == "bio" ]]; then
   bio_cache="$HF_HUB_CACHE/datasets--cais--wmdp-bio-forget-corpus"
   bio_revision=$(<"$bio_cache/refs/main")
-  bio_forget="$bio_cache/snapshots/$bio_revision/data/*.parquet"
-  compgen -G "$bio_forget" >/dev/null
+  bio_files=("$bio_cache/snapshots/$bio_revision/data/"*.parquet)
+  [[ -f "${bio_files[0]}" ]]
+  bio_data_files=$(IFS=,; echo "[${bio_files[*]}]")
   forget_overrides+=(
     data.forget.WMDP_forget.args.hf_args.path=parquet
-    "data.forget.WMDP_forget.args.hf_args.data_files=$bio_forget"
+    "data.forget.WMDP_forget.args.hf_args.data_files=$bio_data_files"
   )
 else
   test -f "data/wmdp/wmdp-corpora/${domain}-forget-corpus.jsonl" || {

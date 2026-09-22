@@ -33,6 +33,11 @@ def test_wmdp_jobs_load_torch_cuda_toolkit(script_name: str) -> None:
     )
     assert "uv pip install --offline" in script
     assert "snapshots/$revision" in script
+    if script_name == "unlearn_wmdp.sbatch":
+        assert (
+            'bio_files=("$bio_cache/snapshots/$bio_revision/data/"*.parquet)' in script
+        )
+        assert 'echo "[${bio_files[*]}]"' in script
 
 
 def test_wmdp_bio_rmu_example_plan(monkeypatch: pytest.MonkeyPatch) -> None:
