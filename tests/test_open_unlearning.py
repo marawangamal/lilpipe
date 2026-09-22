@@ -50,3 +50,4 @@ def test_wmdp_bio_rmu_example_plan(monkeypatch: pytest.MonkeyPatch) -> None:
         "eval-wmdp-bio-and-mmlu-no-bio-zephyr-7b-beta-rmu-bio",
     ]
     assert plan.stages[-1].args[-2:] == ("bio", "mmlu_no_bio")
+    assert "--mem=128G" in plan.stages[0].sbatch_args
