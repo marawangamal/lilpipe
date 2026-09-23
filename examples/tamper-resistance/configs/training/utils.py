@@ -68,10 +68,10 @@ def masked_mean(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
     return (values * expanded).sum() / expanded.sum().clamp_min(1)
 
 
-def coefficients(microstep: int) -> tuple[float, float, float]:
-    """Retain, removal, and orthogonalization weights over 512 microsteps."""
+def coefficients(microstep: int, total_microsteps: int) -> tuple[float, float, float]:
+    """Retain, removal, and orthogonalization weights over a run."""
 
-    progress = min(max(microstep, 0) / 511, 1.0)
+    progress = min(max(microstep, 0) / max(total_microsteps - 1, 1), 1.0)
     return 1.0 + 9.0 * progress, 23.0 - 5.75 * progress, 5.0 * progress
 
 
@@ -105,6 +105,9 @@ class OrthCircuitBreakerTrainer(AxolotlTrainer):
                 f"target_layers must be unique indices in 0-{num_layers - 1}"
             )
         self.microstep = 0
+        self.total_microsteps = (
+            self.args.max_steps * self.args.gradient_accumulation_steps
+        )
 
     def selected_activations(
         self,
@@ -145,7 +148,9 @@ class OrthCircuitBreakerTrainer(AxolotlTrainer):
 
         n_retain = int(sample_mask_retain.sum())
         n_forget = int(sample_mask_forget.sum())
-        lam_ret, lam_fgt, lam_ortho = coefficients(self.microstep)
+        lam_ret, lam_fgt, lam_ortho = coefficients(
+            self.microstep, self.total_microsteps
+        )
 
         zero = (
             next(

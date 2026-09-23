@@ -300,16 +300,21 @@ def test_orth_cb_layer_mapping_and_schedule(orth_training_module) -> None:
         Model(), torch.ones((1, 1)), torch.ones((1, 1))
     )
     assert selected[:, 0, 0, 0].tolist() == [6, 11, 16, 21, 26, 31]
-    assert orth_training_module.coefficients(0) == (1.0, 23.0, 0.0)
-    midpoint = orth_training_module.coefficients(256)
+    assert orth_training_module.coefficients(0, 512) == (1.0, 23.0, 0.0)
+    midpoint = orth_training_module.coefficients(256, 512)
     assert midpoint == pytest.approx(
         (1.0 + 9.0 * 256 / 511, 23 - 5.75 * 256 / 511, 5 * 256 / 511)
     )
-    assert orth_training_module.coefficients(511) == (
+    assert orth_training_module.coefficients(511, 512) == (
         10.0,
         17.25,
         5.0,
     )
+    assert orth_training_module.coefficients(0, 128) == (1.0, 23.0, 0.0)
+    assert orth_training_module.coefficients(64, 128) == pytest.approx(
+        (1.0 + 9.0 * 64 / 127, 23 - 5.75 * 64 / 127, 5 * 64 / 127)
+    )
+    assert orth_training_module.coefficients(127, 128) == (10.0, 17.25, 5.0)
 
 
 @pytest.mark.parametrize("sources", [[0, 1, 0, 1], [0, 0], [1, 1], [0, 1, 1], [0, 1]])
@@ -326,6 +331,7 @@ def test_orth_cb_routes_tagged_rows(orth_training_module, sources) -> None:
     trainer = object.__new__(orth_training_module.OrthCircuitBreakerTrainer)
     trainer.target_layers = (0,)
     trainer.microstep = 0
+    trainer.total_microsteps = 512
     trainer.logged = []
     trainer.log = trainer.logged.append
     observed = []
@@ -433,6 +439,35 @@ def test_orth_cb_config() -> None:
     assert "merge" not in config
 
 
+def test_orth_cb_batch_16_config_is_isolated_and_keeps_effective_batch() -> None:
+    training_dir = EXAMPLE / "configs/training/di-6.9b"
+    original = yaml.safe_load((training_dir / "circuit-breaker-orth.yml").read_text())
+    variant = yaml.safe_load(
+        (training_dir / "circuit-breaker-orth-mb16.yml").read_text()
+    )
+    assert variant["micro_batch_size"] == 16
+    assert variant["gradient_accumulation_steps"] == 4
+    assert variant["max_steps"] == original["max_steps"] == 32
+    assert variant["micro_batch_size"] * variant["gradient_accumulation_steps"] == (
+        original["micro_batch_size"] * original["gradient_accumulation_steps"]
+    )
+    assert 2048 // variant["micro_batch_size"] == 128
+    assert 128 // variant["gradient_accumulation_steps"] == 32
+    isolated = {
+        "micro_batch_size",
+        "gradient_accumulation_steps",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    }
+    assert {key: value for key, value in variant.items() if key not in isolated} == {
+        key: value for key, value in original.items() if key not in isolated
+    }
+    for key in ("dataset_prepared_path", "output_dir", "wandb_name"):
+        assert variant[key] != original[key]
+        assert variant[key].endswith("-mb16") or key == "dataset_prepared_path"
+
+
 def test_single_experiment_plans_base_and_orth_cb(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -444,7 +479,13 @@ def test_single_experiment_plans_base_and_orth_cb(
     assert orth.args == ("configs/training/di-6.9b/circuit-breaker-orth.yml",)
     assert f"eval-bio-mcqa-{orth_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
-    assert len(plan.stages) == 5
+    batch_16_id = f"{orth_id}-mb16"
+    batch_16 = plan.stage_index[f"train-{batch_16_id}"]
+    assert batch_16.script == "scripts/slurm/train.sbatch"
+    assert batch_16.args == ("configs/training/di-6.9b/circuit-breaker-orth-mb16.yml",)
+    assert f"eval-bio-mcqa-{batch_16_id}" in plan.stage_index
+    assert f"eval-mmlu-no-bio-{batch_16_id}" in plan.stage_index
+    assert len(plan.stages) == 8
     assert plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
         "di-6.9b-base",
         "EleutherAI/deep-ignorance-unfiltered",
@@ -498,6 +539,7 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
     assert set(registry) == {
         "di-6.9b-base",
         "di-6.9b-cb--orth-ret10-rm23-orth5-r8",
+        "di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb16",
     }
     assert all(model_id.startswith("di-6.9b-") for model_id in registry)
     for model_id, model in registry.items():
@@ -524,6 +566,7 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
     config = yaml.safe_load((EXAMPLE / "configs/results/di-6.9b.yml").read_text())
     assert [row["group"] for row in config["rows"]] == [
         "base-model",
+        "circuit-breaker",
         "circuit-breaker",
     ]
 
