@@ -36,7 +36,7 @@ Axolotl's tokenized WMDP/WikiText dataset is stored under
 
 ## Run
 
-Submit the base model, circuit breaker, NPO, and weight-steering methods, and their
+Submit the base model, circuit breaker, NPO, GradDiff, and weight-steering methods, and their
 forget-set relearning stages:
 
 ```bash
@@ -64,6 +64,13 @@ fields. The dependent NPO relearning stage merges its adapter and uses the same
 32-step forget-set attack as CB. Both NPO models are evaluated on Robust
 WMDP-Bio and MMLU excluding biology.
 
+GradDiff (`di-6.9b-wmdp-bio-unlearn-gd`) uses the same data, balanced batches,
+rank-8 LoRA setup, and 32-step training schedule as NPO and CB. It minimizes
+`−forget CE + retain CE`, with a retain coefficient of 1.0. Its dependent
+relearning model (`di-6.9b-wmdp-bio-unlearn-gd-relearn`) merges the GradDiff
+adapter and follows the same 32-step forget-set attack schedule as NPO. Both
+models receive the Robust WMDP-Bio and MMLU excluding biology evaluations.
+
 Weight steering trains separate rank-8 LoRA adapters on the same 1,024 WikiText
 retain and WMDP-Bio forget documents, using the CB optimizer, learning rate,
 32-step schedule, and batch settings. It builds a retain-minus-forget adapter
@@ -82,5 +89,5 @@ lilpipe results configs/results/di-6.9b.yml
 Axolotl loads the tagged-document strategy and orthogonal trainer from
 `configs/unlearn/utils.py`, as selected by `trainer_cls` and
 `datasets[].type` in the YAML.
-The NPO config uses the same document strategy and balanced sampler, with its
-trainer in `configs/unlearn/npo.py`.
+The NPO and GradDiff configs use the same document strategy and balanced sampler,
+with their trainers in `configs/unlearn/npo.py` and `configs/unlearn/gd.py`.

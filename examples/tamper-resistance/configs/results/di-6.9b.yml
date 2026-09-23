@@ -34,6 +34,14 @@ rows:
     group: npo-relearn
     label: DI-6.9B-NPO + Relearn
     root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-relearn
+  - id: gd
+    group: grad-diff
+    label: DI-6.9B-GradDiff
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-gd
+  - id: gd-relearn
+    group: grad-diff-relearn
+    label: DI-6.9B-GradDiff + Relearn
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-gd-relearn
   - id: weight-steering
     group: weight-steering
     label: DI-6.9B-WS

@@ -46,6 +46,19 @@ def npo_training_module():
         sys.path.remove(str(EXAMPLE))
 
 
+@pytest.fixture(scope="module")
+def gd_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script("configs/unlearn/gd.py", "gd_training")
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa.sbatch").read_text()
 
@@ -544,6 +557,72 @@ def test_npo_requires_both_sources(npo_training_module) -> None:
         trainer.compute_loss(None, {"cb_source": torch.tensor([1, 1])})
 
 
+def test_grad_diff_loss_and_gradient_direction(gd_training_module) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.forget_weight = torch.nn.Parameter(torch.tensor(2.0))
+            self.retain_weight = torch.nn.Parameter(torch.tensor(3.0))
+            self.calls = []
+
+        def forward(self, input_ids, attention_mask, labels):
+            assert torch.equal(input_ids, labels)
+            assert torch.all(attention_mask == 1)
+            ids = input_ids.flatten().tolist()
+            self.calls.append(ids)
+            weight = self.forget_weight if ids == [2, 4] else self.retain_weight
+            return SimpleNamespace(loss=input_ids.float().mean() * weight)
+
+    model = Model()
+    trainer = object.__new__(gd_training_module.BalancedGradDiffTrainer)
+    inputs = {
+        "input_ids": torch.tensor([[7], [2], [9], [4]]),
+        "attention_mask": torch.ones(4, 1),
+        "labels": torch.tensor([[7], [2], [9], [4]]),
+        "cb_source": torch.tensor([0, 1, 0, 1]),
+    }
+    loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
+    assert loss.item() == pytest.approx(-3 * 2 + 8 * 3)
+    assert outputs.loss.item() == pytest.approx(3 * 2)
+    assert model.calls == [[2, 4], [7, 9]]
+    loss.backward()
+    assert model.forget_weight.grad.item() == pytest.approx(-3)
+    assert model.retain_weight.grad.item() == pytest.approx(8)
+
+
+@pytest.mark.parametrize("sources", [[1, 1], [0, 0]])
+def test_grad_diff_requires_both_sources(gd_training_module, sources) -> None:
+    torch = pytest.importorskip("torch")
+    trainer = object.__new__(gd_training_module.BalancedGradDiffTrainer)
+    with pytest.raises(ValueError, match="forget and retain"):
+        trainer.compute_loss(None, {"cb_source": torch.tensor(sources)})
+
+
+def test_grad_diff_sampler_balances_each_microbatch(gd_training_module) -> None:
+    class TaggedDataset:
+        def __getitem__(self, key):
+            assert key == "cb_source"
+            return [0, 1, 1, 0] * 2
+
+    trainer = SimpleNamespace(
+        train_dataset=TaggedDataset(),
+        args=SimpleNamespace(per_device_train_batch_size=4, data_seed=None, seed=42),
+    )
+    sampler = gd_training_module.BalancedGradDiffTrainer._get_train_sampler(trainer)
+    indices = list(sampler)
+    assert sorted(indices) == list(range(8))
+    for start in (0, 4):
+        assert (
+            sum(
+                trainer.train_dataset["cb_source"][i]
+                for i in indices[start : start + 4]
+            )
+            == 2
+        )
+
+
 def test_peft_disabled_adapter_recovers_initial_base_output() -> None:
     torch = pytest.importorskip("torch")
     peft = pytest.importorskip("peft")
@@ -575,6 +654,7 @@ def test_orth_cb_config() -> None:
     training_dir = EXAMPLE / "configs/unlearn/di-6.9b"
     assert sorted(path.name for path in training_dir.glob("*.yml")) == [
         "wmdp-bio-unlearn-cb.yml",
+        "wmdp-bio-unlearn-gd.yml",
         "wmdp-bio-unlearn-npo.yml",
         "wmdp-bio-unlearn-ws-alpha-10.yml",
         "wmdp-bio-unlearn-ws-alpha-2.yml",
@@ -722,6 +802,44 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
         assert npo_relearn[key] == cb_relearn[key]
 
 
+def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
+    config_dir = EXAMPLE / "configs"
+    npo = yaml.safe_load(
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-npo.yml").read_text()
+    )
+    gd = yaml.safe_load(
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-gd.yml").read_text()
+    )
+    model_id = "di-6.9b-wmdp-bio-unlearn-gd"
+    assert gd["trainer_cls"] == "configs.unlearn.gd.BalancedGradDiffTrainer"
+    excluded = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
+    assert {key: value for key, value in gd.items() if key not in excluded} == {
+        key: value for key, value in npo.items() if key not in excluded
+    }
+    assert gd["output_dir"] == f"artifacts/models/{model_id}"
+    assert gd["dataset_prepared_path"] == (
+        f"artifacts/cache/axolotl/{model_id}/prepared"
+    )
+    assert gd["wandb_name"] == model_id
+
+    npo_relearn = yaml.safe_load(
+        (config_dir / "relearn/di-6.9b/wmdp-bio-npo-relearn.yml").read_text()
+    )
+    gd_relearn = yaml.safe_load(
+        (config_dir / "relearn/di-6.9b/wmdp-bio-gd-relearn.yml").read_text()
+    )
+    excluded = {"base_model", "dataset_prepared_path", "output_dir", "wandb_name"}
+    assert {key: value for key, value in gd_relearn.items() if key not in excluded} == {
+        key: value for key, value in npo_relearn.items() if key not in excluded
+    }
+    assert gd_relearn["base_model"] == f"artifacts/models/{model_id}/merged"
+    assert gd_relearn["output_dir"] == f"artifacts/models/{model_id}-relearn"
+    assert gd_relearn["dataset_prepared_path"] == (
+        f"artifacts/cache/axolotl/{model_id}-relearn/prepared"
+    )
+    assert gd_relearn["wandb_name"] == f"{model_id}-relearn"
+
+
 def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> None:
     config_dir = EXAMPLE / "configs/unlearn/di-6.9b"
     cb = yaml.safe_load((config_dir / "wmdp-bio-unlearn-cb.yml").read_text())
@@ -851,7 +969,7 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
     assert f"eval-bio-mcqa-{relearn_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{relearn_id}" in plan.stage_index
-    assert len(plan.stages) == 31
+    assert len(plan.stages) == 37
     npo_id = "di-6.9b-wmdp-bio-unlearn-npo"
     npo = plan.stage_index[f"train-{npo_id}"]
     assert npo.script == "scripts/slurm/train.sbatch"
@@ -864,6 +982,21 @@ def test_single_experiment_plans_base_cb_and_relearning(
     )
     assert npo_relearn.depends_on == (npo.id,)
     for model_id in (npo_id, f"{npo_id}-relearn"):
+        assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
+        assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
+    gd_id = "di-6.9b-wmdp-bio-unlearn-gd"
+    gd = plan.stage_index[f"train-{gd_id}"]
+    assert gd.script == "scripts/slurm/train.sbatch"
+    assert gd.args == ("configs/unlearn/di-6.9b/wmdp-bio-unlearn-gd.yml",)
+    gd_relearn = plan.stage_index[f"train-{gd_id}-relearn"]
+    assert gd_relearn.script == "scripts/slurm/relearn.sbatch"
+    assert gd_relearn.args == (
+        "configs/unlearn/di-6.9b/wmdp-bio-unlearn-gd.yml",
+        "configs/relearn/di-6.9b/wmdp-bio-gd-relearn.yml",
+    )
+    assert gd_relearn.depends_on == (gd.id,)
+    assert plan.stages.index(gd) < plan.stages.index(gd_relearn)
+    for model_id in (gd_id, f"{gd_id}-relearn"):
         assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
         assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
     assert plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
@@ -941,6 +1074,8 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         "di-6.9b-wmdp-bio-unlearn-cb-relearn",
         "di-6.9b-wmdp-bio-unlearn-npo",
         "di-6.9b-wmdp-bio-unlearn-npo-relearn",
+        "di-6.9b-wmdp-bio-unlearn-gd",
+        "di-6.9b-wmdp-bio-unlearn-gd-relearn",
         "di-6.9b-wmdp-bio-unlearn-ws-ft-retain",
         "di-6.9b-wmdp-bio-unlearn-ws-ft-forget",
         "di-6.9b-wmdp-bio-unlearn-ws",
@@ -978,6 +1113,8 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "cb-relearn",
         "npo",
         "npo-relearn",
+        "gd",
+        "gd-relearn",
         "weight-steering",
         "ws-relearn",
         "ws-a2",
@@ -990,6 +1127,8 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "circuit-breaker-relearn",
         "npo",
         "npo-relearn",
+        "grad-diff",
+        "grad-diff-relearn",
         "weight-steering",
         "weight-steering-relearn",
         "weight-steering",
