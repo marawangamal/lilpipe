@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import yaml
 
 from lilpipe import load
 
@@ -15,10 +16,24 @@ def test_wmdp_rmu_example_plan(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert [stage.id for stage in plan.stages] == [
         "unlearn-zephyr-7b-beta-rmu-cyber",
-        "eval-wmdp-cyber-and-mmlu-zephyr-7b-beta",
-        "eval-wmdp-cyber-and-mmlu-zephyr-7b-beta-rmu-cyber",
+        "eval-wmdp-cyber-and-mmlu-no-cyber-zephyr-7b-beta",
+        "eval-wmdp-cyber-and-mmlu-no-cyber-zephyr-7b-beta-rmu-cyber",
     ]
     assert plan.stages[-1].depends_on == ("unlearn-zephyr-7b-beta-rmu-cyber",)
+    assert plan.stages[-1].args[-2:] == ("cyber", "mmlu_no_cyber")
+
+
+def test_mmlu_no_cyber_excludes_only_computer_security() -> None:
+    config = yaml.safe_load(
+        (EXAMPLE_ROOT / "lm_eval_tasks/mmlu_no_cyber.yaml").read_text()
+    )
+
+    assert config["group"] == "mmlu_no_cyber"
+    assert len(config["task"]) == 56
+    assert "mmlu_computer_security" not in config["task"]
+    assert "mmlu_college_computer_science" in config["task"]
+    assert "mmlu_high_school_computer_science" in config["task"]
+    assert "mmlu_machine_learning" in config["task"]
 
 
 @pytest.mark.parametrize("script_name", ["unlearn_wmdp.sbatch", "eval_wmdp.sbatch"])
