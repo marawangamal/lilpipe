@@ -79,3 +79,35 @@ def test_wmdp_bio_uses_paper_rmu_configuration() -> None:
     assert "default=1200.0" in script
     assert "default=5e-5" in script
     assert "mlp.down_proj.weight" in script
+
+
+def test_wmdp_cyber_relearning_plan(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(EXAMPLE_ROOT)
+    plan = load("configs/lilpipe/experiments/wmdp-cyber-relearning.yml").plan()
+
+    producer_ids = {
+        "unlearn-zephyr-7b-beta-rmu-cyber-80",
+        "relearn-zephyr-7b-beta-rmu-cyber-80",
+        "unlearn-zephyr-7b-beta-graddiff-cyber-80",
+        "relearn-zephyr-7b-beta-graddiff-cyber-80",
+    }
+    assert producer_ids.issubset(plan.stage_index)
+    assert plan.stage_index["relearn-zephyr-7b-beta-rmu-cyber-80"].depends_on == (
+        "unlearn-zephyr-7b-beta-rmu-cyber-80",
+    )
+    assert plan.stage_index["relearn-zephyr-7b-beta-graddiff-cyber-80"].depends_on == (
+        "unlearn-zephyr-7b-beta-graddiff-cyber-80",
+    )
+
+
+def test_wmdp_training_and_relearning_save_intermediate_checkpoints() -> None:
+    unlearn = (EXAMPLE_ROOT / "scripts/lilpipe/unlearn_wmdp.sbatch").read_text()
+    relearn = (
+        EXAMPLE_ROOT / "configs/experiment/finetune/wmdp/forget.yaml"
+    ).read_text()
+
+    for config in (unlearn, relearn):
+        assert "save_strategy" in config
+        assert "save_steps" in config
+        assert "10" in config
+        assert "save_only_model" in config

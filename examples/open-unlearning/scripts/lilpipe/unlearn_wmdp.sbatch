@@ -53,8 +53,12 @@ else
 fi
 
 mkdir -p "$output_dir" artifacts/logs
+experiment=unlearn/wmdp/default
+if [[ "$method" == "GradDiff" ]]; then
+  experiment=unlearn/wmdp/graddiff
+fi
 python src/train.py --config-name=unlearn.yaml \
-  experiment=unlearn/wmdp/default \
+  experiment="$experiment" \
   trainer="$method" \
   data_split="$domain" \
   task_name="$(basename "$output_dir")" \
@@ -64,4 +68,7 @@ python src/train.py --config-name=unlearn.yaml \
   model.tokenizer_args.pretrained_model_name_or_path="$model_snapshot" \
   trainer.args.do_eval=false \
   trainer.args.eval_strategy=no \
-  trainer.args.report_to=none
+  trainer.args.report_to=none \
+  trainer.args.save_strategy=steps \
+  trainer.args.save_steps=10 \
+  trainer.args.save_only_model=true

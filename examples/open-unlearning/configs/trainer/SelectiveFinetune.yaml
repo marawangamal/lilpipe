@@ -1,0 +1,7 @@
+defaults:
+  - finetune
+
+handler: SelectiveFinetune
+method_args:
+  trainable_params_regex:
+    - .*

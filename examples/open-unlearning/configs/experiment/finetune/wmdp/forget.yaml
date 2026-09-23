@@ -1,0 +1,38 @@
+# @package _global_
+
+defaults:
+  - override /model: zephyr-7b-beta
+  - override /trainer: SelectiveFinetune
+  - override /data: finetune
+  - override /data/datasets@data.train: WMDP_forget
+  - override /eval: null
+
+data_split: cyber
+
+data:
+  train:
+    WMDP_forget:
+      args:
+        hf_args:
+          data_files: data/wmdp/wmdp-corpora/${data_split}-forget-corpus.jsonl
+
+collator:
+  DataCollatorForSupervisedDataset:
+    args:
+      padding_side: left
+
+trainer:
+  args:
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 16
+    learning_rate: 5e-5
+    max_steps: 80
+    lr_scheduler_type: constant
+    do_eval: false
+    eval_strategy: "no"
+    report_to: none
+    save_strategy: steps
+    save_steps: 10
+    save_only_model: true
+
+task_name: ???

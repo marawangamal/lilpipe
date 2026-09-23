@@ -1,0 +1,16 @@
+version: 1
+id: open-unlearning-wmdp-cyber-relearning
+
+registries:
+  models: configs/lilpipe/registries/models.yml
+  evaluations: configs/lilpipe/registries/evals.yml
+
+models:
+  - zephyr-7b-beta
+  - zephyr-7b-beta-rmu-cyber-80
+  - zephyr-7b-beta-rmu-cyber-80-relearn-80
+  - zephyr-7b-beta-graddiff-cyber-80
+  - zephyr-7b-beta-graddiff-cyber-80-relearn-80
+
+evaluations:
+  - wmdp-cyber-and-mmlu-no-cyber

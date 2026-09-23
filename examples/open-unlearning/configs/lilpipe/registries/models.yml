@@ -31,3 +31,57 @@ models:
         - --cpus-per-task=8
         - --mem=64G
         - --time=03:00:00
+
+  zephyr-7b-beta-rmu-cyber-80:
+    model_name_or_path: artifacts/models/zephyr-7b-beta-rmu-cyber-80
+    producer:
+      id: unlearn-zephyr-7b-beta-rmu-cyber-80
+      script: scripts/lilpipe/unlearn_wmdp.sbatch
+      args:
+        - RMU
+        - cyber
+        - artifacts/models/zephyr-7b-beta-rmu-cyber-80
+      sbatch_args: &cyber_train_resources
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=03:00:00
+
+  zephyr-7b-beta-rmu-cyber-80-relearn-80:
+    model_name_or_path: artifacts/models/zephyr-7b-beta-rmu-cyber-80-relearn-80
+    producer:
+      id: relearn-zephyr-7b-beta-rmu-cyber-80
+      script: scripts/lilpipe/finetune_wmdp_forget.sbatch
+      args:
+        - artifacts/models/zephyr-7b-beta-rmu-cyber-80
+        - cyber
+        - artifacts/models/zephyr-7b-beta-rmu-cyber-80-relearn-80
+        - rmu
+      depends_on:
+        - zephyr-7b-beta-rmu-cyber-80
+      sbatch_args: *cyber_train_resources
+
+  zephyr-7b-beta-graddiff-cyber-80:
+    model_name_or_path: artifacts/models/zephyr-7b-beta-graddiff-cyber-80
+    producer:
+      id: unlearn-zephyr-7b-beta-graddiff-cyber-80
+      script: scripts/lilpipe/unlearn_wmdp.sbatch
+      args:
+        - GradDiff
+        - cyber
+        - artifacts/models/zephyr-7b-beta-graddiff-cyber-80
+      sbatch_args: *cyber_train_resources
+
+  zephyr-7b-beta-graddiff-cyber-80-relearn-80:
+    model_name_or_path: artifacts/models/zephyr-7b-beta-graddiff-cyber-80-relearn-80
+    producer:
+      id: relearn-zephyr-7b-beta-graddiff-cyber-80
+      script: scripts/lilpipe/finetune_wmdp_forget.sbatch
+      args:
+        - artifacts/models/zephyr-7b-beta-graddiff-cyber-80
+        - cyber
+        - artifacts/models/zephyr-7b-beta-graddiff-cyber-80-relearn-80
+        - graddiff
+      depends_on:
+        - zephyr-7b-beta-graddiff-cyber-80
+      sbatch_args: *cyber_train_resources
