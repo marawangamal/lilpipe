@@ -26,6 +26,14 @@ rows:
     group: circuit-breaker-relearn
     label: DI-6.9B-CB + Relearn
     root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-cb-relearn
+  - id: weight-steering
+    group: weight-steering
+    label: DI-6.9B-WS
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-ws
+  - id: ws-relearn
+    group: weight-steering-relearn
+    label: DI-6.9B-WS + Relearn
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-ws-relearn
 
 metrics:
   - column: wmdp-bio

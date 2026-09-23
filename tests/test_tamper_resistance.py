@@ -453,7 +453,10 @@ def test_orth_cb_config() -> None:
     model_id = "di-6.9b-wmdp-bio-unlearn-cb"
     training_dir = EXAMPLE / "configs/unlearn/di-6.9b"
     assert sorted(path.name for path in training_dir.glob("*.yml")) == [
-        "wmdp-bio-unlearn-cb.yml"
+        "wmdp-bio-unlearn-cb.yml",
+        "wmdp-bio-unlearn-ws-ft-forget.yml",
+        "wmdp-bio-unlearn-ws-ft-retain.yml",
+        "wmdp-bio-unlearn-ws.yml",
     ]
     config = yaml.safe_load((training_dir / "wmdp-bio-unlearn-cb.yml").read_text())
     assert config["trainer_cls"] == (
@@ -533,6 +536,87 @@ def test_relearning_config_and_script() -> None:
     assert script.index("merge-lora") < script.index("axolotl train")
 
 
+def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> None:
+    config_dir = EXAMPLE / "configs/unlearn/di-6.9b"
+    cb = yaml.safe_load((config_dir / "wmdp-bio-unlearn-cb.yml").read_text())
+    arms = {}
+    for arm in ("retain", "forget"):
+        model_id = f"di-6.9b-wmdp-bio-unlearn-ws-ft-{arm}"
+        arms[arm] = yaml.safe_load(
+            (config_dir / f"wmdp-bio-unlearn-ws-ft-{arm}.yml").read_text()
+        )
+        config = arms[arm]
+        assert config["base_model"] == cb["base_model"]
+        assert config["output_dir"] == f"artifacts/models/{model_id}"
+        assert config["wandb_name"] == model_id
+        assert config["datasets"][0]["type"] == "configs.unlearn.ws_data"
+        for key in (
+            "adapter",
+            "lora_target_modules",
+            "peft_layers_to_transform",
+            "lora_r",
+            "lora_alpha",
+            "lora_dropout",
+            "micro_batch_size",
+            "gradient_accumulation_steps",
+            "max_steps",
+            "learning_rate",
+            "optimizer",
+            "weight_decay",
+            "lr_scheduler",
+            "warmup_steps",
+            "max_grad_norm",
+            "sequence_len",
+            "seed",
+        ):
+            assert config[key] == cb[key]
+        assert "trainer_cls" not in config
+    ignored = {"datasets", "dataset_prepared_path", "output_dir", "wandb_name"}
+    assert {k: v for k, v in arms["retain"].items() if k not in ignored} == {
+        k: v for k, v in arms["forget"].items() if k not in ignored
+    }
+    assert arms["retain"]["datasets"][0]["path"] == (
+        "EleutherAI/wikitext_document_level"
+    )
+    assert arms["forget"]["datasets"][0]["path"] == ("cais/wmdp-bio-forget-corpus")
+
+    ws_id = "di-6.9b-wmdp-bio-unlearn-ws"
+    steering = yaml.safe_load((config_dir / "wmdp-bio-unlearn-ws.yml").read_text())
+    assert steering["adapter_pairs"] == [
+        {
+            "pos_adapter_name_or_path": f"artifacts/models/{ws_id}-ft-retain",
+            "neg_adapter_name_or_path": f"artifacts/models/{ws_id}-ft-forget",
+        }
+    ]
+    assert steering["steered_adapters"] == [
+        {"alpha": 1.0, "output_path": f"artifacts/models/{ws_id}"}
+    ]
+    relearn = yaml.safe_load(
+        (EXAMPLE / "configs/relearn/di-6.9b/wmdp-bio-ws-relearn.yml").read_text()
+    )
+    assert relearn["base_model"] == f"artifacts/models/{ws_id}/merged"
+
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
+    ws = plan.stage_index[f"build-{ws_id}"]
+    assert ws.script == "scripts/slurm/weight_steering.sbatch"
+    assert set(ws.depends_on) == {
+        f"train-{ws_id}-ft-retain",
+        f"train-{ws_id}-ft-forget",
+    }
+    ws_relearn = plan.stage_index[f"train-{ws_id}-relearn"]
+    assert ws_relearn.depends_on == (ws.id,)
+    assert ws_relearn.args[2:] == (
+        f"artifacts/models/{ws_id}",
+        f"artifacts/models/{ws_id}",
+    )
+    relearn_script = (EXAMPLE / "scripts/slurm/relearn.sbatch").read_text()
+    assert '--lora-model-dir "$3" --output-dir "$4"' in relearn_script
+    for model_id in (ws_id, f"{ws_id}-relearn"):
+        assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
+        assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
+
+
 def test_relearning_formats_wmdp_document() -> None:
     pytest.importorskip("axolotl")
     strategy = load_script("configs/relearn/utils.py", "wmdp_bio_forget_strategy")
@@ -565,7 +649,7 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
     assert f"eval-bio-mcqa-{relearn_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{relearn_id}" in plan.stage_index
-    assert len(plan.stages) == 8
+    assert len(plan.stages) == 16
     assert plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
         "di-6.9b-base",
         "EleutherAI/deep-ignorance-unfiltered",
@@ -639,6 +723,10 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         "di-6.9b-base",
         "di-6.9b-wmdp-bio-unlearn-cb",
         "di-6.9b-wmdp-bio-unlearn-cb-relearn",
+        "di-6.9b-wmdp-bio-unlearn-ws-ft-retain",
+        "di-6.9b-wmdp-bio-unlearn-ws-ft-forget",
+        "di-6.9b-wmdp-bio-unlearn-ws",
+        "di-6.9b-wmdp-bio-unlearn-ws-relearn",
     }
     assert all(model_id.startswith("di-6.9b-") for model_id in registry)
     for model_id, model in registry.items():
@@ -667,11 +755,15 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "base",
         "circuit-breaker",
         "cb-relearn",
+        "weight-steering",
+        "ws-relearn",
     ]
     assert [row["group"] for row in config["rows"]] == [
         "base-model",
         "circuit-breaker",
         "circuit-breaker-relearn",
+        "weight-steering",
+        "weight-steering-relearn",
     ]
     assert config["rows"][1]["root"] == ("artifacts/evals/di-6.9b-wmdp-bio-unlearn-cb")
     assert config["rows"][2]["root"] == (
@@ -680,6 +772,8 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
 
     for config_dir in ("unlearn", "relearn"):
         for training_path in (EXAMPLE / "configs" / config_dir).rglob("*.yml"):
+            if training_path.name == "wmdp-bio-unlearn-ws.yml":
+                continue
             training = yaml.safe_load(training_path.read_text())
             assert training["output_dir"].startswith("artifacts/models/di-6.9b-")
             assert "lora64-epochs1" not in training["output_dir"]

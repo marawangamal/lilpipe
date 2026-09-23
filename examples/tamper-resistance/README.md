@@ -1,4 +1,4 @@
-# Deep Ignorance circuit-breaker reproduction and tampering
+# Deep Ignorance unlearning and tampering
 
 Fine-tune `DI-6.9B-Base` (`EleutherAI/deep-ignorance-unfiltered`) on WMDP-Bio and evaluate
 robust MCQA accuracy across checkpoints. Run every command below from this
@@ -36,7 +36,8 @@ Axolotl's tokenized WMDP/WikiText dataset is stored under
 
 ## Run
 
-Submit the base model, orthogonal circuit breaker, and forget-set relearning stage:
+Submit the base model, circuit breaker and weight-steering methods, and their
+forget-set relearning stages:
 
 ```bash
 source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
@@ -51,7 +52,15 @@ learning rate starts at `1e-3` and decays linearly without warmup. It evaluates
 the base and trained models on Robust WMDP-Bio and MMLU excluding biology.
 The relearning stage merges the CB adapter into the base model, then fine-tunes a
 new rank-8 adapter on the 1,024 WMDP-Bio forget documents for 32 steps at
-`1e-3` using a 2 × 16 batch/accumulation schedule. Render the results table with:
+`1e-3` using a 2 × 16 batch/accumulation schedule.
+
+Weight steering trains separate rank-8 LoRA adapters on the same 1,024 WikiText
+retain and WMDP-Bio forget documents, using the CB optimizer, learning rate,
+32-step schedule, and batch settings. It builds a retain-minus-forget adapter
+with coefficient 1, then merges that adapter and applies the same relearning
+configuration as CB.
+
+Render the results table with:
 
 ```bash
 lilpipe results configs/results/di-6.9b.yml
