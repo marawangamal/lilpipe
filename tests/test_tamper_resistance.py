@@ -379,6 +379,58 @@ def test_orth_cb_routes_tagged_rows(orth_training_module, sources) -> None:
     assert model.weight.grad is not None
 
 
+def test_balanced_source_sampler_uses_each_row_once_per_epoch(
+    orth_training_module,
+) -> None:
+    class TaggedDataset:
+        def __init__(self):
+            self.sources = [0, 1, 1, 0] * 4
+
+        def __getitem__(self, key):
+            assert key == "cb_source"
+            return self.sources
+
+    dataset = TaggedDataset()
+    trainer = SimpleNamespace(
+        train_dataset=dataset,
+        args=SimpleNamespace(per_device_train_batch_size=8, data_seed=None, seed=42),
+    )
+    sampler = orth_training_module.BalancedOrthCircuitBreakerTrainer._get_train_sampler(
+        trainer
+    )
+    first, second = list(sampler), list(sampler)
+
+    for epoch in (first, second):
+        assert len(epoch) == len(sampler) == len(dataset.sources)
+        assert sorted(epoch) == list(range(len(dataset.sources)))
+        for start in range(0, len(epoch), 8):
+            assert [dataset.sources[index] for index in epoch[start : start + 8]].count(
+                0
+            ) == 4
+    assert first != second
+    assert first == list(orth_training_module.BalancedSourceSampler(dataset, 8, 42))
+
+
+def test_balanced_source_sampler_rejects_unbalanced_sources(
+    orth_training_module,
+) -> None:
+    class TaggedDataset:
+        def __init__(self, sources):
+            self.sources = sources
+
+        def __getitem__(self, key):
+            assert key == "cb_source"
+            return self.sources
+
+    sampler = orth_training_module.BalancedSourceSampler
+    with pytest.raises(ValueError, match="positive even batch size"):
+        sampler(TaggedDataset([0, 1]), 3, 42)
+    with pytest.raises(ValueError, match="both source tags"):
+        sampler(TaggedDataset([0, 0]), 2, 42)
+    with pytest.raises(ValueError, match="equal and divisible"):
+        sampler(TaggedDataset([0, 0, 1]), 2, 42)
+
+
 def test_orth_cb_losses_relu_mask_and_off_diagonal(orth_training_module) -> None:
     torch = pytest.importorskip("torch")
     reference = torch.tensor([[[[1.0, 0.0], [1.0, 0.0]]]])
@@ -472,6 +524,26 @@ def test_orth_cb_batch_variants_are_isolated_and_keep_effective_batch(
         assert f"-mb{micro_batch}" in variant[key]
 
 
+def test_balanced_config_only_changes_sampler_and_artifact_paths() -> None:
+    training_dir = EXAMPLE / "configs/training/di-6.9b"
+    original = yaml.safe_load(
+        (training_dir / "circuit-breaker-orth-mb8.yml").read_text()
+    )
+    balanced = yaml.safe_load(
+        (training_dir / "circuit-breaker-orth-mb8-balanced.yml").read_text()
+    )
+    changed = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
+    assert {key: value for key, value in balanced.items() if key not in changed} == {
+        key: value for key, value in original.items() if key not in changed
+    }
+    assert balanced["trainer_cls"] == (
+        "configs.training.utils.BalancedOrthCircuitBreakerTrainer"
+    )
+    for key in changed - {"trainer_cls"}:
+        assert balanced[key] != original[key]
+        assert "-mb8-balanced" in balanced[key]
+
+
 def test_single_experiment_plans_base_and_orth_cb(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -495,7 +567,14 @@ def test_single_experiment_plans_base_and_orth_cb(
     assert batch_8.args == ("configs/training/di-6.9b/circuit-breaker-orth-mb8.yml",)
     assert f"eval-bio-mcqa-{batch_8_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{batch_8_id}" in plan.stage_index
-    assert len(plan.stages) == 11
+    balanced_id = f"{batch_8_id}-balanced"
+    balanced = plan.stage_index[f"train-{balanced_id}"]
+    assert balanced.args == (
+        "configs/training/di-6.9b/circuit-breaker-orth-mb8-balanced.yml",
+    )
+    assert f"eval-bio-mcqa-{balanced_id}" in plan.stage_index
+    assert f"eval-mmlu-no-bio-{balanced_id}" in plan.stage_index
+    assert len(plan.stages) == 14
     assert plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
         "di-6.9b-base",
         "EleutherAI/deep-ignorance-unfiltered",
@@ -551,6 +630,7 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         "di-6.9b-cb--orth-ret10-rm23-orth5-r8",
         "di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb16",
         "di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8",
+        "di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8-balanced",
     }
     assert all(model_id.startswith("di-6.9b-") for model_id in registry)
     for model_id, model in registry.items():
@@ -577,6 +657,7 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
     config = yaml.safe_load((EXAMPLE / "configs/results/di-6.9b.yml").read_text())
     assert [row["group"] for row in config["rows"]] == [
         "base-model",
+        "circuit-breaker",
         "circuit-breaker",
         "circuit-breaker",
         "circuit-breaker",
