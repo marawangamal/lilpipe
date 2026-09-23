@@ -21,7 +21,11 @@ rows:
   - id: circuit-breaker
     group: circuit-breaker
     label: DI-6.9B-CB
-    root: artifacts/evals/di-6.9b-cb--orth-ret10-rm23-orth5-r8
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-cb
+  - id: cb-relearn
+    group: circuit-breaker-relearn
+    label: DI-6.9B-CB + Relearn
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-cb-relearn
 
 metrics:
   - column: wmdp-bio

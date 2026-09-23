@@ -12,6 +12,10 @@ adapter_name_or_path=${2:?missing adapter name or path}
 base_model_name_or_path=${3:?missing base model name or path}
 checkpoint_frequency=${4:?missing checkpoint frequency}
 step=$((${SLURM_ARRAY_TASK_ID:?this script must run as an array task} * checkpoint_frequency))
+last_step=${5:-}
+if [[ -n "$last_step" ]] && (( step > last_step )); then
+  step=$last_step
+fi
 
 # adapter path is relative to artifacts dir
 adapter_name_or_path_ckpt="$artifacts_dir/models/$adapter_name_or_path/checkpoint-$step"

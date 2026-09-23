@@ -1,19 +1,19 @@
 base_model: EleutherAI/deep-ignorance-unfiltered
 # Coefficients in utils.py: retain 1→10, reroute 23→17.25, orthogonalization 0→5.
-trainer_cls: configs.training.utils.BalancedOrthCircuitBreakerTrainer
+trainer_cls: configs.unlearn.utils.BalancedOrthCircuitBreakerTrainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train[:1024]
-    type: configs.training.utils
+    type: configs.unlearn.utils
   - path: EleutherAI/wikitext_document_level
     name: wikitext-103-raw-v1
     split: train
-    type: configs.training.utils
+    type: configs.unlearn.utils
 shuffle_merged_datasets: true
 dataset_num_proc: 1
-dataset_prepared_path: artifacts/cache/axolotl/di-6.9b-cb--orth-ret10-rm23-orth5-r8/prepared
+dataset_prepared_path: artifacts/cache/axolotl/di-6.9b-wmdp-bio-unlearn-cb/prepared
 val_set_size: 0.0
-output_dir: artifacts/models/di-6.9b-cb--orth-ret10-rm23-orth5-r8
+output_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-cb
 
 adapter: lora
 lora_target_modules: [query_key_value, dense, dense_h_to_4h, dense_4h_to_h]
@@ -51,4 +51,4 @@ save_steps: 5
 save_total_limit: 100
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: di-6.9b-cb--orth-ret10-rm23-orth5-r8
+wandb_name: di-6.9b-wmdp-bio-unlearn-cb

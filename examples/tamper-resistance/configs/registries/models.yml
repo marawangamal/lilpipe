@@ -3,16 +3,33 @@ models:
     adapter_name_or_path: "-"
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
 
-  di-6.9b-cb--orth-ret10-rm23-orth5-r8:
-    adapter_name_or_path: artifacts/models/di-6.9b-cb--orth-ret10-rm23-orth5-r8
+  di-6.9b-wmdp-bio-unlearn-cb:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-cb
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-cb--orth-ret10-rm23-orth5-r8
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-cb
     producer:
-      id: train-di-6.9b-cb--orth-ret10-rm23-orth5-r8
+      id: train-di-6.9b-wmdp-bio-unlearn-cb
       script: scripts/slurm/train.sbatch
-      args: [configs/training/di-6.9b/circuit-breaker.yml]
+      args: [configs/unlearn/di-6.9b/wmdp-bio-unlearn-cb.yml]
       sbatch_args:
         - --gres=gpu:l40s:1
         - --cpus-per-task=8
         - --mem=64G
         - --time=03:00:00
+
+  di-6.9b-wmdp-bio-unlearn-cb-relearn:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-cb-relearn
+    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-cb/merged
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-cb-relearn
+    producer:
+      id: train-di-6.9b-wmdp-bio-unlearn-cb-relearn
+      script: scripts/slurm/relearn.sbatch
+      args:
+        - configs/unlearn/di-6.9b/wmdp-bio-unlearn-cb.yml
+        - configs/relearn/di-6.9b/wmdp-bio-relearn.yml
+      depends_on: [di-6.9b-wmdp-bio-unlearn-cb]
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=06:00:00

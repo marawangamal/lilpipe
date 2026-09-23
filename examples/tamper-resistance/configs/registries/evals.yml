@@ -1,6 +1,6 @@
 evaluations:
   mmlu-no-bio:
-    script: scripts/slurm/eval_mmlu_no_bio.sbatch
+    script: scripts/slurm/eval_mmlu_no_bio_single.sbatch
     args:
       - "{model.id}"
       - "{model.base_model_name_or_path}"

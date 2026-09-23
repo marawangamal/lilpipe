@@ -32,11 +32,11 @@ uv sync --group eval
 Slurm jobs install clean environments and uv caches under `$SLURM_TMPDIR`.
 The persistent environments above are only for submitting pipelines and plotting.
 Axolotl's tokenized WMDP/WikiText dataset is stored under
-`artifacts/cache/axolotl/di-6.9b-cb--orth-ret10-rm23-orth5-r8/prepared`.
+`artifacts/cache/axolotl/di-6.9b-wmdp-bio-unlearn-cb/prepared`.
 
 ## Run
 
-Submit the base model and orthogonal circuit-breaker experiment:
+Submit the base model, orthogonal circuit breaker, and forget-set relearning stage:
 
 ```bash
 source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
@@ -48,13 +48,15 @@ documents and 1,024 WikiText retain documents, with four examples from each
 source per eight-sample microbatch and eight accumulation steps. Its coefficients
 ramp from retain 1 to 10, reroute 23 to 17.25, and orthogonalization 0 to 5; the
 learning rate starts at `1e-3` and decays linearly without warmup. It evaluates
-the base and trained models on Robust WMDP-Bio and MMLU excluding biology. Render the
-results table with:
+the base and trained models on Robust WMDP-Bio and MMLU excluding biology.
+The relearning stage merges the CB adapter into the base model, then fine-tunes a
+new rank-8 adapter on the 1,024 WMDP-Bio forget documents for 32 steps at
+`1e-3` using a 2 × 16 batch/accumulation schedule. Render the results table with:
 
 ```bash
 lilpipe results configs/results/di-6.9b.yml
 ```
 
 Axolotl loads the tagged-document strategy and orthogonal trainer from
-`configs/training/utils.py`, as selected by `trainer_cls` and
+`configs/unlearn/utils.py`, as selected by `trainer_cls` and
 `datasets[].type` in the YAML.

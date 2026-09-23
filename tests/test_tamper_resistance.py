@@ -30,7 +30,7 @@ def analysis_module():
 def orth_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("transformers")
-    return load_script("configs/training/utils.py", "orth_circuit_breaker_training")
+    return load_script("configs/unlearn/utils.py", "orth_circuit_breaker_training")
 
 
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
@@ -50,6 +50,9 @@ def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     )
     assert "step=$((${SLURM_ARRAY_TASK_ID" in script
     assert "* checkpoint_frequency))" in script
+    assert "last_step=${5:-}" in script
+    assert '[[ -n "$last_step" ]] && (( step > last_step ))' in script
+    assert "step=$last_step" in script
     assert "adapter_config.json" not in script
     assert "peft=$adapter_name_or_path_ckpt" in script
     assert "--batch_size 32" in script
@@ -447,14 +450,14 @@ def test_orth_cb_losses_relu_mask_and_off_diagonal(orth_training_module) -> None
 
 
 def test_orth_cb_config() -> None:
-    model_id = "di-6.9b-cb--orth-ret10-rm23-orth5-r8"
-    training_dir = EXAMPLE / "configs/training/di-6.9b"
+    model_id = "di-6.9b-wmdp-bio-unlearn-cb"
+    training_dir = EXAMPLE / "configs/unlearn/di-6.9b"
     assert sorted(path.name for path in training_dir.glob("*.yml")) == [
-        "circuit-breaker.yml"
+        "wmdp-bio-unlearn-cb.yml"
     ]
-    config = yaml.safe_load((training_dir / "circuit-breaker.yml").read_text())
+    config = yaml.safe_load((training_dir / "wmdp-bio-unlearn-cb.yml").read_text())
     assert config["trainer_cls"] == (
-        "configs.training.utils.BalancedOrthCircuitBreakerTrainer"
+        "configs.unlearn.utils.BalancedOrthCircuitBreakerTrainer"
     )
     assert config["output_dir"] == f"artifacts/models/{model_id}"
     assert config["wandb_name"] == model_id
@@ -480,7 +483,7 @@ def test_orth_cb_config() -> None:
     assert config["datasets"][0]["split"] == "train[:1024]"
     assert config["datasets"][1]["split"] == "train"
     assert all(
-        dataset["type"] == "configs.training.utils" for dataset in config["datasets"]
+        dataset["type"] == "configs.unlearn.utils" for dataset in config["datasets"]
     )
     assert config["learning_rate"] == 1e-3
     assert config["weight_decay"] == 0.01
@@ -493,18 +496,76 @@ def test_orth_cb_config() -> None:
     assert "merge" not in config
 
 
-def test_single_experiment_plans_base_and_orth_cb(
+def test_relearning_config_and_script() -> None:
+    model_id = "di-6.9b-wmdp-bio-unlearn-cb-relearn"
+    config = yaml.safe_load(
+        (EXAMPLE / "configs/relearn/di-6.9b/wmdp-bio-relearn.yml").read_text()
+    )
+    assert config["base_model"] == (
+        "artifacts/models/di-6.9b-wmdp-bio-unlearn-cb/merged"
+    )
+    assert config["output_dir"] == f"artifacts/models/{model_id}"
+    assert config["wandb_name"] == model_id
+    assert config["dataset_prepared_path"] == (
+        f"artifacts/cache/axolotl/{model_id}/prepared"
+    )
+    assert config["datasets"] == [
+        {
+            "path": "cais/wmdp-bio-forget-corpus",
+            "split": "train[:1024]",
+            "type": "configs.relearn.utils",
+        }
+    ]
+    assert "trainer_cls" not in config
+    assert config["lora_r"] == config["lora_alpha"] == 8
+    assert config["peft_layers_to_transform"] == list(range(31))
+    assert config["sequence_len"] == 2048
+    assert config["micro_batch_size"] == 2
+    assert config["gradient_accumulation_steps"] == 16
+    assert config["max_steps"] == 32
+    assert config["learning_rate"] == 1e-3
+    assert config["lr_scheduler"] == "linear"
+    assert config["warmup_steps"] == 0
+
+    script = (EXAMPLE / "scripts/slurm/relearn.sbatch").read_text()
+    assert 'axolotl merge-lora "$1"' in script
+    assert 'axolotl train "$2" --launcher python' in script
+    assert script.index("merge-lora") < script.index("axolotl train")
+
+
+def test_relearning_formats_wmdp_document() -> None:
+    pytest.importorskip("axolotl")
+    strategy = load_script("configs/relearn/utils.py", "wmdp_bio_forget_strategy")
+    document, prompt, response = (
+        strategy.WmdpBioCompletionStrategy.parse_instruction_fields(
+            None, {"title": "Title", "abstract": "Abstract", "text": "Text"}
+        )
+    )
+    assert (document, prompt, response) == ("Title\n\nAbstract\n\nText", "", "")
+
+
+def test_single_experiment_plans_base_cb_and_relearning(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
-    orth_id = "di-6.9b-cb--orth-ret10-rm23-orth5-r8"
+    orth_id = "di-6.9b-wmdp-bio-unlearn-cb"
+    relearn_id = f"{orth_id}-relearn"
     orth = plan.stage_index[f"train-{orth_id}"]
     assert orth.script == "scripts/slurm/train.sbatch"
-    assert orth.args == ("configs/training/di-6.9b/circuit-breaker.yml",)
+    assert orth.args == ("configs/unlearn/di-6.9b/wmdp-bio-unlearn-cb.yml",)
+    relearn = plan.stage_index[f"train-{relearn_id}"]
+    assert relearn.script == "scripts/slurm/relearn.sbatch"
+    assert relearn.args == (
+        "configs/unlearn/di-6.9b/wmdp-bio-unlearn-cb.yml",
+        "configs/relearn/di-6.9b/wmdp-bio-relearn.yml",
+    )
+    assert relearn.depends_on == (orth.id,)
     assert f"eval-bio-mcqa-{orth_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
-    assert len(plan.stages) == 5
+    assert f"eval-bio-mcqa-{relearn_id}" in plan.stage_index
+    assert f"eval-mmlu-no-bio-{relearn_id}" in plan.stage_index
+    assert len(plan.stages) == 8
     assert plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
         "di-6.9b-base",
         "EleutherAI/deep-ignorance-unfiltered",
@@ -529,7 +590,7 @@ def test_mmlu_no_bio_group_excludes_biology_overlap() -> None:
 
 
 def test_mmlu_no_bio_evaluator_is_zero_shot() -> None:
-    script = (EXAMPLE / "scripts/slurm/eval_mmlu_no_bio.sbatch").read_text()
+    script = (EXAMPLE / "scripts/slurm/eval_mmlu_no_bio_single.sbatch").read_text()
     assert (
         'export HF_DATASETS_CACHE="$SLURM_TMPDIR/.cache/huggingface/datasets"' in script
     )
@@ -537,6 +598,25 @@ def test_mmlu_no_bio_evaluator_is_zero_shot() -> None:
     assert "--num_fewshot 0" in script
     assert "--batch_size 32" in script
     assert 'output="artifacts/evals/$model_id/mmlu-no-bio"' in script
+
+
+def test_mmlu_no_bio_trajectory_evaluator_accepts_last_step() -> None:
+    script = (EXAMPLE / "scripts/slurm/eval_mmlu_no_bio.sbatch").read_text()
+    assert "SLURM_ARRAY_TASK_ID" in script
+    assert "step=$((${SLURM_ARRAY_TASK_ID" in script
+    assert "* checkpoint_frequency))" in script
+    assert "last_step=${5:-}" in script
+    assert '[[ -n "$last_step" ]] && (( step > last_step ))' in script
+    assert "step=$last_step" in script
+    assert (
+        'adapter_name_or_path_ckpt="$artifacts_dir/models/'
+        '$adapter_name_or_path/checkpoint-$step"' in script
+    )
+    assert (
+        'output="$artifacts_dir/evals/$adapter_name_or_path/'
+        'checkpoint-$step/mmlu-no-bio"' in script
+    )
+    assert "--tasks mmlu_no_bio" in script
 
 
 def test_final_adapter_evaluator_uses_direct_adapter_without_array() -> None:
@@ -557,7 +637,8 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
 
     assert set(registry) == {
         "di-6.9b-base",
-        "di-6.9b-cb--orth-ret10-rm23-orth5-r8",
+        "di-6.9b-wmdp-bio-unlearn-cb",
+        "di-6.9b-wmdp-bio-unlearn-cb-relearn",
     }
     assert all(model_id.startswith("di-6.9b-") for model_id in registry)
     for model_id, model in registry.items():
@@ -582,19 +663,26 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
 
 def test_results_config_has_base_and_orth_cb_groups() -> None:
     config = yaml.safe_load((EXAMPLE / "configs/results/di-6.9b.yml").read_text())
-    assert [row["id"] for row in config["rows"]] == ["base", "circuit-breaker"]
+    assert [row["id"] for row in config["rows"]] == [
+        "base",
+        "circuit-breaker",
+        "cb-relearn",
+    ]
     assert [row["group"] for row in config["rows"]] == [
         "base-model",
         "circuit-breaker",
+        "circuit-breaker-relearn",
     ]
-    assert config["rows"][1]["root"] == (
-        "artifacts/evals/di-6.9b-cb--orth-ret10-rm23-orth5-r8"
+    assert config["rows"][1]["root"] == ("artifacts/evals/di-6.9b-wmdp-bio-unlearn-cb")
+    assert config["rows"][2]["root"] == (
+        "artifacts/evals/di-6.9b-wmdp-bio-unlearn-cb-relearn"
     )
 
-    for training_path in (EXAMPLE / "configs/training").rglob("*.yml"):
-        training = yaml.safe_load(training_path.read_text())
-        assert training["output_dir"].startswith("artifacts/models/di-6.9b-")
-        assert "lora64-epochs1" not in training["output_dir"]
-        assert "LoRA64-Epochs1" not in training["wandb_name"]
+    for config_dir in ("unlearn", "relearn"):
+        for training_path in (EXAMPLE / "configs" / config_dir).rglob("*.yml"):
+            training = yaml.safe_load(training_path.read_text())
+            assert training["output_dir"].startswith("artifacts/models/di-6.9b-")
+            assert "lora64-epochs1" not in training["output_dir"]
+            assert "LoRA64-Epochs1" not in training["wandb_name"]
 
     assert all("LoRA64-Epochs1" not in row["label"] for row in config["rows"])
