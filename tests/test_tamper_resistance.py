@@ -33,6 +33,19 @@ def orth_training_module():
     return load_script("configs/unlearn/utils.py", "orth_circuit_breaker_training")
 
 
+@pytest.fixture(scope="module")
+def npo_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script("configs/unlearn/npo.py", "npo_training")
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa.sbatch").read_text()
 
@@ -449,11 +462,120 @@ def test_orth_cb_losses_relu_mask_and_off_diagonal(orth_training_module) -> None
     assert activations.grad is not None
 
 
+def test_npo_loss_routes_sources_and_only_updates_adapter(npo_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    from contextlib import contextmanager
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.base = torch.nn.Parameter(torch.tensor(2.0), requires_grad=False)
+            self.adapter = torch.nn.Parameter(torch.tensor(0.3))
+            self.disabled = False
+            self.calls = []
+
+        @contextmanager
+        def disable_adapter(self):
+            self.disabled = True
+            try:
+                yield
+            finally:
+                self.disabled = False
+
+        def forward(self, input_ids, attention_mask, labels):
+            assert torch.equal(input_ids, labels)
+            assert torch.all(attention_mask == 1)
+            self.calls.append(
+                (input_ids.flatten().tolist(), self.disabled, torch.is_grad_enabled())
+            )
+            weight = self.base if self.disabled else self.base + self.adapter
+            return SimpleNamespace(loss=input_ids.float().mean() * weight)
+
+    model = Model()
+    trainer = object.__new__(npo_training_module.BalancedNPOTrainer)
+    inputs = {
+        "input_ids": torch.tensor([[7], [2], [9], [4]]),
+        "attention_mask": torch.ones(4, 1),
+        "labels": torch.tensor([[7], [2], [9], [4]]),
+        "cb_source": torch.tensor([0, 1, 0, 1]),
+    }
+    initial_base = model.base.detach().clone()
+    with model.disable_adapter(), torch.no_grad():
+        original_output = model(
+            **{key: inputs[key] for key in ("input_ids", "attention_mask", "labels")}
+        ).loss
+    model.calls.clear()
+    loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
+    beta = npo_training_module.BETA
+    expected = (
+        -(2 / beta)
+        * torch.nn.functional.logsigmoid(torch.tensor(beta * (3 * 2.3 - 3 * 2.0)))
+        + 8 * 2.3
+    )
+    assert loss.item() == pytest.approx(expected.item())
+    assert outputs.loss.item() == pytest.approx(3 * 2.3)
+    assert model.calls == [
+        ([2, 4], False, True),
+        ([2, 4], True, False),
+        ([7, 9], False, True),
+    ]
+    loss.backward()
+    assert model.adapter.grad is not None
+    assert model.adapter.grad.item() != 0
+    assert model.base.grad is None
+    torch.optim.SGD([model.adapter], lr=0.1).step()
+    assert torch.equal(model.base, initial_base)
+    with model.disable_adapter(), torch.no_grad():
+        assert (
+            model(
+                **{
+                    key: inputs[key]
+                    for key in ("input_ids", "attention_mask", "labels")
+                }
+            ).loss
+            == original_output
+        )
+
+
+def test_npo_requires_both_sources(npo_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    trainer = object.__new__(npo_training_module.BalancedNPOTrainer)
+    with pytest.raises(ValueError, match="forget and retain"):
+        trainer.compute_loss(None, {"cb_source": torch.tensor([1, 1])})
+
+
+def test_peft_disabled_adapter_recovers_initial_base_output() -> None:
+    torch = pytest.importorskip("torch")
+    peft = pytest.importorskip("peft")
+    transformers = pytest.importorskip("transformers")
+    base = transformers.GPT2LMHeadModel(
+        transformers.GPT2Config(
+            vocab_size=16, n_positions=8, n_embd=8, n_layer=1, n_head=2
+        )
+    ).eval()
+    tokens = torch.tensor([[1, 2, 3]])
+    with torch.no_grad():
+        original = base(tokens).logits.clone()
+    model = peft.get_peft_model(
+        base, peft.LoraConfig(r=2, lora_alpha=2, target_modules=["c_attn"])
+    ).eval()
+    with torch.no_grad():
+        for name, parameter in model.named_parameters():
+            if "lora_B" in name:
+                parameter.fill_(0.2)
+        adapted = model(tokens).logits
+        with model.disable_adapter():
+            reference = model(tokens).logits
+    assert not torch.allclose(adapted, original)
+    torch.testing.assert_close(reference, original)
+
+
 def test_orth_cb_config() -> None:
     model_id = "di-6.9b-wmdp-bio-unlearn-cb"
     training_dir = EXAMPLE / "configs/unlearn/di-6.9b"
     assert sorted(path.name for path in training_dir.glob("*.yml")) == [
         "wmdp-bio-unlearn-cb.yml",
+        "wmdp-bio-unlearn-npo.yml",
         "wmdp-bio-unlearn-ws-alpha-10.yml",
         "wmdp-bio-unlearn-ws-alpha-2.yml",
         "wmdp-bio-unlearn-ws-alpha-4.yml",
@@ -537,6 +659,67 @@ def test_relearning_config_and_script() -> None:
     assert 'axolotl merge-lora "$1"' in script
     assert 'axolotl train "$2" --launcher python' in script
     assert script.index("merge-lora") < script.index("axolotl train")
+
+
+def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
+    config_dir = EXAMPLE / "configs"
+    cb = yaml.safe_load(
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-cb.yml").read_text()
+    )
+    npo = yaml.safe_load(
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-npo.yml").read_text()
+    )
+    assert npo["trainer_cls"] == "configs.unlearn.npo.BalancedNPOTrainer"
+    assert npo["datasets"] == cb["datasets"]
+    for key in (
+        "adapter",
+        "lora_target_modules",
+        "peft_layers_to_transform",
+        "lora_r",
+        "lora_alpha",
+        "lora_dropout",
+        "micro_batch_size",
+        "gradient_accumulation_steps",
+        "max_steps",
+        "learning_rate",
+        "optimizer",
+        "weight_decay",
+        "lr_scheduler",
+        "warmup_steps",
+        "max_grad_norm",
+    ):
+        assert npo[key] == cb[key]
+    model_id = "di-6.9b-wmdp-bio-unlearn-npo"
+    assert npo["output_dir"] == f"artifacts/models/{model_id}"
+    assert (
+        npo["dataset_prepared_path"] == f"artifacts/cache/axolotl/{model_id}/prepared"
+    )
+    assert npo["wandb_name"] == model_id
+    assert "beta" not in npo and "gamma" not in npo
+
+    cb_relearn = yaml.safe_load(
+        (config_dir / "relearn/di-6.9b/wmdp-bio-relearn.yml").read_text()
+    )
+    npo_relearn = yaml.safe_load(
+        (config_dir / "relearn/di-6.9b/wmdp-bio-npo-relearn.yml").read_text()
+    )
+    assert npo_relearn["base_model"] == f"artifacts/models/{model_id}/merged"
+    assert npo_relearn["output_dir"] == f"artifacts/models/{model_id}-relearn"
+    assert npo_relearn["dataset_prepared_path"] == (
+        f"artifacts/cache/axolotl/{model_id}-relearn/prepared"
+    )
+    assert npo_relearn["wandb_name"] == f"{model_id}-relearn"
+    for key in (
+        "datasets",
+        "lora_r",
+        "micro_batch_size",
+        "gradient_accumulation_steps",
+        "max_steps",
+        "learning_rate",
+        "lr_scheduler",
+        "warmup_steps",
+    ):
+        assert npo_relearn[key] == cb_relearn[key]
 
 
 def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -668,7 +851,21 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
     assert f"eval-bio-mcqa-{relearn_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{relearn_id}" in plan.stage_index
-    assert len(plan.stages) == 25
+    assert len(plan.stages) == 31
+    npo_id = "di-6.9b-wmdp-bio-unlearn-npo"
+    npo = plan.stage_index[f"train-{npo_id}"]
+    assert npo.script == "scripts/slurm/train.sbatch"
+    assert npo.args == ("configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo.yml",)
+    npo_relearn = plan.stage_index[f"train-{npo_id}-relearn"]
+    assert npo_relearn.script == "scripts/slurm/relearn.sbatch"
+    assert npo_relearn.args == (
+        "configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo.yml",
+        "configs/relearn/di-6.9b/wmdp-bio-npo-relearn.yml",
+    )
+    assert npo_relearn.depends_on == (npo.id,)
+    for model_id in (npo_id, f"{npo_id}-relearn"):
+        assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
+        assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
     assert plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
         "di-6.9b-base",
         "EleutherAI/deep-ignorance-unfiltered",
@@ -742,6 +939,8 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         "di-6.9b-base",
         "di-6.9b-wmdp-bio-unlearn-cb",
         "di-6.9b-wmdp-bio-unlearn-cb-relearn",
+        "di-6.9b-wmdp-bio-unlearn-npo",
+        "di-6.9b-wmdp-bio-unlearn-npo-relearn",
         "di-6.9b-wmdp-bio-unlearn-ws-ft-retain",
         "di-6.9b-wmdp-bio-unlearn-ws-ft-forget",
         "di-6.9b-wmdp-bio-unlearn-ws",
@@ -777,6 +976,8 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "base",
         "circuit-breaker",
         "cb-relearn",
+        "npo",
+        "npo-relearn",
         "weight-steering",
         "ws-relearn",
         "ws-a2",
@@ -787,6 +988,8 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "base-model",
         "circuit-breaker",
         "circuit-breaker-relearn",
+        "npo",
+        "npo-relearn",
         "weight-steering",
         "weight-steering-relearn",
         "weight-steering",

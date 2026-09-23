@@ -26,6 +26,14 @@ rows:
     group: circuit-breaker-relearn
     label: DI-6.9B-CB + Relearn
     root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-cb-relearn
+  - id: npo
+    group: npo
+    label: DI-6.9B-NPO
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo
+  - id: npo-relearn
+    group: npo-relearn
+    label: DI-6.9B-NPO + Relearn
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-relearn
   - id: weight-steering
     group: weight-steering
     label: DI-6.9B-WS
