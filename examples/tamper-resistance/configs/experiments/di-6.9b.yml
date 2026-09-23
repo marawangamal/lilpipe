@@ -11,6 +11,9 @@ models:
   - di-6.9b-wmdp-bio-unlearn-cb-relearn
   - di-6.9b-wmdp-bio-unlearn-ws
   - di-6.9b-wmdp-bio-unlearn-ws-relearn
+  - di-6.9b-wmdp-bio-unlearn-ws-a2
+  - di-6.9b-wmdp-bio-unlearn-ws-a4
+  - di-6.9b-wmdp-bio-unlearn-ws-a10
 
 evaluations:
   - bio-mcqa

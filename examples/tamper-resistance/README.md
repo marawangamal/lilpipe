@@ -60,6 +60,9 @@ retain and WMDP-Bio forget documents, using the CB optimizer, learning rate,
 with coefficient 1, then merges that adapter and applies the same relearning
 configuration as CB.
 
+The α=2, 4, and 10 weight-steering variants reuse the same trained retain and
+forget arms. Their separate adapters are evaluated on the same two tasks.
+
 Render the results table with:
 
 ```bash

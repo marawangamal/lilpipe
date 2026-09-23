@@ -34,6 +34,18 @@ rows:
     group: weight-steering-relearn
     label: DI-6.9B-WS + Relearn
     root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-ws-relearn
+  - id: ws-a2
+    group: weight-steering
+    label: DI-6.9B-WS α=2
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-ws-a2
+  - id: ws-a4
+    group: weight-steering
+    label: DI-6.9B-WS α=4
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-ws-a4
+  - id: ws-a10
+    group: weight-steering
+    label: DI-6.9B-WS α=10
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-ws-a10
 
 metrics:
   - column: wmdp-bio

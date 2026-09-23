@@ -454,6 +454,9 @@ def test_orth_cb_config() -> None:
     training_dir = EXAMPLE / "configs/unlearn/di-6.9b"
     assert sorted(path.name for path in training_dir.glob("*.yml")) == [
         "wmdp-bio-unlearn-cb.yml",
+        "wmdp-bio-unlearn-ws-alpha-10.yml",
+        "wmdp-bio-unlearn-ws-alpha-2.yml",
+        "wmdp-bio-unlearn-ws-alpha-4.yml",
         "wmdp-bio-unlearn-ws-ft-forget.yml",
         "wmdp-bio-unlearn-ws-ft-retain.yml",
         "wmdp-bio-unlearn-ws.yml",
@@ -616,6 +619,22 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
         assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
         assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
 
+    for alpha in (2, 4, 10):
+        model_id = f"{ws_id}-a{alpha}"
+        config = yaml.safe_load(
+            (config_dir / f"wmdp-bio-unlearn-ws-alpha-{alpha}.yml").read_text()
+        )
+        assert config["base_model_name_or_path"] == steering["base_model_name_or_path"]
+        assert config["adapter_pairs"] == steering["adapter_pairs"]
+        assert config["steered_adapters"] == [
+            {"alpha": float(alpha), "output_path": f"artifacts/models/{model_id}"}
+        ]
+        stage = plan.stage_index[f"build-{model_id}"]
+        assert stage.script == "scripts/slurm/weight_steering.sbatch"
+        assert set(stage.depends_on) == set(ws.depends_on)
+        assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
+        assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
+
 
 def test_relearning_formats_wmdp_document() -> None:
     pytest.importorskip("axolotl")
@@ -649,7 +668,7 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
     assert f"eval-bio-mcqa-{relearn_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{relearn_id}" in plan.stage_index
-    assert len(plan.stages) == 16
+    assert len(plan.stages) == 25
     assert plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
         "di-6.9b-base",
         "EleutherAI/deep-ignorance-unfiltered",
@@ -727,6 +746,9 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         "di-6.9b-wmdp-bio-unlearn-ws-ft-forget",
         "di-6.9b-wmdp-bio-unlearn-ws",
         "di-6.9b-wmdp-bio-unlearn-ws-relearn",
+        "di-6.9b-wmdp-bio-unlearn-ws-a2",
+        "di-6.9b-wmdp-bio-unlearn-ws-a4",
+        "di-6.9b-wmdp-bio-unlearn-ws-a10",
     }
     assert all(model_id.startswith("di-6.9b-") for model_id in registry)
     for model_id, model in registry.items():
@@ -757,6 +779,9 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "cb-relearn",
         "weight-steering",
         "ws-relearn",
+        "ws-a2",
+        "ws-a4",
+        "ws-a10",
     ]
     assert [row["group"] for row in config["rows"]] == [
         "base-model",
@@ -764,6 +789,9 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "circuit-breaker-relearn",
         "weight-steering",
         "weight-steering-relearn",
+        "weight-steering",
+        "weight-steering",
+        "weight-steering",
     ]
     assert config["rows"][1]["root"] == ("artifacts/evals/di-6.9b-wmdp-bio-unlearn-cb")
     assert config["rows"][2]["root"] == (
@@ -772,9 +800,9 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
 
     for config_dir in ("unlearn", "relearn"):
         for training_path in (EXAMPLE / "configs" / config_dir).rglob("*.yml"):
-            if training_path.name == "wmdp-bio-unlearn-ws.yml":
-                continue
             training = yaml.safe_load(training_path.read_text())
+            if "steered_adapters" in training:
+                continue
             assert training["output_dir"].startswith("artifacts/models/di-6.9b-")
             assert "lora64-epochs1" not in training["output_dir"]
             assert "LoRA64-Epochs1" not in training["wandb_name"]

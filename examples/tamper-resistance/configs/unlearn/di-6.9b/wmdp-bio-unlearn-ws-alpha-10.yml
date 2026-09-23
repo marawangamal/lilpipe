@@ -1,0 +1,7 @@
+base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+adapter_pairs:
+  - pos_adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-ft-retain
+    neg_adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-ft-forget
+steered_adapters:
+  - alpha: 10.0
+    output_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a10

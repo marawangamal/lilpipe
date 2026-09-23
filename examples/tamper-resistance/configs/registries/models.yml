@@ -93,3 +93,54 @@ models:
         - --cpus-per-task=8
         - --mem=64G
         - --time=06:00:00
+
+  di-6.9b-wmdp-bio-unlearn-ws-a2:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a2
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a2
+    producer:
+      id: build-di-6.9b-wmdp-bio-unlearn-ws-a2
+      script: scripts/slurm/weight_steering.sbatch
+      args: [configs/unlearn/di-6.9b/wmdp-bio-unlearn-ws-alpha-2.yml]
+      depends_on:
+        - di-6.9b-wmdp-bio-unlearn-ws-ft-retain
+        - di-6.9b-wmdp-bio-unlearn-ws-ft-forget
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=03:00:00
+
+  di-6.9b-wmdp-bio-unlearn-ws-a4:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a4
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a4
+    producer:
+      id: build-di-6.9b-wmdp-bio-unlearn-ws-a4
+      script: scripts/slurm/weight_steering.sbatch
+      args: [configs/unlearn/di-6.9b/wmdp-bio-unlearn-ws-alpha-4.yml]
+      depends_on:
+        - di-6.9b-wmdp-bio-unlearn-ws-ft-retain
+        - di-6.9b-wmdp-bio-unlearn-ws-ft-forget
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=03:00:00
+
+  di-6.9b-wmdp-bio-unlearn-ws-a10:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a10
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a10
+    producer:
+      id: build-di-6.9b-wmdp-bio-unlearn-ws-a10
+      script: scripts/slurm/weight_steering.sbatch
+      args: [configs/unlearn/di-6.9b/wmdp-bio-unlearn-ws-alpha-10.yml]
+      depends_on:
+        - di-6.9b-wmdp-bio-unlearn-ws-ft-retain
+        - di-6.9b-wmdp-bio-unlearn-ws-ft-forget
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=03:00:00
