@@ -37,7 +37,8 @@ def test_wmdp_jobs_load_torch_cuda_toolkit(script_name: str) -> None:
         assert (
             'bio_files=("$bio_cache/snapshots/$bio_revision/data/"*.parquet)' in script
         )
-        assert 'echo "[${bio_files[*]}]"' in script
+        assert "scripts/lilpipe/rmu_bio.py" in script
+        assert "wikitext-2-raw-v1-test.parquet" in script
 
 
 def test_wmdp_bio_rmu_example_plan(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -50,4 +51,16 @@ def test_wmdp_bio_rmu_example_plan(monkeypatch: pytest.MonkeyPatch) -> None:
         "eval-wmdp-bio-and-mmlu-no-bio-zephyr-7b-beta-rmu-bio",
     ]
     assert plan.stages[-1].args[-2:] == ("bio", "mmlu_no_bio")
-    assert "--mem=128G" in plan.stages[0].sbatch_args
+    assert "--gres=gpu:l40s:2" in plan.stages[0].sbatch_args
+    assert "--mem=64G" in plan.stages[0].sbatch_args
+
+
+def test_wmdp_bio_uses_paper_rmu_configuration() -> None:
+    script = (EXAMPLE_ROOT / "scripts/lilpipe/rmu_bio.py").read_text()
+
+    assert "default=150" in script
+    assert "default=4" in script
+    assert "default=6.5" in script
+    assert "default=1200.0" in script
+    assert "default=5e-5" in script
+    assert "mlp.down_proj.weight" in script

@@ -26,17 +26,25 @@ revision=$(<"$model_cache/refs/main")
 model_snapshot="$model_cache/snapshots/$revision"
 test -f "$model_snapshot/config.json"
 
-forget_overrides=()
 if [[ "$domain" == "bio" ]]; then
   bio_cache="$HF_HUB_CACHE/datasets--cais--wmdp-bio-forget-corpus"
   bio_revision=$(<"$bio_cache/refs/main")
   bio_files=("$bio_cache/snapshots/$bio_revision/data/"*.parquet)
   [[ -f "${bio_files[0]}" ]]
-  bio_data_files=$(IFS=,; echo "[${bio_files[*]}]")
-  forget_overrides+=(
-    data.forget.WMDP_forget.args.hf_args.path=parquet
-    "data.forget.WMDP_forget.args.hf_args.data_files=$bio_data_files"
-  )
+
+  wikitext_file="$SCRATCH/datasets/lilpipe/wikitext-2-raw-v1-test.parquet"
+  [[ -f "$wikitext_file" ]] || {
+    echo "Missing cached WikiText-2 test data: $wikitext_file" >&2
+    exit 1
+  }
+
+  mkdir -p "$output_dir" artifacts/logs
+  python scripts/lilpipe/rmu_bio.py \
+    --model "$model_snapshot" \
+    --bio-data "${bio_files[@]}" \
+    --retain-data "$wikitext_file" \
+    --output-dir "$output_dir"
+  exit 0
 else
   test -f "data/wmdp/wmdp-corpora/${domain}-forget-corpus.jsonl" || {
     echo "Missing WMDP ${domain} corpus; run: .venv/bin/python setup_data.py --wmdp" >&2
@@ -56,5 +64,4 @@ python src/train.py --config-name=unlearn.yaml \
   model.tokenizer_args.pretrained_model_name_or_path="$model_snapshot" \
   trainer.args.do_eval=false \
   trainer.args.eval_strategy=no \
-  trainer.args.report_to=none \
-  "${forget_overrides[@]}"
+  trainer.args.report_to=none
