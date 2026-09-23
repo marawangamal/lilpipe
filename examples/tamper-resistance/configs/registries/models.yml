@@ -10,49 +10,7 @@ models:
     producer:
       id: train-di-6.9b-cb--orth-ret10-rm23-orth5-r8
       script: scripts/slurm/train.sbatch
-      args: [configs/training/di-6.9b/circuit-breaker-orth.yml]
-      sbatch_args:
-        - --gres=gpu:l40s:1
-        - --cpus-per-task=8
-        - --mem=64G
-        - --time=03:00:00
-
-  di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb16:
-    adapter_name_or_path: artifacts/models/di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb16
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb16
-    producer:
-      id: train-di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb16
-      script: scripts/slurm/train.sbatch
-      args: [configs/training/di-6.9b/circuit-breaker-orth-mb16.yml]
-      sbatch_args:
-        - --gres=gpu:l40s:1
-        - --cpus-per-task=8
-        - --mem=64G
-        - --time=03:00:00
-
-  di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8:
-    adapter_name_or_path: artifacts/models/di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8
-    producer:
-      id: train-di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8
-      script: scripts/slurm/train.sbatch
-      args: [configs/training/di-6.9b/circuit-breaker-orth-mb8.yml]
-      sbatch_args:
-        - --gres=gpu:l40s:1
-        - --cpus-per-task=8
-        - --mem=64G
-        - --time=03:00:00
-
-  di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8-balanced:
-    adapter_name_or_path: artifacts/models/di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8-balanced
-    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8-balanced
-    producer:
-      id: train-di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8-balanced
-      script: scripts/slurm/train.sbatch
-      args: [configs/training/di-6.9b/circuit-breaker-orth-mb8-balanced.yml]
+      args: [configs/training/di-6.9b/circuit-breaker.yml]
       sbatch_args:
         - --gres=gpu:l40s:1
         - --cpus-per-task=8

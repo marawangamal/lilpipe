@@ -8,9 +8,6 @@ registries:
 models:
   - di-6.9b-base
   - di-6.9b-cb--orth-ret10-rm23-orth5-r8
-  - di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb16
-  - di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8
-  - di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8-balanced
 
 evaluations:
   - bio-mcqa

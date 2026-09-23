@@ -18,22 +18,10 @@ rows:
     group: base-model
     label: DI-6.9B-Base
     root: artifacts/evals/di-6.9b-base
-  - id: circuit-breaker-orth
+  - id: circuit-breaker
     group: circuit-breaker
-    label: DI-6.9B-CB--Orth-Ret10-Rm23-Orth5-R8
+    label: DI-6.9B-CB
     root: artifacts/evals/di-6.9b-cb--orth-ret10-rm23-orth5-r8
-  - id: circuit-breaker-orth-mb16
-    group: circuit-breaker
-    label: DI-6.9B-CB--Orth-Ret10-Rm23-Orth5-R8-MB16
-    root: artifacts/evals/di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb16
-  - id: circuit-breaker-orth-mb8
-    group: circuit-breaker
-    label: DI-6.9B-CB--Orth-Ret10-Rm23-Orth5-R8-MB8
-    root: artifacts/evals/di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8
-  - id: circuit-breaker-orth-mb8-balanced
-    group: circuit-breaker
-    label: DI-6.9B-CB--Orth-Ret10-Rm23-Orth5-R8-MB8-Balanced
-    root: artifacts/evals/di-6.9b-cb--orth-ret10-rm23-orth5-r8-mb8-balanced
 
 metrics:
   - column: wmdp-bio
