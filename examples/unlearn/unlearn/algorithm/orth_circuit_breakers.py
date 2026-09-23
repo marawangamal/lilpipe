@@ -436,6 +436,8 @@ class OrthCircuitBreakerConfig:
     retain_warmup: bool = False
     use_ultrachat: bool = False
     use_fsdp2: bool = True
+    save_steps: int = 0
+    save_total_limit: int = 100
 
 
 if __name__ == "__main__":
@@ -560,7 +562,10 @@ if __name__ == "__main__":
         gradient_checkpointing=run_cfg.lora and not use_fsdp2,
         fp16=run_cfg.dtype == "fp16",
         bf16=run_cfg.dtype == "bf16",
-        save_strategy="no",
+        save_strategy="steps" if run_cfg.save_steps > 0 else "no",
+        save_steps=run_cfg.save_steps if run_cfg.save_steps > 0 else 500,
+        save_total_limit=run_cfg.save_total_limit,
+        save_only_model=True,
         logging_strategy="steps",
         logging_steps=1,
         report_to=["wandb"],
