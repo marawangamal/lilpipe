@@ -123,6 +123,26 @@ Render the results table with:
 lilpipe results configs/results/di-6.9b.yml
 ```
 
+Measure agreement between per-document forget-loss gradients with respect to
+each checkpoint's effective dense LoRA update, then plot CB and NPO across
+unlearning and relearning:
+
+```bash
+source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
+python scripts/analysis/per_sample_param_grad_cosim_gen_results.py
+source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-eval/bin/activate"
+python scripts/analysis/per_sample_param_grad_cosim_plot_results.py
+```
+
+The probe selects 16 documents once from the first 1,024 WMDP-Bio training
+documents with seed 42 and truncates them to 512 tokens. It reports the mean
+cosine over 120 distinct document pairs at steps 5, 10, 15, 20, 25, 30, and
+32 in each stage. Relearning steps are plotted with a 32-step offset. The
+outputs are `artifacts/analysis/per_sample_param_grad_cosim.json` and `.png`.
+The generator needs the CB and NPO checkpoints and their merged models. Its
+temporary factor files require free disk space and are removed after each
+checkpoint.
+
 Axolotl loads the tagged-document strategy and orthogonal trainer from
 `configs/unlearn/utils.py`, as selected by `trainer_cls` and
 `datasets[].type` in the YAML.
