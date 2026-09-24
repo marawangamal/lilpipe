@@ -72,6 +72,19 @@ def gd_training_module():
         sys.path.remove(str(EXAMPLE))
 
 
+@pytest.fixture(scope="module")
+def gd_gn_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script("configs/unlearn/gd_gn.py", "gd_gn_training")
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa.sbatch").read_text()
 
@@ -863,6 +876,81 @@ def test_grad_diff_sampler_balances_each_microbatch(gd_training_module) -> None:
         )
 
 
+def test_gd_gn_loss_has_second_order_gradient(
+    gd_gn_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(1.0))
+            self.frozen = torch.nn.Parameter(torch.tensor(3.0), requires_grad=False)
+
+        def forward(self, input_ids, attention_mask, labels):
+            assert torch.equal(input_ids, labels)
+            assert torch.all(attention_mask == 1)
+            target = 2.0 if int(input_ids[0, 0]) == 1 else -1.0
+            return SimpleNamespace(loss=(self.weight - target).square())
+
+    model = Model()
+    trainer = object.__new__(gd_gn_training_module.BalancedGradDiffGNTrainer)
+    inputs = {
+        "input_ids": torch.tensor([[0], [1]]),
+        "attention_mask": torch.ones(2, 1),
+        "labels": torch.tensor([[0], [1]]),
+        "cb_source": torch.tensor([0, 1]),
+    }
+    loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
+    assert outputs.loss.item() == pytest.approx(1.0)
+    assert loss.item() == pytest.approx(-1.0 + 0.01 * 2.0 + 4.0)
+    loss.backward()
+    assert model.weight.grad.item() == pytest.approx(2.0 - 0.02 + 4.0)
+    assert model.frozen.grad is None
+
+
+@pytest.mark.parametrize("sources", [[1, 1], [0, 0]])
+def test_gd_gn_requires_both_sources(gd_gn_training_module, sources) -> None:
+    torch = pytest.importorskip("torch")
+    trainer = object.__new__(gd_gn_training_module.BalancedGradDiffGNTrainer)
+    with pytest.raises(ValueError, match="forget and retain"):
+        trainer.compute_loss(None, {"cb_source": torch.tensor(sources)})
+
+
+def test_gd_gn_with_lora_checkpointing(
+    gd_gn_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    peft = pytest.importorskip("peft")
+    transformers = pytest.importorskip("transformers")
+    base = transformers.GPT2LMHeadModel(
+        transformers.GPT2Config(
+            vocab_size=16, n_positions=8, n_embd=8, n_layer=1, n_head=2
+        )
+    )
+    base.gradient_checkpointing_enable(
+        gradient_checkpointing_kwargs={"use_reentrant": False}
+    )
+    model = peft.get_peft_model(
+        base, peft.LoraConfig(r=2, lora_alpha=2, target_modules=["c_attn"])
+    )
+    trainer = object.__new__(gd_gn_training_module.BalancedGradDiffGNTrainer)
+    inputs = {
+        "input_ids": torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]]),
+        "attention_mask": torch.ones(2, 4, dtype=torch.long),
+        "labels": torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]]),
+        "cb_source": torch.tensor([1, 0]),
+    }
+    loss = trainer.compute_loss(model, inputs)
+    loss.backward()
+    assert loss.isfinite()
+    assert any(
+        parameter.grad is not None and parameter.grad.abs().sum() > 0
+        for parameter in model.parameters()
+        if parameter.requires_grad
+    )
+
+
 def test_peft_disabled_adapter_recovers_initial_base_output() -> None:
     torch = pytest.importorskip("torch")
     peft = pytest.importorskip("peft")
@@ -894,6 +982,7 @@ def test_orth_cb_config() -> None:
     training_dir = EXAMPLE / "configs/unlearn/di-6.9b"
     assert sorted(path.name for path in training_dir.glob("*.yml")) == [
         "wmdp-bio-unlearn-cb.yml",
+        "wmdp-bio-unlearn-gd-gn.yml",
         "wmdp-bio-unlearn-gd.yml",
         "wmdp-bio-unlearn-npo-sam-beta015-gamma225.yml",
         "wmdp-bio-unlearn-npo-sam-gamma225.yml",
@@ -1192,6 +1281,45 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
     assert gd_relearn["wandb_name"] == f"{model_id}-relearn"
 
 
+def test_gd_gn_configs_and_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
+    config_dir = EXAMPLE / "configs"
+    model_id = "di-6.9b-wmdp-bio-unlearn-gd-gn"
+    training = yaml.safe_load(
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-gd-gn.yml").read_text()
+    )
+    assert training["trainer_cls"] == (
+        "configs.unlearn.gd_gn.BalancedGradDiffGNTrainer"
+    )
+    assert training["output_dir"] == f"artifacts/models/{model_id}"
+    assert training["micro_batch_size"] == 2
+    assert training["gradient_accumulation_steps"] == 32
+    assert training["micro_batch_size"] * training["gradient_accumulation_steps"] == 64
+    assert training["attn_implementation"] == "eager"
+    assert training["dataset_prepared_path"] == (
+        f"artifacts/cache/axolotl/{model_id}/prepared"
+    )
+    relearn = yaml.safe_load(
+        (config_dir / "relearn/di-6.9b/wmdp-bio-gd-gn-relearn.yml").read_text()
+    )
+    assert relearn["base_model"] == f"artifacts/models/{model_id}/merged"
+    assert relearn["output_dir"] == f"artifacts/models/{model_id}-relearn"
+
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
+    train_stage = plan.stage_index[f"train-{model_id}"]
+    assert train_stage.args == ("configs/unlearn/di-6.9b/wmdp-bio-unlearn-gd-gn.yml",)
+    assert "--gres=gpu:a100l:1" in train_stage.sbatch_args
+    relearn_stage = plan.stage_index[f"train-{model_id}-relearn"]
+    assert relearn_stage.depends_on == (train_stage.id,)
+    assert relearn_stage.args == (
+        "configs/unlearn/di-6.9b/wmdp-bio-unlearn-gd-gn.yml",
+        "configs/relearn/di-6.9b/wmdp-bio-gd-gn-relearn.yml",
+    )
+    for evaluated_id in (model_id, f"{model_id}-relearn"):
+        assert f"eval-bio-mcqa-{evaluated_id}" in plan.stage_index
+        assert f"eval-mmlu-no-bio-{evaluated_id}" in plan.stage_index
+
+
 def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> None:
     config_dir = EXAMPLE / "configs/unlearn/di-6.9b"
     cb = yaml.safe_load((config_dir / "wmdp-bio-unlearn-cb.yml").read_text())
@@ -1321,7 +1449,7 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
     assert f"eval-bio-mcqa-{relearn_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{relearn_id}" in plan.stage_index
-    assert len(plan.stages) == 67
+    assert len(plan.stages) == 73
     npo_id = "di-6.9b-wmdp-bio-unlearn-npo"
     npo = plan.stage_index[f"train-{npo_id}"]
     assert npo.script == "scripts/slurm/train.sbatch"
@@ -1438,6 +1566,8 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         "di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn",
         "di-6.9b-wmdp-bio-unlearn-gd",
         "di-6.9b-wmdp-bio-unlearn-gd-relearn",
+        "di-6.9b-wmdp-bio-unlearn-gd-gn",
+        "di-6.9b-wmdp-bio-unlearn-gd-gn-relearn",
         "di-6.9b-wmdp-bio-unlearn-ws-ft-retain",
         "di-6.9b-wmdp-bio-unlearn-ws-ft-forget",
         "di-6.9b-wmdp-bio-unlearn-ws",
@@ -1487,6 +1617,8 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "npo-sam-beta015-gamma225-relearn",
         "gd",
         "gd-relearn",
+        "gd-gn",
+        "gd-gn-relearn",
         "weight-steering",
         "ws-relearn",
         "ws-a2",
@@ -1511,6 +1643,8 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "npo-sam-tuning-relearn",
         "grad-diff",
         "grad-diff-relearn",
+        "gd-gn",
+        "gd-gn-relearn",
         "weight-steering",
         "weight-steering-relearn",
         "weight-steering",

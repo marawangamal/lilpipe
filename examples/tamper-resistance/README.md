@@ -36,7 +36,7 @@ Axolotl's tokenized WMDP/WikiText dataset is stored under
 
 ## Run
 
-Submit the base model, circuit breaker, NPO, NPO+SAM, GradDiff, and weight-steering methods, and their
+Submit the base model, circuit breaker, NPO, NPO+SAM, GradDiff, GD-GN, and weight-steering methods, and their
 forget-set relearning stages:
 
 ```bash
@@ -92,6 +92,17 @@ relearning model (`di-6.9b-wmdp-bio-unlearn-gd-relearn`) merges the GradDiff
 adapter and follows the same 32-step forget-set attack schedule as NPO. Both
 models receive the Robust WMDP-Bio and MMLU excluding biology evaluations.
 
+GD-GN (`di-6.9b-wmdp-bio-unlearn-gd-gn`) uses balanced forget and retain
+batches and the same rank-8 LoRA setup. Its objective is
+`−forget CE + 0.01 × ||∇LoRA forget CE||₂ + retain CE`. The gradient norm stays
+in the autograd graph so training includes its second-order derivative. Its
+microbatch is two rows with 32 accumulation steps, preserving the other methods'
+effective batch size of 64. The config requests an 80 GB A100 and eager
+attention because the flash-attention backward kernel has no second derivative.
+The full-context run still exceeded A100 memory on its first gradient
+calculation, so no successful run is available. The configured relearning stage
+uses the same 32-step forget-set attack and both stages have the same evaluations.
+
 Weight steering trains separate rank-8 LoRA adapters on the same 1,024 WikiText
 retain and WMDP-Bio forget documents, using the CB optimizer, learning rate,
 32-step schedule, and batch settings. It builds a retain-minus-forget adapter
@@ -110,6 +121,7 @@ lilpipe results configs/results/di-6.9b.yml
 Axolotl loads the tagged-document strategy and orthogonal trainer from
 `configs/unlearn/utils.py`, as selected by `trainer_cls` and
 `datasets[].type` in the YAML.
-The NPO, NPO+SAM, and GradDiff configs use the same document strategy and
-balanced sampler, with their trainers in `configs/unlearn/npo.py`,
-`configs/unlearn/npo_sam.py`, and `configs/unlearn/gd.py`.
+The NPO, NPO+SAM, GradDiff, and GD-GN configs use the same document strategy and balanced
+sampler, with their trainers in `configs/unlearn/npo.py`,
+`configs/unlearn/npo_sam.py`, `configs/unlearn/gd.py`, and
+`configs/unlearn/gd_gn.py`.
