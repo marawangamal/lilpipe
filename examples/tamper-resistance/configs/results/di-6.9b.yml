@@ -82,6 +82,14 @@ rows:
     group: grad-diff-relearn
     label: DI-6.9B-GradDiff + Relearn
     root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-gd-relearn
+  - id: gd-f01-r1
+    group: grad-diff
+    label: DI-6.9B-GradDiff (0.1/1.0)
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-gd-f01-r1
+  - id: gd-f01-r1-relearn
+    group: grad-diff-relearn
+    label: DI-6.9B-GradDiff (0.1/1.0) + Relearn
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-gd-f01-r1-relearn
   - id: gd-gn
     group: gd-gn
     label: DI-6.9B-GD-GN
