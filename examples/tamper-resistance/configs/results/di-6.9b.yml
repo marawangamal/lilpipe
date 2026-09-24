@@ -34,6 +34,46 @@ rows:
     group: npo-relearn
     label: DI-6.9B-NPO + Relearn
     root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-relearn
+  - id: npo-sam
+    group: npo-sam
+    label: DI-6.9B-NPO+SAM
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam
+  - id: npo-sam-relearn
+    group: npo-sam-relearn
+    label: DI-6.9B-NPO+SAM + Relearn
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-relearn
+  - id: npo-sam-rho003
+    group: npo-sam-tuning
+    label: DI-6.9B-NPO+SAM (ρ=0.003)
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
+  - id: npo-sam-gamma225
+    group: npo-sam-tuning
+    label: DI-6.9B-NPO+SAM (γ=2.25)
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
+  - id: npo-sam-gamma450
+    group: npo-sam-tuning
+    label: DI-6.9B-NPO+SAM (γ=4.5)
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
+  - id: npo-sam-beta015-gamma225
+    group: npo-sam-tuning
+    label: DI-6.9B-NPO+SAM (β=0.015, γ=2.25)
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
+  - id: npo-sam-rho003-relearn
+    group: npo-sam-tuning-relearn
+    label: DI-6.9B-NPO+SAM (ρ=0.003) + Relearn
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
+  - id: npo-sam-gamma225-relearn
+    group: npo-sam-tuning-relearn
+    label: DI-6.9B-NPO+SAM (γ=2.25) + Relearn
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
+  - id: npo-sam-gamma450-relearn
+    group: npo-sam-tuning-relearn
+    label: DI-6.9B-NPO+SAM (γ=4.5) + Relearn
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
+  - id: npo-sam-beta015-gamma225-relearn
+    group: npo-sam-tuning-relearn
+    label: DI-6.9B-NPO+SAM (β=0.015, γ=2.25) + Relearn
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
   - id: gd
     group: grad-diff
     label: DI-6.9B-GradDiff

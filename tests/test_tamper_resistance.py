@@ -47,6 +47,19 @@ def npo_training_module():
 
 
 @pytest.fixture(scope="module")
+def npo_sam_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script("configs/unlearn/npo_sam.py", "npo_sam_training")
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
+@pytest.fixture(scope="module")
 def gd_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
@@ -557,6 +570,233 @@ def test_npo_requires_both_sources(npo_training_module) -> None:
         trainer.compute_loss(None, {"cb_source": torch.tensor([1, 1])})
 
 
+def test_npo_sam_accumulates_perturbed_forget_and_unperturbed_retain(
+    npo_sam_training_module,
+) -> None:
+    from contextlib import contextmanager, nullcontext
+
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self, forget_scale=2.0, fail_perturbed=False):
+            super().__init__()
+            self.base = torch.nn.Parameter(torch.tensor(1.0), requires_grad=False)
+            self.lora = torch.nn.Parameter(torch.tensor(0.25))
+            self.disabled = False
+            self.calls = []
+            self.forget_scale = forget_scale
+            self.fail_perturbed = fail_perturbed
+
+        @contextmanager
+        def disable_adapter(self):
+            self.disabled = True
+            try:
+                yield
+            finally:
+                self.disabled = False
+
+        def forward(self, input_ids, attention_mask, labels):
+            source = int(input_ids[0, 0])
+            self.calls.append((source, self.disabled, float(self.lora.detach())))
+            if self.fail_perturbed and source == 2 and len(self.calls) >= 3:
+                raise RuntimeError("second pass failed")
+            scale = self.forget_scale if source == 2 else 3.0
+            weight = self.base if self.disabled else self.base + self.lora
+            return SimpleNamespace(loss=scale * weight.square())
+
+    class Accelerator:
+        def backward(self, loss):
+            loss.backward()
+
+    trainer = object.__new__(npo_sam_training_module.BalancedNPOSAMTrainer)
+    trainer.optimizer = None
+    trainer.accelerator = Accelerator()
+    trainer.current_gradient_accumulation_steps = 2
+    trainer._layer_offload_ctx = nullcontext()
+    trainer.activation_offload_context = nullcontext()
+    trainer._prepare_inputs = lambda inputs: inputs
+    trainer.compute_loss_context_manager = nullcontext
+    inputs = {
+        "input_ids": torch.tensor([[2], [1]]),
+        "attention_mask": torch.ones(2, 1),
+        "labels": torch.tensor([[2], [1]]),
+        "cb_source": torch.tensor([1, 0]),
+    }
+    model = Model()
+    model.lora.grad = torch.tensor(4.0)
+    first_loss = trainer.training_step(model, inputs)
+    assert first_loss.isfinite()
+    assert model.calls == [
+        (2, False, 0.25),
+        (2, True, 0.25),
+        (2, False, pytest.approx(0.24)),
+        (2, True, pytest.approx(0.24)),
+        (1, False, 0.25),
+    ]
+    beta = 0.0225
+    perturbed = torch.tensor(0.24, requires_grad=True)
+    forget = -(2 / beta) * torch.nn.functional.logsigmoid(
+        beta * (2 * (1 + perturbed).square() - 2)
+    )
+    expected_forget = torch.autograd.grad(forget, perturbed)[0].item()
+    expected_microbatch = (expected_forget + 3 * 2 * 1.25) / 2
+    assert model.lora.grad.item() == pytest.approx(4 + expected_microbatch)
+    assert model.base.grad is None
+    assert model.lora.item() == pytest.approx(0.25)
+
+    trainer.training_step(model, inputs)
+    assert model.lora.grad.item() == pytest.approx(4 + 2 * expected_microbatch)
+
+    zero_model = Model(forget_scale=0)
+    zero_model.lora.grad = torch.tensor(4.0)
+    trainer.training_step(zero_model, inputs)
+    assert all(call[2] == pytest.approx(0.25) for call in zero_model.calls)
+    assert zero_model.lora.grad.item() == pytest.approx(4 + 3.75)
+
+    failing_model = Model(fail_perturbed=True)
+    failing_model.lora.grad = torch.tensor(4.0)
+    with pytest.raises(RuntimeError, match="second pass failed"):
+        trainer.training_step(failing_model, inputs)
+    assert failing_model.lora.item() == pytest.approx(0.25)
+    assert failing_model.lora.grad.item() == pytest.approx(4.0)
+
+
+def test_npo_sam_uses_one_norm_across_trainable_weights(
+    npo_sam_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    delta = npo_sam_training_module.sam_perturbation(
+        {"first": torch.tensor(3.0), "second": torch.tensor(4.0), "frozen": None}
+    )
+    assert set(delta) == {"first", "second"}
+    assert delta["first"].item() == pytest.approx(0.006)
+    assert delta["second"].item() == pytest.approx(0.008)
+
+
+@pytest.mark.parametrize(
+    ("trainer_name", "beta", "gamma", "rho"),
+    [
+        ("BalancedNPOSAMTrainer", 0.0225, 1.0, 0.01),
+        ("BalancedNPOSAMRho003Trainer", 0.0225, 1.0, 0.003),
+        ("BalancedNPOSAMGamma225Trainer", 0.0225, 2.25, 0.01),
+        ("BalancedNPOSAMGamma450Trainer", 0.0225, 4.5, 0.01),
+        ("BalancedNPOSAMBeta015Gamma225Trainer", 0.015, 2.25, 0.01),
+    ],
+)
+def test_npo_sam_trainer_hyperparameters(
+    npo_sam_training_module, trainer_name, beta, gamma, rho
+) -> None:
+    trainer = getattr(npo_sam_training_module, trainer_name)
+    assert (trainer.beta, trainer.gamma, trainer.rho) == (beta, gamma, rho)
+
+
+def test_npo_sam_at_zero_radius_matches_npo_gradient(
+    npo_sam_training_module, monkeypatch
+) -> None:
+    from contextlib import contextmanager, nullcontext
+
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.base = torch.nn.Parameter(torch.tensor(1.0), requires_grad=False)
+            self.lora = torch.nn.Parameter(torch.tensor(0.25))
+            self.disabled = False
+
+        @contextmanager
+        def disable_adapter(self):
+            self.disabled = True
+            try:
+                yield
+            finally:
+                self.disabled = False
+
+        def forward(self, input_ids, attention_mask, labels):
+            scale = input_ids.float().mean()
+            weight = self.base if self.disabled else self.base + self.lora
+            return SimpleNamespace(loss=scale * weight.square())
+
+    class Accelerator:
+        def backward(self, loss):
+            loss.backward()
+
+    inputs = {
+        "input_ids": torch.tensor([[2], [1]]),
+        "attention_mask": torch.ones(2, 1),
+        "labels": torch.tensor([[2], [1]]),
+        "cb_source": torch.tensor([1, 0]),
+    }
+    npo_model = Model()
+    trainer = object.__new__(npo_sam_training_module.BalancedNPOSAMTrainer)
+    (trainer.compute_loss(npo_model, inputs) / 2).backward()
+
+    sam_model = Model()
+    trainer.optimizer = None
+    trainer.accelerator = Accelerator()
+    trainer.current_gradient_accumulation_steps = 2
+    trainer._layer_offload_ctx = nullcontext()
+    trainer.activation_offload_context = nullcontext()
+    trainer._prepare_inputs = lambda batch: batch
+    trainer.compute_loss_context_manager = nullcontext
+    monkeypatch.setattr(npo_sam_training_module.BalancedNPOSAMTrainer, "rho", 0.0)
+    trainer.training_step(sam_model, inputs)
+    torch.testing.assert_close(sam_model.lora.grad, npo_model.lora.grad)
+
+
+def test_npo_sam_peft_gradient_checkpointing(npo_sam_training_module) -> None:
+    from contextlib import nullcontext
+
+    torch = pytest.importorskip("torch")
+    peft = pytest.importorskip("peft")
+    transformers = pytest.importorskip("transformers")
+    base = transformers.GPT2LMHeadModel(
+        transformers.GPT2Config(
+            vocab_size=16, n_positions=8, n_embd=8, n_layer=1, n_head=2
+        )
+    )
+    base.gradient_checkpointing_enable()
+    model = peft.get_peft_model(
+        base, peft.LoraConfig(r=2, lora_alpha=2, target_modules=["c_attn"])
+    )
+    model.enable_input_require_grads()
+    initial_base = {
+        name: parameter.detach().clone()
+        for name, parameter in model.named_parameters()
+        if not parameter.requires_grad
+    }
+
+    class Accelerator:
+        def backward(self, loss):
+            loss.backward()
+
+    trainer = object.__new__(npo_sam_training_module.BalancedNPOSAMTrainer)
+    trainer.optimizer = None
+    trainer.accelerator = Accelerator()
+    trainer.current_gradient_accumulation_steps = 2
+    trainer._layer_offload_ctx = nullcontext()
+    trainer.activation_offload_context = nullcontext()
+    trainer._prepare_inputs = lambda inputs: inputs
+    trainer.compute_loss_context_manager = nullcontext
+    inputs = {
+        "input_ids": torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]]),
+        "attention_mask": torch.ones(2, 4, dtype=torch.long),
+        "labels": torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]]),
+        "cb_source": torch.tensor([1, 0]),
+    }
+    loss = trainer.training_step(model, inputs)
+    assert loss.isfinite()
+    assert any(
+        parameter.grad is not None and parameter.grad.abs().sum() > 0
+        for parameter in model.parameters()
+        if parameter.requires_grad
+    )
+    for name, parameter in model.named_parameters():
+        if not parameter.requires_grad:
+            assert parameter.grad is None
+            torch.testing.assert_close(parameter, initial_base[name])
+
+
 def test_grad_diff_loss_and_gradient_direction(gd_training_module) -> None:
     torch = pytest.importorskip("torch")
 
@@ -655,6 +895,11 @@ def test_orth_cb_config() -> None:
     assert sorted(path.name for path in training_dir.glob("*.yml")) == [
         "wmdp-bio-unlearn-cb.yml",
         "wmdp-bio-unlearn-gd.yml",
+        "wmdp-bio-unlearn-npo-sam-beta015-gamma225.yml",
+        "wmdp-bio-unlearn-npo-sam-gamma225.yml",
+        "wmdp-bio-unlearn-npo-sam-gamma450.yml",
+        "wmdp-bio-unlearn-npo-sam-rho003.yml",
+        "wmdp-bio-unlearn-npo-sam.yml",
         "wmdp-bio-unlearn-npo.yml",
         "wmdp-bio-unlearn-ws-alpha-10.yml",
         "wmdp-bio-unlearn-ws-alpha-2.yml",
@@ -801,6 +1046,112 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
         "warmup_steps",
     ):
         assert npo_relearn[key] == cb_relearn[key]
+
+
+def test_npo_sam_configs_and_pipeline() -> None:
+    config_dir = EXAMPLE / "configs"
+    model_id = "di-6.9b-wmdp-bio-unlearn-npo-sam"
+    npo = yaml.safe_load(
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-npo.yml").read_text()
+    )
+    sam = yaml.safe_load(
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam.yml").read_text()
+    )
+    excluded = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
+    assert {key: value for key, value in sam.items() if key not in excluded} == {
+        key: value for key, value in npo.items() if key not in excluded
+    }
+    assert sam["trainer_cls"] == "configs.unlearn.npo_sam.BalancedNPOSAMTrainer"
+    assert sam["output_dir"] == f"artifacts/models/{model_id}"
+    assert (
+        sam["dataset_prepared_path"] == f"artifacts/cache/axolotl/{model_id}/prepared"
+    )
+    assert sam["wandb_name"] == model_id
+    npo_relearn = yaml.safe_load(
+        (config_dir / "relearn/di-6.9b/wmdp-bio-npo-relearn.yml").read_text()
+    )
+    sam_relearn = yaml.safe_load(
+        (config_dir / "relearn/di-6.9b/wmdp-bio-npo-sam-relearn.yml").read_text()
+    )
+    excluded = {"base_model", "dataset_prepared_path", "output_dir", "wandb_name"}
+    assert {
+        key: value for key, value in sam_relearn.items() if key not in excluded
+    } == {key: value for key, value in npo_relearn.items() if key not in excluded}
+    assert sam_relearn["base_model"] == f"artifacts/models/{model_id}/merged"
+    assert sam_relearn["output_dir"] == f"artifacts/models/{model_id}-relearn"
+
+    import os
+
+    previous_cwd = Path.cwd()
+    try:
+        os.chdir(EXAMPLE)
+        pipeline = lilpipe.load("configs/experiments/di-6.9b.yml")
+    finally:
+        os.chdir(previous_cwd)
+    plan = pipeline.select(models=[model_id, f"{model_id}-relearn"]).plan()
+    stages = plan.stage_index
+    assert f"train-{model_id}" in stages
+    assert f"train-{model_id}-relearn" in stages
+    assert (
+        len([stage for stage in stages if model_id in stage and "eval" in stage]) == 4
+    )
+
+
+@pytest.mark.parametrize(
+    ("suffix", "trainer_name", "beta", "gamma", "rho"),
+    [
+        ("rho003", "BalancedNPOSAMRho003Trainer", 0.0225, 1.0, 0.003),
+        ("gamma225", "BalancedNPOSAMGamma225Trainer", 0.0225, 2.25, 0.01),
+        ("gamma450", "BalancedNPOSAMGamma450Trainer", 0.0225, 4.5, 0.01),
+        (
+            "beta015-gamma225",
+            "BalancedNPOSAMBeta015Gamma225Trainer",
+            0.015,
+            2.25,
+            0.01,
+        ),
+    ],
+)
+def test_npo_sam_tuning_configs(
+    suffix: str, trainer_name: str, beta: float, gamma: float, rho: float
+) -> None:
+    config_dir = EXAMPLE / "configs/unlearn/di-6.9b"
+    baseline = yaml.safe_load((config_dir / "wmdp-bio-unlearn-npo-sam.yml").read_text())
+    path = config_dir / f"wmdp-bio-unlearn-npo-sam-{suffix}.yml"
+    variant = yaml.safe_load(path.read_text())
+    model_id = f"di-6.9b-wmdp-bio-unlearn-npo-sam-{suffix}"
+    excluded = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
+    assert {key: value for key, value in variant.items() if key not in excluded} == {
+        key: value for key, value in baseline.items() if key not in excluded
+    }
+    assert variant["trainer_cls"] == f"configs.unlearn.npo_sam.{trainer_name}"
+    assert variant["output_dir"] == f"artifacts/models/{model_id}"
+    assert variant["dataset_prepared_path"] == (
+        f"artifacts/cache/axolotl/{model_id}/prepared"
+    )
+    assert variant["wandb_name"] == model_id
+    comment = path.read_text().splitlines()[1]
+    assert f"beta = {beta}" in comment
+    assert f"gamma = {gamma}" in comment
+    assert f"rho = {rho}" in comment
+
+    relearn_dir = EXAMPLE / "configs/relearn/di-6.9b"
+    relearn = yaml.safe_load(
+        (relearn_dir / f"wmdp-bio-npo-sam-{suffix}-relearn.yml").read_text()
+    )
+    baseline_relearn = yaml.safe_load(
+        (relearn_dir / "wmdp-bio-npo-sam-relearn.yml").read_text()
+    )
+    excluded = {"base_model", "dataset_prepared_path", "output_dir", "wandb_name"}
+    assert {key: value for key, value in relearn.items() if key not in excluded} == {
+        key: value for key, value in baseline_relearn.items() if key not in excluded
+    }
+    assert relearn["base_model"] == f"artifacts/models/{model_id}/merged"
+    assert relearn["output_dir"] == f"artifacts/models/{model_id}-relearn"
+    assert relearn["dataset_prepared_path"] == (
+        f"artifacts/cache/axolotl/{model_id}-relearn/prepared"
+    )
+    assert relearn["wandb_name"] == f"{model_id}-relearn"
 
 
 def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
@@ -970,7 +1321,7 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
     assert f"eval-bio-mcqa-{relearn_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{relearn_id}" in plan.stage_index
-    assert len(plan.stages) == 37
+    assert len(plan.stages) == 67
     npo_id = "di-6.9b-wmdp-bio-unlearn-npo"
     npo = plan.stage_index[f"train-{npo_id}"]
     assert npo.script == "scripts/slurm/train.sbatch"
@@ -1075,6 +1426,16 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         "di-6.9b-wmdp-bio-unlearn-cb-relearn",
         "di-6.9b-wmdp-bio-unlearn-npo",
         "di-6.9b-wmdp-bio-unlearn-npo-relearn",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam-relearn",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam-rho003",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn",
         "di-6.9b-wmdp-bio-unlearn-gd",
         "di-6.9b-wmdp-bio-unlearn-gd-relearn",
         "di-6.9b-wmdp-bio-unlearn-ws-ft-retain",
@@ -1114,6 +1475,16 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "cb-relearn",
         "npo",
         "npo-relearn",
+        "npo-sam",
+        "npo-sam-relearn",
+        "npo-sam-rho003",
+        "npo-sam-gamma225",
+        "npo-sam-gamma450",
+        "npo-sam-beta015-gamma225",
+        "npo-sam-rho003-relearn",
+        "npo-sam-gamma225-relearn",
+        "npo-sam-gamma450-relearn",
+        "npo-sam-beta015-gamma225-relearn",
         "gd",
         "gd-relearn",
         "weight-steering",
@@ -1128,6 +1499,16 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "circuit-breaker-relearn",
         "npo",
         "npo-relearn",
+        "npo-sam",
+        "npo-sam-relearn",
+        "npo-sam-tuning",
+        "npo-sam-tuning",
+        "npo-sam-tuning",
+        "npo-sam-tuning",
+        "npo-sam-tuning-relearn",
+        "npo-sam-tuning-relearn",
+        "npo-sam-tuning-relearn",
+        "npo-sam-tuning-relearn",
         "grad-diff",
         "grad-diff-relearn",
         "weight-steering",

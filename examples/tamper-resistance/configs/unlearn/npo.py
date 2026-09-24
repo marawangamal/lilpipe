@@ -22,7 +22,8 @@ class BalancedNPOTrainer(AxolotlTrainer):
             self.args.data_seed if self.args.data_seed is not None else self.args.seed,
         )
 
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+    @staticmethod
+    def split_sources(inputs):
         source = inputs["cb_source"]
         forget_mask = source == 1
         retain_mask = source == 0
@@ -32,15 +33,22 @@ class BalancedNPOTrainer(AxolotlTrainer):
         fields = ("input_ids", "attention_mask", "labels")
         forget_inputs = {field: inputs[field][forget_mask] for field in fields}
         retain_inputs = {field: inputs[field][retain_mask] for field in fields}
+        return forget_inputs, retain_inputs
 
+    @staticmethod
+    def forget_loss(model, forget_inputs, beta=BETA):
         forget_outputs = model(**forget_inputs)
         current_forget_ce = forget_outputs.loss.float()
         with torch.no_grad(), model.disable_adapter():
             reference_forget_ce = model(**forget_inputs).loss.float()
-        retain_ce = model(**retain_inputs).loss.float()
-
-        forget_loss = -(2 / BETA) * F.logsigmoid(
-            BETA * (current_forget_ce - reference_forget_ce)
+        forget_loss = -(2 / beta) * F.logsigmoid(
+            beta * (current_forget_ce - reference_forget_ce)
         )
+        return forget_loss, forget_outputs
+
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        forget_inputs, retain_inputs = self.split_sources(inputs)
+        forget_loss, forget_outputs = self.forget_loss(model, forget_inputs)
+        retain_ce = model(**retain_inputs).loss.float()
         loss = forget_loss + GAMMA * retain_ce
         return (loss, forget_outputs) if return_outputs else loss

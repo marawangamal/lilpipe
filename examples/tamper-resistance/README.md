@@ -36,7 +36,7 @@ Axolotl's tokenized WMDP/WikiText dataset is stored under
 
 ## Run
 
-Submit the base model, circuit breaker, NPO, GradDiff, and weight-steering methods, and their
+Submit the base model, circuit breaker, NPO, NPO+SAM, GradDiff, and weight-steering methods, and their
 forget-set relearning stages:
 
 ```bash
@@ -64,6 +64,27 @@ fields. The dependent NPO relearning stage merges its adapter and uses the same
 32-step forget-set attack as CB. Both NPO models are evaluated on Robust
 WMDP-Bio and MMLU excluding biology.
 
+NPO+SAM (`di-6.9b-wmdp-bio-unlearn-npo-sam`) keeps NPO's β = 0.0225,
+retain weight γ = 1.0, data, LoRA setup, and 32-step schedule. For each
+microbatch it maximizes the forget loss within a radius ρ = 0.01 in trainable
+LoRA weight space, then accumulates the perturbed forget gradient and the
+unperturbed WikiText retain gradient. Its dependent relearning stage uses the
+same 32-step forget-set attack. This is a controlled LoRA comparison, rather
+than the [paper's](https://arxiv.org/pdf/2502.05374) full-model NPO+SAM tuning.
+Both stages receive Robust WMDP-Bio and MMLU excluding biology evaluations.
+
+The NPO+SAM tuning sweep keeps the data, LoRA setup, optimizer, and 32-step
+schedule fixed. It compares a smaller LoRA perturbation (`rho003`: ρ = 0.003),
+stronger retention (`gamma225`: γ = 2.25), and the released NPO+SAM β/γ pair
+(`beta015-gamma225`: β = 0.015, γ = 2.25). The latter still trains only LoRA
+weights, so it is not a reproduction of the paper's full-model run. Each
+variant uses the same 32-step forget-set relearning attack and both evaluation
+tasks before and after relearning.
+
+A follow-up run doubles the retain weight from γ = 2.25 to γ = 4.5
+(`gamma450`) while keeping β = 0.0225 and ρ = 0.01. It uses the same data,
+LoRA setup, 32-step unlearning and relearning schedules, and evaluations.
+
 GradDiff (`di-6.9b-wmdp-bio-unlearn-gd`) uses the same data, balanced batches,
 rank-8 LoRA setup, and 32-step training schedule as NPO and CB. It minimizes
 `−forget CE + retain CE`, with a retain coefficient of 1.0. Its dependent
@@ -89,5 +110,6 @@ lilpipe results configs/results/di-6.9b.yml
 Axolotl loads the tagged-document strategy and orthogonal trainer from
 `configs/unlearn/utils.py`, as selected by `trainer_cls` and
 `datasets[].type` in the YAML.
-The NPO and GradDiff configs use the same document strategy and balanced sampler,
-with their trainers in `configs/unlearn/npo.py` and `configs/unlearn/gd.py`.
+The NPO, NPO+SAM, and GradDiff configs use the same document strategy and
+balanced sampler, with their trainers in `configs/unlearn/npo.py`,
+`configs/unlearn/npo_sam.py`, and `configs/unlearn/gd.py`.

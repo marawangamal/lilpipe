@@ -65,6 +65,161 @@ models:
         - --mem=64G
         - --time=06:00:00
 
+  di-6.9b-wmdp-bio-unlearn-npo-sam:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam
+    producer:
+      id: train-di-6.9b-wmdp-bio-unlearn-npo-sam
+      script: scripts/slurm/train.sbatch
+      args: [configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam.yml]
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=03:00:00
+
+  di-6.9b-wmdp-bio-unlearn-npo-sam-relearn:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-relearn
+    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam/merged
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-relearn
+    producer:
+      id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-relearn
+      script: scripts/slurm/relearn.sbatch
+      args:
+        - configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam.yml
+        - configs/relearn/di-6.9b/wmdp-bio-npo-sam-relearn.yml
+      depends_on: [di-6.9b-wmdp-bio-unlearn-npo-sam]
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=06:00:00
+
+  di-6.9b-wmdp-bio-unlearn-npo-sam-rho003:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
+    producer:
+      id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
+      script: scripts/slurm/train.sbatch
+      args: [configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam-rho003.yml]
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=03:00:00
+
+  di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
+    producer:
+      id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
+      script: scripts/slurm/train.sbatch
+      args: [configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam-gamma225.yml]
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=03:00:00
+
+  di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
+    producer:
+      id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
+      script: scripts/slurm/train.sbatch
+      args: [configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam-gamma450.yml]
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=03:00:00
+
+  di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
+    base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
+    producer:
+      id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
+      script: scripts/slurm/train.sbatch
+      args: [configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam-beta015-gamma225.yml]
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=03:00:00
+
+  di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
+    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003/merged
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
+    producer:
+      id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
+      script: scripts/slurm/relearn.sbatch
+      args:
+        - configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam-rho003.yml
+        - configs/relearn/di-6.9b/wmdp-bio-npo-sam-rho003-relearn.yml
+      depends_on: [di-6.9b-wmdp-bio-unlearn-npo-sam-rho003]
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=06:00:00
+
+  di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
+    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225/merged
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
+    producer:
+      id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
+      script: scripts/slurm/relearn.sbatch
+      args:
+        - configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam-gamma225.yml
+        - configs/relearn/di-6.9b/wmdp-bio-npo-sam-gamma225-relearn.yml
+      depends_on: [di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225]
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=06:00:00
+
+  di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
+    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450/merged
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
+    producer:
+      id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
+      script: scripts/slurm/relearn.sbatch
+      args:
+        - configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam-gamma450.yml
+        - configs/relearn/di-6.9b/wmdp-bio-npo-sam-gamma450-relearn.yml
+      depends_on: [di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450]
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=06:00:00
+
+  di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn:
+    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
+    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225/merged
+    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
+    producer:
+      id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
+      script: scripts/slurm/relearn.sbatch
+      args:
+        - configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam-beta015-gamma225.yml
+        - configs/relearn/di-6.9b/wmdp-bio-npo-sam-beta015-gamma225-relearn.yml
+      depends_on: [di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225]
+      sbatch_args:
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=06:00:00
+
   di-6.9b-wmdp-bio-unlearn-gd:
     adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
