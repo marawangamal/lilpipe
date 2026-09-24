@@ -661,6 +661,7 @@ def test_orth_cb_config() -> None:
         "wmdp-bio-unlearn-ws-alpha-4.yml",
         "wmdp-bio-unlearn-ws-ft-forget.yml",
         "wmdp-bio-unlearn-ws-ft-retain.yml",
+        "wmdp-bio-unlearn-ws-r1-f01.yml",
         "wmdp-bio-unlearn-ws.yml",
     ]
     config = yaml.safe_load((training_dir / "wmdp-bio-unlearn-cb.yml").read_text())

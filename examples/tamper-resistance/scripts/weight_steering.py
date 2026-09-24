@@ -5,8 +5,24 @@ import os
 import tempfile
 from pathlib import Path
 
-import torch
 import yaml
+
+
+def weighted_adapter_spec(steered):
+    """Return the adapter name and signed retain/forget weights."""
+
+    if "alpha" in steered:
+        if "retain_weight" in steered or "forget_weight" in steered:
+            raise ValueError("set either alpha or separate retain/forget weights")
+        alpha = float(steered["alpha"])
+        name = f"steered_{alpha:g}"
+        weights = [alpha, -alpha]
+    else:
+        retain_weight = float(steered["retain_weight"])
+        forget_weight = float(steered["forget_weight"])
+        name = f"steered_r{retain_weight:g}_f{forget_weight:g}"
+        weights = [retain_weight, -forget_weight]
+    return name.replace(".", "_"), weights
 
 
 def main():
@@ -15,6 +31,7 @@ def main():
     args = parser.parse_args()
     config = yaml.safe_load(Path(args.config).read_text())
 
+    import torch
     from peft import PeftModel
     from transformers import AutoModelForCausalLM
 
@@ -30,10 +47,9 @@ def main():
     )
     model.load_adapter(pair["neg_adapter_name_or_path"], adapter_name="forget")
     for steered in config["steered_adapters"]:
-        alpha = float(steered["alpha"])
-        name = f"steered_{alpha:g}".replace(".", "_")
+        name, weights = weighted_adapter_spec(steered)
         model.add_weighted_adapter(
-            ["retain", "forget"], [alpha, -alpha], name, combination_type="cat"
+            ["retain", "forget"], weights, name, combination_type="cat"
         )
         output = Path(steered["output_path"])
         if (output / "adapter_model.safetensors").exists():
