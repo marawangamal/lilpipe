@@ -84,6 +84,8 @@ tasks before and after relearning.
 A follow-up run doubles the retain weight from γ = 2.25 to γ = 4.5
 (`gamma450`) while keeping β = 0.0225 and ρ = 0.01. It uses the same data,
 LoRA setup, 32-step unlearning and relearning schedules, and evaluations.
+The `gamma900` follow-up doubles the retain weight again to γ = 9.0, with
+the remaining settings fixed.
 
 GradDiff (`di-6.9b-wmdp-bio-unlearn-gd`) uses the same data, balanced batches,
 rank-8 LoRA setup, and 32-step training schedule as NPO and CB. It minimizes

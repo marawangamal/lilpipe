@@ -752,6 +752,7 @@ def test_npo_sam_uses_one_norm_across_trainable_weights(
         ("BalancedNPOSAMRho003Trainer", 0.0225, 1.0, 0.003),
         ("BalancedNPOSAMGamma225Trainer", 0.0225, 2.25, 0.01),
         ("BalancedNPOSAMGamma450Trainer", 0.0225, 4.5, 0.01),
+        ("BalancedNPOSAMGamma900Trainer", 0.0225, 9.0, 0.01),
         ("BalancedNPOSAMBeta015Gamma225Trainer", 0.015, 2.25, 0.01),
     ],
 )
@@ -1067,6 +1068,7 @@ def test_orth_cb_config() -> None:
         "wmdp-bio-unlearn-npo-sam-beta015-gamma225.yml",
         "wmdp-bio-unlearn-npo-sam-gamma225.yml",
         "wmdp-bio-unlearn-npo-sam-gamma450.yml",
+        "wmdp-bio-unlearn-npo-sam-gamma900.yml",
         "wmdp-bio-unlearn-npo-sam-rho003.yml",
         "wmdp-bio-unlearn-npo-sam.yml",
         "wmdp-bio-unlearn-npo.yml",
@@ -1275,6 +1277,7 @@ def test_npo_sam_configs_and_pipeline() -> None:
         ("rho003", "BalancedNPOSAMRho003Trainer", 0.0225, 1.0, 0.003),
         ("gamma225", "BalancedNPOSAMGamma225Trainer", 0.0225, 2.25, 0.01),
         ("gamma450", "BalancedNPOSAMGamma450Trainer", 0.0225, 4.5, 0.01),
+        ("gamma900", "BalancedNPOSAMGamma900Trainer", 0.0225, 9.0, 0.01),
         (
             "beta015-gamma225",
             "BalancedNPOSAMBeta015Gamma225Trainer",
@@ -1610,7 +1613,7 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
     assert f"eval-bio-mcqa-{relearn_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{relearn_id}" in plan.stage_index
-    assert len(plan.stages) == 79
+    assert len(plan.stages) == 85
     npo_id = "di-6.9b-wmdp-bio-unlearn-npo"
     npo = plan.stage_index[f"train-{npo_id}"]
     assert npo.script == "scripts/slurm/train.sbatch"
@@ -1732,10 +1735,12 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         "di-6.9b-wmdp-bio-unlearn-npo-sam-rho003",
         "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225",
         "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900",
         "di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225",
         "di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn",
         "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn",
         "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn",
+        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn",
         "di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn",
         "di-6.9b-wmdp-bio-unlearn-gd",
         "di-6.9b-wmdp-bio-unlearn-gd-relearn",
@@ -1785,10 +1790,12 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "npo-sam-rho003",
         "npo-sam-gamma225",
         "npo-sam-gamma450",
+        "npo-sam-gamma900",
         "npo-sam-beta015-gamma225",
         "npo-sam-rho003-relearn",
         "npo-sam-gamma225-relearn",
         "npo-sam-gamma450-relearn",
+        "npo-sam-gamma900-relearn",
         "npo-sam-beta015-gamma225-relearn",
         "gd",
         "gd-relearn",
@@ -1814,6 +1821,8 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "npo-sam-tuning",
         "npo-sam-tuning",
         "npo-sam-tuning",
+        "npo-sam-tuning",
+        "npo-sam-tuning-relearn",
         "npo-sam-tuning-relearn",
         "npo-sam-tuning-relearn",
         "npo-sam-tuning-relearn",

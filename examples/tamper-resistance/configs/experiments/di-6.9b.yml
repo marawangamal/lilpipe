@@ -16,10 +16,12 @@ models:
   - di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
   - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
   - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
+  - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900
   - di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
   - di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
   - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
   - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
+  - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn
   - di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
   - di-6.9b-wmdp-bio-unlearn-gd
   - di-6.9b-wmdp-bio-unlearn-gd-relearn

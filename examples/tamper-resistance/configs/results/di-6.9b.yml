@@ -54,6 +54,10 @@ rows:
     group: npo-sam-tuning
     label: DI-6.9B-NPO+SAM (γ=4.5)
     root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
+  - id: npo-sam-gamma900
+    group: npo-sam-tuning
+    label: DI-6.9B-NPO+SAM (γ=9.0)
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900
   - id: npo-sam-beta015-gamma225
     group: npo-sam-tuning
     label: DI-6.9B-NPO+SAM (β=0.015, γ=2.25)
@@ -70,6 +74,10 @@ rows:
     group: npo-sam-tuning-relearn
     label: DI-6.9B-NPO+SAM (γ=4.5) + Relearn
     root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
+  - id: npo-sam-gamma900-relearn
+    group: npo-sam-tuning-relearn
+    label: DI-6.9B-NPO+SAM (γ=9.0) + Relearn
+    root: artifacts/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn
   - id: npo-sam-beta015-gamma225-relearn
     group: npo-sam-tuning-relearn
     label: DI-6.9B-NPO+SAM (β=0.015, γ=2.25) + Relearn

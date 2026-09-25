@@ -112,5 +112,9 @@ class BalancedNPOSAMGamma450Trainer(BalancedNPOSAMTrainer):
     gamma = 4.5
 
 
+class BalancedNPOSAMGamma900Trainer(BalancedNPOSAMTrainer):
+    gamma = 9.0
+
+
 class BalancedNPOSAMBeta015Gamma225Trainer(BalancedNPOSAMGamma225Trainer):
     beta = 0.015
