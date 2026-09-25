@@ -7,7 +7,7 @@ from pathlib import Path
 
 import torch
 from datasets import load_dataset
-from peft import PeftModel
+from peft import LoraConfig, PeftModel, get_peft_model
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -57,11 +57,25 @@ def compute_avg_cosine_similarity(grads):
 def main():
     parser = argparse.ArgumentParser(description="LoRA parameter gradient cosine probe")
     parser.add_argument("--model_name_or_path", required=True)
-    parser.add_argument("--adapter_name_or_path", required=True)
+    parser.add_argument("--adapter_name_or_path")
     parser.add_argument("--dataset", default="cais/wmdp-bio-forget-corpus")
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--max_samples", type=int, default=1024)
+
+    # Fresh LoRA adapter configuration.
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--lora_r", type=int, default=8)
+    parser.add_argument("--lora_alpha", type=int, default=8)
+    parser.add_argument("--lora_dropout", type=float, default=0.05)
+    parser.add_argument(
+        "--lora_target_modules",
+        nargs="+",
+        default=("query_key_value", "dense", "dense_h_to_4h", "dense_4h_to_h"),
+    )
+    parser.add_argument(
+        "--lora_layers_to_transform", nargs="+", type=int, default=tuple(range(31))
+    )
     args = parser.parse_args()
 
     # setup
@@ -73,11 +87,25 @@ def main():
         args.model_name_or_path,
         dtype=torch.bfloat16 if device.type == "cuda" else torch.float32,
     )
-    model = PeftModel.from_pretrained(
-        model,
-        args.adapter_name_or_path,
-        is_trainable=True,
-    )
+    if args.adapter_name_or_path:
+        model = PeftModel.from_pretrained(
+            model,
+            args.adapter_name_or_path,
+            is_trainable=True,
+        )
+    else:
+        torch.manual_seed(args.seed)
+        model = get_peft_model(
+            model,
+            LoraConfig(
+                r=args.lora_r,
+                lora_alpha=args.lora_alpha,
+                lora_dropout=args.lora_dropout,
+                target_modules=args.lora_target_modules,
+                layers_to_transform=args.lora_layers_to_transform,
+                task_type="CAUSAL_LM",
+            ),
+        )
     model.to(device)
     model.eval()
 
