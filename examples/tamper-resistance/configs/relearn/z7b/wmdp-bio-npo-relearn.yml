@@ -1,13 +1,13 @@
-base_model: artifacts/mila/models/z7b-wmdp-bio-unlearn-npo
+base_model: artifacts/tamia/models/z7b-wmdp-bio-unlearn-npo
 tokenizer_type: AutoTokenizer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
     type: configs.training.data.wmdp_zephyr
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-unlearn-npo-relearn/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio-unlearn-npo-relearn/prepared
 val_set_size: 0.0
-output_dir: artifacts/mila/models/z7b-wmdp-bio-unlearn-npo-relearn
+output_dir: artifacts/tamia/models/z7b-wmdp-bio-unlearn-npo-relearn
 
 sequence_len: 512
 sample_packing: false

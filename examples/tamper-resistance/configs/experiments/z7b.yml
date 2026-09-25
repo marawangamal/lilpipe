@@ -2,7 +2,7 @@ version: 1
 id: z7b-wmdp-bio-reproduction
 
 registries:
-  models: configs/registries/z7b-models.yml
+  models: configs/registries/models.yml
   evaluations: configs/registries/evals.yml
 
 models:
@@ -11,6 +11,4 @@ models:
   - z7b-wmdp-bio-unlearn-gd
   - z7b-wmdp-bio-unlearn-gd-relearn
 
-evaluations:
-  - bio-mcqa
-  - mmlu-no-bio
+evaluations: []
