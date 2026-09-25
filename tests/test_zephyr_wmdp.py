@@ -63,12 +63,15 @@ def test_four_model_pipeline_and_full_model_paths(monkeypatch):
         config = yaml.safe_load((EXAMPLE / model["producer"]["args"][0]).read_text())
         assert config["output_dir"] == model["local_dir"]
         assert config["max_steps"] == 125
-        assert config["gradient_accumulation_steps"] == 1
+        assert config["gradient_accumulation_steps"] == 4
         assert config["sequence_len"] == 512
         assert config["optimizer"] == "adamw_torch"
         assert config["lr_scheduler"] == "linear"
         assert config["weight_decay"] == 0
         assert config["warmup_steps"] == 12
+        assert config["save_steps"] == 25
+        assert config["save_total_limit"] == 5
+        assert config["save_only_model"] is True
         assert "adapter" not in config
         if model_id.endswith("-relearn"):
             assert config["base_model"] == (
