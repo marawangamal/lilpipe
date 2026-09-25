@@ -107,7 +107,9 @@ def gd_gn_training_module():
 
 
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
-    script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa_ckpts.sbatch").read_text()
+    script = (
+        EXAMPLE / "scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch"
+    ).read_text()
 
     assert 'export HF_HOME="$SCRATCH/.cache/huggingface"' in script
     assert 'export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv"' in script
@@ -145,14 +147,16 @@ def test_z7b_manifest_evaluates_lora_and_fft_trajectories(
 
 
 def test_training_script_is_minimal() -> None:
-    script = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
+    script = (EXAMPLE / "scripts/slurm/mila/train.sbatch").read_text()
 
     assert 'export HF_HOME="$SCRATCH/.cache/huggingface"' in script
-    assert 'export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv"' in script
-    assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-train"' in script
+    assert 'export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv-$SLURM_JOB_ID"' in script
+    assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"' in script
+    assert 'export PATH="$HOME/.local/bin:$PATH"' in script
+    assert 'mkdir -p "$WANDB_DIR"' in script
     assert "uv sync --frozen --group train" in script
     assert 'source "$UV_PROJECT_ENVIRONMENT/bin/activate"' in script
-    assert 'axolotl train "$1" --launcher python' in script
+    assert 'axolotl train "$config"' in script
     assert "prepare_forget_corpus.py" not in script
 
 
@@ -1159,9 +1163,9 @@ def test_relearning_config_and_script() -> None:
     assert config["lr_scheduler"] == "linear"
     assert config["warmup_steps"] == 0
 
-    script = (EXAMPLE / "scripts/slurm/relearn.sbatch").read_text()
+    script = (EXAMPLE / "scripts/slurm/mila/relearn.sbatch").read_text()
     assert 'axolotl merge-lora "$1"' in script
-    assert 'axolotl train "$2" --launcher python' in script
+    assert 'axolotl train "$config"' in script
     assert script.index("merge-lora") < script.index("axolotl train")
 
 
@@ -1506,7 +1510,7 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
     ws = plan.stage_index[f"build-{ws_id}"]
-    assert ws.script == "scripts/slurm/weight_steering.sbatch"
+    assert ws.script == "scripts/slurm/mila/weight_steering.sbatch"
     assert set(ws.depends_on) == {
         f"train-{ws_id}-ft-retain",
         f"train-{ws_id}-ft-forget",
@@ -1517,7 +1521,7 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
         f"artifacts/mila/models/{ws_id}",
         f"artifacts/mila/models/{ws_id}",
     )
-    relearn_script = (EXAMPLE / "scripts/slurm/relearn.sbatch").read_text()
+    relearn_script = (EXAMPLE / "scripts/slurm/mila/relearn.sbatch").read_text()
     assert '--lora-model-dir "$3" --output-dir "$4"' in relearn_script
     for model_id in (ws_id, f"{ws_id}-relearn"):
         assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
@@ -1534,7 +1538,7 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
             {"alpha": float(alpha), "output_path": f"artifacts/mila/models/{model_id}"}
         ]
         stage = plan.stage_index[f"build-{model_id}"]
-        assert stage.script == "scripts/slurm/weight_steering.sbatch"
+        assert stage.script == "scripts/slurm/mila/weight_steering.sbatch"
         assert set(stage.depends_on) == set(ws.depends_on)
         assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
         assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
@@ -1561,10 +1565,10 @@ def test_single_experiment_plans_base_cb_and_relearning(
     orth_id = "di-6.9b-wmdp-bio-lora-unlearn-cb"
     relearn_id = f"{orth_id}-relearn"
     orth = plan.stage_index[f"train-{orth_id}"]
-    assert orth.script == "scripts/slurm/train.sbatch"
+    assert orth.script == "scripts/slurm/mila/train.sbatch"
     assert orth.args == ("configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-cb.yml",)
     relearn = plan.stage_index[f"train-{relearn_id}"]
-    assert relearn.script == "scripts/slurm/relearn.sbatch"
+    assert relearn.script == "scripts/slurm/mila/relearn.sbatch"
     assert relearn.args == (
         "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-cb.yml",
         "configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-cb-relearn.yml",
@@ -1577,10 +1581,10 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert len(plan.stages) == 79
     npo_id = "di-6.9b-wmdp-bio-lora-unlearn-npo"
     npo = plan.stage_index[f"train-{npo_id}"]
-    assert npo.script == "scripts/slurm/train.sbatch"
+    assert npo.script == "scripts/slurm/mila/train.sbatch"
     assert npo.args == ("configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo.yml",)
     npo_relearn = plan.stage_index[f"train-{npo_id}-relearn"]
-    assert npo_relearn.script == "scripts/slurm/relearn.sbatch"
+    assert npo_relearn.script == "scripts/slurm/mila/relearn.sbatch"
     assert npo_relearn.args == (
         "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo.yml",
         "configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-relearn.yml",
@@ -1591,10 +1595,10 @@ def test_single_experiment_plans_base_cb_and_relearning(
         assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
     gd_id = "di-6.9b-wmdp-bio-lora-unlearn-gd"
     gd = plan.stage_index[f"train-{gd_id}"]
-    assert gd.script == "scripts/slurm/train.sbatch"
+    assert gd.script == "scripts/slurm/mila/train.sbatch"
     assert gd.args == ("configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd.yml",)
     gd_relearn = plan.stage_index[f"train-{gd_id}-relearn"]
-    assert gd_relearn.script == "scripts/slurm/relearn.sbatch"
+    assert gd_relearn.script == "scripts/slurm/mila/relearn.sbatch"
     assert gd_relearn.args == (
         "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd.yml",
         "configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-gd-relearn.yml",
@@ -1629,7 +1633,7 @@ def test_mmlu_no_bio_group_excludes_biology_overlap() -> None:
 
 
 def test_mmlu_no_bio_evaluator_is_zero_shot() -> None:
-    script = (EXAMPLE / "scripts/slurm/eval_mmlu_no_bio_single.sbatch").read_text()
+    script = (EXAMPLE / "scripts/slurm/mila/eval_mmlu_no_bio_single.sbatch").read_text()
     assert (
         'export HF_DATASETS_CACHE="$SLURM_TMPDIR/.cache/huggingface/datasets"' in script
     )
@@ -1641,7 +1645,7 @@ def test_mmlu_no_bio_evaluator_is_zero_shot() -> None:
 
 
 def test_mmlu_no_bio_trajectory_evaluator_accepts_last_step() -> None:
-    script = (EXAMPLE / "scripts/slurm/eval_mmlu_no_bio_ckpts.sbatch").read_text()
+    script = (EXAMPLE / "scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch").read_text()
     assert "SLURM_ARRAY_TASK_ID" in script
     assert "step=$((${SLURM_ARRAY_TASK_ID" in script
     assert "* checkpoint_frequency))" in script
@@ -1654,7 +1658,9 @@ def test_mmlu_no_bio_trajectory_evaluator_accepts_last_step() -> None:
 
 
 def test_final_adapter_evaluator_uses_direct_adapter_without_array() -> None:
-    script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa_single.sbatch").read_text()
+    script = (
+        EXAMPLE / "scripts/slurm/mila/eval_wmdp_bio_mcqa_single.sbatch"
+    ).read_text()
     assert "adapter_name_or_path=${3:?missing adapter name or path}" in script
     assert "result_root=${4:?missing result root}" in script
     assert 'if [[ "$adapter_name_or_path" != "-" ]]' in script

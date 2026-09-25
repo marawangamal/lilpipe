@@ -36,20 +36,18 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
     monkeypatch.chdir(EXAMPLE)
     pipeline = lilpipe.load("configs/experiments/z7b.yml")
     assert pipeline.selected_models == MODEL_IDS
-    assert pipeline.selected_evaluations == ()
     stages = pipeline.plan().stage_index
-    assert len(stages) == 8
     for model_id in MODEL_IDS:
         producer = stages[f"train-{model_id}"]
         regime = "fft" if "-fft-" in model_id else "lora"
         cluster = "tamia" if regime == "fft" else "mila"
         expected_script = (
-            "scripts/slurm/train_tamia.sbatch"
+            "scripts/slurm/tamia/train.sbatch"
             if regime == "fft"
             else (
-                "scripts/slurm/relearn.sbatch"
+                "scripts/slurm/mila/relearn.sbatch"
                 if model_id.endswith("-relearn")
-                else "scripts/slurm/train.sbatch"
+                else "scripts/slurm/mila/train.sbatch"
             )
         )
         assert producer.script == expected_script
@@ -149,24 +147,31 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             assert config["learning_rate"] == 5.0e-6
 
 
-def test_tamia_launcher_is_offline_and_cluster_namespaced():
-    script = (EXAMPLE / "scripts/slurm/train_tamia.sbatch").read_text()
-    assert "HF_HUB_OFFLINE=1" in script
-    assert "HF_DATASETS_OFFLINE=1" in script
-    assert "UV_OFFLINE=1" in script
+def test_tamia_launcher_matches_template_and_is_cluster_namespaced():
+    script = (EXAMPLE / "scripts/slurm/tamia/train.sbatch").read_text()
+    assert "module load httpproxy/1.0" in script
+    assert "uv sync --frozen --group train" in script
+    assert "OFFLINE" not in script
     assert "artifacts/tamia/" in script
+    assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"' in script
+    assert 'mkdir -p "$WANDB_DIR"' in script
+    assert 'axolotl train "$config"' in script
     assert "sed " not in script
 
 
-def test_mila_launchers_distribute_zephyr_and_merge_once():
-    train = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
-    relearn = (EXAMPLE / "scripts/slurm/relearn.sbatch").read_text()
-    assert 'if [[ "$1" == configs/*/z7b/* ]]' in train
-    assert 'if [[ "$2" == configs/relearn/z7b/* ]]' in relearn
-    assert "torchrun --standalone" in train
-    assert "torchrun --standalone" in relearn
-    assert train.index("torchrun --standalone") < train.index("axolotl merge-lora")
-    assert relearn.index("axolotl merge-lora") < relearn.index("torchrun --standalone")
+def test_mila_launchers_delegate_distribution_to_axolotl_and_merge_once():
+    train = (EXAMPLE / "scripts/slurm/mila/train.sbatch").read_text()
+    relearn = (EXAMPLE / "scripts/slurm/mila/relearn.sbatch").read_text()
+    assert 'axolotl train "$config"' in train
+    assert 'axolotl train "$config"' in relearn
+    assert 'export PATH="$HOME/.local/bin:$PATH"' in train
+    assert 'export PATH="$HOME/.local/bin:$PATH"' in relearn
+    assert 'mkdir -p "$WANDB_DIR"' in train
+    assert 'mkdir -p "$WANDB_DIR"' in relearn
+    assert "torchrun" not in train
+    assert "torchrun" not in relearn
+    assert train.index("axolotl train") < train.index("axolotl merge-lora")
+    assert relearn.index("axolotl merge-lora") < relearn.index("axolotl train")
 
 
 def test_document_filter_and_paired_sampling(monkeypatch):

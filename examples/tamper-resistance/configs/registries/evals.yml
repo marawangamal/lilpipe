@@ -1,6 +1,6 @@
 evaluations:
   mmlu-no-bio:
-    script: scripts/slurm/eval_mmlu_no_bio_single.sbatch
+    script: scripts/slurm/mila/eval_mmlu_no_bio_single.sbatch
     args:
       - "{model.id}"
       - "{model.base_model_name_or_path}"
@@ -13,7 +13,7 @@ evaluations:
       - --time=00:30:00
       - --exclude=cn-c034,cn-l030,cn-l055
   bio-mcqa:
-    script: scripts/slurm/eval_wmdp_bio_mcqa_single.sbatch
+    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_single.sbatch
     args:
       - "{model.id}"
       - "{model.base_model_name_or_path}"
@@ -26,7 +26,7 @@ evaluations:
       - --time=00:30:00
       - --exclude=cn-c034,cn-l030,cn-l055
   mmlu-no-bio-ckpts-max125-freq25:
-    script: scripts/slurm/eval_mmlu_no_bio_ckpts.sbatch
+    script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
     args:
       - "{model.id}"
       - "{model.base_model_name_or_path}"
@@ -42,7 +42,7 @@ evaluations:
       - --time=00:30:00
       - --exclude=cn-c034,cn-l030,cn-l055
   bio-mcqa-ckpts-max125-freq25:
-    script: scripts/slurm/eval_wmdp_bio_mcqa_ckpts.sbatch
+    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
     args:
       - "{model.id}"
       - "{model.base_model_name_or_path}"

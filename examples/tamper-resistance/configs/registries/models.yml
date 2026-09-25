@@ -9,7 +9,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-cb
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-cb
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-cb.yml]
       sbatch_args:
         - --gres=gpu:l40s:1
@@ -23,7 +23,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-cb-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-cb-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-cb.yml
         - configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-cb-relearn.yml
@@ -40,7 +40,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo.yml]
       sbatch_args:
         - --gres=gpu:l40s:1
@@ -54,7 +54,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo.yml
         - configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-relearn.yml
@@ -71,7 +71,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam.yml]
       sbatch_args:
         - --gres=gpu:l40s:1
@@ -85,7 +85,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam.yml
         - configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-relearn.yml
@@ -102,7 +102,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-rho003.yml]
       sbatch_args:
         - --gres=gpu:l40s:1
@@ -116,7 +116,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-gamma225.yml]
       sbatch_args:
         - --gres=gpu:l40s:1
@@ -130,7 +130,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-gamma450.yml]
       sbatch_args:
         - --gres=gpu:l40s:1
@@ -144,7 +144,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-gamma900.yml]
       sbatch_args:
         - --gres=gpu:l40s:1
@@ -158,7 +158,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225.yml]
       sbatch_args:
         - --gres=gpu:l40s:1
@@ -172,7 +172,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-rho003.yml
         - configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-rho003-relearn.yml
@@ -189,7 +189,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-gamma225.yml
         - configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-gamma225-relearn.yml
@@ -206,7 +206,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-gamma450.yml
         - configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-gamma450-relearn.yml
@@ -223,7 +223,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-gamma900.yml
         - configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-gamma900-relearn.yml
@@ -240,7 +240,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225.yml
         - configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225-relearn.yml
@@ -257,7 +257,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-gd
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-gd
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd.yml]
       sbatch_args:
         - --gres=gpu:l40s:1
@@ -271,7 +271,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-gd-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-gd-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd.yml
         - configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-gd-relearn.yml
@@ -288,7 +288,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-gd-gn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-gd-gn
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn.yml]
       sbatch_args:
         - --gres=gpu:a100l:1
@@ -302,7 +302,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-gd-gn-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-gd-gn-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn.yml
         - configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn-relearn.yml
@@ -319,7 +319,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-ws-ft-retain
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-ws-ft-retain
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-ws-ft-retain.yml]
       sbatch_args: &ws_train_resources
         - --gres=gpu:l40s:1
@@ -333,7 +333,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-ws-ft-forget
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-ws-ft-forget
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-ws-ft-forget.yml]
       sbatch_args: *ws_train_resources
 
@@ -343,7 +343,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-ws
     producer:
       id: build-di-6.9b-wmdp-bio-lora-unlearn-ws
-      script: scripts/slurm/weight_steering.sbatch
+      script: scripts/slurm/mila/weight_steering.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-ws.yml]
       depends_on:
         - di-6.9b-wmdp-bio-lora-unlearn-ws-ft-retain
@@ -360,7 +360,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-ws-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-lora-unlearn-ws-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-ws-ft-retain.yml
         - configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-ws-relearn.yml
@@ -379,7 +379,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-ws-a2
     producer:
       id: build-di-6.9b-wmdp-bio-lora-unlearn-ws-a2
-      script: scripts/slurm/weight_steering.sbatch
+      script: scripts/slurm/mila/weight_steering.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-ws-alpha-2.yml]
       depends_on:
         - di-6.9b-wmdp-bio-lora-unlearn-ws-ft-retain
@@ -396,7 +396,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-ws-a4
     producer:
       id: build-di-6.9b-wmdp-bio-lora-unlearn-ws-a4
-      script: scripts/slurm/weight_steering.sbatch
+      script: scripts/slurm/mila/weight_steering.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-ws-alpha-4.yml]
       depends_on:
         - di-6.9b-wmdp-bio-lora-unlearn-ws-ft-retain
@@ -413,7 +413,7 @@ models:
     local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-ws-a10
     producer:
       id: build-di-6.9b-wmdp-bio-lora-unlearn-ws-a10
-      script: scripts/slurm/weight_steering.sbatch
+      script: scripts/slurm/mila/weight_steering.sbatch
       args: [configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-ws-alpha-10.yml]
       depends_on:
         - di-6.9b-wmdp-bio-lora-unlearn-ws-ft-retain
@@ -430,7 +430,7 @@ models:
     local_dir: artifacts/tamia/models/z7b-wmdp-bio-fft-unlearn-npo
     producer:
       id: train-z7b-wmdp-bio-fft-unlearn-npo
-      script: scripts/slurm/train_tamia.sbatch
+      script: scripts/slurm/tamia/train.sbatch
       args: [configs/unlearn/z7b/wmdp-bio-fft-unlearn-npo.yml]
       sbatch_args: &tamia_training
         - --partition=gpubase_bynode_b1
@@ -445,7 +445,7 @@ models:
     local_dir: artifacts/tamia/models/z7b-wmdp-bio-fft-unlearn-npo-relearn
     producer:
       id: train-z7b-wmdp-bio-fft-unlearn-npo-relearn
-      script: scripts/slurm/train_tamia.sbatch
+      script: scripts/slurm/tamia/train.sbatch
       args: [configs/relearn/z7b/wmdp-bio-fft-unlearn-npo-relearn.yml]
       depends_on: [z7b-wmdp-bio-fft-unlearn-npo]
       sbatch_args: *tamia_training
@@ -456,7 +456,7 @@ models:
     local_dir: artifacts/tamia/models/z7b-wmdp-bio-fft-unlearn-gd
     producer:
       id: train-z7b-wmdp-bio-fft-unlearn-gd
-      script: scripts/slurm/train_tamia.sbatch
+      script: scripts/slurm/tamia/train.sbatch
       args: [configs/unlearn/z7b/wmdp-bio-fft-unlearn-gd.yml]
       sbatch_args: *tamia_training
 
@@ -466,7 +466,7 @@ models:
     local_dir: artifacts/tamia/models/z7b-wmdp-bio-fft-unlearn-gd-relearn
     producer:
       id: train-z7b-wmdp-bio-fft-unlearn-gd-relearn
-      script: scripts/slurm/train_tamia.sbatch
+      script: scripts/slurm/tamia/train.sbatch
       args: [configs/relearn/z7b/wmdp-bio-fft-unlearn-gd-relearn.yml]
       depends_on: [z7b-wmdp-bio-fft-unlearn-gd]
       sbatch_args: *tamia_training
@@ -477,7 +477,7 @@ models:
     local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo
     producer:
       id: train-z7b-wmdp-bio-lora-unlearn-npo
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/z7b/wmdp-bio-lora-unlearn-npo.yml, --merge]
       sbatch_args: &mila_zephyr_training
         - --gres=gpu:l40s:4
@@ -491,7 +491,7 @@ models:
     local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-relearn
     producer:
       id: train-z7b-wmdp-bio-lora-unlearn-npo-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/z7b/wmdp-bio-lora-unlearn-npo.yml
         - configs/relearn/z7b/wmdp-bio-lora-unlearn-npo-relearn.yml
@@ -504,7 +504,7 @@ models:
     local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd
     producer:
       id: train-z7b-wmdp-bio-lora-unlearn-gd
-      script: scripts/slurm/train.sbatch
+      script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/z7b/wmdp-bio-lora-unlearn-gd.yml, --merge]
       sbatch_args: *mila_zephyr_training
 
@@ -514,7 +514,7 @@ models:
     local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-relearn
     producer:
       id: train-z7b-wmdp-bio-lora-unlearn-gd-relearn
-      script: scripts/slurm/relearn.sbatch
+      script: scripts/slurm/mila/relearn.sbatch
       args:
         - configs/unlearn/z7b/wmdp-bio-lora-unlearn-gd.yml
         - configs/relearn/z7b/wmdp-bio-lora-unlearn-gd-relearn.yml
