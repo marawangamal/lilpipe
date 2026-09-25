@@ -70,7 +70,11 @@ def sequence_cross_entropy(logits, labels):
     return (token_losses * valid).sum(dim=1) / valid.sum(dim=1).clamp_min(1)
 
 
-class FullModelNPOTrainer(PairedSourceSamplerMixin, BalancedNPOTrainer):
+class PairedNPOTrainer(PairedSourceSamplerMixin, BalancedNPOTrainer):
+    """LoRA NPO with paired sampling and the disabled adapter as reference."""
+
+
+class FullModelNPOTrainer(PairedNPOTrainer):
     """NPO against a separate frozen Zephyr reference, plus retain CE."""
 
     def __init__(self, *args, **kwargs):

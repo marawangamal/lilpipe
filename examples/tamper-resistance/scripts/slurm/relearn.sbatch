@@ -15,4 +15,9 @@ if [[ $# -ge 4 ]]; then
 else
   axolotl merge-lora "$1"
 fi
-axolotl train "$2" --launcher python
+if [[ "$2" == configs/relearn/z7b/* ]]; then
+  torchrun --standalone --nproc_per_node="${SLURM_GPUS_ON_NODE:?}" \
+    -m axolotl.cli.train "$2"
+else
+  axolotl train "$2" --launcher python
+fi

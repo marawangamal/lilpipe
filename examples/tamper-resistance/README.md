@@ -32,7 +32,7 @@ uv sync --group eval
 Slurm jobs install clean environments and uv caches under `$SLURM_TMPDIR`.
 The persistent environments above are only for submitting pipelines and plotting.
 Axolotl's tokenized WMDP/WikiText dataset is stored under
-`artifacts/mila/cache/axolotl/di-6.9b-wmdp-bio-unlearn-cb/prepared`.
+`artifacts/mila/cache/axolotl/di-6.9b-wmdp-bio-lora-unlearn-cb/prepared`.
 
 ## Run
 
@@ -64,7 +64,7 @@ fields. The dependent NPO relearning stage merges its adapter and uses the same
 32-step forget-set attack as CB. Both NPO models are evaluated on Robust
 WMDP-Bio and MMLU excluding biology.
 
-NPO+SAM (`di-6.9b-wmdp-bio-unlearn-npo-sam`) keeps NPO's β = 0.0225,
+NPO+SAM (`di-6.9b-wmdp-bio-lora-unlearn-npo-sam`) keeps NPO's β = 0.0225,
 retain weight γ = 1.0, data, LoRA setup, and 32-step schedule. For each
 microbatch it maximizes the forget loss within a radius ρ = 0.01 in trainable
 LoRA weight space, then accumulates the perturbed forget gradient and the
@@ -87,14 +87,14 @@ LoRA setup, 32-step unlearning and relearning schedules, and evaluations.
 The `gamma900` follow-up doubles the retain weight again to γ = 9.0, with
 the remaining settings fixed.
 
-GradDiff (`di-6.9b-wmdp-bio-unlearn-gd`) uses the same data, balanced batches,
+GradDiff (`di-6.9b-wmdp-bio-lora-unlearn-gd`) uses the same data, balanced batches,
 rank-8 LoRA setup, and 32-step training schedule as NPO and CB. It minimizes
 `−0.1 × forget CE + 1.0 × retain CE`. Its dependent
-relearning model (`di-6.9b-wmdp-bio-unlearn-gd-relearn`) merges the GradDiff
+relearning model (`di-6.9b-wmdp-bio-lora-unlearn-gd-relearn`) merges the GradDiff
 adapter and follows the same 32-step forget-set attack schedule as NPO. Both
 models receive the Robust WMDP-Bio and MMLU excluding biology evaluations.
 
-GD-GN (`di-6.9b-wmdp-bio-unlearn-gd-gn`) uses balanced forget and retain
+GD-GN (`di-6.9b-wmdp-bio-lora-unlearn-gd-gn`) uses balanced forget and retain
 batches and the same rank-8 LoRA setup. Its objective is
 `−forget CE + 0.01 × ||∇LoRA forget CE||₂ + retain CE`. The gradient norm stays
 in the autograd graph so training includes its second-order derivative. Its

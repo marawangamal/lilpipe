@@ -7,31 +7,31 @@ registries:
 
 models:
   - di-6.9b-base
-  - di-6.9b-wmdp-bio-unlearn-cb
-  - di-6.9b-wmdp-bio-unlearn-cb-relearn
-  - di-6.9b-wmdp-bio-unlearn-npo
-  - di-6.9b-wmdp-bio-unlearn-npo-relearn
-  - di-6.9b-wmdp-bio-unlearn-npo-sam
-  - di-6.9b-wmdp-bio-unlearn-npo-sam-relearn
-  - di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
-  - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
-  - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
-  - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900
-  - di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
-  - di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
-  - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
-  - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
-  - di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn
-  - di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
-  - di-6.9b-wmdp-bio-unlearn-gd
-  - di-6.9b-wmdp-bio-unlearn-gd-relearn
-  - di-6.9b-wmdp-bio-unlearn-gd-gn
-  - di-6.9b-wmdp-bio-unlearn-gd-gn-relearn
-  - di-6.9b-wmdp-bio-unlearn-ws
-  - di-6.9b-wmdp-bio-unlearn-ws-relearn
-  - di-6.9b-wmdp-bio-unlearn-ws-a2
-  - di-6.9b-wmdp-bio-unlearn-ws-a4
-  - di-6.9b-wmdp-bio-unlearn-ws-a10
+  - di-6.9b-wmdp-bio-lora-unlearn-cb
+  - di-6.9b-wmdp-bio-lora-unlearn-cb-relearn
+  - di-6.9b-wmdp-bio-lora-unlearn-npo
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-relearn
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam-relearn
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003-relearn
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225-relearn
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450-relearn
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900-relearn
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225-relearn
+  - di-6.9b-wmdp-bio-lora-unlearn-gd
+  - di-6.9b-wmdp-bio-lora-unlearn-gd-relearn
+  - di-6.9b-wmdp-bio-lora-unlearn-gd-gn
+  - di-6.9b-wmdp-bio-lora-unlearn-gd-gn-relearn
+  - di-6.9b-wmdp-bio-lora-unlearn-ws
+  - di-6.9b-wmdp-bio-lora-unlearn-ws-relearn
+  - di-6.9b-wmdp-bio-lora-unlearn-ws-a2
+  - di-6.9b-wmdp-bio-lora-unlearn-ws-a4
+  - di-6.9b-wmdp-bio-lora-unlearn-ws-a10
 
 evaluations:
   - bio-mcqa

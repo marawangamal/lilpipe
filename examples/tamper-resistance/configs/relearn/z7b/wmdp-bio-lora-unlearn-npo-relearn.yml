@@ -1,0 +1,44 @@
+base_model: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo/merged
+tokenizer_type: AutoTokenizer
+datasets:
+  - path: cais/wmdp-bio-forget-corpus
+    split: train
+    type: configs.training.data.wmdp_zephyr
+dataset_num_proc: 8
+dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-unlearn-npo-relearn/prepared
+val_set_size: 0.0
+output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-relearn
+
+adapter: lora
+lora_r: 8
+lora_alpha: 8
+lora_dropout: 0.05
+lora_target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+sequence_len: 512
+sample_packing: false
+pad_to_sequence_len: false
+remove_unused_columns: true
+train_on_inputs: true
+micro_batch_size: 1
+gradient_accumulation_steps: 4
+max_steps: 125
+learning_rate: 1.0e-5
+optimizer: adamw_torch
+weight_decay: 0.0
+lr_scheduler: linear
+warmup_steps: 12
+max_grad_norm: 1.0
+
+bf16: true
+tf32: true
+gradient_checkpointing: true
+seed: 42
+eval_strategy: "no"
+save_strategy: steps
+save_steps: 25
+save_total_limit: 5
+save_only_model: true
+logging_steps: 1
+wandb_project: lp-tamper-resistance
+wandb_name: z7b-wmdp-bio-lora-unlearn-npo-relearn

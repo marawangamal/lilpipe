@@ -20,21 +20,21 @@ def load_steering_module():
 
 def test_separate_weights_match_requested_grad_diff_ratio() -> None:
     config = yaml.safe_load(
-        (ROOT / "configs/unlearn/di-6.9b/wmdp-bio-unlearn-ws-r1-f01.yml").read_text()
+        (ROOT / "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-ws-r1-f01.yml").read_text()
     )
     assert config["base_model_name_or_path"] == ("EleutherAI/deep-ignorance-unfiltered")
     assert config["adapter_pairs"] == [
         {
             "pos_adapter_name_or_path": (
-                "artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-ft-retain"
+                "artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-ws-ft-retain"
             ),
             "neg_adapter_name_or_path": (
-                "artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-ft-forget"
+                "artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-ws-ft-forget"
             ),
         }
     ]
     steered = config["steered_adapters"][0]
-    assert steered["output_path"].endswith("di-6.9b-wmdp-bio-unlearn-ws-r1-f01")
+    assert steered["output_path"].endswith("di-6.9b-wmdp-bio-lora-unlearn-ws-r1-f01")
     assert load_steering_module().weighted_adapter_spec(steered) == (
         "steered_r1_f0_1",
         [1.0, -0.1],

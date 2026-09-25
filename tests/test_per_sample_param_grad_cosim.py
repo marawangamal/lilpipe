@@ -63,7 +63,7 @@ def test_ghost_products_and_cosine_match_dense_autograd(tmp_path):
 def test_rows_and_cumulative_offsets(tmp_path):
     generator = load_script("per_sample_param_grad_cosim_gen_results")
     for method in generator.METHODS:
-        root = tmp_path / "models" / f"di-6.9b-wmdp-bio-unlearn-{method}"
+        root = tmp_path / "models" / f"di-6.9b-wmdp-bio-lora-unlearn-{method}"
         (root / "merged").mkdir(parents=True)
         for adapter in (root, Path(f"{root}-relearn")):
             for step in generator.STEPS:

@@ -21,103 +21,103 @@ rows:
   - id: circuit-breaker
     group: circuit-breaker
     label: DI-6.9B-CB
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-cb
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-cb
   - id: cb-relearn
     group: circuit-breaker-relearn
     label: DI-6.9B-CB + Relearn
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-cb-relearn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-cb-relearn
   - id: npo
     group: npo
     label: DI-6.9B-NPO
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo
   - id: npo-relearn
     group: npo-relearn
     label: DI-6.9B-NPO + Relearn
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-relearn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-relearn
   - id: npo-sam
     group: npo-sam
     label: DI-6.9B-NPO+SAM
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam
   - id: npo-sam-relearn
     group: npo-sam-relearn
     label: DI-6.9B-NPO+SAM + Relearn
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-relearn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-relearn
   - id: npo-sam-rho003
     group: npo-sam-tuning
     label: DI-6.9B-NPO+SAM (ρ=0.003)
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003
   - id: npo-sam-gamma225
     group: npo-sam-tuning
     label: DI-6.9B-NPO+SAM (γ=2.25)
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225
   - id: npo-sam-gamma450
     group: npo-sam-tuning
     label: DI-6.9B-NPO+SAM (γ=4.5)
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450
   - id: npo-sam-gamma900
     group: npo-sam-tuning
     label: DI-6.9B-NPO+SAM (γ=9.0)
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900
   - id: npo-sam-beta015-gamma225
     group: npo-sam-tuning
     label: DI-6.9B-NPO+SAM (β=0.015, γ=2.25)
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225
   - id: npo-sam-rho003-relearn
     group: npo-sam-tuning-relearn
     label: DI-6.9B-NPO+SAM (ρ=0.003) + Relearn
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003-relearn
   - id: npo-sam-gamma225-relearn
     group: npo-sam-tuning-relearn
     label: DI-6.9B-NPO+SAM (γ=2.25) + Relearn
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225-relearn
   - id: npo-sam-gamma450-relearn
     group: npo-sam-tuning-relearn
     label: DI-6.9B-NPO+SAM (γ=4.5) + Relearn
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450-relearn
   - id: npo-sam-gamma900-relearn
     group: npo-sam-tuning-relearn
     label: DI-6.9B-NPO+SAM (γ=9.0) + Relearn
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900-relearn
   - id: npo-sam-beta015-gamma225-relearn
     group: npo-sam-tuning-relearn
     label: DI-6.9B-NPO+SAM (β=0.015, γ=2.25) + Relearn
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225-relearn
   - id: gd
     group: grad-diff
     label: DI-6.9B-GradDiff
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-gd
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-gd
   - id: gd-relearn
     group: grad-diff-relearn
     label: DI-6.9B-GradDiff + Relearn
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-gd-relearn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-gd-relearn
   - id: gd-gn
     group: gd-gn
     label: DI-6.9B-GD-GN
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-gd-gn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-gd-gn
   - id: gd-gn-relearn
     group: gd-gn-relearn
     label: DI-6.9B-GD-GN + Relearn
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-gd-gn-relearn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-gd-gn-relearn
   - id: weight-steering
     group: weight-steering
     label: DI-6.9B-WS
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-ws
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-ws
   - id: ws-relearn
     group: weight-steering-relearn
     label: DI-6.9B-WS + Relearn
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-ws-relearn
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-ws-relearn
   - id: ws-a2
     group: weight-steering
     label: DI-6.9B-WS α=2
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-ws-a2
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-ws-a2
   - id: ws-a4
     group: weight-steering
     label: DI-6.9B-WS α=4
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-ws-a4
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-ws-a4
   - id: ws-a10
     group: weight-steering
     label: DI-6.9B-WS α=10
-    root: artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-ws-a10
+    root: artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-ws-a10
 
 metrics:
   - column: wmdp-bio

@@ -1,7 +1,8 @@
-"""Regression coverage for the four-model Zephyr WMDP pipeline."""
+"""Regression coverage for Zephyr FFT and LoRA WMDP pipelines."""
 
 import importlib.util
 import math
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -12,10 +13,14 @@ import lilpipe
 
 EXAMPLE = Path(__file__).resolve().parents[1] / "examples" / "tamper-resistance"
 MODEL_IDS = (
-    "z7b-wmdp-bio-unlearn-npo",
-    "z7b-wmdp-bio-unlearn-npo-relearn",
-    "z7b-wmdp-bio-unlearn-gd",
-    "z7b-wmdp-bio-unlearn-gd-relearn",
+    "z7b-wmdp-bio-fft-unlearn-npo",
+    "z7b-wmdp-bio-fft-unlearn-npo-relearn",
+    "z7b-wmdp-bio-fft-unlearn-gd",
+    "z7b-wmdp-bio-fft-unlearn-gd-relearn",
+    "z7b-wmdp-bio-lora-unlearn-npo",
+    "z7b-wmdp-bio-lora-unlearn-npo-relearn",
+    "z7b-wmdp-bio-lora-unlearn-gd",
+    "z7b-wmdp-bio-lora-unlearn-gd-relearn",
 )
 
 
@@ -27,26 +32,45 @@ def module(path, name):
     return result
 
 
-def test_four_model_pipeline_and_full_model_paths(monkeypatch):
+def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
     monkeypatch.chdir(EXAMPLE)
     pipeline = lilpipe.load("configs/experiments/z7b.yml")
     assert pipeline.selected_models == MODEL_IDS
     assert pipeline.selected_evaluations == ()
     stages = pipeline.plan().stage_index
-    assert len(stages) == 4
+    assert len(stages) == 8
     for model_id in MODEL_IDS:
         producer = stages[f"train-{model_id}"]
-        assert producer.script == "scripts/slurm/train_tamia.sbatch"
-        assert "--partition=gpubase_bynode_b1" in producer.sbatch_args
-        assert "--gpus-per-node=h100:4" in producer.sbatch_args
+        regime = "fft" if "-fft-" in model_id else "lora"
+        cluster = "tamia" if regime == "fft" else "mila"
+        expected_script = (
+            "scripts/slurm/train_tamia.sbatch"
+            if regime == "fft"
+            else (
+                "scripts/slurm/relearn.sbatch"
+                if model_id.endswith("-relearn")
+                else "scripts/slurm/train.sbatch"
+            )
+        )
+        assert producer.script == expected_script
+        expected_resource = (
+            "--gpus-per-node=h100:4" if regime == "fft" else "--gres=gpu:l40s:4"
+        )
+        assert expected_resource in producer.sbatch_args
         method = "npo" if "-npo" in model_id else "gd"
         config_kind = "relearn" if model_id.endswith("-relearn") else "unlearn"
-        config_name = (
-            f"wmdp-bio-{method}-relearn.yml"
-            if config_kind == "relearn"
-            else f"wmdp-bio-unlearn-{method}.yml"
-        )
-        assert producer.args == (f"configs/{config_kind}/z7b/{config_name}",)
+        config_name = f"wmdp-bio-{regime}-unlearn-{method}"
+        if config_kind == "relearn":
+            config_name += "-relearn"
+        expected_args = (f"configs/{config_kind}/z7b/{config_name}.yml",)
+        if regime == "lora" and config_kind == "unlearn":
+            expected_args += ("--merge",)
+        if regime == "lora" and config_kind == "relearn":
+            expected_args = (
+                f"configs/unlearn/z7b/wmdp-bio-lora-unlearn-{method}.yml",
+                *expected_args,
+            )
+        assert producer.args == expected_args
         expected = (
             (f"train-{model_id.removesuffix('-relearn')}",)
             if model_id.endswith("-relearn")
@@ -54,14 +78,31 @@ def test_four_model_pipeline_and_full_model_paths(monkeypatch):
         )
         assert producer.depends_on == expected
 
-    registry = yaml.safe_load(
-        (EXAMPLE / "configs/registries/models.yml").read_text()
-    )["models"]
+    registry = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
+        "models"
+    ]
     for model_id in MODEL_IDS:
         model = registry[model_id]
-        assert model["adapter_name_or_path"] == "-"
-        assert model["base_model_name_or_path"] == f"artifacts/tamia/models/{model_id}"
+        regime = "fft" if "-fft-" in model_id else "lora"
+        cluster = "tamia" if regime == "fft" else "mila"
+        if regime == "fft":
+            assert model["adapter_name_or_path"] == "-"
+            assert (
+                model["base_model_name_or_path"] == f"artifacts/tamia/models/{model_id}"
+            )
+        else:
+            assert model["adapter_name_or_path"] == f"artifacts/mila/models/{model_id}"
+            expected_base = (
+                f"artifacts/mila/models/{model_id.removesuffix('-relearn')}/merged"
+                if model_id.endswith("-relearn")
+                else "HuggingFaceH4/zephyr-7b-beta"
+            )
+            assert model["base_model_name_or_path"] == expected_base
         config = yaml.safe_load((EXAMPLE / model["producer"]["args"][0]).read_text())
+        if regime == "lora" and model_id.endswith("-relearn"):
+            config = yaml.safe_load(
+                (EXAMPLE / model["producer"]["args"][1]).read_text()
+            )
         assert config["output_dir"] == model["local_dir"]
         assert config["max_steps"] == 125
         assert config["gradient_accumulation_steps"] == 4
@@ -73,10 +114,25 @@ def test_four_model_pipeline_and_full_model_paths(monkeypatch):
         assert config["save_steps"] == 25
         assert config["save_total_limit"] == 5
         assert config["save_only_model"] is True
-        assert "adapter" not in config
+        if regime == "fft":
+            assert "adapter" not in config
+        else:
+            assert config["adapter"] == "lora"
+            assert config["lora_r"] == config["lora_alpha"] == 8
+            assert config["lora_dropout"] == 0.05
+            assert set(config["lora_target_modules"]) == {
+                "q_proj",
+                "k_proj",
+                "v_proj",
+                "o_proj",
+                "gate_proj",
+                "up_proj",
+                "down_proj",
+            }
         if model_id.endswith("-relearn"):
+            suffix = "/merged" if regime == "lora" else ""
             assert config["base_model"] == (
-                f"artifacts/tamia/models/{model_id.removesuffix('-relearn')}"
+                f"artifacts/{cluster}/models/{model_id.removesuffix('-relearn')}{suffix}"
             )
             assert config["datasets"][0]["split"] == "train"
             assert config["datasets"][0]["path"] == "cais/wmdp-bio-forget-corpus"
@@ -100,6 +156,17 @@ def test_tamia_launcher_is_offline_and_cluster_namespaced():
     assert "UV_OFFLINE=1" in script
     assert "artifacts/tamia/" in script
     assert "sed " not in script
+
+
+def test_mila_launchers_distribute_zephyr_and_merge_once():
+    train = (EXAMPLE / "scripts/slurm/train.sbatch").read_text()
+    relearn = (EXAMPLE / "scripts/slurm/relearn.sbatch").read_text()
+    assert 'if [[ "$1" == configs/*/z7b/* ]]' in train
+    assert 'if [[ "$2" == configs/relearn/z7b/* ]]' in relearn
+    assert "torchrun --standalone" in train
+    assert "torchrun --standalone" in relearn
+    assert train.index("torchrun --standalone") < train.index("axolotl merge-lora")
+    assert relearn.index("axolotl merge-lora") < relearn.index("torchrun --standalone")
 
 
 def test_document_filter_and_paired_sampling(monkeypatch):
@@ -175,6 +242,11 @@ def test_npo_frozen_reference_and_grad_diff(monkeypatch):
                 loss=self.weight * input_ids.float().mean(), logits=logits
             )
 
+        @contextmanager
+        def disable_adapter(self):
+            self.adapter_disabled = getattr(self, "adapter_disabled", 0) + 1
+            yield
+
     model = ToyModel(0.5)
     reference = ToyModel(-0.25)
     monkeypatch.setattr(
@@ -196,6 +268,26 @@ def test_npo_frozen_reference_and_grad_diff(monkeypatch):
     assert not reference.training
     assert all(not p.requires_grad and p.grad is None for p in reference.parameters())
     assert model.weight.grad is not None
+
+    lora_model = ToyModel(0.5)
+    lora = object.__new__(npo_trainers.PairedNPOTrainer)
+    lora_loss = lora.compute_loss(lora_model, batch)
+    lora_loss.backward()
+    assert lora_model.adapter_disabled == 1
+    assert not hasattr(lora, "reference_model")
+
+    assert issubclass(
+        npo_trainers.PairedNPOTrainer, npo_trainers.PairedSourceSamplerMixin
+    )
+    assert issubclass(
+        npo_trainers.FullModelNPOTrainer, npo_trainers.PairedSourceSamplerMixin
+    )
+    assert issubclass(
+        gd_trainers.PairedGradDiffTrainer, gd_trainers.PairedSourceSamplerMixin
+    )
+    assert issubclass(
+        gd_trainers.FullModelGradDiffTrainer, gd_trainers.PairedSourceSamplerMixin
+    )
 
     gd = object.__new__(gd_trainers.FullModelGradDiffTrainer)
     gd_loss = gd.compute_loss(model, batch)

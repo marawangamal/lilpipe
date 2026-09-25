@@ -1051,28 +1051,28 @@ def test_peft_disabled_adapter_recovers_initial_base_output() -> None:
 
 
 def test_orth_cb_config() -> None:
-    model_id = "di-6.9b-wmdp-bio-unlearn-cb"
+    model_id = "di-6.9b-wmdp-bio-lora-unlearn-cb"
     training_dir = EXAMPLE / "configs/unlearn/di-6.9b"
     assert sorted(path.name for path in training_dir.glob("*.yml")) == [
-        "wmdp-bio-unlearn-cb.yml",
-        "wmdp-bio-unlearn-gd-gn.yml",
-        "wmdp-bio-unlearn-gd.yml",
-        "wmdp-bio-unlearn-npo-sam-beta015-gamma225.yml",
-        "wmdp-bio-unlearn-npo-sam-gamma225.yml",
-        "wmdp-bio-unlearn-npo-sam-gamma450.yml",
-        "wmdp-bio-unlearn-npo-sam-gamma900.yml",
-        "wmdp-bio-unlearn-npo-sam-rho003.yml",
-        "wmdp-bio-unlearn-npo-sam.yml",
-        "wmdp-bio-unlearn-npo.yml",
-        "wmdp-bio-unlearn-ws-alpha-10.yml",
-        "wmdp-bio-unlearn-ws-alpha-2.yml",
-        "wmdp-bio-unlearn-ws-alpha-4.yml",
-        "wmdp-bio-unlearn-ws-ft-forget.yml",
-        "wmdp-bio-unlearn-ws-ft-retain.yml",
-        "wmdp-bio-unlearn-ws-r1-f01.yml",
-        "wmdp-bio-unlearn-ws.yml",
+        "wmdp-bio-lora-unlearn-cb.yml",
+        "wmdp-bio-lora-unlearn-gd-gn.yml",
+        "wmdp-bio-lora-unlearn-gd.yml",
+        "wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225.yml",
+        "wmdp-bio-lora-unlearn-npo-sam-gamma225.yml",
+        "wmdp-bio-lora-unlearn-npo-sam-gamma450.yml",
+        "wmdp-bio-lora-unlearn-npo-sam-gamma900.yml",
+        "wmdp-bio-lora-unlearn-npo-sam-rho003.yml",
+        "wmdp-bio-lora-unlearn-npo-sam.yml",
+        "wmdp-bio-lora-unlearn-npo.yml",
+        "wmdp-bio-lora-unlearn-ws-alpha-10.yml",
+        "wmdp-bio-lora-unlearn-ws-alpha-2.yml",
+        "wmdp-bio-lora-unlearn-ws-alpha-4.yml",
+        "wmdp-bio-lora-unlearn-ws-ft-forget.yml",
+        "wmdp-bio-lora-unlearn-ws-ft-retain.yml",
+        "wmdp-bio-lora-unlearn-ws-r1-f01.yml",
+        "wmdp-bio-lora-unlearn-ws.yml",
     ]
-    config = yaml.safe_load((training_dir / "wmdp-bio-unlearn-cb.yml").read_text())
+    config = yaml.safe_load((training_dir / "wmdp-bio-lora-unlearn-cb.yml").read_text())
     assert config["trainer_cls"] == (
         "configs.training.trainers.circuit_breaker.BalancedOrthCircuitBreakerTrainer"
     )
@@ -1115,12 +1115,14 @@ def test_orth_cb_config() -> None:
 
 
 def test_relearning_config_and_script() -> None:
-    model_id = "di-6.9b-wmdp-bio-unlearn-cb-relearn"
+    model_id = "di-6.9b-wmdp-bio-lora-unlearn-cb-relearn"
     config = yaml.safe_load(
-        (EXAMPLE / "configs/relearn/di-6.9b/wmdp-bio-relearn.yml").read_text()
+        (
+            EXAMPLE / "configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-cb-relearn.yml"
+        ).read_text()
     )
     assert config["base_model"] == (
-        "artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-cb/merged"
+        "artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-cb/merged"
     )
     assert config["output_dir"] == f"artifacts/mila/models/{model_id}"
     assert config["wandb_name"] == model_id
@@ -1154,10 +1156,10 @@ def test_relearning_config_and_script() -> None:
 def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
     config_dir = EXAMPLE / "configs"
     cb = yaml.safe_load(
-        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-cb.yml").read_text()
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-cb.yml").read_text()
     )
     npo = yaml.safe_load(
-        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-npo.yml").read_text()
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo.yml").read_text()
     )
     assert npo["trainer_cls"] == "configs.training.trainers.npo.BalancedNPOTrainer"
     assert npo["datasets"] == cb["datasets"]
@@ -1179,7 +1181,7 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
         "max_grad_norm",
     ):
         assert npo[key] == cb[key]
-    model_id = "di-6.9b-wmdp-bio-unlearn-npo"
+    model_id = "di-6.9b-wmdp-bio-lora-unlearn-npo"
     assert npo["output_dir"] == f"artifacts/mila/models/{model_id}"
     assert (
         npo["dataset_prepared_path"]
@@ -1189,10 +1191,14 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
     assert "beta" not in npo and "gamma" not in npo
 
     cb_relearn = yaml.safe_load(
-        (config_dir / "relearn/di-6.9b/wmdp-bio-relearn.yml").read_text()
+        (
+            config_dir / "relearn/di-6.9b/wmdp-bio-lora-unlearn-cb-relearn.yml"
+        ).read_text()
     )
     npo_relearn = yaml.safe_load(
-        (config_dir / "relearn/di-6.9b/wmdp-bio-npo-relearn.yml").read_text()
+        (
+            config_dir / "relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-relearn.yml"
+        ).read_text()
     )
     assert npo_relearn["base_model"] == f"artifacts/mila/models/{model_id}/merged"
     assert npo_relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
@@ -1215,12 +1221,12 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
 
 def test_npo_sam_configs_and_pipeline() -> None:
     config_dir = EXAMPLE / "configs"
-    model_id = "di-6.9b-wmdp-bio-unlearn-npo-sam"
+    model_id = "di-6.9b-wmdp-bio-lora-unlearn-npo-sam"
     npo = yaml.safe_load(
-        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-npo.yml").read_text()
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo.yml").read_text()
     )
     sam = yaml.safe_load(
-        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-npo-sam.yml").read_text()
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam.yml").read_text()
     )
     excluded = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
     assert {key: value for key, value in sam.items() if key not in excluded} == {
@@ -1236,10 +1242,14 @@ def test_npo_sam_configs_and_pipeline() -> None:
     )
     assert sam["wandb_name"] == model_id
     npo_relearn = yaml.safe_load(
-        (config_dir / "relearn/di-6.9b/wmdp-bio-npo-relearn.yml").read_text()
+        (
+            config_dir / "relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-relearn.yml"
+        ).read_text()
     )
     sam_relearn = yaml.safe_load(
-        (config_dir / "relearn/di-6.9b/wmdp-bio-npo-sam-relearn.yml").read_text()
+        (
+            config_dir / "relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-relearn.yml"
+        ).read_text()
     )
     excluded = {"base_model", "dataset_prepared_path", "output_dir", "wandb_name"}
     assert {
@@ -1285,10 +1295,12 @@ def test_npo_sam_tuning_configs(
     suffix: str, trainer_name: str, beta: float, gamma: float, rho: float
 ) -> None:
     config_dir = EXAMPLE / "configs/unlearn/di-6.9b"
-    baseline = yaml.safe_load((config_dir / "wmdp-bio-unlearn-npo-sam.yml").read_text())
-    path = config_dir / f"wmdp-bio-unlearn-npo-sam-{suffix}.yml"
+    baseline = yaml.safe_load(
+        (config_dir / "wmdp-bio-lora-unlearn-npo-sam.yml").read_text()
+    )
+    path = config_dir / f"wmdp-bio-lora-unlearn-npo-sam-{suffix}.yml"
     variant = yaml.safe_load(path.read_text())
-    model_id = f"di-6.9b-wmdp-bio-unlearn-npo-sam-{suffix}"
+    model_id = f"di-6.9b-wmdp-bio-lora-unlearn-npo-sam-{suffix}"
     excluded = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
     assert {key: value for key, value in variant.items() if key not in excluded} == {
         key: value for key, value in baseline.items() if key not in excluded
@@ -1306,10 +1318,12 @@ def test_npo_sam_tuning_configs(
 
     relearn_dir = EXAMPLE / "configs/relearn/di-6.9b"
     relearn = yaml.safe_load(
-        (relearn_dir / f"wmdp-bio-npo-sam-{suffix}-relearn.yml").read_text()
+        (
+            relearn_dir / f"wmdp-bio-lora-unlearn-npo-sam-{suffix}-relearn.yml"
+        ).read_text()
     )
     baseline_relearn = yaml.safe_load(
-        (relearn_dir / "wmdp-bio-npo-sam-relearn.yml").read_text()
+        (relearn_dir / "wmdp-bio-lora-unlearn-npo-sam-relearn.yml").read_text()
     )
     excluded = {"base_model", "dataset_prepared_path", "output_dir", "wandb_name"}
     assert {key: value for key, value in relearn.items() if key not in excluded} == {
@@ -1326,12 +1340,12 @@ def test_npo_sam_tuning_configs(
 def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
     config_dir = EXAMPLE / "configs"
     npo = yaml.safe_load(
-        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-npo.yml").read_text()
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo.yml").read_text()
     )
     gd = yaml.safe_load(
-        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-gd.yml").read_text()
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd.yml").read_text()
     )
-    model_id = "di-6.9b-wmdp-bio-unlearn-gd"
+    model_id = "di-6.9b-wmdp-bio-lora-unlearn-gd"
     assert gd["trainer_cls"] == (
         "configs.training.trainers.gd.BalancedGradDiffF01R1Trainer"
     )
@@ -1346,10 +1360,14 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
     assert gd["wandb_name"] == model_id
 
     npo_relearn = yaml.safe_load(
-        (config_dir / "relearn/di-6.9b/wmdp-bio-npo-relearn.yml").read_text()
+        (
+            config_dir / "relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-relearn.yml"
+        ).read_text()
     )
     gd_relearn = yaml.safe_load(
-        (config_dir / "relearn/di-6.9b/wmdp-bio-gd-relearn.yml").read_text()
+        (
+            config_dir / "relearn/di-6.9b/wmdp-bio-lora-unlearn-gd-relearn.yml"
+        ).read_text()
     )
     excluded = {"base_model", "dataset_prepared_path", "output_dir", "wandb_name"}
     assert {key: value for key, value in gd_relearn.items() if key not in excluded} == {
@@ -1365,9 +1383,9 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
 
 def test_gd_gn_configs_and_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
     config_dir = EXAMPLE / "configs"
-    model_id = "di-6.9b-wmdp-bio-unlearn-gd-gn"
+    model_id = "di-6.9b-wmdp-bio-lora-unlearn-gd-gn"
     training = yaml.safe_load(
-        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-gd-gn.yml").read_text()
+        (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn.yml").read_text()
     )
     assert training["trainer_cls"] == (
         "configs.training.trainers.gd_gn.BalancedGradDiffGNTrainer"
@@ -1381,7 +1399,9 @@ def test_gd_gn_configs_and_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
         f"artifacts/mila/cache/axolotl/{model_id}/prepared"
     )
     relearn = yaml.safe_load(
-        (config_dir / "relearn/di-6.9b/wmdp-bio-gd-gn-relearn.yml").read_text()
+        (
+            config_dir / "relearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn-relearn.yml"
+        ).read_text()
     )
     assert relearn["base_model"] == f"artifacts/mila/models/{model_id}/merged"
     assert relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
@@ -1389,13 +1409,15 @@ def test_gd_gn_configs_and_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
     train_stage = plan.stage_index[f"train-{model_id}"]
-    assert train_stage.args == ("configs/unlearn/di-6.9b/wmdp-bio-unlearn-gd-gn.yml",)
+    assert train_stage.args == (
+        "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn.yml",
+    )
     assert "--gres=gpu:a100l:1" in train_stage.sbatch_args
     relearn_stage = plan.stage_index[f"train-{model_id}-relearn"]
     assert relearn_stage.depends_on == (train_stage.id,)
     assert relearn_stage.args == (
-        "configs/unlearn/di-6.9b/wmdp-bio-unlearn-gd-gn.yml",
-        "configs/relearn/di-6.9b/wmdp-bio-gd-gn-relearn.yml",
+        "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn.yml",
+        "configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn-relearn.yml",
     )
     for evaluated_id in (model_id, f"{model_id}-relearn"):
         assert f"eval-bio-mcqa-{evaluated_id}" in plan.stage_index
@@ -1404,12 +1426,12 @@ def test_gd_gn_configs_and_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> None:
     config_dir = EXAMPLE / "configs/unlearn/di-6.9b"
-    cb = yaml.safe_load((config_dir / "wmdp-bio-unlearn-cb.yml").read_text())
+    cb = yaml.safe_load((config_dir / "wmdp-bio-lora-unlearn-cb.yml").read_text())
     arms = {}
     for arm in ("retain", "forget"):
-        model_id = f"di-6.9b-wmdp-bio-unlearn-ws-ft-{arm}"
+        model_id = f"di-6.9b-wmdp-bio-lora-unlearn-ws-ft-{arm}"
         arms[arm] = yaml.safe_load(
-            (config_dir / f"wmdp-bio-unlearn-ws-ft-{arm}.yml").read_text()
+            (config_dir / f"wmdp-bio-lora-unlearn-ws-ft-{arm}.yml").read_text()
         )
         config = arms[arm]
         assert config["base_model"] == cb["base_model"]
@@ -1451,8 +1473,8 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
     )
     assert arms["forget"]["datasets"][0]["path"] == ("cais/wmdp-bio-forget-corpus")
 
-    ws_id = "di-6.9b-wmdp-bio-unlearn-ws"
-    steering = yaml.safe_load((config_dir / "wmdp-bio-unlearn-ws.yml").read_text())
+    ws_id = "di-6.9b-wmdp-bio-lora-unlearn-ws"
+    steering = yaml.safe_load((config_dir / "wmdp-bio-lora-unlearn-ws.yml").read_text())
     assert steering["adapter_pairs"] == [
         {
             "pos_adapter_name_or_path": f"artifacts/mila/models/{ws_id}-ft-retain",
@@ -1463,7 +1485,9 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
         {"alpha": 1.0, "output_path": f"artifacts/mila/models/{ws_id}"}
     ]
     relearn = yaml.safe_load(
-        (EXAMPLE / "configs/relearn/di-6.9b/wmdp-bio-ws-relearn.yml").read_text()
+        (
+            EXAMPLE / "configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-ws-relearn.yml"
+        ).read_text()
     )
     assert relearn["base_model"] == f"artifacts/mila/models/{ws_id}/merged"
 
@@ -1490,7 +1514,7 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
     for alpha in (2, 4, 10):
         model_id = f"{ws_id}-a{alpha}"
         config = yaml.safe_load(
-            (config_dir / f"wmdp-bio-unlearn-ws-alpha-{alpha}.yml").read_text()
+            (config_dir / f"wmdp-bio-lora-unlearn-ws-alpha-{alpha}.yml").read_text()
         )
         assert config["base_model_name_or_path"] == steering["base_model_name_or_path"]
         assert config["adapter_pairs"] == steering["adapter_pairs"]
@@ -1522,16 +1546,16 @@ def test_single_experiment_plans_base_cb_and_relearning(
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
-    orth_id = "di-6.9b-wmdp-bio-unlearn-cb"
+    orth_id = "di-6.9b-wmdp-bio-lora-unlearn-cb"
     relearn_id = f"{orth_id}-relearn"
     orth = plan.stage_index[f"train-{orth_id}"]
     assert orth.script == "scripts/slurm/train.sbatch"
-    assert orth.args == ("configs/unlearn/di-6.9b/wmdp-bio-unlearn-cb.yml",)
+    assert orth.args == ("configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-cb.yml",)
     relearn = plan.stage_index[f"train-{relearn_id}"]
     assert relearn.script == "scripts/slurm/relearn.sbatch"
     assert relearn.args == (
-        "configs/unlearn/di-6.9b/wmdp-bio-unlearn-cb.yml",
-        "configs/relearn/di-6.9b/wmdp-bio-relearn.yml",
+        "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-cb.yml",
+        "configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-cb-relearn.yml",
     )
     assert relearn.depends_on == (orth.id,)
     assert f"eval-bio-mcqa-{orth_id}" in plan.stage_index
@@ -1539,29 +1563,29 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert f"eval-bio-mcqa-{relearn_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{relearn_id}" in plan.stage_index
     assert len(plan.stages) == 79
-    npo_id = "di-6.9b-wmdp-bio-unlearn-npo"
+    npo_id = "di-6.9b-wmdp-bio-lora-unlearn-npo"
     npo = plan.stage_index[f"train-{npo_id}"]
     assert npo.script == "scripts/slurm/train.sbatch"
-    assert npo.args == ("configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo.yml",)
+    assert npo.args == ("configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo.yml",)
     npo_relearn = plan.stage_index[f"train-{npo_id}-relearn"]
     assert npo_relearn.script == "scripts/slurm/relearn.sbatch"
     assert npo_relearn.args == (
-        "configs/unlearn/di-6.9b/wmdp-bio-unlearn-npo.yml",
-        "configs/relearn/di-6.9b/wmdp-bio-npo-relearn.yml",
+        "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo.yml",
+        "configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-relearn.yml",
     )
     assert npo_relearn.depends_on == (npo.id,)
     for model_id in (npo_id, f"{npo_id}-relearn"):
         assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
         assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
-    gd_id = "di-6.9b-wmdp-bio-unlearn-gd"
+    gd_id = "di-6.9b-wmdp-bio-lora-unlearn-gd"
     gd = plan.stage_index[f"train-{gd_id}"]
     assert gd.script == "scripts/slurm/train.sbatch"
-    assert gd.args == ("configs/unlearn/di-6.9b/wmdp-bio-unlearn-gd.yml",)
+    assert gd.args == ("configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd.yml",)
     gd_relearn = plan.stage_index[f"train-{gd_id}-relearn"]
     assert gd_relearn.script == "scripts/slurm/relearn.sbatch"
     assert gd_relearn.args == (
-        "configs/unlearn/di-6.9b/wmdp-bio-unlearn-gd.yml",
-        "configs/relearn/di-6.9b/wmdp-bio-gd-relearn.yml",
+        "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd.yml",
+        "configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-gd-relearn.yml",
     )
     assert gd_relearn.depends_on == (gd.id,)
     assert plan.stages.index(gd) < plan.stages.index(gd_relearn)
@@ -1639,36 +1663,41 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
     registry = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
         "models"
     ]
+    registry = {
+        model_id: model
+        for model_id, model in registry.items()
+        if model_id.startswith("di-6.9b-")
+    }
 
     assert set(registry) == {
         "di-6.9b-base",
-        "di-6.9b-wmdp-bio-unlearn-cb",
-        "di-6.9b-wmdp-bio-unlearn-cb-relearn",
-        "di-6.9b-wmdp-bio-unlearn-npo",
-        "di-6.9b-wmdp-bio-unlearn-npo-relearn",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam-relearn",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam-rho003",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn",
-        "di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn",
-        "di-6.9b-wmdp-bio-unlearn-gd",
-        "di-6.9b-wmdp-bio-unlearn-gd-relearn",
-        "di-6.9b-wmdp-bio-unlearn-gd-gn",
-        "di-6.9b-wmdp-bio-unlearn-gd-gn-relearn",
-        "di-6.9b-wmdp-bio-unlearn-ws-ft-retain",
-        "di-6.9b-wmdp-bio-unlearn-ws-ft-forget",
-        "di-6.9b-wmdp-bio-unlearn-ws",
-        "di-6.9b-wmdp-bio-unlearn-ws-relearn",
-        "di-6.9b-wmdp-bio-unlearn-ws-a2",
-        "di-6.9b-wmdp-bio-unlearn-ws-a4",
-        "di-6.9b-wmdp-bio-unlearn-ws-a10",
+        "di-6.9b-wmdp-bio-lora-unlearn-cb",
+        "di-6.9b-wmdp-bio-lora-unlearn-cb-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-gd",
+        "di-6.9b-wmdp-bio-lora-unlearn-gd-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-gd-gn",
+        "di-6.9b-wmdp-bio-lora-unlearn-gd-gn-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-ws-ft-retain",
+        "di-6.9b-wmdp-bio-lora-unlearn-ws-ft-forget",
+        "di-6.9b-wmdp-bio-lora-unlearn-ws",
+        "di-6.9b-wmdp-bio-lora-unlearn-ws-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-ws-a2",
+        "di-6.9b-wmdp-bio-lora-unlearn-ws-a4",
+        "di-6.9b-wmdp-bio-lora-unlearn-ws-a10",
     }
     assert all(model_id.startswith("di-6.9b-") for model_id in registry)
     for model_id, model in registry.items():
@@ -1750,10 +1779,10 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "weight-steering",
     ]
     assert config["rows"][1]["root"] == (
-        "artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-cb"
+        "artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-cb"
     )
     assert config["rows"][2]["root"] == (
-        "artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-cb-relearn"
+        "artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-cb-relearn"
     )
 
     for config_dir in ("unlearn", "relearn"):

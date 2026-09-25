@@ -42,8 +42,12 @@ class BalancedGradDiffTrainer(AxolotlTrainer):
         return (loss, forget_outputs) if return_outputs else loss
 
 
-class FullModelGradDiffTrainer(PairedSourceSamplerMixin, BalancedGradDiffTrainer):
+class PairedGradDiffTrainer(PairedSourceSamplerMixin, BalancedGradDiffTrainer):
     """Use the gradient-difference loss with paired corpus sampling."""
+
+
+class FullModelGradDiffTrainer(PairedGradDiffTrainer):
+    """Full-model GradDiff with paired corpus sampling."""
 
 
 class BalancedGradDiffF01R1Trainer(BalancedGradDiffTrainer):

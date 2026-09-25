@@ -1,0 +1,54 @@
+base_model: EleutherAI/deep-ignorance-unfiltered
+# NPO+SAM constants in npo.py and npo_sam.py: beta = 0.0225, gamma = 1.0, rho = 0.01.
+trainer_cls: configs.training.trainers.npo_sam.BalancedNPOSAMTrainer
+datasets:
+  - path: cais/wmdp-bio-forget-corpus
+    split: train[:1024]
+    type: configs.training.data.wmdp_di
+  - path: EleutherAI/wikitext_document_level
+    name: wikitext-103-raw-v1
+    split: train
+    type: configs.training.data.wikitext_di
+shuffle_merged_datasets: true
+dataset_num_proc: 1
+dataset_prepared_path: artifacts/mila/cache/axolotl/di-6.9b-wmdp-bio-lora-unlearn-npo-sam/prepared
+val_set_size: 0.0
+output_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-sam
+
+adapter: lora
+lora_target_modules: [query_key_value, dense, dense_h_to_4h, dense_4h_to_h]
+peft_layers_to_transform: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+lora_r: 8
+lora_alpha: 8
+lora_dropout: 0.05
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+lora_embedding_kernel: false
+
+sequence_len: 2048
+sample_packing: false
+pad_to_sequence_len: false
+remove_unused_columns: false
+train_on_inputs: true
+micro_batch_size: 8
+gradient_accumulation_steps: 8
+max_steps: 32
+learning_rate: 1.0e-3
+optimizer: adamw_torch
+weight_decay: 0.01
+lr_scheduler: linear
+warmup_steps: 0
+max_grad_norm: 1.0
+
+bf16: true
+tf32: true
+gradient_checkpointing: true
+seed: 42
+eval_strategy: "no"
+save_strategy: steps
+save_steps: 5
+save_total_limit: 100
+logging_steps: 1
+wandb_project: lp-tamper-resistance
+wandb_name: di-6.9b-wmdp-bio-lora-unlearn-npo-sam
