@@ -177,12 +177,13 @@ def test_tamia_evaluation_launchers_match_template(name, kind):
     script = (EXAMPLE / f"scripts/slurm/tamia/{name}_{kind}.sbatch").read_text()
     assert "module load httpproxy/1.0" in script
     assert "uv sync --frozen --group eval" in script
+    assert "HF_HUB_OFFLINE=1" in script
+    assert "HF_DATASETS_OFFLINE=1" in script
     assert 'export UV_CACHE_DIR="$SCRATCH/.cache/uv"' in script
     assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"' in script
     assert 'accelerate launch --num_processes="${SLURM_GPUS_ON_NODE:?}"' in script
     assert "--batch_size 32" in script
     assert "artifacts/tamia/logs/" in script
-    assert "OFFLINE" not in script
 
 
 def test_mila_launchers_delegate_distribution_to_axolotl_and_merge_once():

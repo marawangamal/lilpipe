@@ -3,6 +3,8 @@
 set -euo pipefail
 
 export HF_HOME="$SCRATCH/.cache/huggingface"
+export HF_HUB_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
 export UV_CACHE_DIR="$SCRATCH/.cache/uv"
 export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"
 export PATH="$HOME/.local/bin:$PATH"
