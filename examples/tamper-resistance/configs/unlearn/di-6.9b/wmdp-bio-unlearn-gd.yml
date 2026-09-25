@@ -1,6 +1,6 @@
 base_model: EleutherAI/deep-ignorance-unfiltered
-# GradDiff objective in gd.py: -forget CE + retain CE.
-trainer_cls: configs.training.trainers.gd.BalancedGradDiffTrainer
+# GradDiff objective in gd.py: -0.1 × forget CE + 1.0 × retain CE.
+trainer_cls: configs.training.trainers.gd.BalancedGradDiffF01R1Trainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train[:1024]

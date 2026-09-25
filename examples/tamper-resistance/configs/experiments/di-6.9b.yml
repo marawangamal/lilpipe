@@ -25,8 +25,6 @@ models:
   - di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
   - di-6.9b-wmdp-bio-unlearn-gd
   - di-6.9b-wmdp-bio-unlearn-gd-relearn
-  - di-6.9b-wmdp-bio-unlearn-gd-f01-r1
-  - di-6.9b-wmdp-bio-unlearn-gd-f01-r1-relearn
   - di-6.9b-wmdp-bio-unlearn-gd-gn
   - di-6.9b-wmdp-bio-unlearn-gd-gn-relearn
   - di-6.9b-wmdp-bio-unlearn-ws

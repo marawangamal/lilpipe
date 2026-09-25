@@ -89,15 +89,10 @@ the remaining settings fixed.
 
 GradDiff (`di-6.9b-wmdp-bio-unlearn-gd`) uses the same data, balanced batches,
 rank-8 LoRA setup, and 32-step training schedule as NPO and CB. It minimizes
-`−forget CE + retain CE`, with a retain coefficient of 1.0. Its dependent
+`−0.1 × forget CE + 1.0 × retain CE`. Its dependent
 relearning model (`di-6.9b-wmdp-bio-unlearn-gd-relearn`) merges the GradDiff
 adapter and follows the same 32-step forget-set attack schedule as NPO. Both
 models receive the Robust WMDP-Bio and MMLU excluding biology evaluations.
-
-The `di-6.9b-wmdp-bio-unlearn-gd-f01-r1` variant uses the same setup with
-`−0.1 × forget CE + 1.0 × retain CE`. It has separate cache, model, and WandB
-paths so its results can be compared with the original GradDiff run. Its
-relearning stage uses the same 32-step forget-set attack as the other methods.
 
 GD-GN (`di-6.9b-wmdp-bio-unlearn-gd-gn`) uses balanced forget and retain
 batches and the same rank-8 LoRA setup. Its objective is

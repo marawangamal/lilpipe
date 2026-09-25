@@ -1057,12 +1057,6 @@ def test_orth_cb_config() -> None:
     training_dir = EXAMPLE / "configs/unlearn/di-6.9b"
     assert sorted(path.name for path in training_dir.glob("*.yml")) == [
         "wmdp-bio-unlearn-cb.yml",
-        "wmdp-bio-unlearn-gd-f01-r05.yml",
-        "wmdp-bio-unlearn-gd-f01-r1-seed43.yml",
-        "wmdp-bio-unlearn-gd-f01-r1.yml",
-        "wmdp-bio-unlearn-gd-f01-r15.yml",
-        "wmdp-bio-unlearn-gd-f01-r2.yml",
-        "wmdp-bio-unlearn-gd-f01-r4.yml",
         "wmdp-bio-unlearn-gd-gn.yml",
         "wmdp-bio-unlearn-gd.yml",
         "wmdp-bio-unlearn-npo-sam-beta015-gamma225.yml",
@@ -1338,7 +1332,9 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
         (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-gd.yml").read_text()
     )
     model_id = "di-6.9b-wmdp-bio-unlearn-gd"
-    assert gd["trainer_cls"] == "configs.training.trainers.gd.BalancedGradDiffTrainer"
+    assert gd["trainer_cls"] == (
+        "configs.training.trainers.gd.BalancedGradDiffF01R1Trainer"
+    )
     excluded = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
     assert {key: value for key, value in gd.items() if key not in excluded} == {
         key: value for key, value in npo.items() if key not in excluded
@@ -1348,64 +1344,6 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
         f"artifacts/cache/axolotl/{model_id}/prepared"
     )
     assert gd["wandb_name"] == model_id
-
-    weighted = yaml.safe_load(
-        (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-gd-f01-r1.yml").read_text()
-    )
-    weighted_id = f"{model_id}-f01-r1"
-    assert weighted["trainer_cls"] == (
-        "configs.training.trainers.gd.BalancedGradDiffF01R1Trainer"
-    )
-    assert {key: value for key, value in weighted.items() if key not in excluded} == {
-        key: value for key, value in gd.items() if key not in excluded
-    }
-    assert weighted["output_dir"] == f"artifacts/models/{weighted_id}"
-    assert weighted["dataset_prepared_path"] == (
-        f"artifacts/cache/axolotl/{weighted_id}/prepared"
-    )
-    assert weighted["wandb_name"] == weighted_id
-
-    seed43 = yaml.safe_load(
-        (
-            config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-gd-f01-r1-seed43.yml"
-        ).read_text()
-    )
-    seed43_id = f"{weighted_id}-seed43"
-    assert seed43["seed"] == 43
-    excluded_with_seed = excluded | {"seed"}
-    assert {
-        key: value for key, value in seed43.items() if key not in excluded_with_seed
-    } == {
-        key: value for key, value in weighted.items() if key not in excluded_with_seed
-    }
-    assert seed43["trainer_cls"] == weighted["trainer_cls"]
-    assert seed43["output_dir"] == f"artifacts/models/{seed43_id}"
-    assert seed43["dataset_prepared_path"] == (
-        f"artifacts/cache/axolotl/{seed43_id}/prepared"
-    )
-    assert seed43["wandb_name"] == seed43_id
-
-    for suffix, trainer_name in (
-        ("r05", "BalancedGradDiffF01R05Trainer"),
-        ("r15", "BalancedGradDiffF01R15Trainer"),
-        ("r2", "BalancedGradDiffF01R2Trainer"),
-        ("r4", "BalancedGradDiffF01R4Trainer"),
-    ):
-        variant = yaml.safe_load(
-            (
-                config_dir / f"unlearn/di-6.9b/wmdp-bio-unlearn-gd-f01-{suffix}.yml"
-            ).read_text()
-        )
-        variant_id = f"{model_id}-f01-{suffix}"
-        assert variant["trainer_cls"] == f"configs.training.trainers.gd.{trainer_name}"
-        assert {
-            key: value for key, value in variant.items() if key not in excluded
-        } == {key: value for key, value in weighted.items() if key not in excluded}
-        assert variant["output_dir"] == f"artifacts/models/{variant_id}"
-        assert variant["dataset_prepared_path"] == (
-            f"artifacts/cache/axolotl/{variant_id}/prepared"
-        )
-        assert variant["wandb_name"] == variant_id
 
     npo_relearn = yaml.safe_load(
         (config_dir / "relearn/di-6.9b/wmdp-bio-npo-relearn.yml").read_text()
@@ -1423,19 +1361,6 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
         f"artifacts/cache/axolotl/{model_id}-relearn/prepared"
     )
     assert gd_relearn["wandb_name"] == f"{model_id}-relearn"
-
-    weighted_relearn = yaml.safe_load(
-        (config_dir / "relearn/di-6.9b/wmdp-bio-gd-f01-r1-relearn.yml").read_text()
-    )
-    assert {
-        key: value for key, value in weighted_relearn.items() if key not in excluded
-    } == {key: value for key, value in gd_relearn.items() if key not in excluded}
-    assert weighted_relearn["base_model"] == (f"artifacts/models/{weighted_id}/merged")
-    assert weighted_relearn["output_dir"] == (f"artifacts/models/{weighted_id}-relearn")
-    assert weighted_relearn["dataset_prepared_path"] == (
-        f"artifacts/cache/axolotl/{weighted_id}-relearn/prepared"
-    )
-    assert weighted_relearn["wandb_name"] == f"{weighted_id}-relearn"
 
 
 def test_gd_gn_configs_and_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1613,7 +1538,7 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
     assert f"eval-bio-mcqa-{relearn_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{relearn_id}" in plan.stage_index
-    assert len(plan.stages) == 85
+    assert len(plan.stages) == 79
     npo_id = "di-6.9b-wmdp-bio-unlearn-npo"
     npo = plan.stage_index[f"train-{npo_id}"]
     assert npo.script == "scripts/slurm/train.sbatch"
@@ -1641,18 +1566,6 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert gd_relearn.depends_on == (gd.id,)
     assert plan.stages.index(gd) < plan.stages.index(gd_relearn)
     for model_id in (gd_id, f"{gd_id}-relearn"):
-        assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
-        assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
-    weighted_id = f"{gd_id}-f01-r1"
-    weighted = plan.stage_index[f"train-{weighted_id}"]
-    assert weighted.args == ("configs/unlearn/di-6.9b/wmdp-bio-unlearn-gd-f01-r1.yml",)
-    weighted_relearn = plan.stage_index[f"train-{weighted_id}-relearn"]
-    assert weighted_relearn.args == (
-        "configs/unlearn/di-6.9b/wmdp-bio-unlearn-gd-f01-r1.yml",
-        "configs/relearn/di-6.9b/wmdp-bio-gd-f01-r1-relearn.yml",
-    )
-    assert weighted_relearn.depends_on == (weighted.id,)
-    for model_id in (weighted_id, f"{weighted_id}-relearn"):
         assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
         assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
     assert plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
@@ -1744,8 +1657,6 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         "di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn",
         "di-6.9b-wmdp-bio-unlearn-gd",
         "di-6.9b-wmdp-bio-unlearn-gd-relearn",
-        "di-6.9b-wmdp-bio-unlearn-gd-f01-r1",
-        "di-6.9b-wmdp-bio-unlearn-gd-f01-r1-relearn",
         "di-6.9b-wmdp-bio-unlearn-gd-gn",
         "di-6.9b-wmdp-bio-unlearn-gd-gn-relearn",
         "di-6.9b-wmdp-bio-unlearn-ws-ft-retain",
@@ -1799,8 +1710,6 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "npo-sam-beta015-gamma225-relearn",
         "gd",
         "gd-relearn",
-        "gd-f01-r1",
-        "gd-f01-r1-relearn",
         "gd-gn",
         "gd-gn-relearn",
         "weight-steering",
@@ -1827,8 +1736,6 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "npo-sam-tuning-relearn",
         "npo-sam-tuning-relearn",
         "npo-sam-tuning-relearn",
-        "grad-diff",
-        "grad-diff-relearn",
         "grad-diff",
         "grad-diff-relearn",
         "gd-gn",
