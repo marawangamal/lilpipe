@@ -60,9 +60,13 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
         )
         assert producer.script == expected_script
         expected_resource = (
-            "--gpus-per-node=h100:4" if regime == "fft" else "--gres=gpu:l40s:4"
+            "--gpus-per-node=h100:4" if regime == "fft" else "--gres=gpu:l40s:1"
         )
         assert expected_resource in producer.sbatch_args
+        if regime == "lora":
+            assert "--cpus-per-task=8" in producer.sbatch_args
+            assert "--mem=64G" in producer.sbatch_args
+            assert "--time=03:00:00" in producer.sbatch_args
         method = "npo" if "-npo" in model_id else "gd"
         config_kind = "relearn" if model_id.endswith("-relearn") else "unlearn"
         config_name = f"wmdp-bio-{regime}-unlearn-{method}"
@@ -196,7 +200,7 @@ def test_mila_launchers_delegate_distribution_to_axolotl_and_merge_once():
     assert relearn.index("axolotl merge-lora") < relearn.index("axolotl train")
 
 
-def test_document_filter_and_paired_sampling(monkeypatch):
+def test_document_filter_and_mixed_sampling(monkeypatch):
     datasets = pytest.importorskip("datasets")
     pytest.importorskip("axolotl")
     monkeypatch.syspath_prepend(str(EXAMPLE))
@@ -229,20 +233,20 @@ def test_document_filter_and_paired_sampling(monkeypatch):
     assert set(retain["cb_source"]) == {0}
 
     utils = module("configs/training/trainers/samplers.py", "zephyr_utils")
-    paired = utils.PairedSourceSampler(
+    sampler = utils.MixedSourceSampler(
         datasets.concatenate_datasets((forget, retain)), 2, seed=42
     )
-    indices = list(paired)
+    indices = list(sampler)
     assert len(indices) == 4
     assert set(indices[::2]) | set(indices[1::2]) == set(indices)
     for start in range(0, len(indices), 2):
         assert {int(i < 2) for i in indices[start : start + 2]} == {0, 1}
 
-    replacement = utils.PairedSourceSampler({"cb_source": [1, 1, 1, 1, 0]}, 2, seed=42)
-    pairs = list(replacement)
-    assert len(pairs) == 8
-    assert sorted(index for index in pairs if index != 4) == [0, 1, 2, 3]
-    assert pairs.count(4) == 4
+    truncated = utils.MixedSourceSampler({"cb_source": [1, 1, 1, 1, 0]}, 2, seed=42)
+    indices = list(truncated)
+    assert len(indices) == 2
+    assert 4 in indices
+    assert sum(index < 4 for index in indices) == 1
 
 
 def test_npo_frozen_reference_and_grad_diff(monkeypatch):
@@ -297,26 +301,15 @@ def test_npo_frozen_reference_and_grad_diff(monkeypatch):
     assert model.weight.grad is not None
 
     lora_model = ToyModel(0.5)
-    lora = object.__new__(npo_trainers.PairedNPOTrainer)
+    lora = object.__new__(npo_trainers.NPOTrainer)
     lora_loss = lora.compute_loss(lora_model, batch)
     lora_loss.backward()
     assert lora_model.adapter_disabled == 1
     assert not hasattr(lora, "reference_model")
 
-    assert issubclass(
-        npo_trainers.PairedNPOTrainer, npo_trainers.PairedSourceSamplerMixin
-    )
-    assert issubclass(
-        npo_trainers.FullModelNPOTrainer, npo_trainers.PairedSourceSamplerMixin
-    )
-    assert issubclass(
-        gd_trainers.PairedGradDiffTrainer, gd_trainers.PairedSourceSamplerMixin
-    )
-    assert issubclass(
-        gd_trainers.FullModelGradDiffTrainer, gd_trainers.PairedSourceSamplerMixin
-    )
+    assert issubclass(npo_trainers.FullModelNPOTrainer, npo_trainers.NPOTrainer)
 
-    gd = object.__new__(gd_trainers.FullModelGradDiffTrainer)
+    gd = object.__new__(gd_trainers.GradDiffTrainer)
     gd_loss = gd.compute_loss(model, batch)
     expected = -model.weight * batch["input_ids"][0].float().mean() + (
         model.weight * batch["input_ids"][1].float().mean()

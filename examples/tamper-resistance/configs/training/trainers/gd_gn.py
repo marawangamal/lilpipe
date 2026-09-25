@@ -2,10 +2,10 @@
 
 import torch
 
-from configs.training.trainers.gd import BalancedGradDiffTrainer
+from configs.training.trainers.gd import GradDiffTrainer
 
 
-class BalancedGradDiffGNTrainer(BalancedGradDiffTrainer):
+class BalancedGradDiffGNTrainer(GradDiffTrainer):
     """Maximize forget CE while limiting its LoRA gradient and retaining WikiText."""
 
     rho = 0.01

@@ -518,7 +518,7 @@ def test_orth_cb_routes_tagged_rows(orth_training_module, sources) -> None:
     assert model.weight.grad is not None
 
 
-def test_balanced_source_sampler_uses_each_row_once_per_epoch(
+def test_mixed_source_sampler_uses_each_row_once_per_epoch(
     orth_training_module,
 ) -> None:
     class TaggedDataset:
@@ -547,10 +547,10 @@ def test_balanced_source_sampler_uses_each_row_once_per_epoch(
                 0
             ) == 4
     assert first != second
-    assert first == list(orth_training_module.BalancedSourceSampler(dataset, 8, 42))
+    assert first == list(orth_training_module.MixedSourceSampler(dataset, 8, 42))
 
 
-def test_balanced_source_sampler_rejects_unbalanced_sources(
+def test_mixed_source_sampler_truncates_to_shorter_source(
     orth_training_module,
 ) -> None:
     class TaggedDataset:
@@ -561,13 +561,15 @@ def test_balanced_source_sampler_rejects_unbalanced_sources(
             assert key == "cb_source"
             return self.sources
 
-    sampler = orth_training_module.BalancedSourceSampler
-    with pytest.raises(ValueError, match="positive even batch size"):
+    sampler = orth_training_module.MixedSourceSampler
+    with pytest.raises(ValueError, match="even batch size"):
         sampler(TaggedDataset([0, 1]), 3, 42)
-    with pytest.raises(ValueError, match="both source tags"):
+    with pytest.raises(ValueError, match="forget and retain"):
         sampler(TaggedDataset([0, 0]), 2, 42)
-    with pytest.raises(ValueError, match="equal and divisible"):
-        sampler(TaggedDataset([0, 0, 1]), 2, 42)
+    mixed = sampler(TaggedDataset([0, 0, 1]), 2, 42)
+    indices = list(mixed)
+    assert len(indices) == 2
+    assert {TaggedDataset([0, 0, 1]).sources[index] for index in indices} == {0, 1}
 
 
 def test_orth_cb_losses_relu_mask_and_off_diagonal(orth_training_module) -> None:
@@ -622,7 +624,7 @@ def test_npo_loss_routes_sources_and_only_updates_adapter(npo_training_module) -
             return SimpleNamespace(loss=input_ids.float().mean() * weight)
 
     model = Model()
-    trainer = object.__new__(npo_training_module.BalancedNPOTrainer)
+    trainer = object.__new__(npo_training_module.NPOTrainer)
     inputs = {
         "input_ids": torch.tensor([[7], [2], [9], [4]]),
         "attention_mask": torch.ones(4, 1),
@@ -669,7 +671,7 @@ def test_npo_loss_routes_sources_and_only_updates_adapter(npo_training_module) -
 
 def test_npo_requires_both_sources(npo_training_module) -> None:
     torch = pytest.importorskip("torch")
-    trainer = object.__new__(npo_training_module.BalancedNPOTrainer)
+    trainer = object.__new__(npo_training_module.NPOTrainer)
     with pytest.raises(ValueError, match="forget and retain"):
         trainer.compute_loss(None, {"cb_source": torch.tensor([1, 1])})
 
@@ -905,12 +907,8 @@ def test_npo_sam_peft_gradient_checkpointing(npo_sam_training_module) -> None:
 @pytest.mark.parametrize(
     ("trainer_name", "forget_coefficient", "retain_coefficient"),
     [
-        ("BalancedGradDiffTrainer", 1.0, 1.0),
-        ("BalancedGradDiffF01R05Trainer", 0.1, 0.5),
-        ("BalancedGradDiffF01R1Trainer", 0.1, 1.0),
-        ("BalancedGradDiffF01R15Trainer", 0.1, 1.5),
-        ("BalancedGradDiffF01R2Trainer", 0.1, 2.0),
-        ("BalancedGradDiffF01R4Trainer", 0.1, 4.0),
+        ("GradDiffTrainer", 1.0, 1.0),
+        ("GradDiffF01R1Trainer", 0.1, 1.0),
     ],
 )
 def test_grad_diff_loss_and_gradient_direction(
@@ -955,7 +953,7 @@ def test_grad_diff_loss_and_gradient_direction(
 @pytest.mark.parametrize("sources", [[1, 1], [0, 0]])
 def test_grad_diff_requires_both_sources(gd_training_module, sources) -> None:
     torch = pytest.importorskip("torch")
-    trainer = object.__new__(gd_training_module.BalancedGradDiffTrainer)
+    trainer = object.__new__(gd_training_module.GradDiffTrainer)
     with pytest.raises(ValueError, match="forget and retain"):
         trainer.compute_loss(None, {"cb_source": torch.tensor(sources)})
 
@@ -970,7 +968,7 @@ def test_grad_diff_sampler_balances_each_microbatch(gd_training_module) -> None:
         train_dataset=TaggedDataset(),
         args=SimpleNamespace(per_device_train_batch_size=4, data_seed=None, seed=42),
     )
-    sampler = gd_training_module.BalancedGradDiffTrainer._get_train_sampler(trainer)
+    sampler = gd_training_module.GradDiffTrainer._get_train_sampler(trainer)
     indices = list(sampler)
     assert sorted(indices) == list(range(8))
     for start in (0, 4):
@@ -1195,7 +1193,7 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
     npo = yaml.safe_load(
         (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo.yml").read_text()
     )
-    assert npo["trainer_cls"] == "configs.training.trainers.npo.BalancedNPOTrainer"
+    assert npo["trainer_cls"] == "configs.training.trainers.npo.NPOTrainer"
     assert npo["datasets"] == cb["datasets"]
     for key in (
         "adapter",
@@ -1380,9 +1378,7 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
         (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd.yml").read_text()
     )
     model_id = "di-6.9b-wmdp-bio-lora-unlearn-gd"
-    assert gd["trainer_cls"] == (
-        "configs.training.trainers.gd.BalancedGradDiffF01R1Trainer"
-    )
+    assert gd["trainer_cls"] == ("configs.training.trainers.gd.GradDiffF01R1Trainer")
     excluded = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
     assert {key: value for key, value in gd.items() if key not in excluded} == {
         key: value for key, value in npo.items() if key not in excluded

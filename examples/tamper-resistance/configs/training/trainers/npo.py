@@ -5,22 +5,19 @@ import torch.nn.functional as F
 from axolotl.core.trainers.base import AxolotlTrainer
 from transformers import AutoModelForCausalLM
 
-from configs.training.trainers.samplers import (
-    BalancedSourceSampler,
-    PairedSourceSamplerMixin,
-)
+from configs.training.trainers.samplers import MixedSourceSampler
 
 # Match the released WMDP NPO baseline. Axolotl drops unknown YAML keys.
 BETA = 0.0225
 GAMMA = 1.0
 
 
-class BalancedNPOTrainer(AxolotlTrainer):
+class NPOTrainer(AxolotlTrainer):
     """Use the disabled LoRA adapter as the original model reference."""
 
     def _get_train_sampler(self, train_dataset=None):
         dataset = self.train_dataset if train_dataset is None else train_dataset
-        return BalancedSourceSampler(
+        return MixedSourceSampler(
             dataset,
             self.args.per_device_train_batch_size,
             self.args.data_seed if self.args.data_seed is not None else self.args.seed,
@@ -70,11 +67,7 @@ def sequence_cross_entropy(logits, labels):
     return (token_losses * valid).sum(dim=1) / valid.sum(dim=1).clamp_min(1)
 
 
-class PairedNPOTrainer(PairedSourceSamplerMixin, BalancedNPOTrainer):
-    """LoRA NPO with paired sampling and the disabled adapter as reference."""
-
-
-class FullModelNPOTrainer(PairedNPOTrainer):
+class FullModelNPOTrainer(NPOTrainer):
     """NPO against a separate frozen Zephyr reference, plus retain CE."""
 
     def __init__(self, *args, **kwargs):

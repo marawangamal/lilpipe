@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from axolotl.core.trainers.base import AxolotlTrainer
 
-from configs.training.trainers.samplers import BalancedSourceSampler
+from configs.training.trainers.samplers import MixedSourceSampler
 
 TARGET_LAYERS = (5, 10, 15, 20, 25, 30)
 
@@ -179,7 +179,7 @@ class BalancedOrthCircuitBreakerTrainer(OrthCircuitBreakerTrainer):
 
     def _get_train_sampler(self, train_dataset=None):
         dataset = self.train_dataset if train_dataset is None else train_dataset
-        return BalancedSourceSampler(
+        return MixedSourceSampler(
             dataset,
             self.args.per_device_train_batch_size,
             self.args.data_seed if self.args.data_seed is not None else self.args.seed,

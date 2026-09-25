@@ -2,7 +2,7 @@
 
 import torch
 
-from configs.training.trainers.npo import BETA, GAMMA, BalancedNPOTrainer
+from configs.training.trainers.npo import BETA, GAMMA, NPOTrainer
 
 RHO = 0.01
 
@@ -24,7 +24,7 @@ def sam_perturbation(gradients, rho=RHO):
     }
 
 
-class BalancedNPOSAMTrainer(BalancedNPOTrainer):
+class BalancedNPOSAMTrainer(NPOTrainer):
     """Accumulate perturbed NPO forget and ordinary WikiText retain gradients."""
 
     beta = BETA

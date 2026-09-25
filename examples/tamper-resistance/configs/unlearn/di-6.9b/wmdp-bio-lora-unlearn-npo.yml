@@ -1,6 +1,6 @@
 base_model: EleutherAI/deep-ignorance-unfiltered
 # NPO constants in npo.py: beta = 0.0225, gamma = 1.0.
-trainer_cls: configs.training.trainers.npo.BalancedNPOTrainer
+trainer_cls: configs.training.trainers.npo.NPOTrainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train[:1024]
