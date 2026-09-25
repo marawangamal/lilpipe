@@ -115,15 +115,13 @@ def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     assert "uv sync --frozen --group eval" in script
     assert "SLURM_ARRAY_TASK_ID" in script
     assert (
-        'adapter_name_or_path_ckpt="$artifacts_dir/models/'
+        'adapter_name_or_path_ckpt="$model_root/'
         '$adapter_name_or_path/checkpoint-$step"' in script
     )
-    assert (
-        'output="$artifacts_dir/evals/$adapter_name_or_path/checkpoint-$step"' in script
-    )
+    assert 'output="$result_root/$adapter_name_or_path/checkpoint-$step"' in script
     assert "step=$((${SLURM_ARRAY_TASK_ID" in script
     assert "* checkpoint_frequency))" in script
-    assert "last_step=${5:-}" in script
+    assert "last_step=${6:-}" in script
     assert '[[ -n "$last_step" ]] && (( step > last_step ))' in script
     assert "step=$last_step" in script
     assert "adapter_config.json" not in script
@@ -1078,10 +1076,10 @@ def test_orth_cb_config() -> None:
     assert config["trainer_cls"] == (
         "configs.training.trainers.circuit_breaker.BalancedOrthCircuitBreakerTrainer"
     )
-    assert config["output_dir"] == f"artifacts/models/{model_id}"
+    assert config["output_dir"] == f"artifacts/mila/models/{model_id}"
     assert config["wandb_name"] == model_id
     assert config["dataset_prepared_path"] == (
-        f"artifacts/cache/axolotl/{model_id}/prepared"
+        f"artifacts/mila/cache/axolotl/{model_id}/prepared"
     )
     assert config["lora_target_modules"] == [
         "query_key_value",
@@ -1122,12 +1120,12 @@ def test_relearning_config_and_script() -> None:
         (EXAMPLE / "configs/relearn/di-6.9b/wmdp-bio-relearn.yml").read_text()
     )
     assert config["base_model"] == (
-        "artifacts/models/di-6.9b-wmdp-bio-unlearn-cb/merged"
+        "artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-cb/merged"
     )
-    assert config["output_dir"] == f"artifacts/models/{model_id}"
+    assert config["output_dir"] == f"artifacts/mila/models/{model_id}"
     assert config["wandb_name"] == model_id
     assert config["dataset_prepared_path"] == (
-        f"artifacts/cache/axolotl/{model_id}/prepared"
+        f"artifacts/mila/cache/axolotl/{model_id}/prepared"
     )
     assert config["datasets"] == [
         {
@@ -1182,9 +1180,10 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
     ):
         assert npo[key] == cb[key]
     model_id = "di-6.9b-wmdp-bio-unlearn-npo"
-    assert npo["output_dir"] == f"artifacts/models/{model_id}"
+    assert npo["output_dir"] == f"artifacts/mila/models/{model_id}"
     assert (
-        npo["dataset_prepared_path"] == f"artifacts/cache/axolotl/{model_id}/prepared"
+        npo["dataset_prepared_path"]
+        == f"artifacts/mila/cache/axolotl/{model_id}/prepared"
     )
     assert npo["wandb_name"] == model_id
     assert "beta" not in npo and "gamma" not in npo
@@ -1195,10 +1194,10 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
     npo_relearn = yaml.safe_load(
         (config_dir / "relearn/di-6.9b/wmdp-bio-npo-relearn.yml").read_text()
     )
-    assert npo_relearn["base_model"] == f"artifacts/models/{model_id}/merged"
-    assert npo_relearn["output_dir"] == f"artifacts/models/{model_id}-relearn"
+    assert npo_relearn["base_model"] == f"artifacts/mila/models/{model_id}/merged"
+    assert npo_relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
     assert npo_relearn["dataset_prepared_path"] == (
-        f"artifacts/cache/axolotl/{model_id}-relearn/prepared"
+        f"artifacts/mila/cache/axolotl/{model_id}-relearn/prepared"
     )
     assert npo_relearn["wandb_name"] == f"{model_id}-relearn"
     for key in (
@@ -1230,9 +1229,10 @@ def test_npo_sam_configs_and_pipeline() -> None:
     assert (
         sam["trainer_cls"] == "configs.training.trainers.npo_sam.BalancedNPOSAMTrainer"
     )
-    assert sam["output_dir"] == f"artifacts/models/{model_id}"
+    assert sam["output_dir"] == f"artifacts/mila/models/{model_id}"
     assert (
-        sam["dataset_prepared_path"] == f"artifacts/cache/axolotl/{model_id}/prepared"
+        sam["dataset_prepared_path"]
+        == f"artifacts/mila/cache/axolotl/{model_id}/prepared"
     )
     assert sam["wandb_name"] == model_id
     npo_relearn = yaml.safe_load(
@@ -1245,8 +1245,8 @@ def test_npo_sam_configs_and_pipeline() -> None:
     assert {
         key: value for key, value in sam_relearn.items() if key not in excluded
     } == {key: value for key, value in npo_relearn.items() if key not in excluded}
-    assert sam_relearn["base_model"] == f"artifacts/models/{model_id}/merged"
-    assert sam_relearn["output_dir"] == f"artifacts/models/{model_id}-relearn"
+    assert sam_relearn["base_model"] == f"artifacts/mila/models/{model_id}/merged"
+    assert sam_relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
 
     import os
 
@@ -1294,9 +1294,9 @@ def test_npo_sam_tuning_configs(
         key: value for key, value in baseline.items() if key not in excluded
     }
     assert variant["trainer_cls"] == f"configs.training.trainers.npo_sam.{trainer_name}"
-    assert variant["output_dir"] == f"artifacts/models/{model_id}"
+    assert variant["output_dir"] == f"artifacts/mila/models/{model_id}"
     assert variant["dataset_prepared_path"] == (
-        f"artifacts/cache/axolotl/{model_id}/prepared"
+        f"artifacts/mila/cache/axolotl/{model_id}/prepared"
     )
     assert variant["wandb_name"] == model_id
     comment = path.read_text().splitlines()[1]
@@ -1315,10 +1315,10 @@ def test_npo_sam_tuning_configs(
     assert {key: value for key, value in relearn.items() if key not in excluded} == {
         key: value for key, value in baseline_relearn.items() if key not in excluded
     }
-    assert relearn["base_model"] == f"artifacts/models/{model_id}/merged"
-    assert relearn["output_dir"] == f"artifacts/models/{model_id}-relearn"
+    assert relearn["base_model"] == f"artifacts/mila/models/{model_id}/merged"
+    assert relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
     assert relearn["dataset_prepared_path"] == (
-        f"artifacts/cache/axolotl/{model_id}-relearn/prepared"
+        f"artifacts/mila/cache/axolotl/{model_id}-relearn/prepared"
     )
     assert relearn["wandb_name"] == f"{model_id}-relearn"
 
@@ -1339,9 +1339,9 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
     assert {key: value for key, value in gd.items() if key not in excluded} == {
         key: value for key, value in npo.items() if key not in excluded
     }
-    assert gd["output_dir"] == f"artifacts/models/{model_id}"
+    assert gd["output_dir"] == f"artifacts/mila/models/{model_id}"
     assert gd["dataset_prepared_path"] == (
-        f"artifacts/cache/axolotl/{model_id}/prepared"
+        f"artifacts/mila/cache/axolotl/{model_id}/prepared"
     )
     assert gd["wandb_name"] == model_id
 
@@ -1355,10 +1355,10 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
     assert {key: value for key, value in gd_relearn.items() if key not in excluded} == {
         key: value for key, value in npo_relearn.items() if key not in excluded
     }
-    assert gd_relearn["base_model"] == f"artifacts/models/{model_id}/merged"
-    assert gd_relearn["output_dir"] == f"artifacts/models/{model_id}-relearn"
+    assert gd_relearn["base_model"] == f"artifacts/mila/models/{model_id}/merged"
+    assert gd_relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
     assert gd_relearn["dataset_prepared_path"] == (
-        f"artifacts/cache/axolotl/{model_id}-relearn/prepared"
+        f"artifacts/mila/cache/axolotl/{model_id}-relearn/prepared"
     )
     assert gd_relearn["wandb_name"] == f"{model_id}-relearn"
 
@@ -1372,19 +1372,19 @@ def test_gd_gn_configs_and_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
     assert training["trainer_cls"] == (
         "configs.training.trainers.gd_gn.BalancedGradDiffGNTrainer"
     )
-    assert training["output_dir"] == f"artifacts/models/{model_id}"
+    assert training["output_dir"] == f"artifacts/mila/models/{model_id}"
     assert training["micro_batch_size"] == 2
     assert training["gradient_accumulation_steps"] == 32
     assert training["micro_batch_size"] * training["gradient_accumulation_steps"] == 64
     assert training["attn_implementation"] == "eager"
     assert training["dataset_prepared_path"] == (
-        f"artifacts/cache/axolotl/{model_id}/prepared"
+        f"artifacts/mila/cache/axolotl/{model_id}/prepared"
     )
     relearn = yaml.safe_load(
         (config_dir / "relearn/di-6.9b/wmdp-bio-gd-gn-relearn.yml").read_text()
     )
-    assert relearn["base_model"] == f"artifacts/models/{model_id}/merged"
-    assert relearn["output_dir"] == f"artifacts/models/{model_id}-relearn"
+    assert relearn["base_model"] == f"artifacts/mila/models/{model_id}/merged"
+    assert relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
 
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
@@ -1413,7 +1413,7 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
         )
         config = arms[arm]
         assert config["base_model"] == cb["base_model"]
-        assert config["output_dir"] == f"artifacts/models/{model_id}"
+        assert config["output_dir"] == f"artifacts/mila/models/{model_id}"
         assert config["wandb_name"] == model_id
         assert config["datasets"][0]["type"] == (
             "configs.training.data.wikitext_di"
@@ -1455,17 +1455,17 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
     steering = yaml.safe_load((config_dir / "wmdp-bio-unlearn-ws.yml").read_text())
     assert steering["adapter_pairs"] == [
         {
-            "pos_adapter_name_or_path": f"artifacts/models/{ws_id}-ft-retain",
-            "neg_adapter_name_or_path": f"artifacts/models/{ws_id}-ft-forget",
+            "pos_adapter_name_or_path": f"artifacts/mila/models/{ws_id}-ft-retain",
+            "neg_adapter_name_or_path": f"artifacts/mila/models/{ws_id}-ft-forget",
         }
     ]
     assert steering["steered_adapters"] == [
-        {"alpha": 1.0, "output_path": f"artifacts/models/{ws_id}"}
+        {"alpha": 1.0, "output_path": f"artifacts/mila/models/{ws_id}"}
     ]
     relearn = yaml.safe_load(
         (EXAMPLE / "configs/relearn/di-6.9b/wmdp-bio-ws-relearn.yml").read_text()
     )
-    assert relearn["base_model"] == f"artifacts/models/{ws_id}/merged"
+    assert relearn["base_model"] == f"artifacts/mila/models/{ws_id}/merged"
 
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
@@ -1478,8 +1478,8 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
     ws_relearn = plan.stage_index[f"train-{ws_id}-relearn"]
     assert ws_relearn.depends_on == (ws.id,)
     assert ws_relearn.args[2:] == (
-        f"artifacts/models/{ws_id}",
-        f"artifacts/models/{ws_id}",
+        f"artifacts/mila/models/{ws_id}",
+        f"artifacts/mila/models/{ws_id}",
     )
     relearn_script = (EXAMPLE / "scripts/slurm/relearn.sbatch").read_text()
     assert '--lora-model-dir "$3" --output-dir "$4"' in relearn_script
@@ -1495,7 +1495,7 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
         assert config["base_model_name_or_path"] == steering["base_model_name_or_path"]
         assert config["adapter_pairs"] == steering["adapter_pairs"]
         assert config["steered_adapters"] == [
-            {"alpha": float(alpha), "output_path": f"artifacts/models/{model_id}"}
+            {"alpha": float(alpha), "output_path": f"artifacts/mila/models/{model_id}"}
         ]
         stage = plan.stage_index[f"build-{model_id}"]
         assert stage.script == "scripts/slurm/weight_steering.sbatch"
@@ -1572,6 +1572,7 @@ def test_single_experiment_plans_base_cb_and_relearning(
         "di-6.9b-base",
         "EleutherAI/deep-ignorance-unfiltered",
         "-",
+        "artifacts/mila/evals",
     )
 
 
@@ -1599,7 +1600,8 @@ def test_mmlu_no_bio_evaluator_is_zero_shot() -> None:
     assert "--tasks mmlu_no_bio" in script
     assert "--num_fewshot 0" in script
     assert "--batch_size 32" in script
-    assert 'output="artifacts/evals/$model_id/mmlu-no-bio"' in script
+    assert "result_root=${4:?missing result root}" in script
+    assert 'output="$result_root/$model_id/mmlu-no-bio"' in script
 
 
 def test_mmlu_no_bio_trajectory_evaluator_accepts_last_step() -> None:
@@ -1607,15 +1609,15 @@ def test_mmlu_no_bio_trajectory_evaluator_accepts_last_step() -> None:
     assert "SLURM_ARRAY_TASK_ID" in script
     assert "step=$((${SLURM_ARRAY_TASK_ID" in script
     assert "* checkpoint_frequency))" in script
-    assert "last_step=${5:-}" in script
+    assert "last_step=${6:-}" in script
     assert '[[ -n "$last_step" ]] && (( step > last_step ))' in script
     assert "step=$last_step" in script
     assert (
-        'adapter_name_or_path_ckpt="$artifacts_dir/models/'
+        'adapter_name_or_path_ckpt="$model_root/'
         '$adapter_name_or_path/checkpoint-$step"' in script
     )
     assert (
-        'output="$artifacts_dir/evals/$adapter_name_or_path/'
+        'output="$result_root/$adapter_name_or_path/'
         'checkpoint-$step/mmlu-no-bio"' in script
     )
     assert "--tasks mmlu_no_bio" in script
@@ -1624,8 +1626,9 @@ def test_mmlu_no_bio_trajectory_evaluator_accepts_last_step() -> None:
 def test_final_adapter_evaluator_uses_direct_adapter_without_array() -> None:
     script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa_single.sbatch").read_text()
     assert "adapter_name_or_path=${3:?missing adapter name or path}" in script
+    assert "result_root=${4:?missing result root}" in script
     assert 'if [[ "$adapter_name_or_path" != "-" ]]' in script
-    assert 'output="artifacts/evals/$model_id/wmdp-bio-robust"' in script
+    assert 'output="$result_root/$model_id/wmdp-bio-robust"' in script
     assert "checkpoint-" not in script
     assert "SLURM_ARRAY_TASK_ID" not in script
     assert "--batch_size 32" in script
@@ -1746,9 +1749,11 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "weight-steering",
         "weight-steering",
     ]
-    assert config["rows"][1]["root"] == ("artifacts/evals/di-6.9b-wmdp-bio-unlearn-cb")
+    assert config["rows"][1]["root"] == (
+        "artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-cb"
+    )
     assert config["rows"][2]["root"] == (
-        "artifacts/evals/di-6.9b-wmdp-bio-unlearn-cb-relearn"
+        "artifacts/mila/evals/di-6.9b-wmdp-bio-unlearn-cb-relearn"
     )
 
     for config_dir in ("unlearn", "relearn"):
@@ -1758,7 +1763,7 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
             training = yaml.safe_load(training_path.read_text())
             if "steered_adapters" in training:
                 continue
-            assert training["output_dir"].startswith("artifacts/models/di-6.9b-")
+            assert training["output_dir"].startswith("artifacts/mila/models/di-6.9b-")
             assert "lora64-epochs1" not in training["output_dir"]
             assert "LoRA64-Epochs1" not in training["wandb_name"]
 

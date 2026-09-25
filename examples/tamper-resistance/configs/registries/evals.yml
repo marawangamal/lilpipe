@@ -5,6 +5,7 @@ evaluations:
       - "{model.id}"
       - "{model.base_model_name_or_path}"
       - "{model.adapter_name_or_path}"
+      - artifacts/mila/evals
     sbatch_args:
       - --gres=gpu:l40s:1
       - --cpus-per-task=8
@@ -17,6 +18,7 @@ evaluations:
       - "{model.id}"
       - "{model.base_model_name_or_path}"
       - "{model.adapter_name_or_path}"
+      - artifacts/mila/evals
     sbatch_args:
       - --gres=gpu:l40s:1
       - --cpus-per-task=8

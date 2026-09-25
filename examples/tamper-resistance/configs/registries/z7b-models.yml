@@ -1,8 +1,8 @@
 models:
   z7b-wmdp-bio-unlearn-npo:
-    base_model_name_or_path: artifacts/models/z7b-wmdp-bio-unlearn-npo
+    base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-unlearn-npo
     adapter_name_or_path: "-"
-    local_dir: artifacts/models/z7b-wmdp-bio-unlearn-npo
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-unlearn-npo
     producer:
       id: train-z7b-wmdp-bio-unlearn-npo
       script: scripts/slurm/train.sbatch
@@ -15,9 +15,9 @@ models:
         - --time=03:00:00
 
   z7b-wmdp-bio-unlearn-npo-relearn:
-    base_model_name_or_path: artifacts/models/z7b-wmdp-bio-unlearn-npo-relearn
+    base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-unlearn-npo-relearn
     adapter_name_or_path: "-"
-    local_dir: artifacts/models/z7b-wmdp-bio-unlearn-npo-relearn
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-unlearn-npo-relearn
     producer:
       id: train-z7b-wmdp-bio-unlearn-npo-relearn
       script: scripts/slurm/train.sbatch
@@ -31,9 +31,9 @@ models:
         - --time=03:00:00
 
   z7b-wmdp-bio-unlearn-gd:
-    base_model_name_or_path: artifacts/models/z7b-wmdp-bio-unlearn-gd
+    base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-unlearn-gd
     adapter_name_or_path: "-"
-    local_dir: artifacts/models/z7b-wmdp-bio-unlearn-gd
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-unlearn-gd
     producer:
       id: train-z7b-wmdp-bio-unlearn-gd
       script: scripts/slurm/train.sbatch
@@ -46,9 +46,9 @@ models:
         - --time=03:00:00
 
   z7b-wmdp-bio-unlearn-gd-relearn:
-    base_model_name_or_path: artifacts/models/z7b-wmdp-bio-unlearn-gd-relearn
+    base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-unlearn-gd-relearn
     adapter_name_or_path: "-"
-    local_dir: artifacts/models/z7b-wmdp-bio-unlearn-gd-relearn
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-unlearn-gd-relearn
     producer:
       id: train-z7b-wmdp-bio-unlearn-gd-relearn
       script: scripts/slurm/train.sbatch

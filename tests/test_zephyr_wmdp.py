@@ -59,7 +59,7 @@ def test_four_model_pipeline_and_full_model_paths(monkeypatch):
     for model_id in MODEL_IDS:
         model = registry[model_id]
         assert model["adapter_name_or_path"] == "-"
-        assert model["base_model_name_or_path"] == f"artifacts/models/{model_id}"
+        assert model["base_model_name_or_path"] == f"artifacts/mila/models/{model_id}"
         config = yaml.safe_load((EXAMPLE / model["producer"]["args"][0]).read_text())
         assert config["output_dir"] == model["local_dir"]
         assert config["max_steps"] == 125
@@ -72,7 +72,7 @@ def test_four_model_pipeline_and_full_model_paths(monkeypatch):
         assert "adapter" not in config
         if model_id.endswith("-relearn"):
             assert config["base_model"] == (
-                f"artifacts/models/{model_id.removesuffix('-relearn')}"
+                f"artifacts/mila/models/{model_id.removesuffix('-relearn')}"
             )
             assert config["datasets"][0]["split"] == "train"
             assert config["datasets"][0]["path"] == "cais/wmdp-bio-forget-corpus"

@@ -4,9 +4,9 @@ models:
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
 
   di-6.9b-wmdp-bio-unlearn-cb:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-cb
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-cb
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-cb
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-cb
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-cb
       script: scripts/slurm/train.sbatch
@@ -18,9 +18,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-cb-relearn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-cb-relearn
-    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-cb/merged
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-cb-relearn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-cb-relearn
+    base_model_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-cb/merged
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-cb-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-cb-relearn
       script: scripts/slurm/relearn.sbatch
@@ -35,9 +35,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo
       script: scripts/slurm/train.sbatch
@@ -49,9 +49,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-relearn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-relearn
-    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo/merged
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-relearn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-relearn
+    base_model_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo/merged
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-relearn
       script: scripts/slurm/relearn.sbatch
@@ -66,9 +66,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam
       script: scripts/slurm/train.sbatch
@@ -80,9 +80,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam-relearn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-relearn
-    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam/merged
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-relearn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-relearn
+    base_model_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam/merged
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-relearn
       script: scripts/slurm/relearn.sbatch
@@ -97,9 +97,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam-rho003:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-rho003
       script: scripts/slurm/train.sbatch
@@ -111,9 +111,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225
       script: scripts/slurm/train.sbatch
@@ -125,9 +125,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450
       script: scripts/slurm/train.sbatch
@@ -139,9 +139,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900
       script: scripts/slurm/train.sbatch
@@ -153,9 +153,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225
       script: scripts/slurm/train.sbatch
@@ -167,9 +167,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
-    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003/merged
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
+    base_model_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003/merged
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-rho003-relearn
       script: scripts/slurm/relearn.sbatch
@@ -184,9 +184,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
-    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225/merged
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
+    base_model_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225/merged
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-gamma225-relearn
       script: scripts/slurm/relearn.sbatch
@@ -201,9 +201,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
-    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450/merged
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
+    base_model_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450/merged
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-gamma450-relearn
       script: scripts/slurm/relearn.sbatch
@@ -218,9 +218,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn
-    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900/merged
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn
+    base_model_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900/merged
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-gamma900-relearn
       script: scripts/slurm/relearn.sbatch
@@ -235,9 +235,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
-    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225/merged
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
+    base_model_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225/merged
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
       script: scripts/slurm/relearn.sbatch
@@ -252,9 +252,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-gd:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-gd
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-gd
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-gd
       script: scripts/slurm/train.sbatch
@@ -266,9 +266,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-gd-relearn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd-relearn
-    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd/merged
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd-relearn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-gd-relearn
+    base_model_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-gd/merged
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-gd-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-gd-relearn
       script: scripts/slurm/relearn.sbatch
@@ -283,9 +283,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-gd-gn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd-gn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-gd-gn
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd-gn
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-gd-gn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-gd-gn
       script: scripts/slurm/train.sbatch
@@ -297,9 +297,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-gd-gn-relearn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd-gn-relearn
-    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd-gn/merged
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd-gn-relearn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-gd-gn-relearn
+    base_model_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-gd-gn/merged
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-gd-gn-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-gd-gn-relearn
       script: scripts/slurm/relearn.sbatch
@@ -314,9 +314,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-ws-ft-retain:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-ft-retain
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-ft-retain
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-ft-retain
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-ft-retain
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-ws-ft-retain
       script: scripts/slurm/train.sbatch
@@ -328,9 +328,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-ws-ft-forget:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-ft-forget
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-ft-forget
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-ft-forget
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-ft-forget
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-ws-ft-forget
       script: scripts/slurm/train.sbatch
@@ -338,9 +338,9 @@ models:
       sbatch_args: *ws_train_resources
 
   di-6.9b-wmdp-bio-unlearn-ws:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws
     producer:
       id: build-di-6.9b-wmdp-bio-unlearn-ws
       script: scripts/slurm/weight_steering.sbatch
@@ -355,17 +355,17 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-ws-relearn:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-relearn
-    base_model_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws/merged
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-relearn
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-relearn
+    base_model_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws/merged
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-relearn
     producer:
       id: train-di-6.9b-wmdp-bio-unlearn-ws-relearn
       script: scripts/slurm/relearn.sbatch
       args:
         - configs/unlearn/di-6.9b/wmdp-bio-unlearn-ws-ft-retain.yml
         - configs/relearn/di-6.9b/wmdp-bio-ws-relearn.yml
-        - artifacts/models/di-6.9b-wmdp-bio-unlearn-ws
-        - artifacts/models/di-6.9b-wmdp-bio-unlearn-ws
+        - artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws
+        - artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws
       depends_on: [di-6.9b-wmdp-bio-unlearn-ws]
       sbatch_args:
         - --gres=gpu:l40s:1
@@ -374,9 +374,9 @@ models:
         - --time=06:00:00
 
   di-6.9b-wmdp-bio-unlearn-ws-a2:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a2
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-a2
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a2
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-a2
     producer:
       id: build-di-6.9b-wmdp-bio-unlearn-ws-a2
       script: scripts/slurm/weight_steering.sbatch
@@ -391,9 +391,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-ws-a4:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a4
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-a4
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a4
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-a4
     producer:
       id: build-di-6.9b-wmdp-bio-unlearn-ws-a4
       script: scripts/slurm/weight_steering.sbatch
@@ -408,9 +408,9 @@ models:
         - --time=03:00:00
 
   di-6.9b-wmdp-bio-unlearn-ws-a10:
-    adapter_name_or_path: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a10
+    adapter_name_or_path: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-a10
     base_model_name_or_path: EleutherAI/deep-ignorance-unfiltered
-    local_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-a10
+    local_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-a10
     producer:
       id: build-di-6.9b-wmdp-bio-unlearn-ws-a10
       script: scripts/slurm/weight_steering.sbatch

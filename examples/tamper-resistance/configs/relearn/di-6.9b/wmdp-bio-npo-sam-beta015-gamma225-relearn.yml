@@ -1,4 +1,4 @@
-base_model: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225/merged
+base_model: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225/merged
 tokenizer_type: AutoTokenizer
 seed: 42
 
@@ -6,10 +6,10 @@ datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train[:1024]
     type: configs.training.data.wmdp_completion
-dataset_prepared_path: artifacts/cache/axolotl/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn/prepared
 dataset_num_proc: 1
 val_set_size: 0.0
-output_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
+output_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-npo-sam-beta015-gamma225-relearn
 
 adapter: lora
 lora_r: 8

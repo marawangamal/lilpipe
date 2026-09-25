@@ -26,10 +26,10 @@ def test_separate_weights_match_requested_grad_diff_ratio() -> None:
     assert config["adapter_pairs"] == [
         {
             "pos_adapter_name_or_path": (
-                "artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-ft-retain"
+                "artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-ft-retain"
             ),
             "neg_adapter_name_or_path": (
-                "artifacts/models/di-6.9b-wmdp-bio-unlearn-ws-ft-forget"
+                "artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-ws-ft-forget"
             ),
         }
     ]

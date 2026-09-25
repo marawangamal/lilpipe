@@ -5,5 +5,5 @@
 reroutes forget activations away from the base model, and orthogonalizes forget
 representations. A second stage merges this adapter and fine-tunes a new adapter
 on the forget documents alone. Run `lilpipe configs/experiments/di-6.9b.yml`;
-the adapters and evaluations appear under `artifacts/models/` and
-`artifacts/evals/`.
+the adapters and evaluations appear under `artifacts/mila/models/` and
+`artifacts/mila/evals/`.

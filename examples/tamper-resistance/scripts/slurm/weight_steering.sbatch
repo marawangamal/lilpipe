@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --output=artifacts/logs/slurm-%j.out
+#SBATCH --output=artifacts/mila/logs/slurm-%j.out
 set -euo pipefail
 
 export HF_HOME="$SCRATCH/.cache/huggingface"

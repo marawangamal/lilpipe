@@ -57,12 +57,12 @@ def main() -> None:
     parser.add_argument(
         "--input",
         type=Path,
-        default=Path("artifacts/analysis/per_sample_param_grad_cosim.json"),
+        default=Path("artifacts/mila/analysis/per_sample_param_grad_cosim.json"),
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("artifacts/analysis/per_sample_param_grad_cosim.png"),
+        default=Path("artifacts/mila/analysis/per_sample_param_grad_cosim.png"),
     )
     parser.add_argument("--method", choices=("all", "cb", "npo"), default="all")
     args = parser.parse_args()

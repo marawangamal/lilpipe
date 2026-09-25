@@ -10,9 +10,9 @@ datasets:
     type: configs.training.data.wikitext2
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/cache/axolotl/z7b-wmdp-bio-unlearn-npo/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-unlearn-npo/prepared
 val_set_size: 0.0
-output_dir: artifacts/models/z7b-wmdp-bio-unlearn-npo
+output_dir: artifacts/mila/models/z7b-wmdp-bio-unlearn-npo
 
 sequence_len: 512
 sample_packing: false

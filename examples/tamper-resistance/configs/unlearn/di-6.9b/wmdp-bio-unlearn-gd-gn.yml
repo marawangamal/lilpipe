@@ -12,9 +12,9 @@ datasets:
     type: configs.training.data.wikitext_di
 shuffle_merged_datasets: true
 dataset_num_proc: 1
-dataset_prepared_path: artifacts/cache/axolotl/di-6.9b-wmdp-bio-unlearn-gd-gn/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/di-6.9b-wmdp-bio-unlearn-gd-gn/prepared
 val_set_size: 0.0
-output_dir: artifacts/models/di-6.9b-wmdp-bio-unlearn-gd-gn
+output_dir: artifacts/mila/models/di-6.9b-wmdp-bio-unlearn-gd-gn
 
 adapter: lora
 lora_target_modules: [query_key_value, dense, dense_h_to_4h, dense_4h_to_h]

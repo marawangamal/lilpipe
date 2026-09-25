@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --output=artifacts/logs/slurm-%j.out
+#SBATCH --output=artifacts/mila/logs/slurm-%j.out
 set -euo pipefail
 
 export HF_HOME="$SCRATCH/.cache/huggingface"
@@ -11,7 +11,8 @@ export PYTHONPATH="$PWD"
 model_id=${1:?missing model id}
 base_model_name_or_path=${2:?missing base model name or path}
 adapter_name_or_path=${3:?missing adapter name or path}
-output="artifacts/evals/$model_id/mmlu-no-bio"
+result_root=${4:?missing result root}
+output="$result_root/$model_id/mmlu-no-bio"
 model_args="pretrained=$base_model_name_or_path,dtype=bfloat16,trust_remote_code=True"
 if [[ "$adapter_name_or_path" != "-" ]]; then
   model_args+=",peft=$adapter_name_or_path"

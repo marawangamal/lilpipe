@@ -32,7 +32,7 @@ uv sync --group eval
 Slurm jobs install clean environments and uv caches under `$SLURM_TMPDIR`.
 The persistent environments above are only for submitting pipelines and plotting.
 Axolotl's tokenized WMDP/WikiText dataset is stored under
-`artifacts/cache/axolotl/di-6.9b-wmdp-bio-unlearn-cb/prepared`.
+`artifacts/mila/cache/axolotl/di-6.9b-wmdp-bio-unlearn-cb/prepared`.
 
 ## Run
 
@@ -135,7 +135,7 @@ The probe selects 16 documents once from the first 1,024 WMDP-Bio training
 documents with seed 42 and truncates them to 512 tokens. It reports the mean
 cosine over 120 distinct document pairs at steps 5, 10, 15, 20, 25, 30, and
 32 in each stage. Relearning steps are plotted with a 32-step offset. The
-outputs are `artifacts/analysis/per_sample_param_grad_cosim.json` and `.png`.
+outputs are `artifacts/mila/analysis/per_sample_param_grad_cosim.json` and `.png`.
 The generator needs the CB and NPO checkpoints and their merged models. Its
 temporary factor files require free disk space and are removed after each
 checkpoint.

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --output=artifacts/logs/per-sample-grad-cosim-%j.out
+#SBATCH --output=artifacts/mila/logs/per-sample-grad-cosim-%j.out
 set -euo pipefail
 
 export PATH="$HOME/.local/bin:$PATH"
@@ -19,7 +19,7 @@ source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 base_model=$(python -c \
   'import json, sys; print(json.load(open(sys.argv[1]))["base_model_name_or_path"])' \
   "$model_dir/adapter_config.json")
-output_dir="artifacts/analysis/per_sample_param_grad_cosim/$model_id"
+output_dir="artifacts/mila/analysis/per_sample_param_grad_cosim/$model_id"
 mkdir -p "$output_dir"
 
 mapfile -t checkpoints < <(
