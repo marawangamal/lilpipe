@@ -1,5 +1,5 @@
 version: 1
-id: z7b-wmdp-bio-reproduction
+id: z7b-wmdp-bio-fft-reproduction
 
 registries:
   models: configs/registries/models.yml
@@ -10,11 +10,7 @@ models:
   - z7b-wmdp-bio-fft-unlearn-npo-relearn
   - z7b-wmdp-bio-fft-unlearn-gd
   - z7b-wmdp-bio-fft-unlearn-gd-relearn
-  - z7b-wmdp-bio-lora-unlearn-npo
-  - z7b-wmdp-bio-lora-unlearn-npo-relearn
-  - z7b-wmdp-bio-lora-unlearn-gd
-  - z7b-wmdp-bio-lora-unlearn-gd-relearn
 
 evaluations:
-  - bio-mcqa-ckpts-max125-freq25
-  - mmlu-no-bio-ckpts-max125-freq25
+  - bio-mcqa-ckpts-max125-freq25-tamia
+  - mmlu-no-bio-ckpts-max125-freq25-tamia

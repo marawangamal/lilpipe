@@ -1,0 +1,16 @@
+version: 1
+id: z7b-wmdp-bio-lora-reproduction
+
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - z7b-wmdp-bio-lora-unlearn-npo
+  - z7b-wmdp-bio-lora-unlearn-npo-relearn
+  - z7b-wmdp-bio-lora-unlearn-gd
+  - z7b-wmdp-bio-lora-unlearn-gd-relearn
+
+evaluations:
+  - bio-mcqa-ckpts-max125-freq25-mila
+  - mmlu-no-bio-ckpts-max125-freq25-mila

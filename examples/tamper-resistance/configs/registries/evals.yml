@@ -25,7 +25,7 @@ evaluations:
       - --mem=64G
       - --time=00:30:00
       - --exclude=cn-c034,cn-l030,cn-l055
-  mmlu-no-bio-ckpts-max125-freq25:
+  mmlu-no-bio-ckpts-max125-freq25-mila:
     script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
     args:
       - "{model.id}"
@@ -41,7 +41,7 @@ evaluations:
       - --mem=64G
       - --time=00:30:00
       - --exclude=cn-c034,cn-l030,cn-l055
-  bio-mcqa-ckpts-max125-freq25:
+  bio-mcqa-ckpts-max125-freq25-mila:
     script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
     args:
       - "{model.id}"
@@ -51,3 +51,29 @@ evaluations:
       - "25"
       - "125"
     sbatch_args: *checkpoint_evaluation_resources
+  mmlu-no-bio-ckpts-max125-freq25-tamia:
+    script: scripts/slurm/tamia/eval_mmlu_no_bio_ckpts.sbatch
+    args:
+      - "{model.id}"
+      - "{model.base_model_name_or_path}"
+      - "{model.adapter_name_or_path}"
+      - artifacts/tamia/evals
+      - "25"
+      - "125"
+    sbatch_args: &tamia_checkpoint_evaluation_resources
+      - --array=1-5
+      - --partition=gpubase_bynode_b1
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=00:30:00
+  bio-mcqa-ckpts-max125-freq25-tamia:
+    script: scripts/slurm/tamia/eval_wmdp_bio_mcqa_ckpts.sbatch
+    args:
+      - "{model.id}"
+      - "{model.base_model_name_or_path}"
+      - "{model.adapter_name_or_path}"
+      - artifacts/tamia/evals
+      - "25"
+      - "125"
+    sbatch_args: *tamia_checkpoint_evaluation_resources

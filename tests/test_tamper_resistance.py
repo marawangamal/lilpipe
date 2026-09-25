@@ -133,17 +133,35 @@ def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     assert "plot_trajectory.py" not in script
 
 
-def test_z7b_manifest_evaluates_lora_and_fft_trajectories(
+@pytest.mark.parametrize(
+    ("manifest", "script_cluster", "result_root", "resource"),
+    [
+        (
+            "z7b-fft.yml",
+            "tamia",
+            "artifacts/tamia/evals",
+            "--gpus-per-node=h100:4",
+        ),
+        ("z7b-lora.yml", "mila", "artifacts/mila/evals", "--gres=gpu:l40s:1"),
+    ],
+)
+def test_z7b_manifests_evaluate_trajectories_on_their_training_cluster(
     monkeypatch: pytest.MonkeyPatch,
+    manifest: str,
+    script_cluster: str,
+    result_root: str,
+    resource: str,
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load("configs/experiments/z7b.yml")
+    pipeline = lilpipe.load(f"configs/experiments/{manifest}")
     plan = pipeline.plan(existing_models=pipeline.selected_models)
     stages = [stage for stage in plan.stages if stage.id not in plan.skipped]
-    assert len(stages) == 16
+    assert len(stages) == 8
+    assert all(f"scripts/slurm/{script_cluster}/" in stage.script for stage in stages)
     assert all("ckpts" in stage.script for stage in stages)
+    assert all(result_root in stage.args for stage in stages)
     assert all("--array=1-5" in stage.sbatch_args for stage in stages)
-    assert all("--gres=gpu:l40s:1" in stage.sbatch_args for stage in stages)
+    assert all(resource in stage.sbatch_args for stage in stages)
 
 
 def test_training_script_is_minimal() -> None:

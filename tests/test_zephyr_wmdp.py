@@ -12,16 +12,19 @@ import yaml
 import lilpipe
 
 EXAMPLE = Path(__file__).resolve().parents[1] / "examples" / "tamper-resistance"
-MODEL_IDS = (
+FFT_MODEL_IDS = (
     "z7b-wmdp-bio-fft-unlearn-npo",
     "z7b-wmdp-bio-fft-unlearn-npo-relearn",
     "z7b-wmdp-bio-fft-unlearn-gd",
     "z7b-wmdp-bio-fft-unlearn-gd-relearn",
+)
+LORA_MODEL_IDS = (
     "z7b-wmdp-bio-lora-unlearn-npo",
     "z7b-wmdp-bio-lora-unlearn-npo-relearn",
     "z7b-wmdp-bio-lora-unlearn-gd",
     "z7b-wmdp-bio-lora-unlearn-gd-relearn",
 )
+MODEL_IDS = FFT_MODEL_IDS + LORA_MODEL_IDS
 
 
 def module(path, name):
@@ -34,9 +37,14 @@ def module(path, name):
 
 def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
     monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load("configs/experiments/z7b.yml")
-    assert pipeline.selected_models == MODEL_IDS
-    stages = pipeline.plan().stage_index
+    fft_pipeline = lilpipe.load("configs/experiments/z7b-fft.yml")
+    lora_pipeline = lilpipe.load("configs/experiments/z7b-lora.yml")
+    assert fft_pipeline.selected_models == FFT_MODEL_IDS
+    assert lora_pipeline.selected_models == LORA_MODEL_IDS
+    stages = {
+        **fft_pipeline.plan().stage_index,
+        **lora_pipeline.plan().stage_index,
+    }
     for model_id in MODEL_IDS:
         producer = stages[f"train-{model_id}"]
         regime = "fft" if "-fft-" in model_id else "lora"
@@ -157,6 +165,20 @@ def test_tamia_launcher_matches_template_and_is_cluster_namespaced():
     assert 'mkdir -p "$WANDB_DIR"' in script
     assert 'axolotl train "$config"' in script
     assert "sed " not in script
+
+
+@pytest.mark.parametrize("name", ["eval_mmlu_no_bio", "eval_wmdp_bio_mcqa"])
+@pytest.mark.parametrize("kind", ["single", "ckpts"])
+def test_tamia_evaluation_launchers_match_template(name, kind):
+    script = (EXAMPLE / f"scripts/slurm/tamia/{name}_{kind}.sbatch").read_text()
+    assert "module load httpproxy/1.0" in script
+    assert "uv sync --frozen --group eval" in script
+    assert 'export UV_CACHE_DIR="$SCRATCH/.cache/uv"' in script
+    assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"' in script
+    assert 'accelerate launch --num_processes="${SLURM_GPUS_ON_NODE:?}"' in script
+    assert "--batch_size 32" in script
+    assert "artifacts/tamia/logs/" in script
+    assert "OFFLINE" not in script
 
 
 def test_mila_launchers_delegate_distribution_to_axolotl_and_merge_once():
