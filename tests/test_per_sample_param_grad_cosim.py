@@ -1,5 +1,7 @@
 import importlib.util
 import json
+import random
+import sys
 from pathlib import Path
 
 import pytest
@@ -11,85 +13,103 @@ def load_script(name):
     path = EXAMPLE / "scripts" / "analysis" / f"{name}.py"
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    sys.path.insert(0, str(path.parent))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.remove(str(path.parent))
     return module
 
 
-def test_ghost_products_and_cosine_match_dense_autograd(tmp_path):
+def test_probe_collects_one_parameter_gradient_per_document(tmp_path, monkeypatch):
     torch = pytest.importorskip("torch")
-    import torch.nn.functional as F
-
+    datasets = pytest.importorskip("datasets")
+    peft = pytest.importorskip("peft")
+    transformers = pytest.importorskip("transformers")
     generator = load_script("per_sample_param_grad_cosim_gen_results")
-    torch.manual_seed(7)
-    factors = []
-    dense_gradients = []
-    for sample in range(3):
-        x = torch.randn(4 + sample, 3, dtype=torch.float64)
-        update = torch.randn(5, 3, dtype=torch.float64, requires_grad=True)
-        logits = F.linear(x, update)
-        labels = torch.tensor([0, 1, 2, 3, 4, 0])[: len(x)]
-        loss = F.cross_entropy(logits, labels, reduction="mean")
-        output_gradient = torch.autograd.grad(loss, logits, retain_graph=True)[0]
-        dense_gradient = torch.autograd.grad(loss, update)[0]
-        factors.append((x, output_gradient))
-        dense_gradients.append(dense_gradient)
-        torch.save((x, output_gradient), tmp_path / f"0-{sample}.pt")
+    rows = datasets.Dataset.from_list(
+        [
+            {"title": str(index), "abstract": "abstract", "text": "text"}
+            for index in range(20)
+        ]
+    )
+    monkeypatch.setattr(generator, "load_dataset", lambda name, split: rows)
+    seen = []
 
-    for i in range(3):
-        for j in range(3):
-            expected = (dense_gradients[i] * dense_gradients[j]).sum().item()
-            assert generator.ghost_inner_product(
-                factors[i], factors[j]
-            ).item() == pytest.approx(expected, abs=1e-12)
-    expected_cosines = [
-        F.cosine_similarity(
-            dense_gradients[i].flatten(), dense_gradients[j].flatten(), dim=0
-        ).item()
-        for i in range(3)
-        for j in range(i + 1, 3)
-    ]
-    assert generator.mean_cosine_from_factors(tmp_path, 1, 3) == pytest.approx(
-        sum(expected_cosines) / 3, abs=1e-12
+    class Tokenizer:
+        def __call__(self, text, truncation, max_length):
+            index = int(text.split("\n", 1)[0])
+            seen.append(index)
+            assert truncation and max_length == 5
+            return {"input_ids": [1, 0, 2] if index % 2 else [1, 0, 2, 3]}
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.ones(2))
+            self.calls = []
+
+        def forward(self, input_ids, labels):
+            self.calls.append((input_ids.clone(), labels.clone(), self.training))
+            features = torch.tensor([1.0, float(input_ids[0, -1])])
+            return type("Output", (), {"loss": (self.weight * features).sum()})()
+
+    model = Model()
+    before = model.weight.detach().clone()
+    monkeypatch.setattr(
+        transformers.AutoTokenizer, "from_pretrained", lambda _: Tokenizer()
+    )
+    monkeypatch.setattr(
+        transformers.AutoModelForCausalLM, "from_pretrained", lambda *a, **k: model
+    )
+    monkeypatch.setattr(peft.PeftModel, "from_pretrained", lambda *a, **k: model)
+    output = tmp_path / "result.json"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "probe",
+            "--model_name_or_path",
+            "base",
+            "--adapter_name_or_path",
+            "adapter",
+            "--max_length",
+            "5",
+            "--out",
+            str(output),
+        ],
     )
 
-    torch.save(
-        (torch.zeros(2, 3, dtype=torch.float64), torch.ones(2, 5, dtype=torch.float64)),
-        tmp_path / "0-0.pt",
-    )
-    with pytest.raises(ValueError, match="zero or non-finite"):
-        generator.mean_cosine_from_factors(tmp_path, 1, 3)
+    generator.main()
 
-
-def test_rows_and_cumulative_offsets(tmp_path):
-    generator = load_script("per_sample_param_grad_cosim_gen_results")
-    for method in generator.METHODS:
-        root = tmp_path / "models" / f"di-6.9b-wmdp-bio-lora-unlearn-{method}"
-        (root / "merged").mkdir(parents=True)
-        for adapter in (root, Path(f"{root}-relearn")):
-            for step in generator.STEPS:
-                checkpoint = adapter / f"checkpoint-{step}"
-                checkpoint.mkdir(parents=True)
-                (checkpoint / "adapter_config.json").write_text("{}")
-
-    jobs = generator.checkpoint_jobs(tmp_path)
-    rows = generator.collect_rows(jobs, [[1, 2]] * 16, lambda *_: 0.25)
-    assert len(rows) == 28
-    assert all(row["sample_count"] == 16 and row["pair_count"] == 120 for row in rows)
-    assert {row["cumulative_step"] for row in rows if row["stage"] == "unlearn"} == set(
-        generator.STEPS
-    )
-    assert {row["cumulative_step"] for row in rows if row["stage"] == "relearn"} == {
-        step + 32 for step in generator.STEPS
-    }
+    assert seen == random.Random(42).sample(range(20), 16)
+    assert len(model.calls) == 16
     assert all(
-        base == generator.BASE_MODEL if stage == "unlearn" else base.endswith("/merged")
-        for _, stage, _, base, _ in jobs
+        inputs.shape[0] == 1 and torch.equal(inputs, labels) and not training
+        for inputs, labels, training in model.calls
     )
+    assert all(labels[0, 1].item() == 0 for _, labels, _ in model.calls)
+    vectors = [torch.tensor([1.0, 2.0 if index % 2 else 3.0]) for index in seen]
+    expected = (
+        sum(
+            torch.nn.functional.cosine_similarity(vectors[i], vectors[j], dim=0).item()
+            for i in range(16)
+            for j in range(i + 1, 16)
+        )
+        / 120
+    )
+    result = json.loads(output.read_text())
+    assert result["sample_count"] == 16
+    assert result["pair_count"] == 120
+    assert result["probe"]["sample_indices"] == seen
+    assert result["probe"]["gradient"] == "trainable LoRA adapter parameters"
+    assert result["mean_cosine"] == pytest.approx(expected, abs=1e-6)
+    assert torch.equal(model.weight, before)
+    assert model.weight.grad is None
 
-    missing = jobs[-1][-1] / "adapter_config.json"
-    missing.unlink()
-    with pytest.raises(FileNotFoundError, match="missing LoRA checkpoint"):
-        generator.checkpoint_jobs(tmp_path)
+    monkeypatch.setattr(sys, "argv", ["probe", "--model_name_or_path", "base"])
+    with pytest.raises(SystemExit, match="2"):
+        generator.main()
 
 
 def test_plot_from_fixture_json(tmp_path):

@@ -4,6 +4,9 @@ set -euo pipefail
 
 # Shared caches and outputs.
 export HF_HOME="$SCRATCH/.cache/huggingface"
+# Offline mode avoids shared-cluster Hub rate limits and makes cache requirements explicit.
+export HF_HUB_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
 export UV_CACHE_DIR="$SCRATCH/.cache/uv"
 export WANDB_DIR="$PWD/artifacts/tamia/logs"
 

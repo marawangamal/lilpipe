@@ -163,7 +163,9 @@ def test_tamia_launcher_matches_template_and_is_cluster_namespaced():
     script = (EXAMPLE / "scripts/slurm/tamia/train.sbatch").read_text()
     assert "module load httpproxy/1.0" in script
     assert "uv sync --frozen --group train" in script
-    assert "OFFLINE" not in script
+    assert "export HF_HUB_OFFLINE=1" in script
+    assert "export HF_DATASETS_OFFLINE=1" in script
+    assert "Offline mode avoids shared-cluster Hub rate limits" in script
     assert "artifacts/tamia/" in script
     assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"' in script
     assert 'mkdir -p "$WANDB_DIR"' in script
@@ -193,6 +195,10 @@ def test_mila_launchers_delegate_distribution_to_axolotl_and_merge_once():
     assert 'axolotl train "$config"' in relearn
     assert 'export PATH="$HOME/.local/bin:$PATH"' in train
     assert 'export PATH="$HOME/.local/bin:$PATH"' in relearn
+    for script in (train, relearn):
+        assert "export HF_HUB_OFFLINE=1" in script
+        assert "export HF_DATASETS_OFFLINE=1" in script
+        assert "Offline mode avoids shared-cluster Hub rate limits" in script
     assert 'mkdir -p "$WANDB_DIR"' in train
     assert 'mkdir -p "$WANDB_DIR"' in relearn
     assert "torchrun" not in train

@@ -121,24 +121,21 @@ lilpipe results configs/results/di-6.9b.yml
 ```
 
 Measure agreement between per-document forget-loss gradients with respect to
-each checkpoint's effective dense LoRA update, then plot CB and NPO across
-unlearning and relearning:
+one checkpoint's trainable LoRA parameters:
 
 ```bash
 source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
-python scripts/analysis/per_sample_param_grad_cosim_gen_results.py
-source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-eval/bin/activate"
-python scripts/analysis/per_sample_param_grad_cosim_plot_results.py
+python scripts/analysis/per_sample_param_grad_cosim_gen_results.py \
+  --model_name_or_path EleutherAI/deep-ignorance-unfiltered \
+  --adapter_name_or_path artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-cb/checkpoint-5 \
+  --dataset cais/wmdp-bio-forget-corpus \
+  --out artifacts/mila/analysis/per_sample_param_grad_cosim_gen_results.json
 ```
 
-The probe selects 16 documents once from the first 1,024 WMDP-Bio training
+The probe selects 16 documents from the first 1,024 WMDP-Bio training
 documents with seed 42 and truncates them to 512 tokens. It reports the mean
-cosine over 120 distinct document pairs at steps 5, 10, 15, 20, 25, 30, and
-32 in each stage. Relearning steps are plotted with a 32-step offset. The
-outputs are `artifacts/mila/analysis/per_sample_param_grad_cosim.json` and `.png`.
-The generator needs the CB and NPO checkpoints and their merged models. Its
-temporary factor files require free disk space and are removed after each
-checkpoint.
+cosine over 120 distinct document pairs in one JSON file. The trajectory
+plotter remains available for previously generated trajectory JSON files.
 
 Axolotl loads dataset strategies from `configs/training/data/` and objectives
 from `configs/training/trainers/`, as selected by `datasets[].type` and

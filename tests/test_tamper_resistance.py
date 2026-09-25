@@ -168,6 +168,9 @@ def test_training_script_is_minimal() -> None:
     script = (EXAMPLE / "scripts/slurm/mila/train.sbatch").read_text()
 
     assert 'export HF_HOME="$SCRATCH/.cache/huggingface"' in script
+    assert "export HF_HUB_OFFLINE=1" in script
+    assert "export HF_DATASETS_OFFLINE=1" in script
+    assert "Offline mode avoids shared-cluster Hub rate limits" in script
     assert 'export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv-$SLURM_JOB_ID"' in script
     assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"' in script
     assert 'export PATH="$HOME/.local/bin:$PATH"' in script
@@ -176,6 +179,15 @@ def test_training_script_is_minimal() -> None:
     assert 'source "$UV_PROJECT_ENVIRONMENT/bin/activate"' in script
     assert 'axolotl train "$config"' in script
     assert "prepare_forget_corpus.py" not in script
+
+
+@pytest.mark.parametrize("cluster", ["mila", "tamia"])
+def test_slurm_templates_use_hugging_face_cache_offline(cluster: str) -> None:
+    script = (ROOT / f"slurm/template_{cluster}.sbatch").read_text()
+
+    assert "export HF_HUB_OFFLINE=1" in script
+    assert "export HF_DATASETS_OFFLINE=1" in script
+    assert "Offline mode avoids shared-cluster Hub rate limits" in script
 
 
 def test_vendored_robust_task_group_and_template() -> None:
