@@ -92,6 +92,34 @@ def test_four_model_pipeline_and_full_model_paths(monkeypatch):
             assert config["learning_rate"] == 5.0e-6
 
 
+def test_tamia_pipeline_uses_tracked_cluster_paths(monkeypatch):
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/z7b-tamia.yml")
+    assert pipeline.selected_models == MODEL_IDS
+    assert pipeline.selected_evaluations == ()
+
+    stages = pipeline.plan().stage_index
+    assert len(stages) == 4
+    for model_id in MODEL_IDS:
+        stage = stages[f"train-{model_id}"]
+        assert stage.script == "scripts/slurm/train_tamia.sbatch"
+        assert "--partition=gpubase_bynode_b1" in stage.sbatch_args
+        assert "--gpus-per-node=h100:4" in stage.sbatch_args
+
+    registry = yaml.safe_load(
+        (EXAMPLE / "configs/registries/z7b-models-tamia.yml").read_text()
+    )["models"]
+    for model_id in MODEL_IDS:
+        assert registry[model_id]["local_dir"] == f"artifacts/tamia/models/{model_id}"
+
+    script = (EXAMPLE / "scripts/slurm/train_tamia.sbatch").read_text()
+    assert "HF_HUB_OFFLINE=1" in script
+    assert "HF_DATASETS_OFFLINE=1" in script
+    assert "UV_OFFLINE=1" in script
+    assert "artifacts/mila/" in script
+    assert "artifacts/tamia/" in script
+
+
 def test_document_filter_and_paired_sampling(monkeypatch):
     datasets = pytest.importorskip("datasets")
     pytest.importorskip("axolotl")
