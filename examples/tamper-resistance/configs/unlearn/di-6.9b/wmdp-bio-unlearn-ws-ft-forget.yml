@@ -2,7 +2,7 @@ base_model: EleutherAI/deep-ignorance-unfiltered
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train[:1024]
-    type: configs.unlearn.ws_data
+    type: configs.training.data.wmdp_di
 dataset_num_proc: 1
 dataset_prepared_path: artifacts/cache/axolotl/di-6.9b-wmdp-bio-unlearn-ws-ft-forget/prepared
 val_set_size: 0.0
@@ -21,6 +21,7 @@ lora_embedding_kernel: false
 
 sequence_len: 2048
 sample_packing: false
+remove_unused_columns: true
 pad_to_sequence_len: false
 train_on_inputs: true
 micro_batch_size: 8

@@ -1,0 +1,46 @@
+base_model: artifacts/models/z7b-wmdp-bio-unlearn-npo
+tokenizer_type: AutoTokenizer
+datasets:
+  - path: cais/wmdp-bio-forget-corpus
+    split: train
+    type: configs.training.data.wmdp_zephyr
+dataset_num_proc: 8
+dataset_prepared_path: artifacts/cache/axolotl/z7b-wmdp-bio-unlearn-npo-relearn/prepared
+val_set_size: 0.0
+output_dir: artifacts/models/z7b-wmdp-bio-unlearn-npo-relearn
+
+sequence_len: 512
+sample_packing: false
+pad_to_sequence_len: false
+remove_unused_columns: true
+train_on_inputs: true
+micro_batch_size: 1
+gradient_accumulation_steps: 1
+max_steps: 125
+learning_rate: 1.0e-5
+optimizer: adamw_torch
+weight_decay: 0.0
+lr_scheduler: linear
+warmup_steps: 12
+max_grad_norm: 1.0
+
+bf16: true
+tf32: true
+gradient_checkpointing: false
+fsdp_version: 2
+fsdp_config:
+  activation_checkpointing: true
+  reshard_after_forward: true
+  auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  transformer_layer_cls_to_wrap: MistralDecoderLayer
+  state_dict_type: FULL_STATE_DICT
+  final_state_dict_type: FULL_STATE_DICT
+seed: 42
+eval_strategy: "no"
+save_strategy: steps
+save_steps: 125
+save_total_limit: 1
+save_only_model: true
+logging_steps: 1
+wandb_project: lp-tamper-resistance
+wandb_name: z7b-wmdp-bio-unlearn-npo-relearn

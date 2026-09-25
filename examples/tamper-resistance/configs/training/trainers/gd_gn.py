@@ -2,7 +2,7 @@
 
 import torch
 
-from configs.unlearn.gd import BalancedGradDiffTrainer
+from configs.training.trainers.gd import BalancedGradDiffTrainer
 
 
 class BalancedGradDiffGNTrainer(BalancedGradDiffTrainer):

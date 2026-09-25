@@ -2,7 +2,10 @@
 
 from axolotl.core.trainers.base import AxolotlTrainer
 
-from configs.unlearn.utils import BalancedSourceSampler
+from configs.training.trainers.samplers import (
+    BalancedSourceSampler,
+    PairedSourceSamplerMixin,
+)
 
 
 class BalancedGradDiffTrainer(AxolotlTrainer):
@@ -37,6 +40,10 @@ class BalancedGradDiffTrainer(AxolotlTrainer):
             -self.forget_coefficient * forget_ce + self.retain_coefficient * retain_ce
         )
         return (loss, forget_outputs) if return_outputs else loss
+
+
+class FullModelGradDiffTrainer(PairedSourceSamplerMixin, BalancedGradDiffTrainer):
+    """Use the gradient-difference loss with paired corpus sampling."""
 
 
 class BalancedGradDiffF01R1Trainer(BalancedGradDiffTrainer):

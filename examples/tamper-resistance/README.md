@@ -59,7 +59,7 @@ microbatches, 32-step budget, and optimizer schedule as CB. Its loss uses the
 forget-set cross-entropy with the adapter enabled and the frozen base-model
 cross-entropy with the adapter disabled: `−(2/β) log σ(β × (current CE −
 reference CE)) + γ × retain CE`, with β = 0.0225 and γ = 1.0. These constants
-are defined in `configs/unlearn/npo.py`, because Axolotl drops unknown YAML
+are defined in `configs/training/trainers/npo.py`, because Axolotl drops unknown YAML
 fields. The dependent NPO relearning stage merges its adapter and uses the same
 32-step forget-set attack as CB. Both NPO models are evaluated on Robust
 WMDP-Bio and MMLU excluding biology.
@@ -143,10 +143,9 @@ The generator needs the CB and NPO checkpoints and their merged models. Its
 temporary factor files require free disk space and are removed after each
 checkpoint.
 
-Axolotl loads the tagged-document strategy and orthogonal trainer from
-`configs/unlearn/utils.py`, as selected by `trainer_cls` and
-`datasets[].type` in the YAML.
-The NPO, NPO+SAM, GradDiff, and GD-GN configs use the same document strategy and balanced
-sampler, with their trainers in `configs/unlearn/npo.py`,
-`configs/unlearn/npo_sam.py`, `configs/unlearn/gd.py`, and
-`configs/unlearn/gd_gn.py`.
+Axolotl loads dataset strategies from `configs/training/data/` and objectives
+from `configs/training/trainers/`, as selected by `datasets[].type` and
+`trainer_cls` in each YAML. DI and Zephyr have separate WMDP strategies because
+they format and tokenize documents differently. The NPO, NPO+SAM, GradDiff,
+GD-GN, and circuit-breaker trainers share the samplers in
+`configs/training/trainers/samplers.py`.

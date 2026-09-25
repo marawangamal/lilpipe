@@ -2,7 +2,7 @@
 
 import torch
 
-from configs.unlearn.npo import BETA, GAMMA, BalancedNPOTrainer
+from configs.training.trainers.npo import BETA, GAMMA, BalancedNPOTrainer
 
 RHO = 0.01
 

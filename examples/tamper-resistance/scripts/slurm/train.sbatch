@@ -10,7 +10,12 @@ export WANDB_DIR="$PWD/artifacts/logs"
 
 uv sync --frozen --group train
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
-axolotl train "$1" --launcher python
+if [[ "$1" == configs/*/z7b/* ]]; then
+  torchrun --standalone --nproc_per_node="${SLURM_GPUS_ON_NODE:?}" \
+    -m axolotl.cli.train "$1"
+else
+  axolotl train "$1" --launcher python
+fi
 if [[ ${2:-} == "--merge" ]]; then
   axolotl merge-lora "$1"
 fi

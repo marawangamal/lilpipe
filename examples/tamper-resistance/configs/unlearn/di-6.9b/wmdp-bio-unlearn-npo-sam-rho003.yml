@@ -1,14 +1,14 @@
 base_model: EleutherAI/deep-ignorance-unfiltered
 # NPO+SAM constants in npo.py and npo_sam.py: beta = 0.0225, gamma = 1.0, rho = 0.003.
-trainer_cls: configs.unlearn.npo_sam.BalancedNPOSAMRho003Trainer
+trainer_cls: configs.training.trainers.npo_sam.BalancedNPOSAMRho003Trainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train[:1024]
-    type: configs.unlearn.utils
+    type: configs.training.data.wmdp_di
   - path: EleutherAI/wikitext_document_level
     name: wikitext-103-raw-v1
     split: train
-    type: configs.unlearn.utils
+    type: configs.training.data.wikitext_di
 shuffle_merged_datasets: true
 dataset_num_proc: 1
 dataset_prepared_path: artifacts/cache/axolotl/di-6.9b-wmdp-bio-unlearn-npo-sam-rho003/prepared

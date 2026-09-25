@@ -1,67 +1,14 @@
-"""WMDP/WikiText orthogonal circuit breaker for Axolotl."""
+"""Orthogonal circuit-breaker objective for WMDP unlearning."""
 
-import random
 from contextlib import nullcontext
 
 import torch
 import torch.nn.functional as F
 from axolotl.core.trainers.base import AxolotlTrainer
-from axolotl.prompt_tokenizers import DatasetWrappingStrategy
 
-WMDP_PATH = "cais/wmdp-bio-forget-corpus"
-WIKITEXT_PATH = "EleutherAI/wikitext_document_level"
+from configs.training.trainers.samplers import BalancedSourceSampler
+
 TARGET_LAYERS = (5, 10, 15, 20, 25, 30)
-
-
-class TaggedDocumentStrategy(DatasetWrappingStrategy):
-    """Produce one tokenized document with a source tag per selected row."""
-
-    def __init__(self, tokenizer, sequence_len: int, path: str):
-        self.tokenizer = tokenizer
-        self.sequence_len = sequence_len
-        self.path = path
-
-    def wrap_dataset(self, dataset, **kwargs):
-        del kwargs
-        if self.path == WIKITEXT_PATH:
-            dataset = dataset.shuffle(seed=42).select(range(min(1024, len(dataset))))
-        return dataset.map(self.tokenize_row, remove_columns=dataset.column_names)
-
-    def tokenize_row(self, row):
-        if self.path == WMDP_PATH:
-            fields = ("title", "abstract", "text")
-            if not all(isinstance(row.get(field), str) for field in fields):
-                raise ValueError(
-                    "WMDP row must contain title, abstract, and text fields"
-                )
-            text = "\n\n".join(row[field] for field in fields)
-            source = 1
-        else:
-            text = row.get("page")
-            source = 0
-        if not isinstance(text, str) or not text.strip():
-            raise ValueError("dataset document must be a non-empty string")
-        tokens = self.tokenizer(
-            text,
-            max_length=self.sequence_len,
-            truncation=True,
-            add_special_tokens=True,
-        )
-        return {
-            "input_ids": tokens["input_ids"],
-            "attention_mask": tokens["attention_mask"],
-            "labels": tokens["input_ids"].copy(),
-            "cb_source": source,
-        }
-
-
-def load(tokenizer, cfg, ds_cfg=None):
-    """Select the native WMDP or WikiText dataset source."""
-
-    path = getattr(ds_cfg, "path", None)
-    if path not in (WMDP_PATH, WIKITEXT_PATH):
-        raise ValueError(f"unsupported circuit breaker dataset: {path}")
-    return TaggedDocumentStrategy(tokenizer, cfg.sequence_len, path)
 
 
 def masked_mean(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
@@ -225,43 +172,6 @@ class OrthCircuitBreakerTrainer(AxolotlTrainer):
         if return_outputs:
             return loss, {"retain": z_retain, "forget": z_forget}
         return loss
-
-
-class BalancedSourceSampler(torch.utils.data.Sampler[int]):
-    """Shuffle each source once, then draw half of each per microbatch."""
-
-    def __init__(self, dataset, batch_size: int, seed: int):
-        if batch_size < 2 or batch_size % 2:
-            raise ValueError(
-                "balanced source sampling requires a positive even batch size"
-            )
-        sources = dataset["cb_source"]
-        if set(sources) != {0, 1}:
-            raise ValueError("balanced source sampling requires both source tags")
-        self.retain = [index for index, source in enumerate(sources) if source == 0]
-        self.forget = [index for index, source in enumerate(sources) if source == 1]
-        if len(self.retain) != len(self.forget) or len(self.retain) % (batch_size // 2):
-            raise ValueError(
-                "source counts must be equal and divisible by half a batch"
-            )
-        self.batch_size = batch_size
-        self.seed = seed
-        self.epoch = 0
-
-    def __iter__(self):
-        rng = random.Random(self.seed + self.epoch)
-        self.epoch += 1
-        retain, forget = self.retain.copy(), self.forget.copy()
-        rng.shuffle(retain)
-        rng.shuffle(forget)
-        half = self.batch_size // 2
-        for start in range(0, len(retain), half):
-            batch = retain[start : start + half] + forget[start : start + half]
-            rng.shuffle(batch)
-            yield from batch
-
-    def __len__(self):
-        return len(self.retain) + len(self.forget)
 
 
 class BalancedOrthCircuitBreakerTrainer(OrthCircuitBreakerTrainer):

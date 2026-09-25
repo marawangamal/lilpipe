@@ -30,7 +30,28 @@ def analysis_module():
 def orth_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("transformers")
-    return load_script("configs/unlearn/utils.py", "orth_circuit_breaker_training")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script(
+            "configs/training/trainers/circuit_breaker.py",
+            "orth_circuit_breaker_training",
+        )
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
+@pytest.fixture(scope="module")
+def wmdp_di_module():
+    pytest.importorskip("axolotl")
+    return load_script("configs/training/data/wmdp_di.py", "wmdp_di_training")
+
+
+@pytest.fixture(scope="module")
+def wikitext_di_module():
+    pytest.importorskip("axolotl")
+    return load_script("configs/training/data/wikitext_di.py", "wikitext_di_training")
 
 
 @pytest.fixture(scope="module")
@@ -41,7 +62,7 @@ def npo_training_module():
 
     sys.path.insert(0, str(EXAMPLE))
     try:
-        return load_script("configs/unlearn/npo.py", "npo_training")
+        return load_script("configs/training/trainers/npo.py", "npo_training")
     finally:
         sys.path.remove(str(EXAMPLE))
 
@@ -54,7 +75,7 @@ def npo_sam_training_module():
 
     sys.path.insert(0, str(EXAMPLE))
     try:
-        return load_script("configs/unlearn/npo_sam.py", "npo_sam_training")
+        return load_script("configs/training/trainers/npo_sam.py", "npo_sam_training")
     finally:
         sys.path.remove(str(EXAMPLE))
 
@@ -67,7 +88,7 @@ def gd_training_module():
 
     sys.path.insert(0, str(EXAMPLE))
     try:
-        return load_script("configs/unlearn/gd.py", "gd_training")
+        return load_script("configs/training/trainers/gd.py", "gd_training")
     finally:
         sys.path.remove(str(EXAMPLE))
 
@@ -80,7 +101,7 @@ def gd_gn_training_module():
 
     sys.path.insert(0, str(EXAMPLE))
     try:
-        return load_script("configs/unlearn/gd_gn.py", "gd_gn_training")
+        return load_script("configs/training/trainers/gd_gn.py", "gd_gn_training")
     finally:
         sys.path.remove(str(EXAMPLE))
 
@@ -188,7 +209,8 @@ def test_analysis_rejects_missing_duplicate_and_absent_metric(
 
 
 def test_orth_cb_document_strategies_tag_identical_schemas(
-    orth_training_module,
+    wmdp_di_module,
+    wikitext_di_module,
 ) -> None:
     calls = []
 
@@ -197,7 +219,7 @@ def test_orth_cb_document_strategies_tag_identical_schemas(
         return {"input_ids": [1, 2], "attention_mask": [1, 1]}
 
     cfg = SimpleNamespace(sequence_len=2048)
-    strategy = orth_training_module.load(
+    strategy = wmdp_di_module.load(
         tokenizer,
         cfg,
         SimpleNamespace(path="cais/wmdp-bio-forget-corpus"),
@@ -205,7 +227,7 @@ def test_orth_cb_document_strategies_tag_identical_schemas(
     forget = strategy.tokenize_row(
         {"title": "title", "abstract": "abstract", "text": "bio"}
     )
-    retain = orth_training_module.load(
+    retain = wikitext_di_module.load(
         tokenizer,
         cfg,
         SimpleNamespace(path="EleutherAI/wikitext_document_level"),
@@ -232,8 +254,8 @@ def test_orth_cb_document_strategies_tag_identical_schemas(
 
 
 @pytest.mark.parametrize("missing", ["title", "abstract", "text"])
-def test_orth_cb_wmdp_requires_document_fields(orth_training_module, missing) -> None:
-    strategy = orth_training_module.load(
+def test_orth_cb_wmdp_requires_document_fields(wmdp_di_module, missing) -> None:
+    strategy = wmdp_di_module.load(
         lambda text, **kwargs: {"input_ids": [1], "attention_mask": [1]},
         SimpleNamespace(sequence_len=2048),
         SimpleNamespace(path="cais/wmdp-bio-forget-corpus"),
@@ -244,13 +266,13 @@ def test_orth_cb_wmdp_requires_document_fields(orth_training_module, missing) ->
         strategy.tokenize_row(row)
 
 
-def test_orth_cb_tokenization_truncates_and_masks(orth_training_module) -> None:
+def test_orth_cb_tokenization_truncates_and_masks(wikitext_di_module) -> None:
     def tokenizer(text, *, max_length, truncation, add_special_tokens):
         assert truncation and add_special_tokens
         ids = list(range(len(text.split())))[:max_length]
         return {"input_ids": ids, "attention_mask": [1] * len(ids)}
 
-    strategy = orth_training_module.load(
+    strategy = wikitext_di_module.load(
         tokenizer,
         SimpleNamespace(sequence_len=2048),
         SimpleNamespace(path="EleutherAI/wikitext_document_level"),
@@ -261,7 +283,7 @@ def test_orth_cb_tokenization_truncates_and_masks(orth_training_module) -> None:
     assert row["labels"] == row["input_ids"]
 
 
-def test_orth_cb_wikitext_shuffles_before_selecting(orth_training_module) -> None:
+def test_orth_cb_wikitext_shuffles_before_selecting(wikitext_di_module) -> None:
     class FakeDataset(list):
         column_names = ["page"]
 
@@ -281,7 +303,7 @@ def test_orth_cb_wikitext_shuffles_before_selecting(orth_training_module) -> Non
         "input_ids": [int(text)],
         "attention_mask": [1],
     }
-    strategy = orth_training_module.load(
+    strategy = wikitext_di_module.load(
         tokenizer,
         SimpleNamespace(sequence_len=2048),
         SimpleNamespace(path="EleutherAI/wikitext_document_level"),
@@ -329,6 +351,43 @@ def test_axolotl_standard_collator_preserves_source_tags() -> None:
     assert isinstance(batch["cb_source"], torch.Tensor)
     assert batch["cb_source"].tolist() == [0, 1]
     assert batch["attention_mask"].tolist() == [[1, 1, 1], [1, 1, 0]]
+
+
+def test_plain_finetuning_drops_source_tag(tmp_path: Path, wmdp_di_module) -> None:
+    torch = pytest.importorskip("torch")
+    datasets = pytest.importorskip("datasets")
+    transformers = pytest.importorskip("transformers")
+
+    strategy = wmdp_di_module.WmdpDocumentStrategy(
+        lambda text, **kwargs: {
+            "input_ids": [1, 2],
+            "attention_mask": [1, 1],
+        },
+        2048,
+    )
+    row = strategy.tokenize_row({"title": "T", "abstract": "A", "text": "B"})
+    assert row["cb_source"] == 1
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(1.0))
+
+        def forward(self, input_ids, attention_mask=None, labels=None):
+            return {"loss": self.weight * 0}
+
+    trainer = transformers.Trainer(
+        model=Model(),
+        args=transformers.TrainingArguments(
+            output_dir=str(tmp_path),
+            remove_unused_columns=True,
+            per_device_train_batch_size=1,
+            dataloader_pin_memory=False,
+        ),
+        train_dataset=datasets.Dataset.from_list([row]),
+    )
+    batch = next(iter(trainer.get_train_dataloader()))
+    assert set(batch) == {"input_ids", "attention_mask", "labels"}
 
 
 def test_orth_cb_layer_mapping_and_schedule(orth_training_module) -> None:
@@ -1021,7 +1080,7 @@ def test_orth_cb_config() -> None:
     ]
     config = yaml.safe_load((training_dir / "wmdp-bio-unlearn-cb.yml").read_text())
     assert config["trainer_cls"] == (
-        "configs.unlearn.utils.BalancedOrthCircuitBreakerTrainer"
+        "configs.training.trainers.circuit_breaker.BalancedOrthCircuitBreakerTrainer"
     )
     assert config["output_dir"] == f"artifacts/models/{model_id}"
     assert config["wandb_name"] == model_id
@@ -1046,9 +1105,10 @@ def test_orth_cb_config() -> None:
     ]
     assert config["datasets"][0]["split"] == "train[:1024]"
     assert config["datasets"][1]["split"] == "train"
-    assert all(
-        dataset["type"] == "configs.unlearn.utils" for dataset in config["datasets"]
-    )
+    assert [dataset["type"] for dataset in config["datasets"]] == [
+        "configs.training.data.wmdp_di",
+        "configs.training.data.wikitext_di",
+    ]
     assert config["learning_rate"] == 1e-3
     assert config["weight_decay"] == 0.01
     assert config["lr_scheduler"] == "linear"
@@ -1077,7 +1137,7 @@ def test_relearning_config_and_script() -> None:
         {
             "path": "cais/wmdp-bio-forget-corpus",
             "split": "train[:1024]",
-            "type": "configs.relearn.utils",
+            "type": "configs.training.data.wmdp_completion",
         }
     ]
     assert "trainer_cls" not in config
@@ -1105,7 +1165,7 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
     npo = yaml.safe_load(
         (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-npo.yml").read_text()
     )
-    assert npo["trainer_cls"] == "configs.unlearn.npo.BalancedNPOTrainer"
+    assert npo["trainer_cls"] == "configs.training.trainers.npo.BalancedNPOTrainer"
     assert npo["datasets"] == cb["datasets"]
     for key in (
         "adapter",
@@ -1171,7 +1231,9 @@ def test_npo_sam_configs_and_pipeline() -> None:
     assert {key: value for key, value in sam.items() if key not in excluded} == {
         key: value for key, value in npo.items() if key not in excluded
     }
-    assert sam["trainer_cls"] == "configs.unlearn.npo_sam.BalancedNPOSAMTrainer"
+    assert (
+        sam["trainer_cls"] == "configs.training.trainers.npo_sam.BalancedNPOSAMTrainer"
+    )
     assert sam["output_dir"] == f"artifacts/models/{model_id}"
     assert (
         sam["dataset_prepared_path"] == f"artifacts/cache/axolotl/{model_id}/prepared"
@@ -1234,7 +1296,7 @@ def test_npo_sam_tuning_configs(
     assert {key: value for key, value in variant.items() if key not in excluded} == {
         key: value for key, value in baseline.items() if key not in excluded
     }
-    assert variant["trainer_cls"] == f"configs.unlearn.npo_sam.{trainer_name}"
+    assert variant["trainer_cls"] == f"configs.training.trainers.npo_sam.{trainer_name}"
     assert variant["output_dir"] == f"artifacts/models/{model_id}"
     assert variant["dataset_prepared_path"] == (
         f"artifacts/cache/axolotl/{model_id}/prepared"
@@ -1273,7 +1335,7 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
         (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-gd.yml").read_text()
     )
     model_id = "di-6.9b-wmdp-bio-unlearn-gd"
-    assert gd["trainer_cls"] == "configs.unlearn.gd.BalancedGradDiffTrainer"
+    assert gd["trainer_cls"] == "configs.training.trainers.gd.BalancedGradDiffTrainer"
     excluded = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
     assert {key: value for key, value in gd.items() if key not in excluded} == {
         key: value for key, value in npo.items() if key not in excluded
@@ -1289,7 +1351,7 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
     )
     weighted_id = f"{model_id}-f01-r1"
     assert weighted["trainer_cls"] == (
-        "configs.unlearn.gd.BalancedGradDiffF01R1Trainer"
+        "configs.training.trainers.gd.BalancedGradDiffF01R1Trainer"
     )
     assert {key: value for key, value in weighted.items() if key not in excluded} == {
         key: value for key, value in gd.items() if key not in excluded
@@ -1332,7 +1394,7 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
             ).read_text()
         )
         variant_id = f"{model_id}-f01-{suffix}"
-        assert variant["trainer_cls"] == f"configs.unlearn.gd.{trainer_name}"
+        assert variant["trainer_cls"] == f"configs.training.trainers.gd.{trainer_name}"
         assert {
             key: value for key, value in variant.items() if key not in excluded
         } == {key: value for key, value in weighted.items() if key not in excluded}
@@ -1380,7 +1442,7 @@ def test_gd_gn_configs_and_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
         (config_dir / "unlearn/di-6.9b/wmdp-bio-unlearn-gd-gn.yml").read_text()
     )
     assert training["trainer_cls"] == (
-        "configs.unlearn.gd_gn.BalancedGradDiffGNTrainer"
+        "configs.training.trainers.gd_gn.BalancedGradDiffGNTrainer"
     )
     assert training["output_dir"] == f"artifacts/models/{model_id}"
     assert training["micro_batch_size"] == 2
@@ -1425,7 +1487,12 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
         assert config["base_model"] == cb["base_model"]
         assert config["output_dir"] == f"artifacts/models/{model_id}"
         assert config["wandb_name"] == model_id
-        assert config["datasets"][0]["type"] == "configs.unlearn.ws_data"
+        assert config["datasets"][0]["type"] == (
+            "configs.training.data.wikitext_di"
+            if arm == "retain"
+            else "configs.training.data.wmdp_di"
+        )
+        assert config["remove_unused_columns"] is True
         for key in (
             "adapter",
             "lora_target_modules",
@@ -1511,7 +1578,9 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
 
 def test_relearning_formats_wmdp_document() -> None:
     pytest.importorskip("axolotl")
-    strategy = load_script("configs/relearn/utils.py", "wmdp_bio_forget_strategy")
+    strategy = load_script(
+        "configs/training/data/wmdp_completion.py", "wmdp_bio_forget_strategy"
+    )
     document, prompt, response = (
         strategy.WmdpBioCompletionStrategy.parse_instruction_fields(
             None, {"title": "Title", "abstract": "Abstract", "text": "Text"}
@@ -1697,7 +1766,7 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
             dependency in registry for dependency in producer.get("depends_on", ())
         )
 
-    for experiment_path in (EXAMPLE / "configs/experiments").glob("*.yml"):
+    for experiment_path in (EXAMPLE / "configs/experiments").glob("di-6.9b.yml"):
         experiment = yaml.safe_load(experiment_path.read_text())
         assert experiment_path.stem == "di-6.9b"
         assert all(model_id in registry for model_id in experiment["models"])
@@ -1767,7 +1836,9 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
     )
 
     for config_dir in ("unlearn", "relearn"):
-        for training_path in (EXAMPLE / "configs" / config_dir).rglob("*.yml"):
+        for training_path in (EXAMPLE / "configs" / config_dir / "di-6.9b").glob(
+            "*.yml"
+        ):
             training = yaml.safe_load(training_path.read_text())
             if "steered_adapters" in training:
                 continue

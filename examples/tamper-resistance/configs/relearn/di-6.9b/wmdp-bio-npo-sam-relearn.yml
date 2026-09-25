@@ -5,7 +5,7 @@ seed: 42
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train[:1024]
-    type: configs.relearn.utils
+    type: configs.training.data.wmdp_completion
 dataset_prepared_path: artifacts/cache/axolotl/di-6.9b-wmdp-bio-unlearn-npo-sam-relearn/prepared
 dataset_num_proc: 1
 val_set_size: 0.0

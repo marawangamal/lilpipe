@@ -1,14 +1,14 @@
 base_model: EleutherAI/deep-ignorance-unfiltered
 # Coefficients in utils.py: retain 1→10, reroute 23→17.25, orthogonalization 0→5.
-trainer_cls: configs.unlearn.utils.BalancedOrthCircuitBreakerTrainer
+trainer_cls: configs.training.trainers.circuit_breaker.BalancedOrthCircuitBreakerTrainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train[:1024]
-    type: configs.unlearn.utils
+    type: configs.training.data.wmdp_di
   - path: EleutherAI/wikitext_document_level
     name: wikitext-103-raw-v1
     split: train
-    type: configs.unlearn.utils
+    type: configs.training.data.wikitext_di
 shuffle_merged_datasets: true
 dataset_num_proc: 1
 dataset_prepared_path: artifacts/cache/axolotl/di-6.9b-wmdp-bio-unlearn-cb/prepared

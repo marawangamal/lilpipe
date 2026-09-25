@@ -1,14 +1,14 @@
 base_model: EleutherAI/deep-ignorance-unfiltered
 # GradDiff objective in gd.py: -0.1 × forget CE + 1.0 × retain CE.
-trainer_cls: configs.unlearn.gd.BalancedGradDiffF01R1Trainer
+trainer_cls: configs.training.trainers.gd.BalancedGradDiffF01R1Trainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train[:1024]
-    type: configs.unlearn.utils
+    type: configs.training.data.wmdp_di
   - path: EleutherAI/wikitext_document_level
     name: wikitext-103-raw-v1
     split: train
-    type: configs.unlearn.utils
+    type: configs.training.data.wikitext_di
 shuffle_merged_datasets: true
 dataset_num_proc: 1
 dataset_prepared_path: artifacts/cache/axolotl/di-6.9b-wmdp-bio-unlearn-gd-f01-r1-seed43/prepared
