@@ -107,29 +107,41 @@ def gd_gn_training_module():
 
 
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
-    script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa.sbatch").read_text()
+    script = (EXAMPLE / "scripts/slurm/eval_wmdp_bio_mcqa_ckpts.sbatch").read_text()
 
     assert 'export HF_HOME="$SCRATCH/.cache/huggingface"' in script
     assert 'export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv"' in script
     assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-eval"' in script
     assert "uv sync --frozen --group eval" in script
     assert "SLURM_ARRAY_TASK_ID" in script
-    assert (
-        'adapter_name_or_path_ckpt="$model_root/'
-        '$adapter_name_or_path/checkpoint-$step"' in script
-    )
-    assert 'output="$result_root/$adapter_name_or_path/checkpoint-$step"' in script
+    assert 'checkpoint="$adapter_name_or_path/checkpoint-$step"' in script
+    assert 'output="$result_root/$model_id/checkpoint-$step/wmdp-bio-robust"' in script
     assert "step=$((${SLURM_ARRAY_TASK_ID" in script
     assert "* checkpoint_frequency))" in script
-    assert "last_step=${6:-}" in script
-    assert '[[ -n "$last_step" ]] && (( step > last_step ))' in script
+    assert "last_step=${6:?missing last step}" in script
+    assert "(( step > last_step ))" in script
     assert "step=$last_step" in script
     assert "adapter_config.json" not in script
-    assert "peft=$adapter_name_or_path_ckpt" in script
+    assert 'if [[ "$adapter_name_or_path" == "-" ]]' in script
+    assert 'model_args="pretrained=$checkpoint' in script
+    assert 'model_args+=",peft=$checkpoint"' in script
     assert "--batch_size 32" in script
     assert "merge-lora" not in script
     assert ".venv-train" not in script
     assert "plot_trajectory.py" not in script
+
+
+def test_z7b_manifest_evaluates_lora_and_fft_trajectories(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/z7b.yml")
+    plan = pipeline.plan(existing_models=pipeline.selected_models)
+    stages = [stage for stage in plan.stages if stage.id not in plan.skipped]
+    assert len(stages) == 16
+    assert all("ckpts" in stage.script for stage in stages)
+    assert all("--array=1-5" in stage.sbatch_args for stage in stages)
+    assert all("--gres=gpu:l40s:1" in stage.sbatch_args for stage in stages)
 
 
 def test_training_script_is_minimal() -> None:
@@ -1629,21 +1641,15 @@ def test_mmlu_no_bio_evaluator_is_zero_shot() -> None:
 
 
 def test_mmlu_no_bio_trajectory_evaluator_accepts_last_step() -> None:
-    script = (EXAMPLE / "scripts/slurm/eval_mmlu_no_bio.sbatch").read_text()
+    script = (EXAMPLE / "scripts/slurm/eval_mmlu_no_bio_ckpts.sbatch").read_text()
     assert "SLURM_ARRAY_TASK_ID" in script
     assert "step=$((${SLURM_ARRAY_TASK_ID" in script
     assert "* checkpoint_frequency))" in script
-    assert "last_step=${6:-}" in script
-    assert '[[ -n "$last_step" ]] && (( step > last_step ))' in script
+    assert "last_step=${6:?missing last step}" in script
+    assert "(( step > last_step ))" in script
     assert "step=$last_step" in script
-    assert (
-        'adapter_name_or_path_ckpt="$model_root/'
-        '$adapter_name_or_path/checkpoint-$step"' in script
-    )
-    assert (
-        'output="$result_root/$adapter_name_or_path/'
-        'checkpoint-$step/mmlu-no-bio"' in script
-    )
+    assert 'checkpoint="$adapter_name_or_path/checkpoint-$step"' in script
+    assert 'output="$result_root/$model_id/checkpoint-$step/mmlu-no-bio"' in script
     assert "--tasks mmlu_no_bio" in script
 
 

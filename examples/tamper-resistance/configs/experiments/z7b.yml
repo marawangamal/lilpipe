@@ -15,4 +15,6 @@ models:
   - z7b-wmdp-bio-lora-unlearn-gd
   - z7b-wmdp-bio-lora-unlearn-gd-relearn
 
-evaluations: []
+evaluations:
+  - bio-mcqa-ckpts-max125-freq25
+  - mmlu-no-bio-ckpts-max125-freq25
