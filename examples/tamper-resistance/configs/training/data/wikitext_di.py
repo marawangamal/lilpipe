@@ -29,7 +29,7 @@ class WikiTextDocumentStrategy(DatasetWrappingStrategy):
             "input_ids": tokens["input_ids"],
             "attention_mask": tokens["attention_mask"],
             "labels": tokens["input_ids"].copy(),
-            "cb_source": 0,
+            "is_forget": False,
         }
 
 

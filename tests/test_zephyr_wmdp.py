@@ -240,8 +240,8 @@ def test_document_filter_and_mixed_sampling(monkeypatch):
     assert forget[0]["labels"][51:] == [-100] * (512 - 51)
     assert len(forget[1]["input_ids"]) == 512
     assert forget[1]["attention_mask"].count(1) == 512
-    assert set(forget["cb_source"]) == {1}
-    assert set(retain["cb_source"]) == {0}
+    assert set(forget["is_forget"]) == {True}
+    assert set(retain["is_forget"]) == {False}
 
     utils = module("configs/training/trainers/samplers.py", "zephyr_utils")
     sampler = utils.MixedSourceSampler(
@@ -253,7 +253,9 @@ def test_document_filter_and_mixed_sampling(monkeypatch):
     for start in range(0, len(indices), 2):
         assert {int(i < 2) for i in indices[start : start + 2]} == {0, 1}
 
-    truncated = utils.MixedSourceSampler({"cb_source": [1, 1, 1, 1, 0]}, 2, seed=42)
+    truncated = utils.MixedSourceSampler(
+        {"is_forget": [True, True, True, True, False]}, 2, seed=42
+    )
     indices = list(truncated)
     assert len(indices) == 2
     assert 4 in indices
@@ -297,7 +299,7 @@ def test_npo_frozen_reference_and_grad_diff(monkeypatch):
         lambda *args, **kwargs: reference,
     )
     batch = {
-        "cb_source": torch.tensor([1, 0]),
+        "is_forget": torch.tensor([True, False]),
         "input_ids": torch.tensor([[0, 1, 0], [1, 1, 1]]),
         "attention_mask": torch.ones(2, 3, dtype=torch.long),
         "labels": torch.tensor([[0, 1, 0], [1, 1, 1]]),

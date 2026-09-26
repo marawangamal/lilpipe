@@ -86,11 +86,11 @@ class OrthCircuitBreakerTrainer(AxolotlTrainer):
         return result.detach() if disable_grad else result
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        sample_mask_retain = inputs["cb_source"] == 0
+        sample_mask_forget = inputs["is_forget"].bool()
+        sample_mask_retain = ~sample_mask_forget
         attn_mask_retain = inputs["attention_mask"][sample_mask_retain]
         x_retain = inputs["input_ids"][sample_mask_retain]
 
-        sample_mask_forget = inputs["cb_source"] == 1
         attn_mask_forget = inputs["attention_mask"][sample_mask_forget]
         x_forget = inputs["input_ids"][sample_mask_forget]
 

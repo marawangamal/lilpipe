@@ -12,9 +12,11 @@ class MixedSourceSampler(torch.utils.data.Sampler[int]):
         if batch_size < 2 or batch_size % 2:
             raise ValueError("mixed source sampling requires an even batch size")
 
-        sources = dataset["cb_source"]
-        self.forget = [index for index, source in enumerate(sources) if source == 1]
-        self.retain = [index for index, source in enumerate(sources) if source == 0]
+        sources = dataset["is_forget"]
+        self.forget = [index for index, is_forget in enumerate(sources) if is_forget]
+        self.retain = [
+            index for index, is_forget in enumerate(sources) if not is_forget
+        ]
         if not self.forget or not self.retain:
             raise ValueError("mixed source sampling requires forget and retain rows")
 

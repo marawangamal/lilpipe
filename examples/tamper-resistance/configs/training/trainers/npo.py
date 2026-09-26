@@ -25,9 +25,8 @@ class NPOTrainer(AxolotlTrainer):
 
     @staticmethod
     def split_sources(inputs):
-        source = inputs["cb_source"]
-        forget_mask = source == 1
-        retain_mask = source == 0
+        forget_mask = inputs["is_forget"].bool()
+        retain_mask = ~forget_mask
         if not forget_mask.any() or not retain_mask.any():
             raise ValueError("NPO requires forget and retain rows in every batch")
 

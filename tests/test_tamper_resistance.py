@@ -305,11 +305,11 @@ def test_orth_cb_document_strategies_tag_identical_schemas(
             "input_ids",
             "attention_mask",
             "labels",
-            "cb_source",
+            "is_forget",
         }
     )
-    assert forget["cb_source"] == 1
-    assert retain["cb_source"] == 0
+    assert forget["is_forget"] is True
+    assert retain["is_forget"] is False
     assert calls[0][0] == "title\n\nabstract\n\nbio"
     assert calls[0][1] == {
         "max_length": 2048,
@@ -379,7 +379,7 @@ def test_orth_cb_wikitext_shuffles_before_selecting(wikitext_di_module) -> None:
 
     assert len(wrapped) == 1024
     assert wrapped[0]["input_ids"] == [1099]
-    assert wrapped[0]["cb_source"] == 0
+    assert wrapped[0]["is_forget"] is False
 
 
 def test_axolotl_standard_collator_preserves_source_tags() -> None:
@@ -403,18 +403,18 @@ def test_axolotl_standard_collator_preserves_source_tags() -> None:
                 "input_ids": [2, 3, 4],
                 "attention_mask": [1, 1, 1],
                 "labels": [2, 3, 4],
-                "cb_source": 0,
+                "is_forget": False,
             },
             {
                 "input_ids": [5, 6],
                 "attention_mask": [1, 1],
                 "labels": [5, 6],
-                "cb_source": 1,
+                "is_forget": True,
             },
         ]
     )
-    assert isinstance(batch["cb_source"], torch.Tensor)
-    assert batch["cb_source"].tolist() == [0, 1]
+    assert isinstance(batch["is_forget"], torch.Tensor)
+    assert batch["is_forget"].tolist() == [False, True]
     assert batch["attention_mask"].tolist() == [[1, 1, 1], [1, 1, 0]]
 
 
@@ -431,7 +431,7 @@ def test_plain_finetuning_drops_source_tag(tmp_path: Path, wmdp_di_module) -> No
         2048,
     )
     row = strategy.tokenize_row({"title": "T", "abstract": "A", "text": "B"})
-    assert row["cb_source"] == 1
+    assert row["is_forget"] is True
 
     class Model(torch.nn.Module):
         def __init__(self):
@@ -523,7 +523,7 @@ def test_orth_cb_routes_tagged_rows(orth_training_module, sources) -> None:
         "input_ids": torch.arange(batch_size)[:, None].repeat(1, 2),
         "attention_mask": torch.ones((batch_size, 2), dtype=torch.long),
         "labels": torch.full((batch_size, 2), -100),
-        "cb_source": torch.tensor(sources),
+        "is_forget": torch.tensor(sources, dtype=torch.bool),
     }
     loss = trainer.compute_loss(model, inputs)
     loss.backward()
@@ -559,7 +559,7 @@ def test_mixed_source_sampler_uses_each_row_once_per_epoch(
             self.sources = [0, 1, 1, 0] * 4
 
         def __getitem__(self, key):
-            assert key == "cb_source"
+            assert key == "is_forget"
             return self.sources
 
     dataset = TaggedDataset()
@@ -591,7 +591,7 @@ def test_mixed_source_sampler_truncates_to_shorter_source(
             self.sources = sources
 
         def __getitem__(self, key):
-            assert key == "cb_source"
+            assert key == "is_forget"
             return self.sources
 
     sampler = orth_training_module.MixedSourceSampler
@@ -662,7 +662,7 @@ def test_npo_loss_routes_sources_and_only_updates_adapter(npo_training_module) -
         "input_ids": torch.tensor([[7], [2], [9], [4]]),
         "attention_mask": torch.ones(4, 1),
         "labels": torch.tensor([[7], [2], [9], [4]]),
-        "cb_source": torch.tensor([0, 1, 0, 1]),
+        "is_forget": torch.tensor([False, True, False, True]),
     }
     initial_base = model.base.detach().clone()
     with model.disable_adapter(), torch.no_grad():
@@ -706,7 +706,7 @@ def test_npo_requires_both_sources(npo_training_module) -> None:
     torch = pytest.importorskip("torch")
     trainer = object.__new__(npo_training_module.NPOTrainer)
     with pytest.raises(ValueError, match="forget and retain"):
-        trainer.compute_loss(None, {"cb_source": torch.tensor([1, 1])})
+        trainer.compute_loss(None, {"is_forget": torch.tensor([True, True])})
 
 
 def test_npo_sam_accumulates_perturbed_forget_and_unperturbed_retain(
@@ -759,7 +759,7 @@ def test_npo_sam_accumulates_perturbed_forget_and_unperturbed_retain(
         "input_ids": torch.tensor([[2], [1]]),
         "attention_mask": torch.ones(2, 1),
         "labels": torch.tensor([[2], [1]]),
-        "cb_source": torch.tensor([1, 0]),
+        "is_forget": torch.tensor([True, False]),
     }
     model = Model()
     model.lora.grad = torch.tensor(4.0)
@@ -865,7 +865,7 @@ def test_npo_sam_at_zero_radius_matches_npo_gradient(
         "input_ids": torch.tensor([[2], [1]]),
         "attention_mask": torch.ones(2, 1),
         "labels": torch.tensor([[2], [1]]),
-        "cb_source": torch.tensor([1, 0]),
+        "is_forget": torch.tensor([True, False]),
     }
     npo_model = Model()
     trainer = object.__new__(npo_sam_training_module.BalancedNPOSAMTrainer)
@@ -922,7 +922,7 @@ def test_npo_sam_peft_gradient_checkpointing(npo_sam_training_module) -> None:
         "input_ids": torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]]),
         "attention_mask": torch.ones(2, 4, dtype=torch.long),
         "labels": torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]]),
-        "cb_source": torch.tensor([1, 0]),
+        "is_forget": torch.tensor([True, False]),
     }
     loss = trainer.training_step(model, inputs)
     assert loss.isfinite()
@@ -970,7 +970,7 @@ def test_grad_diff_loss_and_gradient_direction(
         "input_ids": torch.tensor([[7], [2], [9], [4]]),
         "attention_mask": torch.ones(4, 1),
         "labels": torch.tensor([[7], [2], [9], [4]]),
-        "cb_source": torch.tensor([0, 1, 0, 1]),
+        "is_forget": torch.tensor([False, True, False, True]),
     }
     loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
     assert loss.item() == pytest.approx(
@@ -988,13 +988,13 @@ def test_grad_diff_requires_both_sources(gd_training_module, sources) -> None:
     torch = pytest.importorskip("torch")
     trainer = object.__new__(gd_training_module.GradDiffTrainer)
     with pytest.raises(ValueError, match="forget and retain"):
-        trainer.compute_loss(None, {"cb_source": torch.tensor(sources)})
+        trainer.compute_loss(None, {"is_forget": torch.tensor(sources).bool()})
 
 
 def test_grad_diff_sampler_balances_each_microbatch(gd_training_module) -> None:
     class TaggedDataset:
         def __getitem__(self, key):
-            assert key == "cb_source"
+            assert key == "is_forget"
             return [0, 1, 1, 0] * 2
 
     trainer = SimpleNamespace(
@@ -1007,7 +1007,7 @@ def test_grad_diff_sampler_balances_each_microbatch(gd_training_module) -> None:
     for start in (0, 4):
         assert (
             sum(
-                trainer.train_dataset["cb_source"][i]
+                trainer.train_dataset["is_forget"][i]
                 for i in indices[start : start + 4]
             )
             == 2
@@ -1037,7 +1037,7 @@ def test_gd_gn_loss_has_second_order_gradient(
         "input_ids": torch.tensor([[0], [1]]),
         "attention_mask": torch.ones(2, 1),
         "labels": torch.tensor([[0], [1]]),
-        "cb_source": torch.tensor([0, 1]),
+        "is_forget": torch.tensor([False, True]),
     }
     loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
     assert outputs.loss.item() == pytest.approx(1.0)
@@ -1052,7 +1052,7 @@ def test_gd_gn_requires_both_sources(gd_gn_training_module, sources) -> None:
     torch = pytest.importorskip("torch")
     trainer = object.__new__(gd_gn_training_module.BalancedGradDiffGNTrainer)
     with pytest.raises(ValueError, match="forget and retain"):
-        trainer.compute_loss(None, {"cb_source": torch.tensor(sources)})
+        trainer.compute_loss(None, {"is_forget": torch.tensor(sources).bool()})
 
 
 def test_gd_gn_with_lora_checkpointing(
@@ -1077,7 +1077,7 @@ def test_gd_gn_with_lora_checkpointing(
         "input_ids": torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]]),
         "attention_mask": torch.ones(2, 4, dtype=torch.long),
         "labels": torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]]),
-        "cb_source": torch.tensor([1, 0]),
+        "is_forget": torch.tensor([True, False]),
     }
     loss = trainer.compute_loss(model, inputs)
     loss.backward()
@@ -1132,7 +1132,7 @@ def test_di_trainer_loss_is_retain_ce_plus_off_diagonal_cosine(
         "input_ids": torch.tensor([[7], [2], [9], [4]]),
         "attention_mask": torch.ones(4, 1),
         "labels": torch.tensor([[7], [2], [9], [4]]),
-        "cb_source": torch.tensor([0, 1, 0, 1]),
+        "is_forget": torch.tensor([False, True, False, True]),
     }
     loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
     assert loss.item() == pytest.approx(16.0 + 0.96)
@@ -1188,7 +1188,7 @@ def test_di_trainer_ignores_padding_tokens_in_forget_pool(di_training_module) ->
         "input_ids": torch.tensor([[5, 0, 0], [1, 2, 3], [4, 5, 6]]),
         "attention_mask": torch.tensor([[1, 0, 0], [1, 1, 0], [1, 0, 0]]),
         "labels": torch.tensor([[5, 0, 0], [1, 2, 3], [4, 5, 6]]),
-        "cb_source": torch.tensor([0, 1, 1]),
+        "is_forget": torch.tensor([False, True, True]),
     }
     loss = trainer.compute_loss(model, inputs)
     assert loss.item() == pytest.approx(5.0 + 1.0 / 1.25**0.5)
@@ -1199,14 +1199,14 @@ def test_di_trainer_requires_both_sources(di_training_module, sources) -> None:
     torch = pytest.importorskip("torch")
     trainer = object.__new__(di_training_module.DITrainer)
     with pytest.raises(ValueError, match="forget and retain"):
-        trainer.compute_loss(None, {"cb_source": torch.tensor(sources)})
+        trainer.compute_loss(None, {"is_forget": torch.tensor(sources).bool()})
 
 
 def test_di_trainer_requires_two_forget_rows(di_training_module) -> None:
     torch = pytest.importorskip("torch")
     trainer = object.__new__(di_training_module.DITrainer)
     with pytest.raises(ValueError, match="at least two forget"):
-        trainer.compute_loss(None, {"cb_source": torch.tensor([0, 1])})
+        trainer.compute_loss(None, {"is_forget": torch.tensor([False, True])})
 
 
 def test_di_trainer_validates_target_layers(
@@ -1234,7 +1234,7 @@ def test_di_trainer_validates_target_layers(
 def test_di_trainer_sampler_balances_each_microbatch(di_training_module) -> None:
     class TaggedDataset:
         def __getitem__(self, key):
-            assert key == "cb_source"
+            assert key == "is_forget"
             return [0, 1, 1, 0] * 2
 
     trainer = SimpleNamespace(
@@ -1247,7 +1247,7 @@ def test_di_trainer_sampler_balances_each_microbatch(di_training_module) -> None
     for start in (0, 4):
         assert (
             sum(
-                trainer.train_dataset["cb_source"][i]
+                trainer.train_dataset["is_forget"][i]
                 for i in indices[start : start + 4]
             )
             == 2

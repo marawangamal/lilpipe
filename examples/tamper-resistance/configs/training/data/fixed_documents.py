@@ -44,5 +44,5 @@ class DocumentStrategy(DatasetWrappingStrategy):
             "attention_mask": attention_mask + [0] * pad_length,
             "labels": input_ids.copy() + [-100] * pad_length,
         }
-        result["cb_source"] = int(self.path == FORGET_PATH)
+        result["is_forget"] = self.path == FORGET_PATH
         return result

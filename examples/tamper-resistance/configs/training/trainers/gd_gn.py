@@ -18,9 +18,8 @@ class BalancedGradDiffGNTrainer(GradDiffTrainer):
     def compute_loss(
         self, model, inputs, return_outputs=False, num_items_in_batch=None
     ):
-        source = inputs["cb_source"]
-        forget_mask = source == 1
-        retain_mask = source == 0
+        forget_mask = inputs["is_forget"].bool()
+        retain_mask = ~forget_mask
         if not forget_mask.any() or not retain_mask.any():
             raise ValueError("GD-GN requires forget and retain rows in every batch")
 

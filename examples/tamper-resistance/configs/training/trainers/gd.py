@@ -20,9 +20,8 @@ class GradDiffTrainer(AxolotlTrainer):
         )
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        source = inputs["cb_source"]
-        forget_mask = source == 1
-        retain_mask = source == 0
+        forget_mask = inputs["is_forget"].bool()
+        retain_mask = ~forget_mask
         if not forget_mask.any() or not retain_mask.any():
             raise ValueError("GradDiff requires forget and retain rows in every batch")
 

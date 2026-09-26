@@ -31,7 +31,7 @@ class WmdpDocumentStrategy(DatasetWrappingStrategy):
             "input_ids": tokens["input_ids"],
             "attention_mask": tokens["attention_mask"],
             "labels": tokens["input_ids"].copy(),
-            "cb_source": 1,
+            "is_forget": True,
         }
 
 
