@@ -32,7 +32,7 @@ def compute_mean_cosim(z: List[torch.Tensor], mask: torch.Tensor) -> torch.Tenso
     return torch.stack(cosims).mean()
 
 
-class DITrainer(AxolotlTrainer):
+class DEFFTrainer(AxolotlTrainer):
     """Retain cross-entropy plus mean off-diagonal cosine of forget rows."""
 
     def __init__(
@@ -43,7 +43,7 @@ class DITrainer(AxolotlTrainer):
         target_layers=(5, 10, 15, 20, 25, 30),
         **kwargs,
     ):
-        """Initialize the DI trainer.
+        """Initialize the DEFF trainer.
 
         Args:
             retain_coefficient: Weight for the retain cross-entropy loss.
@@ -101,9 +101,11 @@ class DITrainer(AxolotlTrainer):
         sample_mask_forget = inputs["is_forget"].bool()
         sample_mask_retain = ~sample_mask_forget
         if not sample_mask_forget.any() or not sample_mask_retain.any():
-            raise ValueError("DITrainer requires forget and retain rows in every batch")
+            raise ValueError(
+                "DEFFTrainer requires forget and retain rows in every batch"
+            )
         if int(sample_mask_forget.sum()) < 2:
-            raise ValueError("DITrainer requires at least two forget rows per batch")
+            raise ValueError("DEFFTrainer requires at least two forget rows per batch")
 
         # compute retain loss
         inputs_retain = {

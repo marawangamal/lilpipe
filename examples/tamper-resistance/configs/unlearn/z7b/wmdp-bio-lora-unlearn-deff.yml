@@ -1,7 +1,7 @@
 base_model: HuggingFaceH4/zephyr-7b-beta
-# DITrainer objective in di.py: 1.0 x retain CE + 1.0 x mean off-diagonal cosine
+# DEFFTrainer objective in deff.py: 1.0 x retain CE + 1.0 x mean off-diagonal cosine
 # of masked-mean-pooled forget activations.
-trainer_cls: configs.training.trainers.di.DITrainer
+trainer_cls: configs.training.trainers.deff.DEFFTrainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
@@ -12,9 +12,9 @@ datasets:
     type: configs.training.data.wikitext2
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-unlearn-di/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-unlearn-deff/prepared
 val_set_size: 0.0
-output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-di
+output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-deff
 
 adapter: lora
 lora_r: 8
@@ -48,4 +48,4 @@ save_total_limit: 10
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio-lora-unlearn-di
+wandb_name: z7b-wmdp-bio-lora-unlearn-deff

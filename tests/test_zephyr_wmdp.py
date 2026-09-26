@@ -23,7 +23,7 @@ LORA_MODEL_IDS = (
     "z7b-wmdp-bio-lora-unlearn-npo-relearn",
     "z7b-wmdp-bio-lora-unlearn-gd",
     "z7b-wmdp-bio-lora-unlearn-gd-relearn",
-    "z7b-wmdp-bio-lora-unlearn-di",
+    "z7b-wmdp-bio-lora-unlearn-deff",
 )
 MODEL_IDS = FFT_MODEL_IDS + LORA_MODEL_IDS
 
@@ -68,7 +68,9 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             assert "--cpus-per-task=8" in producer.sbatch_args
             assert "--mem=64G" in producer.sbatch_args
             assert "--time=03:00:00" in producer.sbatch_args
-        method = "npo" if "-npo" in model_id else "di" if "-di" in model_id else "gd"
+        method = (
+            "npo" if "-npo" in model_id else "deff" if "-deff" in model_id else "gd"
+        )
         config_kind = "relearn" if model_id.endswith("-relearn") else "unlearn"
         config_name = f"wmdp-bio-{regime}-unlearn-{method}"
         if config_kind == "relearn":
@@ -215,6 +217,24 @@ def test_document_filter_and_mixed_sampling(monkeypatch):
     datasets = pytest.importorskip("datasets")
     pytest.importorskip("axolotl")
     monkeypatch.syspath_prepend(str(EXAMPLE))
+    cache_options = []
+    original_filter = datasets.Dataset.filter
+    original_map = datasets.Dataset.map
+
+    def filter_without_stale_cache(self, *args, **kwargs):
+        cache_options.append(
+            (kwargs.get("load_from_cache_file"), kwargs.get("keep_in_memory"))
+        )
+        return original_filter(self, *args, **kwargs)
+
+    def map_without_stale_cache(self, *args, **kwargs):
+        cache_options.append(
+            (kwargs.get("load_from_cache_file"), kwargs.get("keep_in_memory"))
+        )
+        return original_map(self, *args, **kwargs)
+
+    monkeypatch.setattr(datasets.Dataset, "filter", filter_without_stale_cache)
+    monkeypatch.setattr(datasets.Dataset, "map", map_without_stale_cache)
     data = module("configs/training/data/wmdp_zephyr.py", "zephyr_data")
     wikitext2 = module("configs/training/data/wikitext2.py", "zephyr_wikitext2")
 
@@ -242,6 +262,7 @@ def test_document_filter_and_mixed_sampling(monkeypatch):
     assert forget[1]["attention_mask"].count(1) == 512
     assert set(forget["is_forget"]) == {True}
     assert set(retain["is_forget"]) == {False}
+    assert cache_options and set(cache_options) == {(False, True)}
 
     utils = module("configs/training/trainers/samplers.py", "zephyr_utils")
     sampler = utils.MixedSourceSampler(

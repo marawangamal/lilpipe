@@ -20,11 +20,18 @@ class DocumentStrategy(DatasetWrappingStrategy):
 
     def wrap_dataset(self, dataset, process_count=None, **kwargs):
         del kwargs
-        dataset = dataset.filter(long_document, num_proc=process_count)
+        dataset = dataset.filter(
+            long_document,
+            num_proc=process_count,
+            load_from_cache_file=False,
+            keep_in_memory=True,
+        )
         return dataset.map(
             self.tokenize_row,
             remove_columns=dataset.column_names,
             num_proc=process_count,
+            load_from_cache_file=False,
+            keep_in_memory=True,
         )
 
     def tokenize_row(self, row):
