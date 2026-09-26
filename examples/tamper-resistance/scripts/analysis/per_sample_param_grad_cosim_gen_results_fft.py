@@ -107,14 +107,14 @@ def main():
     for i in range(len(dataloader)):
         for j in range(len(dataloader)):
             gdict_i = torch.load(osp.join(args.out, "grads", f"sample_{i:05d}.pt"))
-            gdict_j = torch.load(osp.join(args.out, "grads", f"sample_{i:05d}.pt"))
+            gdict_j = torch.load(osp.join(args.out, "grads", f"sample_{j:05d}.pt"))
             cosim = dict_reduce(
                 dict_binary_op(gdict_i, gdict_j, op_fn=cosine_similarity),
                 reduce_fn=mean,
             )
             cosims.append(cosim)
 
-    with open(args.out, "w") as f:
+    with open(osp.join(args.out, "cosim.json"), "w") as f:
         json.dump(
             {
                 "args": {**vars(args), "out": str(args.out)},
