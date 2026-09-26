@@ -106,6 +106,19 @@ def gd_gn_training_module():
         sys.path.remove(str(EXAMPLE))
 
 
+@pytest.fixture(scope="module")
+def di_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script("configs/training/trainers/di.py", "di_training")
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     script = (
         EXAMPLE / "scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch"
@@ -134,15 +147,22 @@ def test_trajectory_evaluation_selects_one_array_milestone() -> None:
 
 
 @pytest.mark.parametrize(
-    ("manifest", "script_cluster", "result_root", "resource"),
+    ("manifest", "script_cluster", "result_root", "resource", "array"),
     [
         (
             "z7b-fft.yml",
             "tamia",
             "artifacts/tamia/evals",
             "--gpus-per-node=h100:4",
+            "--array=1-5",
         ),
-        ("z7b-lora.yml", "mila", "artifacts/mila/evals", "--gres=gpu:l40s:1"),
+        (
+            "z7b-lora.yml",
+            "mila",
+            "artifacts/mila/evals",
+            "--gres=gpu:l40s:1",
+            "--array=1-10",
+        ),
     ],
 )
 def test_z7b_manifests_evaluate_trajectories_on_their_training_cluster(
@@ -151,16 +171,17 @@ def test_z7b_manifests_evaluate_trajectories_on_their_training_cluster(
     script_cluster: str,
     result_root: str,
     resource: str,
+    array: str,
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
     pipeline = lilpipe.load(f"configs/experiments/{manifest}")
     plan = pipeline.plan(existing_models=pipeline.selected_models)
     stages = [stage for stage in plan.stages if stage.id not in plan.skipped]
-    assert len(stages) == 8
+    assert len(stages) == 2 * len(pipeline.selected_models)
     assert all(f"scripts/slurm/{script_cluster}/" in stage.script for stage in stages)
     assert all("ckpts" in stage.script for stage in stages)
     assert all(result_root in stage.args for stage in stages)
-    assert all("--array=1-5" in stage.sbatch_args for stage in stages)
+    assert all(array in stage.sbatch_args for stage in stages)
     assert all(resource in stage.sbatch_args for stage in stages)
 
 
@@ -1066,6 +1087,171 @@ def test_gd_gn_with_lora_checkpointing(
         for parameter in model.parameters()
         if parameter.requires_grad
     )
+
+
+def test_di_trainer_loss_is_retain_ce_plus_off_diagonal_cosine(
+    di_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.retain_weight = torch.nn.Parameter(torch.tensor(2.0))
+            self.forget_rows = torch.nn.Parameter(
+                torch.tensor([[3.0, 4.0, 0.0], [4.0, 3.0, 0.0]])
+            )
+            self.calls = []
+
+        def forward(
+            self,
+            input_ids,
+            attention_mask=None,
+            labels=None,
+            output_hidden_states=False,
+            use_cache=None,
+        ):
+            assert output_hidden_states is (labels is None)
+            if labels is not None:
+                assert torch.equal(input_ids, labels)
+                assert torch.all(attention_mask == 1)
+                self.calls.append("retain")
+                return SimpleNamespace(
+                    loss=input_ids.float().mean() * self.retain_weight
+                )
+            self.calls.append("forget")
+            hidden = self.forget_rows.unsqueeze(1)
+            return SimpleNamespace(hidden_states=(None, hidden, hidden))
+
+    model = Model()
+    trainer = object.__new__(di_training_module.DITrainer)
+    trainer.target_layers = (0, 1)
+    logged = []
+    trainer.log = logged.append
+    inputs = {
+        "input_ids": torch.tensor([[7], [2], [9], [4]]),
+        "attention_mask": torch.ones(4, 1),
+        "labels": torch.tensor([[7], [2], [9], [4]]),
+        "cb_source": torch.tensor([0, 1, 0, 1]),
+    }
+    loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
+    assert loss.item() == pytest.approx(16.0 + 0.96)
+    assert outputs["retain_ce"].item() == pytest.approx(16.0)
+    assert outputs["orth_cosine"].item() == pytest.approx(0.96)
+    assert model.calls == ["retain", "forget"]
+    (metrics,) = logged
+    assert metrics["loss_retain"] == pytest.approx(16.0)
+    assert metrics["loss_orth"] == pytest.approx(0.96)
+    assert metrics["retain_coefficient"] == 1.0
+    assert metrics["forget_coefficient"] == 1.0
+    assert metrics["retain_count"] == 2
+    assert metrics["forget_count"] == 2
+    loss.backward()
+    assert model.retain_weight.grad.item() == pytest.approx(8.0)
+    assert model.forget_rows.grad is not None
+    assert model.forget_rows.grad.abs().sum() > 0
+
+
+def test_di_trainer_ignores_padding_tokens_in_forget_pool(di_training_module) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(1.0))
+            self.z = torch.tensor(
+                [
+                    [[1.0, 0.0], [1.0, 1.0], [9.0, 9.0]],
+                    [[2.0, 0.0], [9.0, 9.0], [9.0, 9.0]],
+                ]
+            )
+
+        def forward(
+            self,
+            input_ids,
+            attention_mask=None,
+            labels=None,
+            output_hidden_states=False,
+            use_cache=None,
+        ):
+            if labels is not None:
+                return SimpleNamespace(
+                    loss=(input_ids.float() * attention_mask).sum() * self.weight
+                )
+            return SimpleNamespace(hidden_states=(None, self.z, self.z))
+
+    model = Model()
+    trainer = object.__new__(di_training_module.DITrainer)
+    trainer.target_layers = (1,)
+    trainer.log = lambda metrics: None
+    inputs = {
+        "input_ids": torch.tensor([[5, 0, 0], [1, 2, 3], [4, 5, 6]]),
+        "attention_mask": torch.tensor([[1, 0, 0], [1, 1, 0], [1, 0, 0]]),
+        "labels": torch.tensor([[5, 0, 0], [1, 2, 3], [4, 5, 6]]),
+        "cb_source": torch.tensor([0, 1, 1]),
+    }
+    loss = trainer.compute_loss(model, inputs)
+    assert loss.item() == pytest.approx(5.0 + 1.0 / 1.25**0.5)
+
+
+@pytest.mark.parametrize("sources", [[1, 1, 1], [0, 0]])
+def test_di_trainer_requires_both_sources(di_training_module, sources) -> None:
+    torch = pytest.importorskip("torch")
+    trainer = object.__new__(di_training_module.DITrainer)
+    with pytest.raises(ValueError, match="forget and retain"):
+        trainer.compute_loss(None, {"cb_source": torch.tensor(sources)})
+
+
+def test_di_trainer_requires_two_forget_rows(di_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    trainer = object.__new__(di_training_module.DITrainer)
+    with pytest.raises(ValueError, match="at least two forget"):
+        trainer.compute_loss(None, {"cb_source": torch.tensor([0, 1])})
+
+
+def test_di_trainer_validates_target_layers(
+    di_training_module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pytest.importorskip("torch")
+    monkeypatch.setattr(
+        di_training_module.AxolotlTrainer,
+        "__init__",
+        lambda self, *args, **kwargs: None,
+    )
+    trainer = object.__new__(di_training_module.DITrainer)
+    trainer.model = SimpleNamespace(config=SimpleNamespace(num_hidden_layers=2))
+    with pytest.raises(ValueError, match="target_layers"):
+        di_training_module.DITrainer.__init__(trainer, target_layers=(0, 0))
+    with pytest.raises(ValueError, match="target_layers"):
+        di_training_module.DITrainer.__init__(trainer, target_layers=(1, 2))
+    di_training_module.DITrainer.__init__(trainer, target_layers=(0, 1))
+    assert trainer.target_layers == (0, 1)
+    trainer.model = SimpleNamespace(config=SimpleNamespace(num_hidden_layers=32))
+    di_training_module.DITrainer.__init__(trainer)
+    assert trainer.target_layers == di_training_module.TARGET_LAYERS
+
+
+def test_di_trainer_sampler_balances_each_microbatch(di_training_module) -> None:
+    class TaggedDataset:
+        def __getitem__(self, key):
+            assert key == "cb_source"
+            return [0, 1, 1, 0] * 2
+
+    trainer = SimpleNamespace(
+        train_dataset=TaggedDataset(),
+        args=SimpleNamespace(per_device_train_batch_size=4, data_seed=None, seed=42),
+    )
+    sampler = di_training_module.DITrainer._get_train_sampler(trainer)
+    indices = list(sampler)
+    assert sorted(indices) == list(range(8))
+    for start in (0, 4):
+        assert (
+            sum(
+                trainer.train_dataset["cb_source"][i]
+                for i in indices[start : start + 4]
+            )
+            == 2
+        )
 
 
 def test_peft_disabled_adapter_recovers_initial_base_output() -> None:

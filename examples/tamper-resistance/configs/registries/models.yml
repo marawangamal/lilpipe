@@ -520,3 +520,13 @@ models:
         - configs/relearn/z7b/wmdp-bio-lora-unlearn-gd-relearn.yml
       depends_on: [z7b-wmdp-bio-lora-unlearn-gd]
       sbatch_args: *mila_zephyr_training
+
+  z7b-wmdp-bio-lora-unlearn-di:
+    base_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-di
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-di
+    producer:
+      id: train-z7b-wmdp-bio-lora-unlearn-di
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/wmdp-bio-lora-unlearn-di.yml, --merge]
+      sbatch_args: *mila_zephyr_training

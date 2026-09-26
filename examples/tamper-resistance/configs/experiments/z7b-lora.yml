@@ -10,6 +10,7 @@ models:
   - z7b-wmdp-bio-lora-unlearn-npo-relearn
   - z7b-wmdp-bio-lora-unlearn-gd
   - z7b-wmdp-bio-lora-unlearn-gd-relearn
+  - z7b-wmdp-bio-lora-unlearn-di
 
 evaluations:
   - bio-mcqa-ckpts-max100-freq10-mila

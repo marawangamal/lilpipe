@@ -23,6 +23,7 @@ LORA_MODEL_IDS = (
     "z7b-wmdp-bio-lora-unlearn-npo-relearn",
     "z7b-wmdp-bio-lora-unlearn-gd",
     "z7b-wmdp-bio-lora-unlearn-gd-relearn",
+    "z7b-wmdp-bio-lora-unlearn-di",
 )
 MODEL_IDS = FFT_MODEL_IDS + LORA_MODEL_IDS
 
@@ -67,7 +68,7 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             assert "--cpus-per-task=8" in producer.sbatch_args
             assert "--mem=64G" in producer.sbatch_args
             assert "--time=03:00:00" in producer.sbatch_args
-        method = "npo" if "-npo" in model_id else "gd"
+        method = "npo" if "-npo" in model_id else "di" if "-di" in model_id else "gd"
         config_kind = "relearn" if model_id.endswith("-relearn") else "unlearn"
         config_name = f"wmdp-bio-{regime}-unlearn-{method}"
         if config_kind == "relearn":
@@ -114,18 +115,18 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
                 (EXAMPLE / model["producer"]["args"][1]).read_text()
             )
         assert config["output_dir"] == model["local_dir"]
-        assert config["max_steps"] == 125
         assert config["gradient_accumulation_steps"] == 4
         assert config["sequence_len"] == 512
         assert config["optimizer"] == "adamw_torch"
         assert config["lr_scheduler"] == "linear"
         assert config["weight_decay"] == 0
         assert config["warmup_steps"] == 12
-        assert config["save_steps"] == 25
-        assert config["save_total_limit"] == 5
         assert config["save_only_model"] is True
         if regime == "fft":
             assert "adapter" not in config
+            assert config["max_steps"] == 125
+            assert config["save_steps"] == 25
+            assert config["save_total_limit"] == 5
         else:
             assert config["adapter"] == "lora"
             assert config["lora_r"] == config["lora_alpha"] == 8
@@ -139,6 +140,9 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
                 "up_proj",
                 "down_proj",
             }
+            assert config["max_steps"] == 100
+            assert config["save_steps"] == 10
+            assert config["save_total_limit"] == 10
         if model_id.endswith("-relearn"):
             suffix = "/merged" if regime == "lora" else ""
             assert config["base_model"] == (
@@ -147,7 +151,7 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             assert config["datasets"][0]["split"] == "train"
             assert config["datasets"][0]["path"] == "cais/wmdp-bio-forget-corpus"
             assert config["micro_batch_size"] == 1
-            assert config["learning_rate"] == 1.0e-5
+            assert config["learning_rate"] == 1.0e-5 if regime == "fft" else 1.0e-4
             assert config["remove_unused_columns"] is True
         else:
             assert config["base_model"] == "HuggingFaceH4/zephyr-7b-beta"
@@ -155,8 +159,8 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             assert config["datasets"][1]["split"] == "test"
             assert config["datasets"][1]["path"] == "Salesforce/wikitext"
             assert config["datasets"][1]["name"] == "wikitext-2-raw-v1"
-            assert config["micro_batch_size"] == 2
-            assert config["learning_rate"] == 5.0e-6
+            assert config["micro_batch_size"] == 4 if "-di" in model_id else 2
+            assert config["learning_rate"] == 5.0e-6 if regime == "fft" else 1.0e-4
 
 
 def test_tamia_launcher_matches_template_and_is_cluster_namespaced():

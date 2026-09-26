@@ -1,0 +1,51 @@
+base_model: HuggingFaceH4/zephyr-7b-beta
+# DITrainer objective in di.py: 1.0 x retain CE + 1.0 x mean off-diagonal cosine
+# of masked-mean-pooled forget activations.
+trainer_cls: configs.training.trainers.di.DITrainer
+datasets:
+  - path: cais/wmdp-bio-forget-corpus
+    split: train
+    type: configs.training.data.wmdp_zephyr
+  - path: Salesforce/wikitext
+    name: wikitext-2-raw-v1
+    split: test
+    type: configs.training.data.wikitext2
+shuffle_merged_datasets: false
+dataset_num_proc: 8
+dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-unlearn-di/prepared
+val_set_size: 0.0
+output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-di
+
+adapter: lora
+lora_r: 8
+lora_alpha: 8
+lora_dropout: 0.05
+lora_target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+sequence_len: 512
+sample_packing: false
+pad_to_sequence_len: false
+remove_unused_columns: false
+train_on_inputs: true
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+max_steps: 100
+learning_rate: 1.0e-4
+optimizer: adamw_torch
+weight_decay: 0.0
+lr_scheduler: linear
+warmup_steps: 12
+max_grad_norm: 1.0
+
+bf16: true
+tf32: true
+gradient_checkpointing: true
+seed: 42
+eval_strategy: "no"
+save_strategy: steps
+save_steps: 10
+save_total_limit: 10
+save_only_model: true
+logging_steps: 1
+wandb_project: lp-tamper-resistance
+wandb_name: z7b-wmdp-bio-lora-unlearn-di
