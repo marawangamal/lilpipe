@@ -142,7 +142,11 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
                 "up_proj",
                 "down_proj",
             }
-            assert config["max_steps"] == 100
+            expected_steps = {
+                "z7b-wmdp-bio-lora-unlearn-npo": 80,
+                "z7b-wmdp-bio-lora-unlearn-gd": 40,
+            }.get(model_id, 100)
+            assert config["max_steps"] == expected_steps
             assert config["save_steps"] == 10
             assert config["save_total_limit"] == 10
         if model_id.endswith("-relearn"):

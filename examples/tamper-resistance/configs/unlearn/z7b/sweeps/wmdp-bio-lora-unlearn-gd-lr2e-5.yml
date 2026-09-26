@@ -1,5 +1,5 @@
 base_model: HuggingFaceH4/zephyr-7b-beta
-trainer_cls: configs.training.trainers.npo.NPOTrainer
+trainer_cls: configs.training.trainers.gd.GradDiffTrainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
@@ -10,9 +10,9 @@ datasets:
     type: configs.training.data.wikitext2
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-unlearn-npo/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr2e-5/prepared
 val_set_size: 0.0
-output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo
+output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr2e-5
 
 adapter: lora
 lora_r: 8
@@ -27,8 +27,8 @@ remove_unused_columns: false
 train_on_inputs: true
 micro_batch_size: 2
 gradient_accumulation_steps: 4
-max_steps: 80
-learning_rate: 1.0e-4
+max_steps: 100
+learning_rate: 2e-5
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
@@ -46,4 +46,4 @@ save_total_limit: 10
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio-lora-unlearn-npo
+wandb_name: z7b-wmdp-bio-lora-unlearn-gd-sweep-lr2e-5

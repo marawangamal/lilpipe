@@ -3,7 +3,9 @@
 set -euo pipefail
 
 export HF_HOME="$SCRATCH/.cache/huggingface"
-export HF_DATASETS_CACHE="$SLURM_TMPDIR/.cache/huggingface/datasets"
+export HF_DATASETS_CACHE="$HF_HOME/datasets"
+export HF_HUB_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
 export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv"
 export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-eval"
 export PYTHONPATH="$PWD"

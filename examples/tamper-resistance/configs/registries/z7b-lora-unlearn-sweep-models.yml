@@ -1,0 +1,104 @@
+models:
+  z7b-wmdp-bio-lora-unlearn-npo-sweep-lr1e-5: &npo_lr1e5
+    base_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-sweep-lr1e-5
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-sweep-lr1e-5
+    producer:
+      id: train-z7b-npo-sweep-lr1e-5
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-npo-lr1e-5.yml]
+      sbatch_args: &training_resources
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=8
+        - --mem=64G
+        - --time=03:00:00
+
+  z7b-wmdp-bio-lora-unlearn-npo-sweep-lr2e-5:
+    <<: *npo_lr1e5
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-sweep-lr2e-5
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-sweep-lr2e-5
+    producer:
+      id: train-z7b-npo-sweep-lr2e-5
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-npo-lr2e-5.yml]
+      sbatch_args: *training_resources
+
+  z7b-wmdp-bio-lora-unlearn-npo-sweep-lr5e-5:
+    <<: *npo_lr1e5
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-sweep-lr5e-5
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-sweep-lr5e-5
+    producer:
+      id: train-z7b-npo-sweep-lr5e-5
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-npo-lr5e-5.yml]
+      sbatch_args: *training_resources
+
+  z7b-wmdp-bio-lora-unlearn-npo-sweep-lr1e-4:
+    <<: *npo_lr1e5
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-sweep-lr1e-4
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-sweep-lr1e-4
+    producer:
+      id: train-z7b-npo-sweep-lr1e-4
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-npo-lr1e-4.yml]
+      sbatch_args: *training_resources
+
+  z7b-wmdp-bio-lora-unlearn-npo-sweep-lr2e-4:
+    <<: *npo_lr1e5
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-sweep-lr2e-4
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-sweep-lr2e-4
+    producer:
+      id: train-z7b-npo-sweep-lr2e-4
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-npo-lr2e-4.yml]
+      sbatch_args: *training_resources
+
+  z7b-wmdp-bio-lora-unlearn-gd-sweep-lr1e-5: &gd_lr1e5
+    base_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr1e-5
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr1e-5
+    producer:
+      id: train-z7b-gd-sweep-lr1e-5
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-gd-lr1e-5.yml]
+      sbatch_args: *training_resources
+
+  z7b-wmdp-bio-lora-unlearn-gd-sweep-lr2e-5:
+    <<: *gd_lr1e5
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr2e-5
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr2e-5
+    producer:
+      id: train-z7b-gd-sweep-lr2e-5
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-gd-lr2e-5.yml]
+      sbatch_args: *training_resources
+
+  z7b-wmdp-bio-lora-unlearn-gd-sweep-lr5e-5:
+    <<: *gd_lr1e5
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr5e-5
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr5e-5
+    producer:
+      id: train-z7b-gd-sweep-lr5e-5
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-gd-lr5e-5.yml]
+      sbatch_args: *training_resources
+
+  z7b-wmdp-bio-lora-unlearn-gd-sweep-lr1e-4:
+    <<: *gd_lr1e5
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr1e-4
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr1e-4
+    producer:
+      id: train-z7b-gd-sweep-lr1e-4
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-gd-lr1e-4.yml]
+      sbatch_args: *training_resources
+
+  z7b-wmdp-bio-lora-unlearn-gd-sweep-lr2e-4:
+    <<: *gd_lr1e5
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr2e-4
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sweep-lr2e-4
+    producer:
+      id: train-z7b-gd-sweep-lr2e-4
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-gd-lr2e-4.yml]
+      sbatch_args: *training_resources

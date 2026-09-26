@@ -1,18 +1,13 @@
-base_model: HuggingFaceH4/zephyr-7b-beta
-trainer_cls: configs.training.trainers.npo.NPOTrainer
+base_model: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo/merged
+tokenizer_type: AutoTokenizer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
     type: configs.training.data.wmdp_zephyr
-  - path: Salesforce/wikitext
-    name: wikitext-2-raw-v1
-    split: test
-    type: configs.training.data.wikitext2
-shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-unlearn-npo/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-unlearn-npo-relearn-sweep-lr1e-6/prepared
 val_set_size: 0.0
-output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo
+output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-relearn-sweep-lr1e-6
 
 adapter: lora
 lora_r: 8
@@ -23,12 +18,12 @@ lora_target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_p
 sequence_len: 512
 sample_packing: false
 pad_to_sequence_len: false
-remove_unused_columns: false
+remove_unused_columns: true
 train_on_inputs: true
-micro_batch_size: 2
+micro_batch_size: 1
 gradient_accumulation_steps: 4
-max_steps: 80
-learning_rate: 1.0e-4
+max_steps: 300
+learning_rate: 1e-6
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
@@ -42,8 +37,8 @@ seed: 42
 eval_strategy: "no"
 save_strategy: steps
 save_steps: 10
-save_total_limit: 10
+save_total_limit: 30
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio-lora-unlearn-npo
+wandb_name: z7b-wmdp-bio-lora-unlearn-npo-relearn-sweep-lr1e-6

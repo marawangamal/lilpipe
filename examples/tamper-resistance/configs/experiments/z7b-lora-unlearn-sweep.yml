@@ -1,0 +1,22 @@
+version: 1
+id: z7b-lora-unlearn-hyperparameter-sweep
+
+registries:
+  models: configs/registries/z7b-lora-unlearn-sweep-models.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - z7b-wmdp-bio-lora-unlearn-npo-sweep-lr1e-5
+  - z7b-wmdp-bio-lora-unlearn-npo-sweep-lr2e-5
+  - z7b-wmdp-bio-lora-unlearn-npo-sweep-lr5e-5
+  - z7b-wmdp-bio-lora-unlearn-npo-sweep-lr1e-4
+  - z7b-wmdp-bio-lora-unlearn-npo-sweep-lr2e-4
+  - z7b-wmdp-bio-lora-unlearn-gd-sweep-lr1e-5
+  - z7b-wmdp-bio-lora-unlearn-gd-sweep-lr2e-5
+  - z7b-wmdp-bio-lora-unlearn-gd-sweep-lr5e-5
+  - z7b-wmdp-bio-lora-unlearn-gd-sweep-lr1e-4
+  - z7b-wmdp-bio-lora-unlearn-gd-sweep-lr2e-4
+
+evaluations:
+  - bio-mcqa-ckpts-max100-freq10-mila
+  - mmlu-no-bio-ckpts-max100-freq10-mila

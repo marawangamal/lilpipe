@@ -27,8 +27,8 @@ remove_unused_columns: false
 train_on_inputs: true
 micro_batch_size: 2
 gradient_accumulation_steps: 4
-max_steps: 100
-learning_rate: 1.0e-4
+max_steps: 40
+learning_rate: 2.0e-4
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
