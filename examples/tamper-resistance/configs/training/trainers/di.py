@@ -16,14 +16,14 @@ def compute_mean_cosim(z: List[torch.Tensor], mask: torch.Tensor) -> torch.Tenso
         mask: Include mask. Shape (B, T)
 
     Returns:
-        Mean cosine similarity. Shape (1,)
+        Mean cosine similarity. Scalar shape: ()
     """
     # compute layer-wise token means (excluding masked tokens)
     lengths = mask.sum(1).clamp_min(1).to(z[0].dtype)  # Shape: (B,)
     cosims = list()
     for l in range(len(z)):
-        z_mean_l = (z[l] * mask.unsqueeze(-1)).sum(1) / lengths  # Shape: (B, D)
-        norm_l = torch.linalg.norm(z_mean_l, keep_dims=True)
+        z_mean_l = (z[l] * mask.unsqueeze(-1)).sum(1) / lengths[:, None]
+        norm_l = torch.linalg.norm(z_mean_l, dim=-1, keepdim=True)
         cosim = z_mean_l @ z_mean_l.T / (norm_l * norm_l.T)  # Shape: (B, B)
         off_diag_mask = ~torch.eye(
             z_mean_l.shape[0], dtype=torch.bool, device=z_mean_l.device
@@ -43,6 +43,14 @@ class DITrainer(AxolotlTrainer):
         target_layers=(5, 10, 15, 20, 25, 30),
         **kwargs,
     ):
+        """Initialize the DI trainer.
+
+        Args:
+            retain_coefficient: Weight for the retain cross-entropy loss.
+            forget_coefficient: Weight for the forget cosine-similarity loss.
+            target_layers: Transformer block indices. Each index is offset
+                by one because hidden_states[0] is the embedding output.
+        """
         super().__init__(*args, **kwargs)
         self.retain_coefficient = retain_coefficient
         self.forget_coefficient = forget_coefficient
@@ -111,8 +119,11 @@ class DITrainer(AxolotlTrainer):
             attention_mask=attn_mask_forget,
             output_hidden_states=True,
             use_cache=False,
-        ).hidden_states  # Shape: (B, T, D) x L
-        loss_mean_cosim = compute_mean_cosim(z_forget, attn_mask_forget)
+        ).hidden_states  # Shape: (B, T, D) x (L + 1)
+        loss_mean_cosim = compute_mean_cosim(
+            [z_forget[layer + 1] for layer in self.target_layers],
+            attn_mask_forget,
+        )
 
         loss = (
             self.retain_coefficient * loss_retain
