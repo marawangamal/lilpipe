@@ -145,10 +145,13 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             expected_steps = {
                 "z7b-wmdp-bio-lora-unlearn-npo": 80,
                 "z7b-wmdp-bio-lora-unlearn-gd": 40,
+                "z7b-wmdp-bio-lora-unlearn-npo-relearn": 300,
+                "z7b-wmdp-bio-lora-unlearn-gd-relearn": 300,
             }.get(model_id, 100)
             assert config["max_steps"] == expected_steps
             assert config["save_steps"] == 10
-            assert config["save_total_limit"] == 10
+            expected_checkpoints = 30 if model_id.endswith("-relearn") else 10
+            assert config["save_total_limit"] == expected_checkpoints
         if model_id.endswith("-relearn"):
             suffix = "/merged" if regime == "lora" else ""
             assert config["base_model"] == (
@@ -157,7 +160,8 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             assert config["datasets"][0]["split"] == "train"
             assert config["datasets"][0]["path"] == "cais/wmdp-bio-forget-corpus"
             assert config["micro_batch_size"] == 1
-            assert config["learning_rate"] == 1.0e-5 if regime == "fft" else 1.0e-4
+            expected_lr = 1.0e-5 if regime == "fft" else 3.0e-5
+            assert config["learning_rate"] == expected_lr
             assert config["remove_unused_columns"] is True
         else:
             assert config["base_model"] == "HuggingFaceH4/zephyr-7b-beta"
