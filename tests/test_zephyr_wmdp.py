@@ -145,16 +145,16 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             expected_steps = {
                 "z7b-wmdp-bio-lora-unlearn-npo": 80,
                 "z7b-wmdp-bio-lora-unlearn-gd": 40,
-                "z7b-wmdp-bio-lora-unlearn-npo-relearn": 220,
-                "z7b-wmdp-bio-lora-unlearn-gd-relearn": 150,
+                "z7b-wmdp-bio-lora-unlearn-npo-relearn": 300,
+                "z7b-wmdp-bio-lora-unlearn-gd-relearn": 300,
             }.get(model_id, 100)
             assert config["max_steps"] == expected_steps
             assert config["save_steps"] == 10
             expected_checkpoints = {
                 "z7b-wmdp-bio-lora-unlearn-npo": 8,
                 "z7b-wmdp-bio-lora-unlearn-gd": 4,
-                "z7b-wmdp-bio-lora-unlearn-npo-relearn": 22,
-                "z7b-wmdp-bio-lora-unlearn-gd-relearn": 15,
+                "z7b-wmdp-bio-lora-unlearn-npo-relearn": 30,
+                "z7b-wmdp-bio-lora-unlearn-gd-relearn": 30,
             }.get(model_id, 10)
             assert config["save_total_limit"] == expected_checkpoints
         if model_id.endswith("-relearn"):
