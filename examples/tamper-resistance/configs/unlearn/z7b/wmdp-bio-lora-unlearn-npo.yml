@@ -27,7 +27,7 @@ remove_unused_columns: false
 train_on_inputs: true
 micro_batch_size: 2
 gradient_accumulation_steps: 4
-max_steps: 125
+max_steps: 100
 learning_rate: 1.0e-4
 optimizer: adamw_torch
 weight_decay: 0.0
@@ -41,8 +41,8 @@ gradient_checkpointing: true
 seed: 42
 eval_strategy: "no"
 save_strategy: steps
-save_steps: 25
-save_total_limit: 5
+save_steps: 10
+save_total_limit: 10
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance

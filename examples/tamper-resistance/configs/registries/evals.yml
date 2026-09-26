@@ -25,31 +25,31 @@ evaluations:
       - --mem=64G
       - --time=00:30:00
       - --exclude=cn-c034,cn-l030,cn-l055
-  mmlu-no-bio-ckpts-max125-freq25-mila:
+  mmlu-no-bio-ckpts-max100-freq10-mila:
     script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
     args:
       - "{model.id}"
       - "{model.base_model_name_or_path}"
       - "{model.adapter_name_or_path}"
       - artifacts/mila/evals
-      - "25"
-      - "125"
+      - "10"
+      - "100"
     sbatch_args: &checkpoint_evaluation_resources
-      - --array=1-5
+      - --array=1-10
       - --gres=gpu:l40s:1
       - --cpus-per-task=8
       - --mem=64G
       - --time=00:30:00
       - --exclude=cn-c034,cn-l030,cn-l055
-  bio-mcqa-ckpts-max125-freq25-mila:
+  bio-mcqa-ckpts-max100-freq10-mila:
     script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
     args:
       - "{model.id}"
       - "{model.base_model_name_or_path}"
       - "{model.adapter_name_or_path}"
       - artifacts/mila/evals
-      - "25"
-      - "125"
+      - "10"
+      - "100"
     sbatch_args: *checkpoint_evaluation_resources
   mmlu-no-bio-ckpts-max125-freq25-tamia:
     script: scripts/slurm/tamia/eval_mmlu_no_bio_ckpts.sbatch
