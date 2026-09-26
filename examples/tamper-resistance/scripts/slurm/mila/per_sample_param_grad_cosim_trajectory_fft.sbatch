@@ -1,5 +1,10 @@
 #!/bin/bash
 #SBATCH --output=artifacts/mila/logs/per-sample-grad-cosim-%j.out
+#SBATCH --gres=gpu:l40s:1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --time=03:00:00
+#SBATCH --exclude=cn-c034,cn-l030,cn-l055
 set -euo pipefail
 
 export PATH="$HOME/.local/bin:$PATH"
@@ -16,10 +21,7 @@ model_id=$(basename "$model_dir")
 uv sync --frozen --group train
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 
-base_model=$(python -c \
-  'import json, sys; print(json.load(open(sys.argv[1]))["base_model_name_or_path"])' \
-  "$model_dir/adapter_config.json")
-output_dir="artifacts/mila/analysis/per_sample_param_grad_cosim/$model_id"
+output_dir="artifacts/mila/analysis/per_sample_param_grad_cosim_fft/$model_id"
 mkdir -p "$output_dir"
 
 mapfile -t checkpoints < <(
@@ -29,15 +31,17 @@ mapfile -t checkpoints < <(
 
 for checkpoint_name in "${checkpoints[@]}"; do
   checkpoint="$model_dir/$checkpoint_name"
-  if [[ ! -f "$checkpoint/adapter_config.json" || \
-        ! -f "$checkpoint/adapter_model.safetensors" ]]; then
+  if [[ ! -f "$checkpoint/model.safetensors" ]]; then
     continue
   fi
 
-  python scripts/analysis/per_sample_param_grad_cosim_gen_results.py \
-    --model_name_or_path "$base_model" \
-    --adapter_name_or_path "$checkpoint" \
+  out_dir="$output_dir/$checkpoint_name"
+  python scripts/analysis/per_sample_param_grad_cosim_gen_results_fft.py \
+    --model_name_or_path "$checkpoint" \
     --dataset cais/wmdp-bio-forget-corpus \
     --max_samples 16 \
-    --out "$output_dir/$checkpoint_name.json"
+    --out "$out_dir"
+
+  # reclaim the per-sample fp32 grads (~29GB each); keep only cosim.json
+  rm -rf "$out_dir/grads"
 done

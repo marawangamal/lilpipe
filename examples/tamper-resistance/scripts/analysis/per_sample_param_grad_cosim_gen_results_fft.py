@@ -101,12 +101,13 @@ def main():
         }
         torch.save(sample_grads, osp.join(args.out, "grads", f"sample_{step:05d}.pt"))
 
-    # compute inner products
+    # compute inner products over unique pairs (cosine is symmetric; skip self)
     del model
     cosims = list()
-    for i in range(len(dataloader)):
-        for j in range(len(dataloader)):
-            gdict_i = torch.load(osp.join(args.out, "grads", f"sample_{i:05d}.pt"))
+    n = len(dataloader)
+    for i in range(n):
+        gdict_i = torch.load(osp.join(args.out, "grads", f"sample_{i:05d}.pt"))
+        for j in range(i + 1, n):
             gdict_j = torch.load(osp.join(args.out, "grads", f"sample_{j:05d}.pt"))
             cosim = dict_reduce(
                 dict_binary_op(gdict_i, gdict_j, op_fn=cosine_similarity),
