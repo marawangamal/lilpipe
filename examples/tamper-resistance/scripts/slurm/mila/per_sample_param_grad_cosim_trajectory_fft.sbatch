@@ -2,7 +2,7 @@
 #SBATCH --output=artifacts/mila/logs/per-sample-grad-cosim-%j.out
 #SBATCH --gres=gpu:l40s:1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
+#SBATCH --mem=128G
 #SBATCH --time=03:00:00
 #SBATCH --exclude=cn-c034,cn-l030,cn-l055
 set -euo pipefail
@@ -36,6 +36,10 @@ for checkpoint_name in "${checkpoints[@]}"; do
   fi
 
   out_dir="$output_dir/$checkpoint_name"
+  if [[ -f "$out_dir/cosim.json" ]]; then
+    echo "skip $checkpoint_name: cosim.json already exists"
+    continue
+  fi
   python scripts/analysis/per_sample_param_grad_cosim_gen_results_fft.py \
     --model_name_or_path "$checkpoint" \
     --dataset cais/wmdp-bio-forget-corpus \
@@ -43,5 +47,5 @@ for checkpoint_name in "${checkpoints[@]}"; do
     --out "$out_dir"
 
   # reclaim the per-sample fp32 grads (~29GB each); keep only cosim.json
-  rm -rf "$out_dir/grads"
+  # rm -rf "$out_dir/grads"
 done

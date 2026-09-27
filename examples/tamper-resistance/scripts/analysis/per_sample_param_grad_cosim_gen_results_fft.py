@@ -88,6 +88,8 @@ def main():
     dataloader = get_dataloader(**vars(args))
 
     for step, batch in enumerate(dataloader):
+        if osp.exists(osp.join(args.out, "grads", f"sample_{step:05d}.pt")):
+            continue
         model.zero_grad(set_to_none=True)
         batch = {name: value.to(device) for name, value in batch.items()}
         out = model(**batch)
