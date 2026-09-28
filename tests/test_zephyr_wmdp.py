@@ -28,6 +28,7 @@ LORA_MODEL_IDS = (
 MODEL_IDS = FFT_MODEL_IDS + LORA_MODEL_IDS
 CB_SWEEP_LRS = ("1e-5", "2e-5", "5e-5", "1e-4", "2e-4")
 CB_EXTENDED_SWEEP_LRS = ("3e-4", "4e-4", "5e-4")
+CB_RELEARN_SWEEP_LRS = ("1e-6", "3e-6", "1e-5", "3e-5", "1e-4")
 
 
 def module(path, name):
@@ -93,6 +94,32 @@ def test_lora_cb_extended_unlearning_sweep(monkeypatch):
         assert config["max_steps"] == 100
         assert config["save_steps"] == 5
         assert config["save_total_limit"] == 20
+
+
+def test_lora_cb_relearning_sweep(monkeypatch):
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/z7b-lora-relearn-cb-sweep.yml")
+    expected_models = tuple(
+        f"z7b-wmdp-bio-lora-unlearn-cb-relearn-sweep-lr{lr}"
+        for lr in CB_RELEARN_SWEEP_LRS
+    )
+    assert pipeline.selected_models == expected_models
+    assert len(pipeline.plan().stages) == 16
+    merge = pipeline.plan().stage_index["merge-z7b-cb-sweep-lr5e-4-step70"]
+    assert merge.args[1].endswith("checkpoint-70")
+
+    for lr in CB_RELEARN_SWEEP_LRS:
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / f"configs/relearn/z7b/sweeps/wmdp-bio-lora-unlearn-cb-relearn-lr{lr}.yml"
+            ).read_text()
+        )
+        assert config["learning_rate"] == lr
+        assert config["max_steps"] == 300
+        assert config["save_steps"] == 10
+        assert config["save_total_limit"] == 30
+        assert config["base_model"].endswith("cb-sweep-selected/merged")
 
 
 def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
