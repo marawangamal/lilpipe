@@ -52,3 +52,33 @@ models:
       script: scripts/slurm/mila/train.sbatch
       args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-cb-lr2e-4.yml]
       sbatch_args: *training
+
+  z7b-wmdp-bio-lora-unlearn-cb-sweep-lr3e-4:
+    <<: *cb
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-sweep-lr3e-4
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-sweep-lr3e-4
+    producer:
+      id: train-z7b-cb-sweep-lr3e-4
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-cb-lr3e-4.yml]
+      sbatch_args: *training
+
+  z7b-wmdp-bio-lora-unlearn-cb-sweep-lr4e-4:
+    <<: *cb
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-sweep-lr4e-4
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-sweep-lr4e-4
+    producer:
+      id: train-z7b-cb-sweep-lr4e-4
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-cb-lr4e-4.yml]
+      sbatch_args: *training
+
+  z7b-wmdp-bio-lora-unlearn-cb-sweep-lr5e-4:
+    <<: *cb
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-sweep-lr5e-4
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-sweep-lr5e-4
+    producer:
+      id: train-z7b-cb-sweep-lr5e-4
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-cb-lr5e-4.yml]
+      sbatch_args: *training

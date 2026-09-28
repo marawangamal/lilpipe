@@ -27,6 +27,7 @@ LORA_MODEL_IDS = (
 )
 MODEL_IDS = FFT_MODEL_IDS + LORA_MODEL_IDS
 CB_SWEEP_LRS = ("1e-5", "2e-5", "5e-5", "1e-4", "2e-4")
+CB_EXTENDED_SWEEP_LRS = ("3e-4", "4e-4", "5e-4")
 
 
 def module(path, name):
@@ -67,6 +68,31 @@ def test_lora_cb_unlearning_sweep(monkeypatch):
         wandb_names.add(config["wandb_name"])
 
     assert len(outputs) == len(caches) == len(wandb_names) == len(CB_SWEEP_LRS)
+
+
+def test_lora_cb_extended_unlearning_sweep(monkeypatch):
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load(
+        "configs/experiments/z7b-lora-unlearn-cb-sweep-extended.yml"
+    )
+    expected_models = tuple(
+        f"z7b-wmdp-bio-lora-unlearn-cb-sweep-lr{lr}" for lr in CB_EXTENDED_SWEEP_LRS
+    )
+    assert pipeline.selected_models == expected_models
+    assert len(pipeline.plan().stages) == 9
+
+    for lr in CB_EXTENDED_SWEEP_LRS:
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / f"configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-cb-lr{lr}.yml"
+            ).read_text()
+        )
+        assert config["trainer_cls"] == "configs.training.trainers.cb.CBTrainer"
+        assert config["learning_rate"] == lr
+        assert config["max_steps"] == 100
+        assert config["save_steps"] == 5
+        assert config["save_total_limit"] == 20
 
 
 def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):

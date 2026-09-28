@@ -46,12 +46,12 @@ lilpipe configs/experiments/di-6.9b.yml
 
 ### Zephyr-7B LoRA sweep-selected configuration
 
-| Stage | Method | LR | `max_steps` | Checkpoints |
-| --- | --- | ---: | ---: | ---: |
-| Unlearn | NPO | `1e-4` | 80 | 8 |
-| Unlearn | GradDiff | `2e-4` | 40 | 4 |
-| Relearn | NPO | `3e-5` | 220 | 22 |
-| Relearn | GradDiff | `3e-5` | 150 | 15 |
+| Stage   | Method   | LR     | Max steps | Checkpoints |
+| ------- | -------- | ------ | --------- | ----------- |
+| Unlearn | NPO      | `1e-4` | 80        | 8           |
+| Unlearn | GradDiff | `2e-4` | 40        | 4           |
+| Relearn | NPO      | `3e-5` | 220       | 22          |
+| Relearn | GradDiff | `3e-5` | 150       | 15          |
 
 The pipeline trains the rank-8 circuit breaker on 1,024 WMDP-Bio forget
 documents and 1,024 WikiText retain documents, with four examples from each
