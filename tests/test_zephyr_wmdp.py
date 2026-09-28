@@ -28,9 +28,12 @@ LORA_MODEL_IDS = (
     "z7b-wmdp-bio-lora-unlearn-deff",
 )
 MODEL_IDS = FFT_MODEL_IDS + LORA_MODEL_IDS
-CB_SWEEP_LRS = ("1e-5", "2e-5", "5e-5", "1e-4", "2e-4")
-CB_EXTENDED_SWEEP_LRS = ("3e-4", "4e-4", "5e-4")
-CB_RELEARN_SWEEP_LRS = ("1e-6", "3e-6", "1e-5", "3e-5", "1e-4")
+UNLEARN_HPO_LRS = {
+    "npo": ("1e-5", "2e-5", "5e-5", "1e-4", "2e-4"),
+    "gd": ("1e-5", "2e-5", "5e-5", "1e-4", "2e-4"),
+    "cb": ("1e-5", "2e-5", "5e-5", "1e-4", "2e-4", "3e-4", "4e-4", "5e-4"),
+}
+RELEARN_HPO_LRS = ("1e-6", "3e-6", "1e-5", "3e-5", "1e-4")
 
 
 def module(path, name):
@@ -41,87 +44,69 @@ def module(path, name):
     return result
 
 
-def test_lora_cb_unlearning_sweep(monkeypatch):
+@pytest.mark.parametrize("phase", ["unlearn", "relearn"])
+def test_lora_hpo_pipeline(phase, monkeypatch):
     monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load("configs/experiments/z7b-lora-unlearn-cb-sweep.yml")
-    expected_models = tuple(
-        f"z7b-wmdp-bio-lora-unlearn-cb-sweep-lr{lr}" for lr in CB_SWEEP_LRS
+    manifest = EXAMPLE / f"configs/experiments/z7b-lora-hpo-{phase}.yml"
+    raw = yaml.safe_load(manifest.read_text())
+    pipeline = lilpipe.load(str(manifest.relative_to(EXAMPLE)))
+
+    assert raw["registries"]["models"] == "configs/registries/models-hpo.yml"
+    assert raw["evaluations"] == [
+        "bio-mcqa-ckpts-max250-freq10-mila",
+        "mmlu-no-bio-ckpts-max250-freq10-mila",
+    ]
+    assert len(pipeline.plan().stages) == len(pipeline.selected_models) * 3
+
+    methods = (
+        UNLEARN_HPO_LRS
+        if phase == "unlearn"
+        else {method: RELEARN_HPO_LRS for method in ("npo", "gd", "cb")}
     )
-    assert pipeline.selected_models == expected_models
-    assert len(pipeline.plan().stages) == 15
+    expected_models = []
+    for method, learning_rates in methods.items():
+        for learning_rate in learning_rates:
+            middle = f"{method}-relearn" if phase == "relearn" else method
+            model_id = f"z7b-wmdp-bio-lora-unlearn-{middle}-hpo-lr{learning_rate}"
+            expected_models.append(model_id)
+            config = yaml.safe_load(
+                (
+                    EXAMPLE
+                    / f"configs/{phase}/z7b/hpo/wmdp-bio-lora-unlearn-{middle}-lr{learning_rate}.yml"
+                ).read_text()
+            )
+            assert config["learning_rate"] == learning_rate
+            assert config["max_steps"] == 250
+            assert config["save_steps"] == 10
+            assert config["save_total_limit"] == 25
+            assert "-hpo-" in config["output_dir"]
+            assert "-sweep-" not in config["dataset_prepared_path"]
+            assert "-sweep-" not in config["wandb_name"]
+            if phase == "relearn":
+                assert config["base_model"].endswith(f"-{method}-hpo-opt")
 
-    outputs = set()
-    caches = set()
-    wandb_names = set()
-    for lr in CB_SWEEP_LRS:
-        config = yaml.safe_load(
-            (
-                EXAMPLE
-                / f"configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-cb-lr{lr}.yml"
-            ).read_text()
-        )
-        assert config["trainer_cls"] == "configs.training.trainers.cb.CBTrainer"
-        assert config["learning_rate"] == lr
-        assert config["max_steps"] == 100
-        assert config["save_steps"] == config["save_total_limit"] == 10
-        assert config["micro_batch_size"] == 4
-        assert config["gradient_accumulation_steps"] == 2
-        outputs.add(config["output_dir"])
-        caches.add(config["dataset_prepared_path"])
-        wandb_names.add(config["wandb_name"])
-
-    assert len(outputs) == len(caches) == len(wandb_names) == len(CB_SWEEP_LRS)
+    assert pipeline.selected_models == tuple(expected_models)
 
 
-def test_lora_cb_extended_unlearning_sweep(monkeypatch):
+def test_zephyr_public_manifests_and_retired_sweep_layout(monkeypatch):
     monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load(
-        "configs/experiments/z7b-lora-unlearn-cb-sweep-extended.yml"
-    )
-    expected_models = tuple(
-        f"z7b-wmdp-bio-lora-unlearn-cb-sweep-lr{lr}" for lr in CB_EXTENDED_SWEEP_LRS
-    )
-    assert pipeline.selected_models == expected_models
-    assert len(pipeline.plan().stages) == 9
+    manifests = [
+        "z7b-lora.yml",
+        "z7b-fft.yml",
+        "z7b-lora-hpo-unlearn.yml",
+        "z7b-lora-hpo-relearn.yml",
+    ]
+    for manifest in manifests:
+        lilpipe.load(f"configs/experiments/{manifest}").plan()
 
-    for lr in CB_EXTENDED_SWEEP_LRS:
-        config = yaml.safe_load(
-            (
-                EXAMPLE
-                / f"configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-cb-lr{lr}.yml"
-            ).read_text()
-        )
-        assert config["trainer_cls"] == "configs.training.trainers.cb.CBTrainer"
-        assert config["learning_rate"] == lr
-        assert config["max_steps"] == 100
-        assert config["save_steps"] == 5
-        assert config["save_total_limit"] == 20
+    assert not list((EXAMPLE / "configs/experiments").glob("*sweep*.yml"))
+    assert not list((EXAMPLE / "configs/registries").glob("*sweep*.yml"))
+    assert not (EXAMPLE / "configs/unlearn/z7b/sweeps").exists()
+    assert not (EXAMPLE / "configs/relearn/z7b/sweeps").exists()
 
-
-def test_lora_cb_relearning_sweep(monkeypatch):
-    monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load("configs/experiments/z7b-lora-relearn-cb-sweep.yml")
-    expected_models = tuple(
-        f"z7b-wmdp-bio-lora-unlearn-cb-relearn-sweep-lr{lr}"
-        for lr in CB_RELEARN_SWEEP_LRS
-    )
-    assert pipeline.selected_models == expected_models
-    assert len(pipeline.plan().stages) == 16
-    merge = pipeline.plan().stage_index["merge-z7b-cb-sweep-lr5e-4-step70"]
-    assert merge.args[1].endswith("checkpoint-70")
-
-    for lr in CB_RELEARN_SWEEP_LRS:
-        config = yaml.safe_load(
-            (
-                EXAMPLE
-                / f"configs/relearn/z7b/sweeps/wmdp-bio-lora-unlearn-cb-relearn-lr{lr}.yml"
-            ).read_text()
-        )
-        assert config["learning_rate"] == lr
-        assert config["max_steps"] == 300
-        assert config["save_steps"] == 10
-        assert config["save_total_limit"] == 30
-        assert config["base_model"].endswith("cb-sweep-selected/merged")
+    results = (EXAMPLE / "configs/results/z7b.yml").read_text()
+    assert "hpo" not in results.lower()
+    assert "sweep" not in results.lower()
 
 
 def test_lora_cb_canonical_configs():

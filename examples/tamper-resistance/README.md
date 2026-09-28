@@ -44,7 +44,31 @@ source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
 lilpipe configs/experiments/di-6.9b.yml
 ```
 
-### Zephyr-7B LoRA sweep-selected configuration
+### Zephyr-7B LoRA HPO promotion
+
+Unlearning and relearning HPO are separate pipelines:
+
+```bash
+lilpipe configs/experiments/z7b-lora-hpo-unlearn.yml
+lilpipe configs/experiments/z7b-lora-hpo-relearn.yml
+```
+
+Both run NPO, GradDiff, and Circuit Breaker for 250 steps, saving and evaluating
+every 10 steps. Promotion between them is manual: choose the best unlearning
+checkpoint using WMDP-Bio and MMLU, merge its LoRA adapter with Zephyr into a
+stable promoted directory, then create the matching symlink before launching
+relearning:
+
+```text
+artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-hpo-opt
+artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-hpo-opt
+artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-hpo-opt
+```
+
+Each link must resolve to its method's promoted merged model. Lilpipe does not
+create or validate these links.
+
+### Zephyr-7B LoRA canonical configuration
 
 | Stage   | Method   | LR     | Max steps | Checkpoints |
 | ------- | -------- | ------ | --------- | ----------- |

@@ -1,0 +1,30 @@
+version: 1
+id: z7b-lora-hpo-unlearn
+
+registries:
+  models: configs/registries/models-hpo.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - z7b-wmdp-bio-lora-unlearn-npo-hpo-lr1e-5
+  - z7b-wmdp-bio-lora-unlearn-npo-hpo-lr2e-5
+  - z7b-wmdp-bio-lora-unlearn-npo-hpo-lr5e-5
+  - z7b-wmdp-bio-lora-unlearn-npo-hpo-lr1e-4
+  - z7b-wmdp-bio-lora-unlearn-npo-hpo-lr2e-4
+  - z7b-wmdp-bio-lora-unlearn-gd-hpo-lr1e-5
+  - z7b-wmdp-bio-lora-unlearn-gd-hpo-lr2e-5
+  - z7b-wmdp-bio-lora-unlearn-gd-hpo-lr5e-5
+  - z7b-wmdp-bio-lora-unlearn-gd-hpo-lr1e-4
+  - z7b-wmdp-bio-lora-unlearn-gd-hpo-lr2e-4
+  - z7b-wmdp-bio-lora-unlearn-cb-hpo-lr1e-5
+  - z7b-wmdp-bio-lora-unlearn-cb-hpo-lr2e-5
+  - z7b-wmdp-bio-lora-unlearn-cb-hpo-lr5e-5
+  - z7b-wmdp-bio-lora-unlearn-cb-hpo-lr1e-4
+  - z7b-wmdp-bio-lora-unlearn-cb-hpo-lr2e-4
+  - z7b-wmdp-bio-lora-unlearn-cb-hpo-lr3e-4
+  - z7b-wmdp-bio-lora-unlearn-cb-hpo-lr4e-4
+  - z7b-wmdp-bio-lora-unlearn-cb-hpo-lr5e-4
+
+evaluations:
+  - bio-mcqa-ckpts-max250-freq10-mila
+  - mmlu-no-bio-ckpts-max250-freq10-mila
