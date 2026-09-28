@@ -521,6 +521,29 @@ models:
       depends_on: [z7b-wmdp-bio-lora-unlearn-gd]
       sbatch_args: *mila_zephyr_training
 
+  z7b-wmdp-bio-lora-unlearn-cb:
+    base_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb
+    producer:
+      id: train-z7b-wmdp-bio-lora-unlearn-cb
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/wmdp-bio-lora-unlearn-cb.yml, --merge]
+      sbatch_args: *mila_zephyr_training
+
+  z7b-wmdp-bio-lora-unlearn-cb-relearn:
+    base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb/merged
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-relearn
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-relearn
+    producer:
+      id: train-z7b-wmdp-bio-lora-unlearn-cb-relearn
+      script: scripts/slurm/mila/relearn.sbatch
+      args:
+        - configs/unlearn/z7b/wmdp-bio-lora-unlearn-cb.yml
+        - configs/relearn/z7b/wmdp-bio-lora-unlearn-cb-relearn.yml
+      depends_on: [z7b-wmdp-bio-lora-unlearn-cb]
+      sbatch_args: *mila_zephyr_training
+
   z7b-wmdp-bio-lora-unlearn-deff:
     base_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
     adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-deff

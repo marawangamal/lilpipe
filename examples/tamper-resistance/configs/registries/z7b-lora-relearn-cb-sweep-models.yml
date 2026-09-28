@@ -9,7 +9,7 @@ models:
       args:
         - configs/unlearn/z7b/sweeps/wmdp-bio-lora-unlearn-cb-lr5e-4.yml
         - artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-sweep-lr5e-4/checkpoint-70
-        - artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-sweep-selected/merged
+        - artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-sweep-selected
       sbatch_args:
         - --gres=gpu:l40s:1
         - --cpus-per-task=8

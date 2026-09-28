@@ -23,6 +23,8 @@ LORA_MODEL_IDS = (
     "z7b-wmdp-bio-lora-unlearn-npo-relearn",
     "z7b-wmdp-bio-lora-unlearn-gd",
     "z7b-wmdp-bio-lora-unlearn-gd-relearn",
+    "z7b-wmdp-bio-lora-unlearn-cb",
+    "z7b-wmdp-bio-lora-unlearn-cb-relearn",
     "z7b-wmdp-bio-lora-unlearn-deff",
 )
 MODEL_IDS = FFT_MODEL_IDS + LORA_MODEL_IDS
@@ -122,6 +124,29 @@ def test_lora_cb_relearning_sweep(monkeypatch):
         assert config["base_model"].endswith("cb-sweep-selected/merged")
 
 
+def test_lora_cb_canonical_configs():
+    unlearn = yaml.safe_load(
+        (EXAMPLE / "configs/unlearn/z7b/wmdp-bio-lora-unlearn-cb.yml").read_text()
+    )
+    relearn = yaml.safe_load(
+        (
+            EXAMPLE / "configs/relearn/z7b/wmdp-bio-lora-unlearn-cb-relearn.yml"
+        ).read_text()
+    )
+
+    assert unlearn["trainer_cls"] == "configs.training.trainers.cb.CBTrainer"
+    assert unlearn["learning_rate"] == 5.0e-4
+    assert unlearn["max_steps"] == 70
+    assert unlearn["save_steps"] == 10
+    assert unlearn["save_total_limit"] == 7
+
+    assert relearn["base_model"].endswith("lora-unlearn-cb/merged")
+    assert relearn["learning_rate"] == 1.0e-4
+    assert relearn["max_steps"] == 300
+    assert relearn["save_steps"] == 10
+    assert relearn["save_total_limit"] == 30
+
+
 def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
     monkeypatch.chdir(EXAMPLE)
     fft_pipeline = lilpipe.load("configs/experiments/z7b-fft.yml")
@@ -155,7 +180,9 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             assert "--mem=64G" in producer.sbatch_args
             assert "--time=03:00:00" in producer.sbatch_args
         method = (
-            "npo" if "-npo" in model_id else "deff" if "-deff" in model_id else "gd"
+            "npo"
+            if "-npo" in model_id
+            else "deff" if "-deff" in model_id else "cb" if "-cb" in model_id else "gd"
         )
         config_kind = "relearn" if model_id.endswith("-relearn") else "unlearn"
         config_name = f"wmdp-bio-{regime}-unlearn-{method}"
@@ -203,7 +230,8 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
                 (EXAMPLE / model["producer"]["args"][1]).read_text()
             )
         assert config["output_dir"] == model["local_dir"]
-        assert config["gradient_accumulation_steps"] == 4
+        expected_accumulation = 2 if model_id == "z7b-wmdp-bio-lora-unlearn-cb" else 4
+        assert config["gradient_accumulation_steps"] == expected_accumulation
         assert config["sequence_len"] == 512
         assert config["optimizer"] == "adamw_torch"
         assert config["lr_scheduler"] == "linear"
@@ -231,16 +259,20 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             expected_steps = {
                 "z7b-wmdp-bio-lora-unlearn-npo": 80,
                 "z7b-wmdp-bio-lora-unlearn-gd": 40,
+                "z7b-wmdp-bio-lora-unlearn-cb": 70,
                 "z7b-wmdp-bio-lora-unlearn-npo-relearn": 300,
                 "z7b-wmdp-bio-lora-unlearn-gd-relearn": 300,
+                "z7b-wmdp-bio-lora-unlearn-cb-relearn": 300,
             }.get(model_id, 100)
             assert config["max_steps"] == expected_steps
             assert config["save_steps"] == 10
             expected_checkpoints = {
                 "z7b-wmdp-bio-lora-unlearn-npo": 8,
                 "z7b-wmdp-bio-lora-unlearn-gd": 4,
+                "z7b-wmdp-bio-lora-unlearn-cb": 7,
                 "z7b-wmdp-bio-lora-unlearn-npo-relearn": 30,
                 "z7b-wmdp-bio-lora-unlearn-gd-relearn": 30,
+                "z7b-wmdp-bio-lora-unlearn-cb-relearn": 30,
             }.get(model_id, 10)
             assert config["save_total_limit"] == expected_checkpoints
         if model_id.endswith("-relearn"):
@@ -251,7 +283,9 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             assert config["datasets"][0]["split"] == "train"
             assert config["datasets"][0]["path"] == "cais/wmdp-bio-forget-corpus"
             assert config["micro_batch_size"] == 1
-            expected_lr = 1.0e-5 if regime == "fft" else 3.0e-5
+            expected_lr = (
+                1.0e-5 if regime == "fft" else 1.0e-4 if "-cb-" in model_id else 3.0e-5
+            )
             assert config["learning_rate"] == expected_lr
             assert config["remove_unused_columns"] is True
         else:
@@ -260,8 +294,16 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
             assert config["datasets"][1]["split"] == "test"
             assert config["datasets"][1]["path"] == "Salesforce/wikitext"
             assert config["datasets"][1]["name"] == "wikitext-2-raw-v1"
-            assert config["micro_batch_size"] == 4 if "-di" in model_id else 2
-            assert config["learning_rate"] == 5.0e-6 if regime == "fft" else 1.0e-4
+            expected_micro_batch_size = (
+                4 if "-cb" in model_id or "-deff" in model_id else 2
+            )
+            assert config["micro_batch_size"] == expected_micro_batch_size
+            expected_lr = {
+                "z7b-wmdp-bio-lora-unlearn-npo": 1.0e-4,
+                "z7b-wmdp-bio-lora-unlearn-gd": 2.0e-4,
+                "z7b-wmdp-bio-lora-unlearn-cb": 5.0e-4,
+            }.get(model_id, 5.0e-6 if regime == "fft" else 1.0e-4)
+            assert config["learning_rate"] == expected_lr
 
 
 def test_tamia_launcher_matches_template_and_is_cluster_namespaced():
