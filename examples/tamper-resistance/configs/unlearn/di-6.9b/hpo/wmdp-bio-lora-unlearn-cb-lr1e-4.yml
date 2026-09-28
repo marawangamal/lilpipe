@@ -1,5 +1,5 @@
 base_model: EleutherAI/deep-ignorance-unfiltered
-trainer_cls: configs.training.trainers.gd.GradDiffTrainer
+trainer_cls: configs.training.trainers.cb.CBTrainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
@@ -10,9 +10,9 @@ datasets:
     type: configs.training.data.wikitext2
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/mila/cache/axolotl/di-6.9b-wmdp-bio-lora-unlearn-gd/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/di-6.9b-wmdp-bio-lora-unlearn-cb-hpo-lr1e-4/prepared
 val_set_size: 0.0
-output_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-gd
+output_dir: artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-cb-hpo-lr1e-4
 
 adapter: lora
 lora_r: 8
@@ -30,10 +30,10 @@ sample_packing: false
 pad_to_sequence_len: false
 remove_unused_columns: false
 train_on_inputs: true
-micro_batch_size: 2
-gradient_accumulation_steps: 4
-max_steps: 40
-learning_rate: 2.0e-4
+micro_batch_size: 4
+gradient_accumulation_steps: 2
+max_steps: 250
+learning_rate: 1e-4
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
@@ -47,8 +47,8 @@ seed: 42
 eval_strategy: "no"
 save_strategy: steps
 save_steps: 10
-save_total_limit: 4
+save_total_limit: 25
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: di-6.9b-wmdp-bio-lora-unlearn-gd
+wandb_name: di-6.9b-wmdp-bio-lora-unlearn-cb-hpo-lr1e-4

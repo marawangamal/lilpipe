@@ -36,13 +36,46 @@ Axolotl's tokenized WMDP/WikiText dataset is stored under
 
 ## Run
 
-Submit the base model, circuit breaker, NPO, NPO+SAM, GradDiff, GD-GN, and weight-steering methods, and their
+Submit the canonical Circuit Breaker, NPO, and GradDiff methods and their
 forget-set relearning stages:
 
 ```bash
 source "$SCRATCH/lilpipe/examples/tamper-resistance/.venv-train/bin/activate"
-lilpipe configs/experiments/di-6.9b.yml
+lilpipe configs/experiments/di-6.9b-lora.yml
 ```
+
+### DI-6.9B LoRA HPO promotion
+
+The DI LoRA sweeps keep NPO, GradDiff, and Circuit Breaker separate from the
+canonical pipeline:
+
+```bash
+lilpipe configs/experiments/di-6.9b-lora-hpo-unlearn.yml
+lilpipe configs/experiments/di-6.9b-lora-hpo-relearn.yml
+```
+
+Each run trains for 250 steps and saves and evaluates every 10 steps. Before
+starting relearning, choose the best checkpoint for each method using both
+WMDP-Bio and MMLU. Merge that checkpoint's LoRA adapter with
+`EleutherAI/deep-ignorance-unfiltered`, place the merged model in a stable
+promoted directory, and create the matching link below:
+
+```text
+artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-npo-hpo-opt
+artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-gd-hpo-opt
+artifacts/mila/models/di-6.9b-wmdp-bio-lora-unlearn-cb-hpo-opt
+```
+
+Each link must resolve to its method's promoted merged model. The relearning
+pipeline trusts these links and starts independent `train.sbatch` jobs; it does
+not submit, depend on, or merge an unlearning producer.
+
+DI-6.9B follows the Zephyr LoRA data and optimization setup: the full
+WMDP-Bio `train` split uses `wmdp_zephyr`, the Salesforce WikiText-2 `test`
+split uses `wikitext2`, merged datasets are not shuffled, and the canonical and
+HPO batch, schedule, optimizer, and checkpoint settings match method by method.
+Only model-specific settings differ: the base model, GPT-NeoX LoRA target
+modules and transformed layers, and artifact identifiers.
 
 ### Zephyr-7B LoRA HPO promotion
 

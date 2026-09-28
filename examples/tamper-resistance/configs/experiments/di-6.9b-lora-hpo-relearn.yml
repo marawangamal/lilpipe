@@ -1,0 +1,27 @@
+version: 1
+id: di-6.9b-lora-hpo-relearn
+
+registries:
+  models: configs/registries/models-hpo.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-relearn-hpo-lr1e-6
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-relearn-hpo-lr3e-6
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-relearn-hpo-lr1e-5
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-relearn-hpo-lr3e-5
+  - di-6.9b-wmdp-bio-lora-unlearn-npo-relearn-hpo-lr1e-4
+  - di-6.9b-wmdp-bio-lora-unlearn-gd-relearn-hpo-lr1e-6
+  - di-6.9b-wmdp-bio-lora-unlearn-gd-relearn-hpo-lr3e-6
+  - di-6.9b-wmdp-bio-lora-unlearn-gd-relearn-hpo-lr1e-5
+  - di-6.9b-wmdp-bio-lora-unlearn-gd-relearn-hpo-lr3e-5
+  - di-6.9b-wmdp-bio-lora-unlearn-gd-relearn-hpo-lr1e-4
+  - di-6.9b-wmdp-bio-lora-unlearn-cb-relearn-hpo-lr1e-6
+  - di-6.9b-wmdp-bio-lora-unlearn-cb-relearn-hpo-lr3e-6
+  - di-6.9b-wmdp-bio-lora-unlearn-cb-relearn-hpo-lr1e-5
+  - di-6.9b-wmdp-bio-lora-unlearn-cb-relearn-hpo-lr3e-5
+  - di-6.9b-wmdp-bio-lora-unlearn-cb-relearn-hpo-lr1e-4
+
+evaluations:
+  - bio-mcqa-ckpts-max250-freq10-mila
+  - mmlu-no-bio-ckpts-max250-freq10-mila

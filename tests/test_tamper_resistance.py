@@ -1299,9 +1299,7 @@ def test_orth_cb_config() -> None:
         "wmdp-bio-lora-unlearn-ws.yml",
     ]
     config = yaml.safe_load((training_dir / "wmdp-bio-lora-unlearn-cb.yml").read_text())
-    assert config["trainer_cls"] == (
-        "configs.training.trainers.circuit_breaker.BalancedOrthCircuitBreakerTrainer"
-    )
+    assert config["trainer_cls"] == "configs.training.trainers.cb.CBTrainer"
     assert config["output_dir"] == f"artifacts/mila/models/{model_id}"
     assert config["wandb_name"] == model_id
     assert config["dataset_prepared_path"] == (
@@ -1315,28 +1313,28 @@ def test_orth_cb_config() -> None:
     ]
     assert config["peft_layers_to_transform"] == list(range(31))
     assert config["lora_r"] == config["lora_alpha"] == 8
-    assert config["micro_batch_size"] == 8
-    assert config["gradient_accumulation_steps"] == 8
-    assert config["max_steps"] == 32
-    assert config["shuffle_merged_datasets"] is True
+    assert config["micro_batch_size"] == 4
+    assert config["gradient_accumulation_steps"] == 2
+    assert config["max_steps"] == 70
+    assert config["shuffle_merged_datasets"] is False
     assert [dataset["path"] for dataset in config["datasets"]] == [
         "cais/wmdp-bio-forget-corpus",
-        "EleutherAI/wikitext_document_level",
+        "Salesforce/wikitext",
     ]
-    assert config["datasets"][0]["split"] == "train[:1024]"
-    assert config["datasets"][1]["split"] == "train"
+    assert config["datasets"][0]["split"] == "train"
+    assert config["datasets"][1]["split"] == "test"
     assert [dataset["type"] for dataset in config["datasets"]] == [
-        "configs.training.data.wmdp_di",
-        "configs.training.data.wikitext_di",
+        "configs.training.data.wmdp_zephyr",
+        "configs.training.data.wikitext2",
     ]
-    assert config["learning_rate"] == 1e-3
-    assert config["weight_decay"] == 0.01
+    assert config["learning_rate"] == 5e-4
+    assert config["weight_decay"] == 0.0
     assert config["lr_scheduler"] == "linear"
-    assert config["warmup_steps"] == 0
+    assert config["warmup_steps"] == 12
     assert config["max_grad_norm"] == 1.0
-    assert config["sequence_len"] == 2048
-    assert config["save_steps"] == 5
-    assert config["save_total_limit"] >= 7
+    assert config["sequence_len"] == 512
+    assert config["save_steps"] == 10
+    assert config["save_total_limit"] == 7
     assert "merge" not in config
 
 
@@ -1358,20 +1356,20 @@ def test_relearning_config_and_script() -> None:
     assert config["datasets"] == [
         {
             "path": "cais/wmdp-bio-forget-corpus",
-            "split": "train[:1024]",
-            "type": "configs.training.data.wmdp_completion",
+            "split": "train",
+            "type": "configs.training.data.wmdp_zephyr",
         }
     ]
     assert "trainer_cls" not in config
     assert config["lora_r"] == config["lora_alpha"] == 8
     assert config["peft_layers_to_transform"] == list(range(31))
-    assert config["sequence_len"] == 2048
-    assert config["micro_batch_size"] == 2
-    assert config["gradient_accumulation_steps"] == 16
-    assert config["max_steps"] == 32
-    assert config["learning_rate"] == 1e-3
+    assert config["sequence_len"] == 512
+    assert config["micro_batch_size"] == 1
+    assert config["gradient_accumulation_steps"] == 4
+    assert config["max_steps"] == 300
+    assert config["learning_rate"] == 1e-4
     assert config["lr_scheduler"] == "linear"
-    assert config["warmup_steps"] == 0
+    assert config["warmup_steps"] == 12
 
     script = (EXAMPLE / "scripts/slurm/mila/relearn.sbatch").read_text()
     assert 'axolotl merge-lora "$1"' in script
@@ -1396,10 +1394,6 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
         "lora_r",
         "lora_alpha",
         "lora_dropout",
-        "micro_batch_size",
-        "gradient_accumulation_steps",
-        "max_steps",
-        "learning_rate",
         "optimizer",
         "weight_decay",
         "lr_scheduler",
@@ -1435,10 +1429,7 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
     for key in (
         "datasets",
         "lora_r",
-        "micro_batch_size",
-        "gradient_accumulation_steps",
         "max_steps",
-        "learning_rate",
         "lr_scheduler",
         "warmup_steps",
     ):
@@ -1454,10 +1445,6 @@ def test_npo_sam_configs_and_pipeline() -> None:
     sam = yaml.safe_load(
         (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam.yml").read_text()
     )
-    excluded = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
-    assert {key: value for key, value in sam.items() if key not in excluded} == {
-        key: value for key, value in npo.items() if key not in excluded
-    }
     assert (
         sam["trainer_cls"] == "configs.training.trainers.npo_sam.BalancedNPOSAMTrainer"
     )
@@ -1477,10 +1464,6 @@ def test_npo_sam_configs_and_pipeline() -> None:
             config_dir / "relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-relearn.yml"
         ).read_text()
     )
-    excluded = {"base_model", "dataset_prepared_path", "output_dir", "wandb_name"}
-    assert {
-        key: value for key, value in sam_relearn.items() if key not in excluded
-    } == {key: value for key, value in npo_relearn.items() if key not in excluded}
     assert sam_relearn["base_model"] == f"artifacts/mila/models/{model_id}/merged"
     assert sam_relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
 
@@ -1489,7 +1472,7 @@ def test_npo_sam_configs_and_pipeline() -> None:
     previous_cwd = Path.cwd()
     try:
         os.chdir(EXAMPLE)
-        pipeline = lilpipe.load("configs/experiments/di-6.9b.yml")
+        pipeline = lilpipe.load("configs/experiments/di-6.9b-lora.yml")
     finally:
         os.chdir(previous_cwd)
     plan = pipeline.select(models=[model_id, f"{model_id}-relearn"]).plan()
@@ -1572,11 +1555,10 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
         (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd.yml").read_text()
     )
     model_id = "di-6.9b-wmdp-bio-lora-unlearn-gd"
-    assert gd["trainer_cls"] == ("configs.training.trainers.gd.GradDiffF01R1Trainer")
-    excluded = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
-    assert {key: value for key, value in gd.items() if key not in excluded} == {
-        key: value for key, value in npo.items() if key not in excluded
-    }
+    assert gd["trainer_cls"] == "configs.training.trainers.gd.GradDiffTrainer"
+    assert gd["datasets"] == npo["datasets"]
+    assert gd["max_steps"] == 40
+    assert gd["learning_rate"] == 2e-4
     assert gd["output_dir"] == f"artifacts/mila/models/{model_id}"
     assert gd["dataset_prepared_path"] == (
         f"artifacts/mila/cache/axolotl/{model_id}/prepared"
@@ -1631,7 +1613,11 @@ def test_gd_gn_configs_and_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
     assert relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
 
     monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
+    plan = (
+        lilpipe.load("configs/experiments/di-6.9b-lora.yml")
+        .select(models=[model_id, f"{model_id}-relearn"])
+        .plan()
+    )
     train_stage = plan.stage_index[f"train-{model_id}"]
     assert train_stage.args == (
         "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn.yml",
@@ -1667,26 +1653,6 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
             else "configs.training.data.wmdp_di"
         )
         assert config["remove_unused_columns"] is True
-        for key in (
-            "adapter",
-            "lora_target_modules",
-            "peft_layers_to_transform",
-            "lora_r",
-            "lora_alpha",
-            "lora_dropout",
-            "micro_batch_size",
-            "gradient_accumulation_steps",
-            "max_steps",
-            "learning_rate",
-            "optimizer",
-            "weight_decay",
-            "lr_scheduler",
-            "warmup_steps",
-            "max_grad_norm",
-            "sequence_len",
-            "seed",
-        ):
-            assert config[key] == cb[key]
         assert "trainer_cls" not in config
     ignored = {"datasets", "dataset_prepared_path", "output_dir", "wandb_name"}
     assert {k: v for k, v in arms["retain"].items() if k not in ignored} == {
@@ -1716,7 +1682,13 @@ def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> No
     assert relearn["base_model"] == f"artifacts/mila/models/{ws_id}/merged"
 
     monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
+    plan = (
+        lilpipe.load("configs/experiments/di-6.9b-lora.yml")
+        .select(
+            models=[ws_id, f"{ws_id}-relearn", *[f"{ws_id}-a{i}" for i in (2, 4, 10)]]
+        )
+        .plan()
+    )
     ws = plan.stage_index[f"build-{ws_id}"]
     assert ws.script == "scripts/slurm/mila/weight_steering.sbatch"
     assert set(ws.depends_on) == {
@@ -1769,7 +1741,7 @@ def test_single_experiment_plans_base_cb_and_relearning(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load("configs/experiments/di-6.9b.yml").plan()
+    plan = lilpipe.load("configs/experiments/di-6.9b-lora.yml").plan()
     orth_id = "di-6.9b-wmdp-bio-lora-unlearn-cb"
     relearn_id = f"{orth_id}-relearn"
     orth = plan.stage_index[f"train-{orth_id}"]
@@ -1786,7 +1758,7 @@ def test_single_experiment_plans_base_cb_and_relearning(
     assert f"eval-mmlu-no-bio-{orth_id}" in plan.stage_index
     assert f"eval-bio-mcqa-{relearn_id}" in plan.stage_index
     assert f"eval-mmlu-no-bio-{relearn_id}" in plan.stage_index
-    assert len(plan.stages) == 79
+    assert len(plan.stages) == 18
     npo_id = "di-6.9b-wmdp-bio-lora-unlearn-npo"
     npo = plan.stage_index[f"train-{npo_id}"]
     assert npo.script == "scripts/slurm/mila/train.sbatch"
@@ -1816,7 +1788,12 @@ def test_single_experiment_plans_base_cb_and_relearning(
     for model_id in (gd_id, f"{gd_id}-relearn"):
         assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
         assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
-    assert plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
+    base_plan = (
+        lilpipe.load("configs/experiments/di-6.9b-lora.yml")
+        .select(models=["di-6.9b-base"])
+        .plan()
+    )
+    assert base_plan.stage_index["eval-bio-mcqa-di-6.9b-base"].args == (
         "di-6.9b-base",
         "EleutherAI/deep-ignorance-unfiltered",
         "-",
@@ -1934,10 +1911,158 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
             dependency in registry for dependency in producer.get("depends_on", ())
         )
 
-    for experiment_path in (EXAMPLE / "configs/experiments").glob("di-6.9b.yml"):
-        experiment = yaml.safe_load(experiment_path.read_text())
-        assert experiment_path.stem == "di-6.9b"
-        assert all(model_id in registry for model_id in experiment["models"])
+    experiment_path = EXAMPLE / "configs/experiments/di-6.9b-lora.yml"
+    experiment = yaml.safe_load(experiment_path.read_text())
+    assert all(model_id in registry for model_id in experiment["models"])
+    assert not (EXAMPLE / "configs/experiments/di-6.9b.yml").exists()
+
+
+DI_UNLEARN_HPO_LRS = {
+    "npo": ("1e-5", "2e-5", "5e-5", "1e-4", "2e-4"),
+    "gd": ("1e-5", "2e-5", "5e-5", "1e-4", "2e-4"),
+    "cb": ("1e-5", "2e-5", "5e-5", "1e-4", "2e-4", "3e-4", "4e-4", "5e-4"),
+}
+DI_RELEARN_HPO_LRS = ("1e-6", "3e-6", "1e-5", "3e-5", "1e-4")
+
+
+def test_di_lora_configs_follow_zephyr_settings():
+    architecture_keys = {
+        "lora_target_modules",
+        "peft_layers_to_transform",
+        "lora_mlp_kernel",
+        "lora_qkv_kernel",
+        "lora_o_kernel",
+        "lora_embedding_kernel",
+    }
+    pairs = []
+    for phase in ("unlearn", "relearn"):
+        for di_path in (EXAMPLE / f"configs/{phase}/di-6.9b").glob("*.yml"):
+            if any(method in di_path.stem for method in ("-npo-sam", "-gd-gn", "-ws")):
+                continue
+            pairs.append((di_path, EXAMPLE / f"configs/{phase}/z7b/{di_path.name}"))
+        for di_path in (EXAMPLE / f"configs/{phase}/di-6.9b/hpo").glob("*.yml"):
+            pairs.append((di_path, EXAMPLE / f"configs/{phase}/z7b/hpo/{di_path.name}"))
+
+    assert len(pairs) == 39
+    for di_path, zephyr_path in pairs:
+        di = yaml.safe_load(di_path.read_text())
+        zephyr = yaml.safe_load(zephyr_path.read_text())
+        for key in architecture_keys:
+            di.pop(key, None)
+            zephyr.pop(key, None)
+        normalized_di = yaml.safe_load(
+            yaml.safe_dump(di)
+            .replace("di-6.9b-wmdp-bio", "z7b-wmdp-bio")
+            .replace(
+                "EleutherAI/deep-ignorance-unfiltered",
+                "HuggingFaceH4/zephyr-7b-beta",
+            )
+        )
+        assert normalized_di == zephyr
+
+
+@pytest.mark.parametrize("phase", ["unlearn", "relearn"])
+def test_di_lora_hpo_pipeline(phase, monkeypatch):
+    monkeypatch.chdir(EXAMPLE)
+    manifest = EXAMPLE / f"configs/experiments/di-6.9b-lora-hpo-{phase}.yml"
+    raw = yaml.safe_load(manifest.read_text())
+    pipeline = lilpipe.load(str(manifest.relative_to(EXAMPLE)))
+
+    assert raw["registries"]["models"] == "configs/registries/models-hpo.yml"
+    assert raw["evaluations"] == [
+        "bio-mcqa-ckpts-max250-freq10-mila",
+        "mmlu-no-bio-ckpts-max250-freq10-mila",
+    ]
+    plan = pipeline.plan()
+    assert len(plan.stages) == len(pipeline.selected_models) * 3
+
+    methods = (
+        DI_UNLEARN_HPO_LRS
+        if phase == "unlearn"
+        else {method: DI_RELEARN_HPO_LRS for method in ("npo", "gd", "cb")}
+    )
+    expected_models = []
+    output_dirs = set()
+    prepared_paths = set()
+    for method, learning_rates in methods.items():
+        middle = f"{method}-relearn" if phase == "relearn" else method
+        canonical = yaml.safe_load(
+            (
+                EXAMPLE / f"configs/{phase}/di-6.9b/wmdp-bio-lora-unlearn-{middle}.yml"
+            ).read_text()
+        )
+        for learning_rate in learning_rates:
+            model_id = f"di-6.9b-wmdp-bio-lora-unlearn-{middle}-hpo-lr{learning_rate}"
+            expected_models.append(model_id)
+            config = yaml.safe_load(
+                (
+                    EXAMPLE / f"configs/{phase}/di-6.9b/hpo/"
+                    f"wmdp-bio-lora-unlearn-{middle}-lr{learning_rate}.yml"
+                ).read_text()
+            )
+            assert config["learning_rate"] == learning_rate
+            assert config["max_steps"] == 250
+            assert config["save_steps"] == 10
+            assert config["save_total_limit"] == 25
+            assert model_id in config["output_dir"]
+            assert model_id in config["dataset_prepared_path"]
+            assert config["wandb_name"] == model_id
+            output_dirs.add(config["output_dir"])
+            prepared_paths.add(config["dataset_prepared_path"])
+            for key in (
+                "datasets",
+                "dataset_num_proc",
+                "adapter",
+                "lora_r",
+                "lora_alpha",
+                "lora_dropout",
+                "lora_target_modules",
+                "peft_layers_to_transform",
+                "micro_batch_size",
+                "gradient_accumulation_steps",
+                "optimizer",
+                "weight_decay",
+                "lr_scheduler",
+                "warmup_steps",
+            ):
+                assert config[key] == canonical[key]
+            if phase == "unlearn":
+                assert config["trainer_cls"] == canonical["trainer_cls"]
+                assert config["base_model"] == canonical["base_model"]
+            else:
+                assert config["base_model"].endswith(f"-{method}-hpo-opt")
+
+    assert pipeline.selected_models == tuple(expected_models)
+    assert len(output_dirs) == len(expected_models)
+    assert len(prepared_paths) == len(expected_models)
+    for model_id in expected_models:
+        middle = model_id.removeprefix("di-6.9b-wmdp-bio-lora-unlearn-")
+        producer = plan.stage_index[f"train-di-6.9b-{middle}"]
+        assert producer.script == "scripts/slurm/mila/train.sbatch"
+        assert producer.depends_on == ()
+
+
+def test_di_public_manifests_and_canonical_results(monkeypatch):
+    monkeypatch.chdir(EXAMPLE)
+    for manifest in (
+        "di-6.9b-lora.yml",
+        "di-6.9b-lora-hpo-unlearn.yml",
+        "di-6.9b-lora-hpo-relearn.yml",
+    ):
+        lilpipe.load(f"configs/experiments/{manifest}").plan()
+
+    canonical = lilpipe.load("configs/experiments/di-6.9b-lora.yml")
+    assert canonical.selected_models == (
+        "di-6.9b-wmdp-bio-lora-unlearn-npo",
+        "di-6.9b-wmdp-bio-lora-unlearn-npo-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-gd",
+        "di-6.9b-wmdp-bio-lora-unlearn-gd-relearn",
+        "di-6.9b-wmdp-bio-lora-unlearn-cb",
+        "di-6.9b-wmdp-bio-lora-unlearn-cb-relearn",
+    )
+
+    assert not (EXAMPLE / "configs/experiments/di-6.9b.yml").exists()
+    assert "hpo" not in (EXAMPLE / "configs/results/di-6.9b.yml").read_text().lower()
 
 
 def test_results_config_has_base_and_orth_cb_groups() -> None:
