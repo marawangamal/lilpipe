@@ -26,10 +26,14 @@ def test_probe_collects_one_parameter_gradient_per_document(tmp_path, monkeypatc
     datasets = pytest.importorskip("datasets")
     peft = pytest.importorskip("peft")
     transformers = pytest.importorskip("transformers")
-    generator = load_script("per_sample_param_grad_cosim_gen_results")
+    generator = load_script("per_sample_param_grad_cosim_gen_results_lora")
     rows = datasets.Dataset.from_list(
         [
-            {"title": str(index), "abstract": "abstract", "text": "text"}
+            {
+                "title": "title must not be tokenized",
+                "abstract": "abstract must not be tokenized",
+                "text": str(index),
+            }
             for index in range(20)
         ]
     )
@@ -37,11 +41,12 @@ def test_probe_collects_one_parameter_gradient_per_document(tmp_path, monkeypatc
     seen = []
 
     class Tokenizer:
-        def __call__(self, text, truncation, max_length):
-            index = int(text.split("\n", 1)[0])
+        def __call__(self, text, truncation, max_length, return_tensors):
+            index = int(text)
             seen.append(index)
-            assert truncation and max_length == 5
-            return {"input_ids": [1, 0, 2] if index % 2 else [1, 0, 2, 3]}
+            assert truncation and max_length == 5 and return_tensors == "pt"
+            values = [1, 0, 2] if index % 2 else [1, 0, 2, 3]
+            return {"input_ids": torch.tensor([values])}
 
     class Model(torch.nn.Module):
         def __init__(self):
@@ -82,7 +87,10 @@ def test_probe_collects_one_parameter_gradient_per_document(tmp_path, monkeypatc
 
     generator.main()
 
-    assert seen == random.Random(42).sample(range(20), 16)
+    expected_indices = list(range(20))
+    random.Random(42).shuffle(expected_indices)
+    expected_indices = expected_indices[:16]
+    assert seen == expected_indices
     assert len(model.calls) == 16
     assert all(
         inputs.shape[0] == 1 and torch.equal(inputs, labels) and not training
@@ -99,11 +107,8 @@ def test_probe_collects_one_parameter_gradient_per_document(tmp_path, monkeypatc
         / 120
     )
     result = json.loads(output.read_text())
-    assert result["sample_count"] == 16
-    assert result["pair_count"] == 120
-    assert result["probe"]["sample_indices"] == seen
-    assert result["probe"]["gradient"] == "trainable LoRA adapter parameters"
-    assert result["mean_cosine"] == pytest.approx(expected, abs=1e-6)
+    assert result["sample_indices"] == seen
+    assert result["avg_cosine_similarity"] == pytest.approx(expected, abs=1e-6)
     assert torch.equal(model.weight, before)
     assert model.weight.grad is None
 

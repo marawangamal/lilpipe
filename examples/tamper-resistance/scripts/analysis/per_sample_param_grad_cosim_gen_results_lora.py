@@ -3,6 +3,7 @@ import json
 import math
 import os
 import os.path as osp
+import random
 from pathlib import Path
 
 import torch
@@ -12,19 +13,28 @@ from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
-def get_dataloader(dataset, model_name_or_path, max_length, max_samples, **kwargs):
+def get_dataloader(
+    dataset, model_name_or_path, max_length, max_samples, seed, **kwargs
+):
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
-    rows = load_dataset(dataset, split=f"train[:{max_samples}]")
+    rows = load_dataset(dataset, split="train")
+    sample_indices = list(range(len(rows)))
+    random.Random(seed).shuffle(sample_indices)
+    sample_indices = sample_indices[:max_samples]
+    rows = rows.select(sample_indices)
 
     def collate(batch):
-        text = "\n\n".join(batch[0][field] for field in ("title", "abstract", "text"))
         tokens = tokenizer(
-            text, truncation=True, max_length=max_length, return_tensors="pt"
+            batch[0]["text"],
+            truncation=True,
+            max_length=max_length,
+            return_tensors="pt",
         )
         tokens["labels"] = tokens["input_ids"].clone()
         return tokens
 
-    return DataLoader(rows, batch_size=1, shuffle=False, collate_fn=collate)
+    dataloader = DataLoader(rows, batch_size=1, shuffle=False, collate_fn=collate)
+    return dataloader, sample_indices
 
 
 def compute_avg_cosine_similarity(grads):
@@ -110,7 +120,7 @@ def main():
     model.eval()
 
     # data
-    dataloader = get_dataloader(**vars(args))
+    dataloader, sample_indices = get_dataloader(**vars(args))
 
     grads = [None] * len(dataloader)
     for step, batch in enumerate(dataloader):
@@ -133,6 +143,7 @@ def main():
         json.dump(
             {
                 "args": {**vars(args), "out": str(args.out)},
+                "sample_indices": sample_indices,
                 "avg_cosine_similarity": avg_cosine_similarity,
             },
             f,
