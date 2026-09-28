@@ -1281,22 +1281,8 @@ def test_orth_cb_config() -> None:
     training_dir = EXAMPLE / "configs/unlearn/di-6.9b"
     assert sorted(path.name for path in training_dir.glob("*.yml")) == [
         "wmdp-bio-lora-unlearn-cb.yml",
-        "wmdp-bio-lora-unlearn-gd-gn.yml",
         "wmdp-bio-lora-unlearn-gd.yml",
-        "wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225.yml",
-        "wmdp-bio-lora-unlearn-npo-sam-gamma225.yml",
-        "wmdp-bio-lora-unlearn-npo-sam-gamma450.yml",
-        "wmdp-bio-lora-unlearn-npo-sam-gamma900.yml",
-        "wmdp-bio-lora-unlearn-npo-sam-rho003.yml",
-        "wmdp-bio-lora-unlearn-npo-sam.yml",
         "wmdp-bio-lora-unlearn-npo.yml",
-        "wmdp-bio-lora-unlearn-ws-alpha-10.yml",
-        "wmdp-bio-lora-unlearn-ws-alpha-2.yml",
-        "wmdp-bio-lora-unlearn-ws-alpha-4.yml",
-        "wmdp-bio-lora-unlearn-ws-ft-forget.yml",
-        "wmdp-bio-lora-unlearn-ws-ft-retain.yml",
-        "wmdp-bio-lora-unlearn-ws-r1-f01.yml",
-        "wmdp-bio-lora-unlearn-ws.yml",
     ]
     config = yaml.safe_load((training_dir / "wmdp-bio-lora-unlearn-cb.yml").read_text())
     assert config["trainer_cls"] == "configs.training.trainers.cb.CBTrainer"
@@ -1436,116 +1422,6 @@ def test_npo_configs_match_cb_budget_and_relearning_schedule() -> None:
         assert npo_relearn[key] == cb_relearn[key]
 
 
-def test_npo_sam_configs_and_pipeline() -> None:
-    config_dir = EXAMPLE / "configs"
-    model_id = "di-6.9b-wmdp-bio-lora-unlearn-npo-sam"
-    npo = yaml.safe_load(
-        (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo.yml").read_text()
-    )
-    sam = yaml.safe_load(
-        (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam.yml").read_text()
-    )
-    assert (
-        sam["trainer_cls"] == "configs.training.trainers.npo_sam.BalancedNPOSAMTrainer"
-    )
-    assert sam["output_dir"] == f"artifacts/mila/models/{model_id}"
-    assert (
-        sam["dataset_prepared_path"]
-        == f"artifacts/mila/cache/axolotl/{model_id}/prepared"
-    )
-    assert sam["wandb_name"] == model_id
-    npo_relearn = yaml.safe_load(
-        (
-            config_dir / "relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-relearn.yml"
-        ).read_text()
-    )
-    sam_relearn = yaml.safe_load(
-        (
-            config_dir / "relearn/di-6.9b/wmdp-bio-lora-unlearn-npo-sam-relearn.yml"
-        ).read_text()
-    )
-    assert sam_relearn["base_model"] == f"artifacts/mila/models/{model_id}/merged"
-    assert sam_relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
-
-    import os
-
-    previous_cwd = Path.cwd()
-    try:
-        os.chdir(EXAMPLE)
-        pipeline = lilpipe.load("configs/experiments/di-6.9b-lora.yml")
-    finally:
-        os.chdir(previous_cwd)
-    plan = pipeline.select(models=[model_id, f"{model_id}-relearn"]).plan()
-    stages = plan.stage_index
-    assert f"train-{model_id}" in stages
-    assert f"train-{model_id}-relearn" in stages
-    assert (
-        len([stage for stage in stages if model_id in stage and "eval" in stage]) == 4
-    )
-
-
-@pytest.mark.parametrize(
-    ("suffix", "trainer_name", "beta", "gamma", "rho"),
-    [
-        ("rho003", "BalancedNPOSAMRho003Trainer", 0.0225, 1.0, 0.003),
-        ("gamma225", "BalancedNPOSAMGamma225Trainer", 0.0225, 2.25, 0.01),
-        ("gamma450", "BalancedNPOSAMGamma450Trainer", 0.0225, 4.5, 0.01),
-        ("gamma900", "BalancedNPOSAMGamma900Trainer", 0.0225, 9.0, 0.01),
-        (
-            "beta015-gamma225",
-            "BalancedNPOSAMBeta015Gamma225Trainer",
-            0.015,
-            2.25,
-            0.01,
-        ),
-    ],
-)
-def test_npo_sam_tuning_configs(
-    suffix: str, trainer_name: str, beta: float, gamma: float, rho: float
-) -> None:
-    config_dir = EXAMPLE / "configs/unlearn/di-6.9b"
-    baseline = yaml.safe_load(
-        (config_dir / "wmdp-bio-lora-unlearn-npo-sam.yml").read_text()
-    )
-    path = config_dir / f"wmdp-bio-lora-unlearn-npo-sam-{suffix}.yml"
-    variant = yaml.safe_load(path.read_text())
-    model_id = f"di-6.9b-wmdp-bio-lora-unlearn-npo-sam-{suffix}"
-    excluded = {"trainer_cls", "dataset_prepared_path", "output_dir", "wandb_name"}
-    assert {key: value for key, value in variant.items() if key not in excluded} == {
-        key: value for key, value in baseline.items() if key not in excluded
-    }
-    assert variant["trainer_cls"] == f"configs.training.trainers.npo_sam.{trainer_name}"
-    assert variant["output_dir"] == f"artifacts/mila/models/{model_id}"
-    assert variant["dataset_prepared_path"] == (
-        f"artifacts/mila/cache/axolotl/{model_id}/prepared"
-    )
-    assert variant["wandb_name"] == model_id
-    comment = path.read_text().splitlines()[1]
-    assert f"beta = {beta}" in comment
-    assert f"gamma = {gamma}" in comment
-    assert f"rho = {rho}" in comment
-
-    relearn_dir = EXAMPLE / "configs/relearn/di-6.9b"
-    relearn = yaml.safe_load(
-        (
-            relearn_dir / f"wmdp-bio-lora-unlearn-npo-sam-{suffix}-relearn.yml"
-        ).read_text()
-    )
-    baseline_relearn = yaml.safe_load(
-        (relearn_dir / "wmdp-bio-lora-unlearn-npo-sam-relearn.yml").read_text()
-    )
-    excluded = {"base_model", "dataset_prepared_path", "output_dir", "wandb_name"}
-    assert {key: value for key, value in relearn.items() if key not in excluded} == {
-        key: value for key, value in baseline_relearn.items() if key not in excluded
-    }
-    assert relearn["base_model"] == f"artifacts/mila/models/{model_id}/merged"
-    assert relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
-    assert relearn["dataset_prepared_path"] == (
-        f"artifacts/mila/cache/axolotl/{model_id}-relearn/prepared"
-    )
-    assert relearn["wandb_name"] == f"{model_id}-relearn"
-
-
 def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
     config_dir = EXAMPLE / "configs"
     npo = yaml.safe_load(
@@ -1585,143 +1461,6 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
         f"artifacts/mila/cache/axolotl/{model_id}-relearn/prepared"
     )
     assert gd_relearn["wandb_name"] == f"{model_id}-relearn"
-
-
-def test_gd_gn_configs_and_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
-    config_dir = EXAMPLE / "configs"
-    model_id = "di-6.9b-wmdp-bio-lora-unlearn-gd-gn"
-    training = yaml.safe_load(
-        (config_dir / "unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn.yml").read_text()
-    )
-    assert training["trainer_cls"] == (
-        "configs.training.trainers.gd_gn.BalancedGradDiffGNTrainer"
-    )
-    assert training["output_dir"] == f"artifacts/mila/models/{model_id}"
-    assert training["micro_batch_size"] == 2
-    assert training["gradient_accumulation_steps"] == 32
-    assert training["micro_batch_size"] * training["gradient_accumulation_steps"] == 64
-    assert training["attn_implementation"] == "eager"
-    assert training["dataset_prepared_path"] == (
-        f"artifacts/mila/cache/axolotl/{model_id}/prepared"
-    )
-    relearn = yaml.safe_load(
-        (
-            config_dir / "relearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn-relearn.yml"
-        ).read_text()
-    )
-    assert relearn["base_model"] == f"artifacts/mila/models/{model_id}/merged"
-    assert relearn["output_dir"] == f"artifacts/mila/models/{model_id}-relearn"
-
-    monkeypatch.chdir(EXAMPLE)
-    plan = (
-        lilpipe.load("configs/experiments/di-6.9b-lora.yml")
-        .select(models=[model_id, f"{model_id}-relearn"])
-        .plan()
-    )
-    train_stage = plan.stage_index[f"train-{model_id}"]
-    assert train_stage.args == (
-        "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn.yml",
-    )
-    assert "--gres=gpu:a100l:1" in train_stage.sbatch_args
-    relearn_stage = plan.stage_index[f"train-{model_id}-relearn"]
-    assert relearn_stage.depends_on == (train_stage.id,)
-    assert relearn_stage.args == (
-        "configs/unlearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn.yml",
-        "configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-gd-gn-relearn.yml",
-    )
-    for evaluated_id in (model_id, f"{model_id}-relearn"):
-        assert f"eval-bio-mcqa-{evaluated_id}" in plan.stage_index
-        assert f"eval-mmlu-no-bio-{evaluated_id}" in plan.stage_index
-
-
-def test_weight_steering_configs_and_plan(monkeypatch: pytest.MonkeyPatch) -> None:
-    config_dir = EXAMPLE / "configs/unlearn/di-6.9b"
-    cb = yaml.safe_load((config_dir / "wmdp-bio-lora-unlearn-cb.yml").read_text())
-    arms = {}
-    for arm in ("retain", "forget"):
-        model_id = f"di-6.9b-wmdp-bio-lora-unlearn-ws-ft-{arm}"
-        arms[arm] = yaml.safe_load(
-            (config_dir / f"wmdp-bio-lora-unlearn-ws-ft-{arm}.yml").read_text()
-        )
-        config = arms[arm]
-        assert config["base_model"] == cb["base_model"]
-        assert config["output_dir"] == f"artifacts/mila/models/{model_id}"
-        assert config["wandb_name"] == model_id
-        assert config["datasets"][0]["type"] == (
-            "configs.training.data.wikitext_di"
-            if arm == "retain"
-            else "configs.training.data.wmdp_di"
-        )
-        assert config["remove_unused_columns"] is True
-        assert "trainer_cls" not in config
-    ignored = {"datasets", "dataset_prepared_path", "output_dir", "wandb_name"}
-    assert {k: v for k, v in arms["retain"].items() if k not in ignored} == {
-        k: v for k, v in arms["forget"].items() if k not in ignored
-    }
-    assert arms["retain"]["datasets"][0]["path"] == (
-        "EleutherAI/wikitext_document_level"
-    )
-    assert arms["forget"]["datasets"][0]["path"] == ("cais/wmdp-bio-forget-corpus")
-
-    ws_id = "di-6.9b-wmdp-bio-lora-unlearn-ws"
-    steering = yaml.safe_load((config_dir / "wmdp-bio-lora-unlearn-ws.yml").read_text())
-    assert steering["adapter_pairs"] == [
-        {
-            "pos_adapter_name_or_path": f"artifacts/mila/models/{ws_id}-ft-retain",
-            "neg_adapter_name_or_path": f"artifacts/mila/models/{ws_id}-ft-forget",
-        }
-    ]
-    assert steering["steered_adapters"] == [
-        {"alpha": 1.0, "output_path": f"artifacts/mila/models/{ws_id}"}
-    ]
-    relearn = yaml.safe_load(
-        (
-            EXAMPLE / "configs/relearn/di-6.9b/wmdp-bio-lora-unlearn-ws-relearn.yml"
-        ).read_text()
-    )
-    assert relearn["base_model"] == f"artifacts/mila/models/{ws_id}/merged"
-
-    monkeypatch.chdir(EXAMPLE)
-    plan = (
-        lilpipe.load("configs/experiments/di-6.9b-lora.yml")
-        .select(
-            models=[ws_id, f"{ws_id}-relearn", *[f"{ws_id}-a{i}" for i in (2, 4, 10)]]
-        )
-        .plan()
-    )
-    ws = plan.stage_index[f"build-{ws_id}"]
-    assert ws.script == "scripts/slurm/mila/weight_steering.sbatch"
-    assert set(ws.depends_on) == {
-        f"train-{ws_id}-ft-retain",
-        f"train-{ws_id}-ft-forget",
-    }
-    ws_relearn = plan.stage_index[f"train-{ws_id}-relearn"]
-    assert ws_relearn.depends_on == (ws.id,)
-    assert ws_relearn.args[2:] == (
-        f"artifacts/mila/models/{ws_id}",
-        f"artifacts/mila/models/{ws_id}",
-    )
-    relearn_script = (EXAMPLE / "scripts/slurm/mila/relearn.sbatch").read_text()
-    assert '--lora-model-dir "$3" --output-dir "$4"' in relearn_script
-    for model_id in (ws_id, f"{ws_id}-relearn"):
-        assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
-        assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
-
-    for alpha in (2, 4, 10):
-        model_id = f"{ws_id}-a{alpha}"
-        config = yaml.safe_load(
-            (config_dir / f"wmdp-bio-lora-unlearn-ws-alpha-{alpha}.yml").read_text()
-        )
-        assert config["base_model_name_or_path"] == steering["base_model_name_or_path"]
-        assert config["adapter_pairs"] == steering["adapter_pairs"]
-        assert config["steered_adapters"] == [
-            {"alpha": float(alpha), "output_path": f"artifacts/mila/models/{model_id}"}
-        ]
-        stage = plan.stage_index[f"build-{model_id}"]
-        assert stage.script == "scripts/slurm/mila/weight_steering.sbatch"
-        assert set(stage.depends_on) == set(ws.depends_on)
-        assert f"eval-bio-mcqa-{model_id}" in plan.stage_index
-        assert f"eval-mmlu-no-bio-{model_id}" in plan.stage_index
 
 
 def test_relearning_formats_wmdp_document() -> None:
@@ -1872,29 +1611,8 @@ def test_canonical_model_ids_paths_dependencies_and_config_basenames() -> None:
         "di-6.9b-wmdp-bio-lora-unlearn-cb-relearn",
         "di-6.9b-wmdp-bio-lora-unlearn-npo",
         "di-6.9b-wmdp-bio-lora-unlearn-npo-relearn",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-relearn",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-rho003-relearn",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma225-relearn",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma450-relearn",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-gamma900-relearn",
-        "di-6.9b-wmdp-bio-lora-unlearn-npo-sam-beta015-gamma225-relearn",
         "di-6.9b-wmdp-bio-lora-unlearn-gd",
         "di-6.9b-wmdp-bio-lora-unlearn-gd-relearn",
-        "di-6.9b-wmdp-bio-lora-unlearn-gd-gn",
-        "di-6.9b-wmdp-bio-lora-unlearn-gd-gn-relearn",
-        "di-6.9b-wmdp-bio-lora-unlearn-ws-ft-retain",
-        "di-6.9b-wmdp-bio-lora-unlearn-ws-ft-forget",
-        "di-6.9b-wmdp-bio-lora-unlearn-ws",
-        "di-6.9b-wmdp-bio-lora-unlearn-ws-relearn",
-        "di-6.9b-wmdp-bio-lora-unlearn-ws-a2",
-        "di-6.9b-wmdp-bio-lora-unlearn-ws-a4",
-        "di-6.9b-wmdp-bio-lora-unlearn-ws-a10",
     }
     assert all(model_id.startswith("di-6.9b-") for model_id in registry)
     for model_id, model in registry.items():
@@ -2073,27 +1791,8 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "cb-relearn",
         "npo",
         "npo-relearn",
-        "npo-sam",
-        "npo-sam-relearn",
-        "npo-sam-rho003",
-        "npo-sam-gamma225",
-        "npo-sam-gamma450",
-        "npo-sam-gamma900",
-        "npo-sam-beta015-gamma225",
-        "npo-sam-rho003-relearn",
-        "npo-sam-gamma225-relearn",
-        "npo-sam-gamma450-relearn",
-        "npo-sam-gamma900-relearn",
-        "npo-sam-beta015-gamma225-relearn",
         "gd",
         "gd-relearn",
-        "gd-gn",
-        "gd-gn-relearn",
-        "weight-steering",
-        "ws-relearn",
-        "ws-a2",
-        "ws-a4",
-        "ws-a10",
     ]
     assert [row["group"] for row in config["rows"]] == [
         "base-model",
@@ -2101,27 +1800,8 @@ def test_results_config_has_base_and_orth_cb_groups() -> None:
         "circuit-breaker-relearn",
         "npo",
         "npo-relearn",
-        "npo-sam",
-        "npo-sam-relearn",
-        "npo-sam-tuning",
-        "npo-sam-tuning",
-        "npo-sam-tuning",
-        "npo-sam-tuning",
-        "npo-sam-tuning",
-        "npo-sam-tuning-relearn",
-        "npo-sam-tuning-relearn",
-        "npo-sam-tuning-relearn",
-        "npo-sam-tuning-relearn",
-        "npo-sam-tuning-relearn",
         "grad-diff",
         "grad-diff-relearn",
-        "gd-gn",
-        "gd-gn-relearn",
-        "weight-steering",
-        "weight-steering-relearn",
-        "weight-steering",
-        "weight-steering",
-        "weight-steering",
     ]
     assert config["rows"][1]["root"] == (
         "artifacts/mila/evals/di-6.9b-wmdp-bio-lora-unlearn-cb"

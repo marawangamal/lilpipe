@@ -132,55 +132,6 @@ fields. The dependent NPO relearning stage merges its adapter and uses the same
 32-step forget-set attack as CB. Both NPO models are evaluated on Robust
 WMDP-Bio and MMLU excluding biology.
 
-NPO+SAM (`di-6.9b-wmdp-bio-lora-unlearn-npo-sam`) keeps NPO's β = 0.0225,
-retain weight γ = 1.0, data, LoRA setup, and 32-step schedule. For each
-microbatch it maximizes the forget loss within a radius ρ = 0.01 in trainable
-LoRA weight space, then accumulates the perturbed forget gradient and the
-unperturbed WikiText retain gradient. Its dependent relearning stage uses the
-same 32-step forget-set attack. This is a controlled LoRA comparison, rather
-than the [paper's](https://arxiv.org/pdf/2502.05374) full-model NPO+SAM tuning.
-Both stages receive Robust WMDP-Bio and MMLU excluding biology evaluations.
-
-The NPO+SAM tuning sweep keeps the data, LoRA setup, optimizer, and 32-step
-schedule fixed. It compares a smaller LoRA perturbation (`rho003`: ρ = 0.003),
-stronger retention (`gamma225`: γ = 2.25), and the released NPO+SAM β/γ pair
-(`beta015-gamma225`: β = 0.015, γ = 2.25). The latter still trains only LoRA
-weights, so it is not a reproduction of the paper's full-model run. Each
-variant uses the same 32-step forget-set relearning attack and both evaluation
-tasks before and after relearning.
-
-A follow-up run doubles the retain weight from γ = 2.25 to γ = 4.5
-(`gamma450`) while keeping β = 0.0225 and ρ = 0.01. It uses the same data,
-LoRA setup, 32-step unlearning and relearning schedules, and evaluations.
-The `gamma900` follow-up doubles the retain weight again to γ = 9.0, with
-the remaining settings fixed.
-
-GradDiff (`di-6.9b-wmdp-bio-lora-unlearn-gd`) uses the same data, balanced batches,
-rank-8 LoRA setup, and 32-step training schedule as NPO and CB. It minimizes
-`−0.1 × forget CE + 1.0 × retain CE`. Its dependent
-relearning model (`di-6.9b-wmdp-bio-lora-unlearn-gd-relearn`) merges the GradDiff
-adapter and follows the same 32-step forget-set attack schedule as NPO. Both
-models receive the Robust WMDP-Bio and MMLU excluding biology evaluations.
-
-GD-GN (`di-6.9b-wmdp-bio-lora-unlearn-gd-gn`) uses balanced forget and retain
-batches and the same rank-8 LoRA setup. Its objective is
-`−forget CE + 0.01 × ||∇LoRA forget CE||₂ + retain CE`. The gradient norm stays
-in the autograd graph so training includes its second-order derivative. Its
-microbatch is two rows with 32 accumulation steps, preserving the other methods'
-effective batch size of 64. The config requests an 80 GB A100 and eager
-attention because the flash-attention backward kernel has no second derivative.
-The full-context run still exceeded A100 memory on its first gradient
-calculation, so no successful run is available. The configured relearning stage
-uses the same 32-step forget-set attack and both stages have the same evaluations.
-
-Weight steering trains separate rank-8 LoRA adapters on the same 1,024 WikiText
-retain and WMDP-Bio forget documents, using the CB optimizer, learning rate,
-32-step schedule, and batch settings. It builds a retain-minus-forget adapter
-with coefficient 1, then merges that adapter and applies the same relearning
-configuration as CB.
-
-The α=2, 4, and 10 weight-steering variants reuse the same trained retain and
-forget arms. Their separate adapters are evaluated on the same two tasks.
 
 Render the results table with:
 
