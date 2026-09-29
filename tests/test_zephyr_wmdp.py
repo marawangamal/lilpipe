@@ -127,9 +127,9 @@ def test_lora_cb_canonical_configs():
 
     assert relearn["base_model"].endswith("lora-unlearn-cb/merged")
     assert relearn["learning_rate"] == 1.0e-4
-    assert relearn["max_steps"] == 300
+    assert relearn["max_steps"] == 250
     assert relearn["save_steps"] == 10
-    assert relearn["save_total_limit"] == 30
+    assert relearn["save_total_limit"] == 25
 
 
 def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
@@ -247,7 +247,7 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
                 "z7b-wmdp-bio-lora-unlearn-cb": 70,
                 "z7b-wmdp-bio-lora-unlearn-npo-relearn": 300,
                 "z7b-wmdp-bio-lora-unlearn-gd-relearn": 300,
-                "z7b-wmdp-bio-lora-unlearn-cb-relearn": 300,
+                "z7b-wmdp-bio-lora-unlearn-cb-relearn": 250,
             }.get(model_id, 100)
             assert config["max_steps"] == expected_steps
             assert config["save_steps"] == 10
@@ -257,7 +257,7 @@ def test_fft_and_lora_pipeline_paths_and_resources(monkeypatch):
                 "z7b-wmdp-bio-lora-unlearn-cb": 7,
                 "z7b-wmdp-bio-lora-unlearn-npo-relearn": 30,
                 "z7b-wmdp-bio-lora-unlearn-gd-relearn": 30,
-                "z7b-wmdp-bio-lora-unlearn-cb-relearn": 30,
+                "z7b-wmdp-bio-lora-unlearn-cb-relearn": 25,
             }.get(model_id, 10)
             assert config["save_total_limit"] == expected_checkpoints
         if model_id.endswith("-relearn"):

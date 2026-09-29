@@ -55,8 +55,14 @@ lilpipe configs/experiments/di-6.9b-lora-hpo-relearn.yml
 ```
 
 Each run trains for 250 steps and saves and evaluates every 10 steps. Before
-starting relearning, choose the best checkpoint for each method using both
-WMDP-Bio and MMLU. Merge that checkpoint's LoRA adapter with
+starting relearning, select checkpoints using the same rule as the Zephyr HPO:
+
+1. Keep checkpoints with WMDP-Bio Robust MCQA accuracy at or below 28%, close
+   to the 25% random-choice floor.
+2. For each method, promote the qualifying checkpoint with the highest
+   MMLU-no-bio accuracy.
+
+Merge that checkpoint's LoRA adapter with
 `EleutherAI/deep-ignorance-unfiltered`, place the merged model in a stable
 promoted directory, and create the matching link below:
 
@@ -87,10 +93,10 @@ lilpipe configs/experiments/z7b-lora-hpo-relearn.yml
 ```
 
 Both run NPO, GradDiff, and Circuit Breaker for 250 steps, saving and evaluating
-every 10 steps. Promotion between them is manual: choose the best unlearning
-checkpoint using WMDP-Bio and MMLU, merge its LoRA adapter with Zephyr into a
-stable promoted directory, then create the matching symlink before launching
-relearning:
+every 10 steps. Promotion between them is manual: retain checkpoints at or
+below 28% WMDP-Bio Robust MCQA, then select the highest MMLU-no-bio checkpoint
+for each method. Merge its LoRA adapter with Zephyr directly into the matching
+stable promoted directory before launching relearning:
 
 ```text
 artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-npo-hpo-opt
@@ -98,8 +104,8 @@ artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-hpo-opt
 artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-hpo-opt
 ```
 
-Each link must resolve to its method's promoted merged model. Lilpipe does not
-create or validate these links.
+Each path must contain its method's promoted merged model. Lilpipe does not
+create or validate these directories.
 
 ### Zephyr-7B LoRA canonical configuration
 
@@ -110,17 +116,23 @@ create or validate these links.
 | Unlearn | CB       | `5e-4` | 70        | 7           |
 | Relearn | NPO      | `3e-5` | 220       | 22          |
 | Relearn | GradDiff | `3e-5` | 150       | 15          |
-| Relearn | CB       | `1e-4` | 190       | 19          |
+| Relearn | CB       | `1e-4` | 250       | 25          |
 
-The pipeline trains the rank-8 circuit breaker on 1,024 WMDP-Bio forget
-documents and 1,024 WikiText retain documents, with four examples from each
-source per eight-sample microbatch and eight accumulation steps. Its coefficients
-ramp from retain 1 to 10, reroute 23 to 17.25, and orthogonalization 0 to 5; the
-learning rate starts at `1e-3` and decays linearly without warmup. It evaluates
-the base and trained models on Robust WMDP-Bio and MMLU excluding biology.
-The relearning stage merges the CB adapter into the base model, then fine-tunes a
-new rank-8 adapter on the 1,024 WMDP-Bio forget documents for 32 steps at
-`1e-3` using a 2 × 16 batch/accumulation schedule.
+The canonical CB trajectory is copied from the selected HPO runs: unlearning
+uses `5e-4` through step 70, while relearning uses `1e-4` through step 250.
+The selected unlearning checkpoint at step 70 scores 27.30% WMDP-Bio Robust
+MCQA and 50.15% MMLU-no-bio. The relearning sweep used that checkpoint after
+merging its LoRA adapter into Zephyr; checkpoint 190 was the selected attack
+point, scoring 55.07% WMDP-Bio and 57.13% MMLU-no-bio, while the canonical
+artifact retains the complete trajectory through step 250.
+
+CB trains rank-8 adapters on 1,024 WMDP-Bio forget documents and 1,024
+WikiText retain documents. Unlearning uses a 4 × 2 microbatch/accumulation
+schedule; its coefficients ramp from retain 1 to 10, reroute 23 to 17.25, and
+orthogonalization 0 to 5. Relearning fine-tunes a new rank-8 adapter on the
+forget documents with a 1 × 4 schedule. Both stages use a linear scheduler with
+12 warmup steps and are evaluated on Robust WMDP-Bio and MMLU excluding
+biology. Both stages save every 10 steps.
 
 NPO uses the same documents, rank-8 LoRA modules, balanced eight-row
 microbatches, 32-step budget, and optimizer schedule as CB. Its loss uses the
