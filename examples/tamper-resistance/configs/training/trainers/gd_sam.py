@@ -1,18 +1,18 @@
-"""SAM-based unlearning with balanced forget and retain batches."""
+"""Gradient-difference unlearning with SAM on the forget objective."""
 
-from configs.training.trainers.sam import TARTrainer
+from configs.training.trainers.sam import SAMAttack, TARTrainer
 from configs.training.trainers.samplers import MixedSourceSampler
 
 
 class GradDiffTrainer(TARTrainer):
-    """Apply SAM to gradient-difference unlearning's forget objective."""
+    """Apply a small SAM perturbation to gradient-difference unlearning."""
 
     def __init__(
         self,
         *args,
         rho=0.01,
-        retain_coeff=1,
-        forget_coeff=1,
+        retain_coeff=1.0,
+        forget_coeff=1.0,
         attack_type="sam",
         attack_kwargs=None,
         **kwargs,
@@ -26,7 +26,6 @@ class GradDiffTrainer(TARTrainer):
             attack_kwargs=attack_kwargs,
             **kwargs,
         )
-        pass
 
     def _get_train_sampler(self, train_dataset=None):
         dataset = self.train_dataset if train_dataset is None else train_dataset

@@ -94,6 +94,19 @@ def gd_training_module():
 
 
 @pytest.fixture(scope="module")
+def gd_sam_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script("configs/training/trainers/gd_sam.py", "gd_sam_training")
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
+@pytest.fixture(scope="module")
 def gd_gn_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
@@ -1027,6 +1040,101 @@ def test_grad_diff_sampler_balances_each_microbatch(gd_training_module) -> None:
         )
 
 
+def test_gd_sam_loss_uses_small_forget_perturbation(gd_sam_training_module) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(2.0))
+
+        def forward(self, input_ids, attention_mask, labels):
+            assert torch.equal(input_ids, labels)
+            assert torch.all(attention_mask == 1)
+            return SimpleNamespace(loss=input_ids.float().mean() * self.weight)
+
+    model = Model()
+    trainer = object.__new__(gd_sam_training_module.GradDiffTrainer)
+    trainer.attack = gd_sam_training_module.SAMAttack(0.01)
+    trainer.forget_coeff = 1.0
+    trainer.retain_coeff = 1.0
+    inputs = {
+        "input_ids": torch.tensor([[7], [2], [9], [4]]),
+        "attention_mask": torch.ones(4, 1),
+        "labels": torch.tensor([[7], [2], [9], [4]]),
+        "is_forget": torch.tensor([False, True, False, True]),
+    }
+
+    loss = trainer.compute_loss(model, inputs)
+
+    assert gd_sam_training_module.GradDiffTrainer.__init__.__kwdefaults__["rho"] == (
+        0.01
+    )
+    assert trainer.attack.rho == pytest.approx(0.01)
+    assert loss.item() == pytest.approx(-3 * (2 - 0.01) + 8 * 2)
+    loss.backward()
+    assert model.weight.grad.item() == pytest.approx(-3 + 8)
+
+
+def test_gd_sam_peft_gradient_checkpointing(gd_sam_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    peft = pytest.importorskip("peft")
+    transformers = pytest.importorskip("transformers")
+    base = transformers.GPT2LMHeadModel(
+        transformers.GPT2Config(
+            vocab_size=16, n_positions=8, n_embd=8, n_layer=1, n_head=2
+        )
+    )
+    base.gradient_checkpointing_enable()
+    model = peft.get_peft_model(
+        base, peft.LoraConfig(r=2, lora_alpha=2, target_modules=["c_attn"])
+    )
+    model.enable_input_require_grads()
+    trainer = object.__new__(gd_sam_training_module.GradDiffTrainer)
+    trainer.attack = gd_sam_training_module.SAMAttack(0.01)
+    trainer.forget_coeff = 1.0
+    trainer.retain_coeff = 1.0
+    inputs = {
+        "input_ids": torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]]),
+        "attention_mask": torch.ones(2, 4, dtype=torch.long),
+        "labels": torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]]),
+        "is_forget": torch.tensor([True, False]),
+    }
+
+    loss = trainer.compute_loss(model, inputs)
+    loss.backward()
+
+    assert loss.isfinite()
+    assert any(
+        parameter.grad is not None and parameter.grad.abs().sum() > 0
+        for parameter in model.parameters()
+        if parameter.requires_grad
+    )
+
+
+def test_gd_sam_sampler_balances_each_microbatch(gd_sam_training_module) -> None:
+    class TaggedDataset:
+        def __getitem__(self, key):
+            assert key == "is_forget"
+            return [0, 1, 1, 0] * 2
+
+    trainer = SimpleNamespace(
+        train_dataset=TaggedDataset(),
+        args=SimpleNamespace(per_device_train_batch_size=4, data_seed=None, seed=42),
+    )
+    sampler = gd_sam_training_module.GradDiffTrainer._get_train_sampler(trainer)
+    indices = list(sampler)
+
+    for start in (0, 4):
+        assert (
+            sum(
+                trainer.train_dataset["is_forget"][i]
+                for i in indices[start : start + 4]
+            )
+            == 2
+        )
+
+
 def test_gd_gn_loss_has_second_order_gradient(
     gd_gn_training_module,
 ) -> None:
@@ -1601,6 +1709,45 @@ def test_grad_diff_configs_match_npo_and_relearning_schedule() -> None:
         f"artifacts/mila/cache/axolotl/{model_id}-relearn/prepared"
     )
     assert gd_relearn["wandb_name"] == f"{model_id}-relearn"
+
+
+def test_z7b_gd_sam_hpo_sweeps_learning_rate_at_paper_rho(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/z7b-lora-hpo-unlearn-gd-sam.yml")
+    plan = pipeline.plan()
+    learning_rates = ("1e-5", "2e-5", "5e-5", "1e-4", "2e-4")
+
+    assert len(plan.stages) == 3 * len(learning_rates)
+    for learning_rate in learning_rates:
+        model_id = f"z7b-wmdp-bio-lora-unlearn-gd-sam-hpo-lr{learning_rate}"
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/unlearn/z7b/hpo"
+                / f"wmdp-bio-lora-unlearn-gd-sam-lr{learning_rate}.yml"
+            ).read_text()
+        )
+        gd_config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/unlearn/z7b/hpo"
+                / f"wmdp-bio-lora-unlearn-gd-lr{learning_rate}.yml"
+            ).read_text()
+        )
+
+        assert model_id in pipeline.selected_models
+        assert config["trainer_cls"] == (
+            "configs.training.trainers.gd_sam.GradDiffTrainer"
+        )
+        assert config["learning_rate"] == gd_config["learning_rate"]
+        assert config["max_steps"] == gd_config["max_steps"] == 250
+        assert config["save_steps"] == gd_config["save_steps"] == 10
+        assert config["save_total_limit"] == gd_config["save_total_limit"] == 25
+        assert config["output_dir"].endswith(model_id)
+        assert model_id in config["dataset_prepared_path"]
+        assert config["wandb_name"] == model_id
 
 
 def test_relearning_formats_wmdp_document() -> None:
