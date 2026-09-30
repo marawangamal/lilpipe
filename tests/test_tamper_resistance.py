@@ -1369,30 +1369,86 @@ def test_z7b_gd_deff_hpo_matches_gd_sweep(
         assert config["gradient_accumulation_steps"] == 1
         assert (
             config["micro_batch_size"] * config["gradient_accumulation_steps"]
-            == gd_config["micro_batch_size"]
-            * gd_config["gradient_accumulation_steps"]
+            == gd_config["micro_batch_size"] * gd_config["gradient_accumulation_steps"]
         )
         assert config["output_dir"].endswith(model_id)
         assert model_id in config["dataset_prepared_path"]
         assert config["wandb_name"] == model_id
 
 
-def test_z7b_gd_deff_relearn_copies_canonical_gd_schedule() -> None:
-    gd = yaml.safe_load(
+def test_z7b_gd_deff_relearn_uses_promoted_hpo_run() -> None:
+    hpo = yaml.safe_load(
         (
-            EXAMPLE / "configs/relearn/z7b/wmdp-bio-lora-unlearn-gd-relearn.yml"
+            EXAMPLE
+            / "configs/relearn/z7b/hpo"
+            / "wmdp-bio-lora-unlearn-gd-deff-relearn-lr1e-4.yml"
         ).read_text()
     )
-    gd_deff = yaml.safe_load(
+    canonical = yaml.safe_load(
         (
             EXAMPLE / "configs/relearn/z7b/wmdp-bio-lora-unlearn-gd-deff-relearn.yml"
         ).read_text()
     )
 
-    normalized = yaml.safe_load(
-        yaml.safe_dump(gd_deff).replace("unlearn-gd-deff", "unlearn-gd")
+    normalized = yaml.safe_load(yaml.safe_dump(hpo).replace("-hpo-lr1e-4", ""))
+    assert canonical == normalized
+
+
+def test_z7b_gd_deff_canonical_uses_promoted_hpo_checkpoint() -> None:
+    model_id = "z7b-wmdp-bio-lora-unlearn-gd-deff"
+    config = yaml.safe_load(
+        (EXAMPLE / "configs/unlearn/z7b/wmdp-bio-lora-unlearn-gd-deff.yml").read_text()
     )
-    assert normalized == gd
+    model = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
+        "models"
+    ][model_id]
+
+    assert config["learning_rate"] == 5.0e-5
+    assert config["max_steps"] == 250
+    assert config["micro_batch_size"] == 8
+    assert config["gradient_accumulation_steps"] == 1
+    assert config["save_steps"] == 10
+    assert config["save_total_limit"] == 25
+    assert "producer" not in model
+
+
+def test_z7b_gd_deff_relearn_hpo_matches_gd_sweep(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    manifest = "configs/experiments/z7b-lora-hpo-relearn-gd-deff.yml"
+    pipeline = lilpipe.load(manifest)
+    plan = pipeline.plan()
+    learning_rates = ("1e-6", "3e-6", "1e-5", "3e-5", "1e-4")
+
+    assert len(plan.stages) == 3 * len(learning_rates)
+    for learning_rate in learning_rates:
+        model_id = "z7b-wmdp-bio-lora-unlearn-gd-deff-relearn-hpo-" f"lr{learning_rate}"
+        assert model_id in pipeline.selected_models
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/relearn/z7b/hpo"
+                / f"wmdp-bio-lora-unlearn-gd-deff-relearn-lr{learning_rate}.yml"
+            ).read_text()
+        )
+        gd_config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/relearn/z7b/hpo"
+                / f"wmdp-bio-lora-unlearn-gd-relearn-lr{learning_rate}.yml"
+            ).read_text()
+        )
+        assert config["base_model"] == (
+            "artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-deff/merged"
+        )
+        assert config["learning_rate"] == gd_config["learning_rate"]
+        assert config["max_steps"] == gd_config["max_steps"] == 250
+        assert config["save_steps"] == gd_config["save_steps"] == 10
+        assert config["save_total_limit"] == gd_config["save_total_limit"] == 25
+        assert config["output_dir"].endswith(model_id)
+        assert model_id in config["dataset_prepared_path"]
+        assert config["wandb_name"] == model_id
 
 
 def test_deff_trainer_ignores_padding_tokens_in_forget_pool(

@@ -114,9 +114,11 @@ create or validate these directories.
 | Unlearn | NPO      | `1e-4` | 80        | 8           |
 | Unlearn | GradDiff | `2e-4` | 40        | 4           |
 | Unlearn | CB       | `5e-4` | 70        | 7           |
+| Unlearn | GD-DEFF  | `5e-5` | 140*      | 14          |
 | Relearn | NPO      | `3e-5` | 220       | 22          |
 | Relearn | GradDiff | `3e-5` | 150       | 15          |
 | Relearn | CB       | `1e-4` | 250       | 25          |
+| Relearn | GD-DEFF  | `1e-4` | 250       | 25          |
 
 The canonical CB trajectory is copied from the selected HPO runs: unlearning
 uses `5e-4` through step 70, while relearning uses `1e-4` through step 250.
@@ -125,6 +127,16 @@ MCQA and 50.15% MMLU-no-bio. The relearning sweep used that checkpoint after
 merging its LoRA adapter into Zephyr; checkpoint 190 was the selected attack
 point, scoring 55.07% WMDP-Bio and 57.13% MMLU-no-bio, while the canonical
 artifact retains the complete trajectory through step 250.
+
+The canonical GD-DEFF artifact promotes checkpoint 140 from its 250-step HPO
+run, preserving the original linear schedule with 12 warmup steps. That
+checkpoint scores 27.88% WMDP-Bio Robust MCQA and 54.76% MMLU-no-bio. The
+canonical artifact retains checkpoints 10 through 140 and merges checkpoint
+140; it does not retrain with a shortened 140-step schedule, which would change
+the linear learning-rate trajectory. Relearning uses the full `1e-4` HPO run;
+checkpoint 50 is the selected attack point, scoring 56.91% WMDP-Bio and 58.90%
+MMLU-no-bio, while the canonical artifact retains all checkpoints through step
+250.
 
 CB trains rank-8 adapters on 1,024 WMDP-Bio forget documents and 1,024
 WikiText retain documents. Unlearning uses a 4 × 2 microbatch/accumulation

@@ -1,0 +1,17 @@
+version: 1
+id: z7b-lora-hpo-relearn-gd-deff
+
+registries:
+  models: configs/registries/models-hpo.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - z7b-wmdp-bio-lora-unlearn-gd-deff-relearn-hpo-lr1e-6
+  - z7b-wmdp-bio-lora-unlearn-gd-deff-relearn-hpo-lr3e-6
+  - z7b-wmdp-bio-lora-unlearn-gd-deff-relearn-hpo-lr1e-5
+  - z7b-wmdp-bio-lora-unlearn-gd-deff-relearn-hpo-lr3e-5
+  - z7b-wmdp-bio-lora-unlearn-gd-deff-relearn-hpo-lr1e-4
+
+evaluations:
+  - bio-mcqa-ckpts-max250-freq10-mila
+  - mmlu-no-bio-ckpts-max250-freq10-mila
