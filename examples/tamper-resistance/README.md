@@ -115,6 +115,7 @@ create or validate these directories.
 | Unlearn | GradDiff | `2e-4` | 40        | 4           |
 | Unlearn | CB       | `5e-4` | 70        | 7           |
 | Unlearn | GD-DEFF  | `5e-5` | 140*      | 14          |
+| Unlearn | GD+SAM   | `5e-5` | 170*      | 17          |
 | Relearn | NPO      | `3e-5` | 220       | 22          |
 | Relearn | GradDiff | `3e-5` | 150       | 15          |
 | Relearn | CB       | `1e-4` | 250       | 25          |
@@ -137,6 +138,12 @@ the linear learning-rate trajectory. Relearning uses the full `1e-4` HPO run;
 checkpoint 50 is the selected attack point, scoring 56.91% WMDP-Bio and 58.90%
 MMLU-no-bio, while the canonical artifact retains all checkpoints through step
 250.
+
+The canonical GD+SAM artifact likewise promotes checkpoint 170 from its
+250-step HPO run at `rho=0.01`, preserving the original linear schedule. That
+checkpoint scores 28.00% WMDP-Bio Robust MCQA and 50.17% MMLU-no-bio. Its
+relearning sweep uses learning rates `1e-6`, `3e-6`, `1e-5`, `3e-5`, and
+`1e-4` for 250 steps, evaluating every 10 steps.
 
 CB trains rank-8 adapters on 1,024 WMDP-Bio forget documents and 1,024
 WikiText retain documents. Unlearning uses a 4 × 2 microbatch/accumulation

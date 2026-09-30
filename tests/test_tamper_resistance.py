@@ -1808,6 +1808,39 @@ def test_z7b_gd_sam_hpo_sweeps_learning_rate_at_paper_rho(
         assert config["wandb_name"] == model_id
 
 
+def test_z7b_gd_sam_relearn_hpo_uses_promoted_checkpoint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    manifest = "configs/experiments/z7b-lora-hpo-relearn-gd-sam.yml"
+    pipeline = lilpipe.load(manifest)
+    plan = pipeline.plan()
+    learning_rates = ("1e-6", "3e-6", "1e-5", "3e-5", "1e-4")
+
+    assert len(plan.stages) == 3 * len(learning_rates)
+    for learning_rate in learning_rates:
+        model_id = "z7b-wmdp-bio-lora-unlearn-gd-sam-relearn-hpo-" f"lr{learning_rate}"
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/relearn/z7b/hpo"
+                / f"wmdp-bio-lora-unlearn-gd-sam-relearn-lr{learning_rate}.yml"
+            ).read_text()
+        )
+
+        assert model_id in pipeline.selected_models
+        assert config["base_model"] == (
+            "artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sam/merged"
+        )
+        assert config["learning_rate"] == learning_rate
+        assert config["max_steps"] == 250
+        assert config["save_steps"] == 10
+        assert config["save_total_limit"] == 25
+        assert config["output_dir"].endswith(model_id)
+        assert model_id in config["dataset_prepared_path"]
+        assert config["wandb_name"] == model_id
+
+
 def test_relearning_formats_wmdp_document() -> None:
     pytest.importorskip("axolotl")
     strategy = load_script(

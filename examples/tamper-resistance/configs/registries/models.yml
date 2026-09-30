@@ -235,3 +235,8 @@ models:
     base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-deff/merged
     adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-deff-relearn
     local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-deff-relearn
+
+  z7b-wmdp-bio-lora-unlearn-gd-sam:
+    base_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sam
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sam
