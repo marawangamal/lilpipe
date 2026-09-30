@@ -1,4 +1,4 @@
-"""Retain cross-entropy plus pairwise-orthogonal forget activations."""
+"""Gradient difference plus pairwise-orthogonal forget activations."""
 
 from typing import List
 
@@ -33,7 +33,7 @@ def compute_mean_cosim(z: List[torch.Tensor], mask: torch.Tensor) -> torch.Tenso
 
 
 class DEFFTrainer(AxolotlTrainer):
-    """Retain cross-entropy plus mean off-diagonal cosine of forget rows."""
+    """Gradient difference plus mean off-diagonal cosine of forget rows."""
 
     def __init__(
         self,
@@ -41,22 +41,27 @@ class DEFFTrainer(AxolotlTrainer):
         retain_coef=1.0,
         forget_coef=1.0,
         cosim_coeff=1.0,
-        target_layers=(5, 10, 15, 20, 25, 30),
+        target_layers=None,
         **kwargs,
     ):
         """Initialize the DEFF trainer.
 
         Args:
-            retain_coefficient: Weight for the retain cross-entropy loss.
-            forget_coefficient: Weight for the forget cosine-similarity loss.
-            target_layers: Transformer block indices. Each index is offset
-                by one because hidden_states[0] is the embedding output.
+            retain_coef: Weight for the retain cross-entropy loss.
+            forget_coef: Weight for the forget cross-entropy loss.
+            cosim_coeff: Weight for the forget cosine-similarity loss.
+            target_layers: Transformer block indices, or None for all blocks.
+                Each index is offset by one because hidden_states[0] is the
+                embedding output.
         """
         super().__init__(*args, **kwargs)
-        self.retain_coefficient = retain_coefficient
-        self.forget_coefficient = forget_coefficient
-        self.target_layers = target_layers
+        self.retain_coef = retain_coef
+        self.forget_coef = forget_coef
+        self.cosim_coeff = cosim_coeff
         num_layers = self.model.config.num_hidden_layers
+        self.target_layers = (
+            tuple(range(num_layers)) if target_layers is None else target_layers
+        )
         if len(set(self.target_layers)) != len(self.target_layers) or any(
             layer < 0 or layer >= num_layers for layer in self.target_layers
         ):
@@ -79,7 +84,7 @@ class DEFFTrainer(AxolotlTrainer):
         return_outputs: bool = False,
         **kwargs,
     ) -> torch.Tensor | tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """Compute retain CE and forget-activation orthogonality loss.
+        """Compute gradient-difference and forget-activation orthogonality loss.
 
         Args:
             model: Trainable causal language model.
@@ -115,26 +120,38 @@ class DEFFTrainer(AxolotlTrainer):
         }
         loss_retain = model(**inputs_retain).loss
 
-        # compute ortho loss
-        attn_mask_forget = inputs["attention_mask"][sample_mask_forget]
-        z_forget = model(
-            input_ids=inputs["input_ids"][sample_mask_forget],
-            attention_mask=attn_mask_forget,
+        # compute forget and ortho loss
+        inputs_forget = {
+            field: inputs[field][sample_mask_forget]
+            for field in ("input_ids", "attention_mask", "labels")
+        }
+        outputs_forget = model(
+            **inputs_forget,
             output_hidden_states=True,
             use_cache=False,
-        ).hidden_states  # Shape: (B, T, D) x (L + 1)
+        )
+        loss_forget = outputs_forget.loss
+        z_forget = outputs_forget.hidden_states  # Shape: (B, T, D) x (L + 1)
         loss_mean_cosim = compute_mean_cosim(
             [z_forget[layer + 1] for layer in self.target_layers],
-            attn_mask_forget,
+            inputs_forget["attention_mask"],
         )
 
         loss = (
-            self.retain_coefficient * loss_retain
-            + self.forget_coefficient * loss_mean_cosim
+            self.retain_coef * loss_retain
+            - self.forget_coef * loss_forget
+            + self.cosim_coeff * loss_mean_cosim
         )
 
         return (
-            (loss, {"loss_retain": loss_retain, "loss_mean_cosim": loss_mean_cosim})
+            (
+                loss,
+                {
+                    "loss_retain": loss_retain,
+                    "loss_forget": loss_forget,
+                    "loss_mean_cosim": loss_mean_cosim,
+                },
+            )
             if return_outputs
             else loss
         )

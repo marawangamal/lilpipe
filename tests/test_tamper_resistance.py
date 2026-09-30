@@ -119,6 +119,19 @@ def deff_training_module():
         sys.path.remove(str(EXAMPLE))
 
 
+@pytest.fixture(scope="module")
+def gd_deff_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script("configs/training/trainers/gd_deff.py", "gd_deff_training")
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
 def test_trajectory_evaluation_selects_one_array_milestone() -> None:
     script = (
         EXAMPLE / "scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch"
@@ -1143,6 +1156,133 @@ def test_deff_trainer_loss_is_retain_ce_plus_off_diagonal_cosine(
     assert model.retain_weight.grad.item() == pytest.approx(8.0)
     assert model.forget_rows.grad is not None
     assert model.forget_rows.grad.abs().sum() > 0
+
+
+def test_gd_deff_loss_has_retain_forget_and_orthogonality_terms(
+    gd_deff_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(2.0))
+            self.forget_rows = torch.nn.Parameter(
+                torch.tensor([[3.0, 4.0, 0.0], [4.0, 3.0, 0.0]])
+            )
+
+        def forward(
+            self,
+            input_ids,
+            attention_mask=None,
+            labels=None,
+            output_hidden_states=False,
+            use_cache=None,
+        ):
+            loss = input_ids.float().mean() * self.weight
+            if not output_hidden_states:
+                return SimpleNamespace(loss=loss)
+            hidden = self.forget_rows.unsqueeze(1)
+            return SimpleNamespace(loss=loss, hidden_states=(None, hidden, hidden))
+
+    model = Model()
+    trainer = object.__new__(gd_deff_training_module.DEFFTrainer)
+    trainer.target_layers = (0, 1)
+    trainer.retain_coef = 2.0
+    trainer.forget_coef = 3.0
+    trainer.cosim_coeff = 4.0
+    inputs = {
+        "input_ids": torch.tensor([[7], [2], [9], [4]]),
+        "attention_mask": torch.ones(4, 1),
+        "labels": torch.tensor([[7], [2], [9], [4]]),
+        "is_forget": torch.tensor([False, True, False, True]),
+    }
+
+    loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
+
+    assert loss.item() == pytest.approx(2 * 16.0 - 3 * 6.0 + 4 * 0.96)
+    assert outputs["loss_retain"].item() == pytest.approx(16.0)
+    assert outputs["loss_forget"].item() == pytest.approx(6.0)
+    assert outputs["loss_mean_cosim"].item() == pytest.approx(0.96)
+
+
+def test_gd_deff_targets_all_transformer_layers_by_default(
+    gd_deff_training_module, monkeypatch
+) -> None:
+    def init(trainer, *args, **kwargs):
+        trainer.model = SimpleNamespace(config=SimpleNamespace(num_hidden_layers=3))
+
+    monkeypatch.setattr(gd_deff_training_module.AxolotlTrainer, "__init__", init)
+    trainer = gd_deff_training_module.DEFFTrainer()
+
+    assert trainer.target_layers == (0, 1, 2)
+    assert trainer.retain_coef == 1.0
+    assert trainer.forget_coef == 1.0
+    assert trainer.cosim_coeff == 1.0
+
+
+def test_z7b_gd_deff_hpo_matches_gd_sweep(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    manifest = "configs/experiments/z7b-lora-hpo-unlearn-gd-deff.yml"
+    pipeline = lilpipe.load(manifest)
+    plan = pipeline.plan()
+    learning_rates = ("1e-5", "2e-5", "5e-5", "1e-4", "2e-4")
+
+    assert len(plan.stages) == 3 * len(learning_rates)
+    for learning_rate in learning_rates:
+        model_id = f"z7b-wmdp-bio-lora-unlearn-gd-deff-hpo-lr{learning_rate}"
+        assert model_id in pipeline.selected_models
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/unlearn/z7b/hpo"
+                / f"wmdp-bio-lora-unlearn-gd-deff-lr{learning_rate}.yml"
+            ).read_text()
+        )
+        gd_config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/unlearn/z7b/hpo"
+                / f"wmdp-bio-lora-unlearn-gd-lr{learning_rate}.yml"
+            ).read_text()
+        )
+        assert config["trainer_cls"] == (
+            "configs.training.trainers.gd_deff.DEFFTrainer"
+        )
+        assert config["learning_rate"] == gd_config["learning_rate"]
+        assert config["max_steps"] == gd_config["max_steps"] == 250
+        assert config["save_steps"] == gd_config["save_steps"] == 10
+        assert config["save_total_limit"] == gd_config["save_total_limit"] == 25
+        assert config["micro_batch_size"] == 8
+        assert config["gradient_accumulation_steps"] == 1
+        assert (
+            config["micro_batch_size"] * config["gradient_accumulation_steps"]
+            == gd_config["micro_batch_size"]
+            * gd_config["gradient_accumulation_steps"]
+        )
+        assert config["output_dir"].endswith(model_id)
+        assert model_id in config["dataset_prepared_path"]
+        assert config["wandb_name"] == model_id
+
+
+def test_z7b_gd_deff_relearn_copies_canonical_gd_schedule() -> None:
+    gd = yaml.safe_load(
+        (
+            EXAMPLE / "configs/relearn/z7b/wmdp-bio-lora-unlearn-gd-relearn.yml"
+        ).read_text()
+    )
+    gd_deff = yaml.safe_load(
+        (
+            EXAMPLE / "configs/relearn/z7b/wmdp-bio-lora-unlearn-gd-deff-relearn.yml"
+        ).read_text()
+    )
+
+    normalized = yaml.safe_load(
+        yaml.safe_dump(gd_deff).replace("unlearn-gd-deff", "unlearn-gd")
+    )
+    assert normalized == gd
 
 
 def test_deff_trainer_ignores_padding_tokens_in_forget_pool(
