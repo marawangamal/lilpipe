@@ -11,9 +11,14 @@ class SAMAttack(torch.nn.Module):
         self.rho = rho
 
     def forward(self, parameters, loss):
-        gradients = torch.autograd.grad(loss, tuple(parameters.values()))
+        gradients = torch.autograd.grad(
+            loss, tuple(parameters.values()), allow_unused=True
+        )
+        active_gradients = [gradient for gradient in gradients if gradient is not None]
+        if not active_gradients:
+            return parameters
         norm = torch.stack(
-            [gradient.detach().float().norm() for gradient in gradients]
+            [gradient.detach().float().norm() for gradient in active_gradients]
         ).norm()
         scale = self.rho / norm.clamp_min(1e-12)
 
@@ -22,7 +27,9 @@ class SAMAttack(torch.nn.Module):
             # θ_attack = θ + const
             # therefore,
             # dθ_attack/dθ = I + 0 (i.e., pass-through-estimator)
-            name: parameter + scale * gradient.detach()
+            name: (
+                parameter if gradient is None else parameter + scale * gradient.detach()
+            )
             for (name, parameter), gradient in zip(parameters.items(), gradients)
         }
 

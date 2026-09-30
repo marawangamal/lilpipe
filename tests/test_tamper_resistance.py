@@ -1047,6 +1047,7 @@ def test_gd_sam_loss_uses_small_forget_perturbation(gd_sam_training_module) -> N
         def __init__(self):
             super().__init__()
             self.weight = torch.nn.Parameter(torch.tensor(2.0))
+            self.unused_weight = torch.nn.Parameter(torch.tensor(3.0))
 
         def forward(self, input_ids, attention_mask, labels):
             assert torch.equal(input_ids, labels)
@@ -1074,6 +1075,7 @@ def test_gd_sam_loss_uses_small_forget_perturbation(gd_sam_training_module) -> N
     assert loss.item() == pytest.approx(-3 * (2 - 0.01) + 8 * 2)
     loss.backward()
     assert model.weight.grad.item() == pytest.approx(-3 + 8)
+    assert model.unused_weight.grad is None
 
 
 def test_gd_sam_peft_gradient_checkpointing(gd_sam_training_module) -> None:
