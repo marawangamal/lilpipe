@@ -83,6 +83,27 @@ class TARTrainer(AxolotlTrainer):
 class GradDiffTrainer(TARTrainer):
     """Apply SAM to gradient-difference unlearning's forget objective."""
 
+    def __init__(
+        self,
+        *args,
+        rho=0.01,
+        retain_coeff=1,
+        forget_coeff=1,
+        attack_type="sam",
+        attack_kwargs=None,
+        **kwargs,
+    ):
+        super().__init__(
+            *args,
+            rho=rho,
+            retain_coeff=retain_coeff,
+            forget_coeff=forget_coeff,
+            attack_type=attack_type,
+            attack_kwargs=attack_kwargs,
+            **kwargs,
+        )
+        pass
+
     def _get_train_sampler(self, train_dataset=None):
         dataset = self.train_dataset if train_dataset is None else train_dataset
         return MixedSourceSampler(
