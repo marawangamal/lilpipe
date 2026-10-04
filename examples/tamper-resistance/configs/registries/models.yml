@@ -240,3 +240,27 @@ models:
     base_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
     adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sam
     local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-gd-sam
+
+  z7b-wmdp-bio-lora-unlearn-cb-tar:
+    base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb/merged
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-tar
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-tar
+    producer:
+      id: train-z7b-wmdp-bio-lora-unlearn-cb-tar
+      script: scripts/slurm/mila/train.sbatch
+      args: [configs/unlearn/z7b/wmdp-bio-lora-tar.yml, --merge]
+      depends_on: [z7b-wmdp-bio-lora-unlearn-cb]
+      sbatch_args: *mila_zephyr_training
+
+  z7b-wmdp-bio-lora-unlearn-cb-tar-relearn:
+    base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-tar/merged
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-tar-relearn
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-tar-relearn
+    producer:
+      id: train-z7b-wmdp-bio-lora-unlearn-cb-tar-relearn
+      script: scripts/slurm/mila/relearn.sbatch
+      args:
+        - configs/unlearn/z7b/wmdp-bio-lora-tar.yml
+        - configs/relearn/z7b/wmdp-bio-lora-unlearn-cb-tar-relearn.yml
+      depends_on: [z7b-wmdp-bio-lora-unlearn-cb-tar]
+      sbatch_args: *mila_zephyr_training

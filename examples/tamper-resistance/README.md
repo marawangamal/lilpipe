@@ -7,6 +7,12 @@ directory (`examples/tamper-resistance`).
 The bundled CB configuration is a behavioral reproduction of the
 `examples/unlearn` circuit breaker run, not an identical implementation.
 
+The `z7b-cb-tar.yml` pipeline treats unlearning as a composable producer:
+merged Zephyr Circuit Breaker → rank-8 CB-TAR → forget-set relearning. This
+compute-reduced implementation samples one final eight-step SFT attack endpoint
+and differentiates TAR's first-order objective through LoRA parameters. It is
+not a full-parameter, multi-coordinate reproduction of the TAR paper.
+
 ## Setup
 
 Request access to

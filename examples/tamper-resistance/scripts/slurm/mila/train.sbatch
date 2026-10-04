@@ -9,6 +9,7 @@ export HF_DATASETS_OFFLINE=1
 export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv-$SLURM_JOB_ID"
 export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"
 export WANDB_DIR="$PWD/artifacts/mila/logs"
+export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
 
 export PATH="$HOME/.local/bin:$PATH"
 mkdir -p "$WANDB_DIR"
