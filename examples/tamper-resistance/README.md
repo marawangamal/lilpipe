@@ -31,7 +31,7 @@ GD+SAM uses its trainer default `rho=1e-2`; the rho suffix makes that fixed
 setting explicit in artifact names.
 
 ```bash
-lilpipe configs/experiments/z7b-lora-s125-hpo-unlearn-gd-sam.yml
+lilpipe configs/experiments/z7b-lora-s125-unlearn-gd-sam-hpo.yml
 ```
 
 After promoting the selected GD and GD+SAM unlearning models, sweep the

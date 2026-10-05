@@ -1,5 +1,5 @@
 base_model: HuggingFaceH4/zephyr-7b-beta
-trainer_cls: configs.training.trainers.gd_sam.GradDiffTrainer
+trainer_cls: configs.training.trainers.gd_sam.GDSAMTrainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
@@ -10,9 +10,9 @@ datasets:
     type: configs.training.data.wikitext2
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr5e-5-rho1e-2/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2-hpo-lr5e-5/prepared
 val_set_size: 0.0
-output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr5e-5-rho1e-2
+output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2-hpo-lr5e-5
 
 adapter: lora
 lora_r: 8
@@ -46,4 +46,4 @@ save_total_limit: 13
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr5e-5-rho1e-2
+wandb_name: z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2-hpo-lr5e-5

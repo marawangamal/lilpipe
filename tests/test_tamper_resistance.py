@@ -1421,11 +1421,11 @@ def test_peft_disabled_adapter_recovers_initial_base_output() -> None:
     torch.testing.assert_close(reference, original)
 
 
-def test_z7b_lora_s125_unlearning_sweeps_lr_at_default_rho(
+def test_z7b_lora_s125_gd_sam_unlearning_sweeps_lr_for_each_rho(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load("configs/experiments/z7b-lora-s125-hpo-unlearn-gd-sam.yml")
+    pipeline = lilpipe.load("configs/experiments/z7b-lora-s125-unlearn-gd-sam-hpo.yml")
     plan = pipeline.plan()
     learning_rates = {
         "2p5e-6": 2.5e-6,
@@ -1436,27 +1436,33 @@ def test_z7b_lora_s125_unlearning_sweeps_lr_at_default_rho(
         "1e-4": 1e-4,
     }
 
-    assert len(pipeline.selected_models) == 12
-    assert len(plan.stages) == 36
-    for learning_rate_slug, learning_rate in learning_rates.items():
-        for method in ("gd", "gd-sam"):
-            rho_suffix = "-rho1e-2" if method == "gd-sam" else ""
+    trainers = {
+        "1e-3": "GDSAMRho1eMinus3Trainer",
+        "1e-2": "GDSAMTrainer",
+        "1e-1": "GDSAMRho1eMinus1Trainer",
+    }
+
+    assert len(pipeline.selected_models) == 18
+    assert len(plan.stages) == 54
+    for rho, trainer in trainers.items():
+        for learning_rate_slug, learning_rate in learning_rates.items():
             model_id = (
-                f"z7b-wmdp-bio-lora-s125-unlearn-{method}-hpo-"
-                f"lr{learning_rate_slug}{rho_suffix}"
+                f"z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho{rho}-hpo-"
+                f"lr{learning_rate_slug}"
             )
             config = yaml.safe_load(
                 (
                     EXAMPLE
                     / "configs/unlearn/z7b/hpo"
                     / (
-                        f"wmdp-bio-lora-s125-unlearn-{method}-"
-                        f"lr{learning_rate_slug}{rho_suffix}.yml"
+                        "wmdp-bio-lora-s125-unlearn-gd-sam-"
+                        f"rho{rho}-lr{learning_rate_slug}.yml"
                     )
                 ).read_text()
             )
 
             assert model_id in pipeline.selected_models
+            assert config["trainer_cls"].endswith(trainer)
             assert float(config["learning_rate"]) == learning_rate
             assert "rho" not in config
             assert config["max_steps"] == 125
@@ -1504,50 +1510,6 @@ def test_z7b_lora_s125_relearning_sweep_uses_promoted_models(
             assert config["save_steps"] == 10
             assert config["save_total_limit"] == 13
         assert config["output_dir"].endswith(model_id)
-
-
-def test_z7b_lora_s125_rho_comparison_uses_selected_learning_rates(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load("configs/experiments/z7b-lora-s125-rho-comparison.yml")
-    plan = pipeline.plan()
-
-    assert len(pipeline.selected_models) == 4
-    assert len(plan.stages) == 12
-    for rho, trainer in (
-        ("1e-3", "GDSAMRho1eMinus3Trainer"),
-        ("1e-1", "GDSAMRho1eMinus1Trainer"),
-    ):
-        unlearn_id = "z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-" f"lr7p5e-5-rho{rho}"
-        relearn_id = f"{unlearn_id}-relearn-hpo-lr1e-4"
-        unlearn = yaml.safe_load(
-            (
-                EXAMPLE
-                / "configs/unlearn/z7b/hpo"
-                / f"wmdp-bio-lora-s125-unlearn-gd-sam-lr7p5e-5-rho{rho}.yml"
-            ).read_text()
-        )
-        relearn = yaml.safe_load(
-            (
-                EXAMPLE
-                / "configs/relearn/z7b/hpo"
-                / (
-                    "wmdp-bio-lora-s125-unlearn-gd-sam-"
-                    f"lr7p5e-5-rho{rho}-relearn-lr1e-4.yml"
-                )
-            ).read_text()
-        )
-
-        assert unlearn_id in pipeline.selected_models
-        assert relearn_id in pipeline.selected_models
-        assert unlearn["trainer_cls"].endswith(trainer)
-        assert float(unlearn["learning_rate"]) == 7.5e-5
-        assert float(relearn["learning_rate"]) == 1e-4
-        assert relearn["base_model"].endswith(f"{unlearn_id}/merged")
-        for config in (unlearn, relearn):
-            assert config["save_steps"] == 10
-            assert config["save_total_limit"] == 13
 
 
 def test_z7b_lora_s125_canonical_pipeline_uses_selected_sweeps(
