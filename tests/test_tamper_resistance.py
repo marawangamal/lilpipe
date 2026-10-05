@@ -1881,8 +1881,9 @@ def test_z7b_lora_s125_unlearning_sweeps_paper_hyperparameters(
             assert model_id in pipeline.selected_models
             assert float(config["learning_rate"]) == float(learning_rate)
             assert config["max_steps"] == 125
-            assert config["save_steps"] == 125
-            assert config["save_total_limit"] == 1
+            assert config["save_strategy"] == "no"
+            assert "save_steps" not in config
+            assert "save_total_limit" not in config
             assert (None if config.get("rho") is None else float(config["rho"])) == (
                 None if rho is None else float(rho)
             )
@@ -1923,8 +1924,9 @@ def test_z7b_lora_s125_relearning_sweep_uses_promoted_models(
             assert config["base_model"] == promoted
             assert float(config["learning_rate"]) == float(learning_rate)
             assert config["max_steps"] == 125
-            assert config["save_steps"] == 125
-            assert config["save_total_limit"] == 1
+            assert config["save_strategy"] == "no"
+            assert "save_steps" not in config
+            assert "save_total_limit" not in config
             assert config["output_dir"].endswith(model_id)
 
 
@@ -1957,10 +1959,14 @@ def test_z7b_lora_s125_canonical_pipeline_uses_selected_sweeps(
 
         assert float(unlearn["learning_rate"]) == 7.5e-5
         assert (None if rho is None else float(unlearn["rho"])) == rho
-        assert unlearn["max_steps"] == unlearn["save_steps"] == 125
+        assert unlearn["max_steps"] == 125
+        assert unlearn["save_steps"] == 10
+        assert unlearn["save_total_limit"] == 13
         assert unlearn["output_dir"].endswith(unlearn_id)
         assert float(relearn["learning_rate"]) == 1e-4
-        assert relearn["max_steps"] == relearn["save_steps"] == 125
+        assert relearn["max_steps"] == 125
+        assert relearn["save_steps"] == 10
+        assert relearn["save_total_limit"] == 13
         assert relearn["base_model"].endswith(f"{unlearn_id}/merged")
         assert relearn["output_dir"].endswith(relearn_id)
 
