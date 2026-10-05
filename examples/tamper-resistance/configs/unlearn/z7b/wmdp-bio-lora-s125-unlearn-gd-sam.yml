@@ -1,6 +1,5 @@
 base_model: HuggingFaceH4/zephyr-7b-beta
 trainer_cls: configs.training.trainers.gd_sam.GradDiffTrainer
-rho: 1e-3
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train

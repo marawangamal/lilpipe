@@ -32,7 +32,9 @@ tf32: true
 gradient_checkpointing: true
 seed: 42
 eval_strategy: "no"
-save_strategy: "no"
+save_strategy: steps
+save_steps: 10
+save_total_limit: 13
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance

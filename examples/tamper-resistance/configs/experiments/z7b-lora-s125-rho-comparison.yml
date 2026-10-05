@@ -1,0 +1,16 @@
+version: 1
+id: z7b-lora-s125-rho-comparison
+
+registries:
+  models: configs/registries/models-hpo.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr7p5e-5-rho1e-3
+  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr7p5e-5-rho1e-3-relearn-hpo-lr1e-4
+  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr7p5e-5-rho1e-1
+  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr7p5e-5-rho1e-1-relearn-hpo-lr1e-4
+
+evaluations:
+  - bio-mcqa-ckpts-max125-freq125-mila
+  - mmlu-no-bio-ckpts-max125-freq125-mila

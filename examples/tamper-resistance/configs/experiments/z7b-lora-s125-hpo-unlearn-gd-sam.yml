@@ -7,29 +7,17 @@ registries:
 
 models:
   - z7b-wmdp-bio-lora-s125-unlearn-gd-hpo-lr2p5e-6
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr2p5e-6-rho1e-3
   - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr2p5e-6-rho1e-2
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr2p5e-6-rho1e-1
   - z7b-wmdp-bio-lora-s125-unlearn-gd-hpo-lr5e-6
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr5e-6-rho1e-3
   - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr5e-6-rho1e-2
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr5e-6-rho1e-1
   - z7b-wmdp-bio-lora-s125-unlearn-gd-hpo-lr1e-5
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr1e-5-rho1e-3
   - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr1e-5-rho1e-2
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr1e-5-rho1e-1
   - z7b-wmdp-bio-lora-s125-unlearn-gd-hpo-lr5e-5
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr5e-5-rho1e-3
   - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr5e-5-rho1e-2
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr5e-5-rho1e-1
   - z7b-wmdp-bio-lora-s125-unlearn-gd-hpo-lr7p5e-5
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr7p5e-5-rho1e-3
   - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr7p5e-5-rho1e-2
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr7p5e-5-rho1e-1
   - z7b-wmdp-bio-lora-s125-unlearn-gd-hpo-lr1e-4
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr1e-4-rho1e-3
   - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr1e-4-rho1e-2
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-hpo-lr1e-4-rho1e-1
 
 evaluations:
   - bio-mcqa-ckpts-max125-freq125-mila

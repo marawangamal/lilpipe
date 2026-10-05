@@ -1,6 +1,5 @@
 base_model: HuggingFaceH4/zephyr-7b-beta
-trainer_cls: configs.training.trainers.gd_sam.GradDiffTrainer
-rho: 1e-3
+trainer_cls: configs.training.trainers.gd_sam.GDSAMRho1eMinus3Trainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
@@ -41,7 +40,9 @@ tf32: true
 gradient_checkpointing: true
 seed: 42
 eval_strategy: "no"
-save_strategy: "no"
+save_strategy: steps
+save_steps: 10
+save_total_limit: 13
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance

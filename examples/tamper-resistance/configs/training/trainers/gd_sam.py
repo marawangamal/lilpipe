@@ -32,10 +32,11 @@ class SAMAttack(torch.nn.Module):
 class GDSAMTrainer(MAMULTrainer):
     """Apply a small SAM perturbation to gradient-difference unlearning."""
 
+    rho = 0.01
+
     def __init__(
         self,
         *args,
-        rho=0.01,
         retain_coeff=1.0,
         forget_coeff=1.0,
         attack_type="sam",
@@ -47,7 +48,7 @@ class GDSAMTrainer(MAMULTrainer):
         super().__init__(
             *args, retain_coeff=retain_coeff, forget_coeff=forget_coeff, **kwargs
         )
-        self.attack = SAMAttack(**{"rho": rho, **(attack_kwargs or {})})
+        self.attack = SAMAttack(**{**(attack_kwargs or {}), "rho": self.rho})
 
     def _get_train_sampler(self, train_dataset=None):
         dataset = self.train_dataset if train_dataset is None else train_dataset
@@ -82,6 +83,18 @@ class GDSAMTrainer(MAMULTrainer):
     def sample_attack(self, model, parameters, inputs, **kwargs):
         loss = self.compute_forget_loss(model, inputs, **kwargs)
         return self.attack(parameters, loss)
+
+
+class GDSAMRho1eMinus3Trainer(GDSAMTrainer):
+    """GD+SAM with rho fixed to 1e-3."""
+
+    rho = 1e-3
+
+
+class GDSAMRho1eMinus1Trainer(GDSAMTrainer):
+    """GD+SAM with rho fixed to 1e-1."""
+
+    rho = 1e-1
 
 
 # Compatibility alias for existing config class paths.
