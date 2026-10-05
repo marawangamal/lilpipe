@@ -113,6 +113,24 @@ artifacts/mila/models/z7b-wmdp-bio-lora-unlearn-cb-hpo-opt
 Each path must contain its method's promoted merged model. Lilpipe does not
 create or validate these directories.
 
+### Zephyr-7B matched 125-step GD and GD+SAM
+
+The matched LoRA study runs 125 unlearning steps followed by 125 relearning
+steps. Sweep configs live directly in `configs/unlearn/z7b/hpo` and
+`configs/relearn/z7b/hpo`; their filenames carry the `lora-s125` identity.
+Run the unlearning sweep, relearning sweep, or selected canonical pipeline with:
+
+```bash
+lilpipe configs/experiments/z7b-lora-s125-hpo-unlearn-gd-sam.yml
+lilpipe configs/experiments/z7b-lora-s125-hpo-relearn-gd-sam.yml
+lilpipe configs/experiments/z7b-lora-s125.yml
+```
+
+The canonical unlearning runs use `7.5e-5`; GD+SAM additionally uses
+`rho=1e-3`. Their checkpoint-125 WMDP-Bio/MMLU-no-bio scores are 23.96%/44.38%
+for GD and 23.85%/40.71% for GD+SAM. Both canonical relearning runs use
+`1e-4`, reaching 55.88%/58.44% from GD and 56.57%/58.29% from GD+SAM.
+
 ### Zephyr-7B LoRA canonical configuration
 
 | Stage   | Method   | LR     | Max steps | Checkpoints |
