@@ -34,6 +34,16 @@ lilpipe configs/experiments/z7b-lora-s125-unlearn-gd-hpo.yml
 lilpipe configs/experiments/z7b-lora-s125-unlearn-gd-sam-hpo.yml
 ```
 
+The Tamia full-finetuning GD study uses the paper's WMDP learning-rate range as
+the same four-point grid for unlearning and relearning:
+`2.5e-6, 5e-6, 7.5e-6, 1e-5`.
+
+```bash
+lilpipe configs/experiments/z7b-fft-s125-unlearn-gd-hpo.yml
+# Promote the selected unlearned model before running:
+lilpipe configs/experiments/z7b-fft-s125-relearn-gd-hpo.yml
+```
+
 After promoting the selected unlearning models, run the corresponding
 relearning learning-rate sweeps:
 
@@ -48,9 +58,10 @@ Run the selected canonical unlearning and relearning configurations with:
 lilpipe configs/experiments/z7b-lora-s125.yml
 ```
 
-All runs save checkpoints every 10 steps plus step 125. Sweep manifests
-evaluate the final checkpoint; the canonical manifest evaluates the full
-trajectory.
+LoRA runs save checkpoints every 10 steps plus step 125. Full-finetuning
+sweeps retain only step 125 to avoid redundant full-model checkpoints. Sweep
+manifests evaluate the final checkpoint; the canonical manifest evaluates the
+full trajectory.
 
 Retired experiment artifacts are kept under
 `artifacts/archive/non-s125-20261005/`.

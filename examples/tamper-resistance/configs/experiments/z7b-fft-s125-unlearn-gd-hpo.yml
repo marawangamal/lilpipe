@@ -1,0 +1,16 @@
+version: 1
+id: z7b-wmdp-bio-fft-s125-unlearn-gd-hpo
+
+registries:
+  models: configs/registries/models-hpo.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - z7b-wmdp-bio-fft-s125-unlearn-gd-hpo-lr2p5e-6
+  - z7b-wmdp-bio-fft-s125-unlearn-gd-hpo-lr5e-6
+  - z7b-wmdp-bio-fft-s125-unlearn-gd-hpo-lr7p5e-6
+  - z7b-wmdp-bio-fft-s125-unlearn-gd-hpo-lr1e-5
+
+evaluations:
+  - bio-mcqa-ckpts-max125-freq125-tamia
+  - mmlu-no-bio-ckpts-max125-freq125-tamia

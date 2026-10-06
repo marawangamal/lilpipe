@@ -1500,6 +1500,50 @@ def test_z7b_lora_s125_gd_unlearning_sweep_uses_selected_learning_rates(
         assert config["output_dir"].endswith(model_id)
 
 
+def test_z7b_fft_s125_gd_sweeps_share_paper_learning_rate_grid(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    learning_rates = {
+        "2p5e-6": 2.5e-6,
+        "5e-6": 5e-6,
+        "7p5e-6": 7.5e-6,
+        "1e-5": 1e-5,
+    }
+
+    for stage in ("unlearn", "relearn"):
+        pipeline = lilpipe.load(f"configs/experiments/z7b-fft-s125-{stage}-gd-hpo.yml")
+        plan = pipeline.plan()
+
+        assert len(pipeline.selected_models) == 4
+        assert len(plan.stages) == 12
+        for learning_rate_slug, learning_rate in learning_rates.items():
+            relearn = "-relearn" if stage == "relearn" else ""
+            model_id = (
+                f"z7b-wmdp-bio-fft-s125-unlearn-gd{relearn}-hpo-"
+                f"lr{learning_rate_slug}"
+            )
+            config_path = (
+                EXAMPLE
+                / f"configs/{stage}/z7b/hpo"
+                / (
+                    f"wmdp-bio-fft-s125-unlearn-gd{relearn}-"
+                    f"lr{learning_rate_slug}.yml"
+                )
+            )
+            config = yaml.safe_load(config_path.read_text())
+
+            assert model_id in pipeline.selected_models
+            assert "adapter" not in config
+            assert float(config["learning_rate"]) == learning_rate
+            assert config["max_steps"] == 125
+            assert config["save_steps"] == 125
+            assert config["save_total_limit"] == 1
+            assert config["fsdp_version"] == 2
+            assert config["output_dir"].startswith("artifacts/tamia/")
+            assert config["output_dir"].endswith(model_id)
+
+
 def test_z7b_lora_s125_gd_relearning_sweep_uses_promoted_model(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
