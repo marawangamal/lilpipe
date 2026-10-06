@@ -1,9 +1,10 @@
 # Tamper-resistance experiments
 
 The active experiment family is the matched Zephyr-7B LoRA `s125` study: 125
-unlearning steps followed by 125 relearning steps for GD and GD+SAM. Run all
-commands from `examples/tamper-resistance`, because lilpipe resolves paths from
-the current working directory.
+unlearning steps followed by 125 relearning steps for GD and GD+SAM at
+`rho={1e-3, 1e-2, 1e-1}`. Run all commands from
+`examples/tamper-resistance`, because lilpipe resolves paths from the current
+working directory.
 
 ## Setup
 
@@ -26,19 +27,19 @@ uv sync --group eval
 
 ## Run
 
-The unlearning sweep compares GD and GD+SAM across the same learning rates.
-GD+SAM uses its trainer default `rho=1e-2`; the rho suffix makes that fixed
-setting explicit in artifact names.
+Run the GD and GD+SAM unlearning learning-rate sweeps separately:
 
 ```bash
+lilpipe configs/experiments/z7b-lora-s125-unlearn-gd-hpo.yml
 lilpipe configs/experiments/z7b-lora-s125-unlearn-gd-sam-hpo.yml
 ```
 
-After promoting the selected GD and GD+SAM unlearning models, sweep the
-relearning learning rate:
+After promoting the selected unlearning models, run the corresponding
+relearning learning-rate sweeps:
 
 ```bash
-lilpipe configs/experiments/z7b-lora-s125-hpo-relearn-gd-sam.yml
+lilpipe configs/experiments/z7b-lora-s125-relearn-gd-hpo.yml
+lilpipe configs/experiments/z7b-lora-s125-relearn-gd-sam-hpo.yml
 ```
 
 Run the selected canonical unlearning and relearning configurations with:
@@ -47,8 +48,9 @@ Run the selected canonical unlearning and relearning configurations with:
 lilpipe configs/experiments/z7b-lora-s125.yml
 ```
 
-HPO runs save only their final adapters. Canonical runs save checkpoints every
-10 steps plus step 125 for trajectory evaluation.
+All runs save checkpoints every 10 steps plus step 125. Sweep manifests
+evaluate the final checkpoint; the canonical manifest evaluates the full
+trajectory.
 
 Retired experiment artifacts are kept under
 `artifacts/archive/non-s125-20261005/`.

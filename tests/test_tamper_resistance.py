@@ -1472,43 +1472,132 @@ def test_z7b_lora_s125_gd_sam_unlearning_sweeps_lr_for_each_rho(
             assert config["output_dir"].endswith(model_id)
 
 
-def test_z7b_lora_s125_relearning_sweep_uses_promoted_models(
+def test_z7b_lora_s125_gd_unlearning_sweep_uses_selected_learning_rates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load("configs/experiments/z7b-lora-s125-hpo-relearn-gd-sam.yml")
+    pipeline = lilpipe.load("configs/experiments/z7b-lora-s125-unlearn-gd-hpo.yml")
+    plan = pipeline.plan()
+    learning_rates = ("2p5e-6", "5e-6", "1e-5", "5e-5", "7p5e-5", "1e-4")
+
+    assert len(pipeline.selected_models) == 6
+    assert len(plan.stages) == 18
+    for learning_rate in learning_rates:
+        model_id = f"z7b-wmdp-bio-lora-s125-unlearn-gd-hpo-lr{learning_rate}"
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/unlearn/z7b/hpo"
+                / f"wmdp-bio-lora-s125-unlearn-gd-lr{learning_rate}.yml"
+            ).read_text()
+        )
+
+        assert model_id in pipeline.selected_models
+        assert config["max_steps"] == 125
+        assert config["save_strategy"] == "steps"
+        assert config["save_steps"] == 10
+        assert config["save_total_limit"] == 13
+        assert config["output_dir"].endswith(model_id)
+
+
+def test_z7b_lora_s125_gd_relearning_sweep_uses_promoted_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/z7b-lora-s125-relearn-gd-hpo.yml")
+    plan = pipeline.plan()
+    learning_rates = ("1e-6", "3e-6", "1e-5", "3e-5", "1e-4")
+    promoted = "artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd/merged"
+
+    assert len(pipeline.selected_models) == 5
+    assert len(plan.stages) == 15
+    for learning_rate in learning_rates:
+        model_id = "z7b-wmdp-bio-lora-s125-unlearn-gd-relearn-hpo-" f"lr{learning_rate}"
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/relearn/z7b/hpo"
+                / ("wmdp-bio-lora-s125-unlearn-gd-relearn-" f"lr{learning_rate}.yml")
+            ).read_text()
+        )
+
+        assert model_id in pipeline.selected_models
+        assert config["base_model"] == promoted
+        assert float(config["learning_rate"]) == float(learning_rate)
+        assert config["max_steps"] == 125
+        assert config["save_strategy"] == "steps"
+        assert config["save_steps"] == 10
+        assert config["save_total_limit"] == 13
+        assert config["output_dir"].endswith(model_id)
+
+
+def test_z7b_lora_s125_rho_relearning_sweep_uses_promoted_models(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/z7b-lora-s125-relearn-gd-sam-hpo.yml")
     plan = pipeline.plan()
     learning_rates = ("1e-6", "3e-6", "1e-5", "3e-5", "1e-4")
 
-    assert len(pipeline.selected_models) == 10
-    assert len(plan.stages) == 30
-    for method in ("gd", "gd-sam"):
-        promoted = (
-            f"artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-{method}/merged"
+    assert len(pipeline.selected_models) == 15
+    assert len(plan.stages) == 48
+    for rho in ("1e-3", "1e-2", "1e-1"):
+        unlearn_id = f"z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho{rho}"
+        unlearn = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/unlearn/z7b"
+                / f"wmdp-bio-lora-s125-unlearn-gd-sam-rho{rho}.yml"
+            ).read_text()
         )
+        assert float(unlearn["learning_rate"]) == 7.5e-5
+        assert unlearn["output_dir"].endswith(unlearn_id)
+
         for learning_rate in learning_rates:
-            model_id = (
-                f"z7b-wmdp-bio-lora-s125-unlearn-{method}-relearn-hpo-"
-                f"lr{learning_rate}"
-            )
+            model_id = f"{unlearn_id}-relearn-hpo-lr{learning_rate}"
             config = yaml.safe_load(
                 (
                     EXAMPLE
                     / "configs/relearn/z7b/hpo"
                     / (
-                        f"wmdp-bio-lora-s125-unlearn-{method}-relearn-"
-                        f"lr{learning_rate}.yml"
+                        "wmdp-bio-lora-s125-unlearn-gd-sam-"
+                        f"rho{rho}-relearn-lr{learning_rate}.yml"
                     )
                 ).read_text()
             )
 
             assert model_id in pipeline.selected_models
-            assert config["base_model"] == promoted
+            assert config["base_model"].endswith(f"{unlearn_id}/merged")
             assert float(config["learning_rate"]) == float(learning_rate)
             assert config["max_steps"] == 125
-            assert config["save_strategy"] == "steps"
             assert config["save_steps"] == 10
             assert config["save_total_limit"] == 13
+            assert config["output_dir"].endswith(model_id)
+            stage = plan.stage_index[
+                f"train-lora-s125-unlearn-gd-sam-rho{rho}-relearn-hpo-"
+                f"lr{learning_rate}"
+            ]
+            assert stage.depends_on == (f"merge-lora-s125-unlearn-gd-sam-rho{rho}",)
+
+
+def test_z7b_lora_s125_rho_canonical_relearning_uses_selected_lr() -> None:
+    for rho in ("1e-3", "1e-2", "1e-1"):
+        model_id = f"z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho{rho}-relearn"
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/relearn/z7b"
+                / f"wmdp-bio-lora-s125-unlearn-gd-sam-rho{rho}-relearn.yml"
+            ).read_text()
+        )
+
+        assert float(config["learning_rate"]) == 1e-4
+        assert config["max_steps"] == 125
+        assert config["save_steps"] == 10
+        assert config["save_total_limit"] == 13
+        assert config["base_model"].endswith(
+            f"z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho{rho}/merged"
+        )
         assert config["output_dir"].endswith(model_id)
 
 
@@ -1519,9 +1608,10 @@ def test_z7b_lora_s125_canonical_pipeline_uses_selected_sweeps(
     pipeline = lilpipe.load("configs/experiments/z7b-lora-s125.yml")
     plan = pipeline.plan()
 
-    assert len(pipeline.selected_models) == 4
-    assert len(plan.stages) == 12
-    for method in ("gd", "gd-sam"):
+    assert len(pipeline.selected_models) == 8
+    assert len(plan.stages) == 24
+    methods = ("gd", "gd-sam-rho1e-3", "gd-sam-rho1e-2", "gd-sam-rho1e-1")
+    for method in methods:
         unlearn_id = f"z7b-wmdp-bio-lora-s125-unlearn-{method}"
         relearn_id = f"{unlearn_id}-relearn"
         unlearn = yaml.safe_load(
@@ -1540,8 +1630,8 @@ def test_z7b_lora_s125_canonical_pipeline_uses_selected_sweeps(
         )
 
         assert float(unlearn["learning_rate"]) == 7.5e-5
-        if method == "gd-sam":
-            assert unlearn["trainer_cls"].endswith("GradDiffTrainer")
+        if method != "gd":
+            assert "GDSAM" in unlearn["trainer_cls"]
             assert "rho" not in unlearn
         assert unlearn["max_steps"] == 125
         assert unlearn["save_steps"] == 10

@@ -1,13 +1,13 @@
-base_model: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam/merged
+base_model: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3/merged
 tokenizer_type: AutoTokenizer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
     type: configs.training.data.wmdp_zephyr
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn-hpo-lr3e-5/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3-relearn-hpo-lr1e-5/prepared
 val_set_size: 0.0
-output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn-hpo-lr3e-5
+output_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3-relearn-hpo-lr1e-5
 adapter: lora
 lora_r: 8
 lora_alpha: 8
@@ -21,7 +21,7 @@ train_on_inputs: true
 micro_batch_size: 1
 gradient_accumulation_steps: 4
 max_steps: 125
-learning_rate: 3e-5
+learning_rate: 1e-5
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
@@ -38,4 +38,4 @@ save_total_limit: 13
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn-hpo-lr3e-5
+wandb_name: z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3-relearn-hpo-lr1e-5

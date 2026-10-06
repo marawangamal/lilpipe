@@ -1,5 +1,5 @@
 version: 1
-id: z7b-lora-s125-hpo-relearn-gd-sam
+id: z7b-wmdp-bio-lora-s125-relearn-gd-hpo
 
 registries:
   models: configs/registries/models-hpo.yml
@@ -11,11 +11,6 @@ models:
   - z7b-wmdp-bio-lora-s125-unlearn-gd-relearn-hpo-lr1e-5
   - z7b-wmdp-bio-lora-s125-unlearn-gd-relearn-hpo-lr3e-5
   - z7b-wmdp-bio-lora-s125-unlearn-gd-relearn-hpo-lr1e-4
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn-hpo-lr1e-6
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn-hpo-lr3e-6
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn-hpo-lr1e-5
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn-hpo-lr3e-5
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn-hpo-lr1e-4
 
 evaluations:
   - bio-mcqa-ckpts-max125-freq125-mila

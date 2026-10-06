@@ -9,7 +9,7 @@ models:
       args:
       - configs/unlearn/z7b/wmdp-bio-lora-s125-unlearn-gd.yml
       - --merge
-      sbatch_args: &id001
+      sbatch_args: &canonical_sbatch
       - --gres=gpu:l40s:1
       - --cpus-per-task=8
       - --mem=64G
@@ -26,28 +26,76 @@ models:
       - configs/relearn/z7b/wmdp-bio-lora-s125-unlearn-gd-relearn.yml
       depends_on:
       - z7b-wmdp-bio-lora-s125-unlearn-gd
-      sbatch_args: *id001
-  z7b-wmdp-bio-lora-s125-unlearn-gd-sam:
+      sbatch_args: *canonical_sbatch
+  z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3:
     base_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
-    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam
-    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3
     producer:
-      id: train-z7b-wmdp-bio-lora-s125-unlearn-gd-sam
+      id: train-z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/unlearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam.yml
+      - configs/unlearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3.yml
       - --merge
-      sbatch_args: *id001
-  z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn:
-    base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam/merged
-    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn
-    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn
+      sbatch_args: *canonical_sbatch
+  z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3-relearn:
+    base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3/merged
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3-relearn
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3-relearn
     producer:
-      id: train-z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn
+      id: train-z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3-relearn
       script: scripts/slurm/mila/relearn.sbatch
       args:
-      - configs/unlearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam.yml
-      - configs/relearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam-relearn.yml
+      - configs/unlearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3.yml
+      - configs/relearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3-relearn.yml
       depends_on:
-      - z7b-wmdp-bio-lora-s125-unlearn-gd-sam
-      sbatch_args: *id001
+      - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3
+      sbatch_args: *canonical_sbatch
+  z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2:
+    base_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2
+    producer:
+      id: train-z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2
+      script: scripts/slurm/mila/train.sbatch
+      args:
+      - configs/unlearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2.yml
+      - --merge
+      sbatch_args: *canonical_sbatch
+  z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2-relearn:
+    base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2/merged
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2-relearn
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2-relearn
+    producer:
+      id: train-z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2-relearn
+      script: scripts/slurm/mila/relearn.sbatch
+      args:
+      - configs/unlearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2.yml
+      - configs/relearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2-relearn.yml
+      depends_on:
+      - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2
+      sbatch_args: *canonical_sbatch
+  z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1:
+    base_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1
+    producer:
+      id: train-z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1
+      script: scripts/slurm/mila/train.sbatch
+      args:
+      - configs/unlearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1.yml
+      - --merge
+      sbatch_args: *canonical_sbatch
+  z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1-relearn:
+    base_model_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1/merged
+    adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1-relearn
+    local_dir: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1-relearn
+    producer:
+      id: train-z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1-relearn
+      script: scripts/slurm/mila/relearn.sbatch
+      args:
+      - configs/unlearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1.yml
+      - configs/relearn/z7b/wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1-relearn.yml
+      depends_on:
+      - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1
+      sbatch_args: *canonical_sbatch

@@ -8,8 +8,12 @@ registries:
 models:
   - z7b-wmdp-bio-lora-s125-unlearn-gd
   - z7b-wmdp-bio-lora-s125-unlearn-gd-relearn
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam
-  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-relearn
+  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3
+  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-3-relearn
+  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2
+  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-2-relearn
+  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1
+  - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1-relearn
 
 evaluations:
   - bio-mcqa-ckpts-max125-freq10-mila
