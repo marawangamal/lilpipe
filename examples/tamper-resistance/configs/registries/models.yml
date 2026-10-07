@@ -99,3 +99,27 @@ models:
       depends_on:
       - z7b-wmdp-bio-lora-s125-unlearn-gd-sam-rho1e-1
       sbatch_args: *canonical_sbatch
+  z7b-wmdp-bio-fft-s125-unlearn-gd:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-unlearn-gd
+    adapter_name_or_path: "-"
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-unlearn-gd
+    producer:
+      id: train-z7b-wmdp-bio-fft-s125-unlearn-gd
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/unlearn/z7b/wmdp-bio-fft-s125-unlearn-gd.yml
+      sbatch_args: &fft_canonical_sbatch
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3
+    adapter_name_or_path: "-"
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3
+    producer:
+      id: train-z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/unlearn/z7b/wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3.yml
+      sbatch_args: *fft_canonical_sbatch

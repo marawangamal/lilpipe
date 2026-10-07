@@ -1788,6 +1788,52 @@ def test_z7b_lora_s125_canonical_pipeline_uses_selected_sweeps(
         assert relearn_stage.depends_on == (unlearn_stage.id,)
 
 
+def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/z7b-fft-s125.yml")
+    plan = pipeline.plan()
+
+    assert len(pipeline.selected_models) == 2
+    assert len(plan.stages) == 6
+    methods = {
+        "gd": "configs.training.trainers.gd.GradDiffTrainer",
+        "gd-sam-rho1e-3": ("configs.training.trainers.gd_sam.GDSAMRho1eMinus3Trainer"),
+    }
+    for method, trainer_cls in methods.items():
+        model_id = f"z7b-wmdp-bio-fft-s125-unlearn-{method}"
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/unlearn/z7b"
+                / f"wmdp-bio-fft-s125-unlearn-{method}.yml"
+            ).read_text()
+        )
+
+        assert config["trainer_cls"] == trainer_cls
+        assert "rho" not in config
+        assert "adapter" not in config
+        assert float(config["learning_rate"]) == 2.5e-6
+        assert config["max_steps"] == 125
+        assert config["save_strategy"] == "steps"
+        assert config["save_steps"] == 10
+        assert config["save_total_limit"] == 13
+        assert config["output_dir"] == f"artifacts/tamia/models/{model_id}"
+
+    registry = yaml.safe_load((EXAMPLE / "configs/registries/evals.yml").read_text())[
+        "evaluations"
+    ]
+    for task in ("bio-mcqa", "mmlu-no-bio"):
+        evaluation = registry[f"{task}-ckpts-max125-freq10-tamia"]
+        assert evaluation["args"][-2:] == ["10", "125"]
+        assert "--array=1-13" in evaluation["sbatch_args"]
+        assert not any(
+            argument.startswith("--partition=")
+            for argument in evaluation["sbatch_args"]
+        )
+
+
 def test_relearning_formats_wmdp_document() -> None:
     pytest.importorskip("axolotl")
     strategy = load_script(

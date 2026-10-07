@@ -204,6 +204,31 @@ evaluations:
       - "125"
       - "125"
     sbatch_args: *tamia_final_evaluation_resources
+  mmlu-no-bio-ckpts-max125-freq10-tamia:
+    script: scripts/slurm/tamia/eval_mmlu_no_bio_ckpts.sbatch
+    args:
+      - "{model.id}"
+      - "{model.base_model_name_or_path}"
+      - "{model.adapter_name_or_path}"
+      - artifacts/tamia/evals
+      - "10"
+      - "125"
+    sbatch_args: &tamia_trajectory_evaluation_resources
+      - --array=1-13
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=00:30:00
+  bio-mcqa-ckpts-max125-freq10-tamia:
+    script: scripts/slurm/tamia/eval_wmdp_bio_mcqa_ckpts.sbatch
+    args:
+      - "{model.id}"
+      - "{model.base_model_name_or_path}"
+      - "{model.adapter_name_or_path}"
+      - artifacts/tamia/evals
+      - "10"
+      - "125"
+    sbatch_args: *tamia_trajectory_evaluation_resources
   mmlu-no-bio-ckpts-max125-freq125-mila:
     script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
     args:
