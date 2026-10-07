@@ -1594,6 +1594,51 @@ def test_z7b_fft_s125_gd_sam_sweep_crosses_rhos_and_learning_rates(
             assert config["output_dir"].endswith(model_id)
 
 
+def test_z7b_fft_s125_gd_sam_relearning_uses_promoted_rho_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load(
+        "configs/experiments/z7b-fft-s125-relearn-gd-sam-rho1e-3-hpo.yml"
+    )
+    plan = pipeline.plan()
+    learning_rates = {
+        "2p5e-6": 2.5e-6,
+        "5e-6": 5e-6,
+        "7p5e-6": 7.5e-6,
+        "1e-5": 1e-5,
+    }
+    promoted = "artifacts/tamia/models/z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3"
+
+    assert len(pipeline.selected_models) == 4
+    assert len(plan.stages) == 12
+    for learning_rate_slug, learning_rate in learning_rates.items():
+        model_id = (
+            "z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3-relearn-hpo-"
+            f"lr{learning_rate_slug}"
+        )
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/relearn/z7b/hpo"
+                / (
+                    "wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3-relearn-"
+                    f"lr{learning_rate_slug}.yml"
+                )
+            ).read_text()
+        )
+
+        assert model_id in pipeline.selected_models
+        assert config["base_model"] == promoted
+        assert "adapter" not in config
+        assert float(config["learning_rate"]) == learning_rate
+        assert config["max_steps"] == 125
+        assert config["save_steps"] == 125
+        assert config["save_total_limit"] == 1
+        assert config["fsdp_version"] == 2
+        assert config["output_dir"].endswith(model_id)
+
+
 def test_z7b_lora_s125_gd_relearning_sweep_uses_promoted_model(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

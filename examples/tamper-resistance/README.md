@@ -49,6 +49,8 @@ rates with `rho={1e-3, 1e-2, 1e-1}`:
 
 ```bash
 lilpipe configs/experiments/z7b-fft-s125-unlearn-gd-sam-hpo.yml
+# After promoting the selected rho and learning rate:
+lilpipe configs/experiments/z7b-fft-s125-relearn-gd-sam-rho1e-3-hpo.yml
 ```
 
 After promoting the selected unlearning models, run the corresponding
