@@ -44,6 +44,13 @@ lilpipe configs/experiments/z7b-fft-s125-unlearn-gd-hpo.yml
 lilpipe configs/experiments/z7b-fft-s125-relearn-gd-hpo.yml
 ```
 
+The matching full-finetuning GD+SAM unlearning sweep crosses the same learning
+rates with `rho={1e-3, 1e-2, 1e-1}`:
+
+```bash
+lilpipe configs/experiments/z7b-fft-s125-unlearn-gd-sam-hpo.yml
+```
+
 After promoting the selected unlearning models, run the corresponding
 relearning learning-rate sweeps:
 

@@ -1544,6 +1544,56 @@ def test_z7b_fft_s125_gd_sweeps_share_paper_learning_rate_grid(
             assert config["output_dir"].endswith(model_id)
 
 
+def test_z7b_fft_s125_gd_sam_sweep_crosses_rhos_and_learning_rates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/z7b-fft-s125-unlearn-gd-sam-hpo.yml")
+    plan = pipeline.plan()
+    learning_rates = {
+        "2p5e-6": 2.5e-6,
+        "5e-6": 5e-6,
+        "7p5e-6": 7.5e-6,
+        "1e-5": 1e-5,
+    }
+    trainers = {
+        "1e-3": "GDSAMRho1eMinus3Trainer",
+        "1e-2": "GDSAMTrainer",
+        "1e-1": "GDSAMRho1eMinus1Trainer",
+    }
+
+    assert len(pipeline.selected_models) == 12
+    assert len(plan.stages) == 36
+    for rho, trainer in trainers.items():
+        for learning_rate_slug, learning_rate in learning_rates.items():
+            model_id = (
+                f"z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho{rho}-hpo-"
+                f"lr{learning_rate_slug}"
+            )
+            config = yaml.safe_load(
+                (
+                    EXAMPLE
+                    / "configs/unlearn/z7b/hpo"
+                    / (
+                        f"wmdp-bio-fft-s125-unlearn-gd-sam-rho{rho}-"
+                        f"lr{learning_rate_slug}.yml"
+                    )
+                ).read_text()
+            )
+
+            assert model_id in pipeline.selected_models
+            assert config["trainer_cls"].endswith(trainer)
+            assert "rho" not in config
+            assert "adapter" not in config
+            assert float(config["learning_rate"]) == learning_rate
+            assert config["max_steps"] == 125
+            assert config["save_steps"] == 125
+            assert config["save_total_limit"] == 1
+            assert config["fsdp_version"] == 2
+            assert config["output_dir"].startswith("artifacts/tamia/")
+            assert config["output_dir"].endswith(model_id)
+
+
 def test_z7b_lora_s125_gd_relearning_sweep_uses_promoted_model(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
