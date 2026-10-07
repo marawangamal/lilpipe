@@ -1795,8 +1795,8 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
     pipeline = lilpipe.load("configs/experiments/z7b-fft-s125.yml")
     plan = pipeline.plan()
 
-    assert len(pipeline.selected_models) == 2
-    assert len(plan.stages) == 6
+    assert len(pipeline.selected_models) == 4
+    assert len(plan.stages) == 12
     methods = {
         "gd": "configs.training.trainers.gd.GradDiffTrainer",
         "gd-sam-rho1e-3": ("configs.training.trainers.gd_sam.GDSAMRho1eMinus3Trainer"),
@@ -1820,6 +1820,32 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
         assert config["save_steps"] == 10
         assert config["save_total_limit"] == 13
         assert config["output_dir"] == f"artifacts/tamia/models/{model_id}"
+
+    relearning_rates = {
+        "gd": 7.5e-6,
+        "gd-sam-rho1e-3": 1e-5,
+    }
+    for method, learning_rate in relearning_rates.items():
+        unlearn_id = f"z7b-wmdp-bio-fft-s125-unlearn-{method}"
+        model_id = f"{unlearn_id}-relearn"
+        config = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/relearn/z7b"
+                / f"wmdp-bio-fft-s125-unlearn-{method}-relearn.yml"
+            ).read_text()
+        )
+
+        assert config["base_model"] == f"artifacts/tamia/models/{unlearn_id}"
+        assert float(config["learning_rate"]) == learning_rate
+        assert config["max_steps"] == 125
+        assert config["save_strategy"] == "steps"
+        assert config["save_steps"] == 10
+        assert config["save_total_limit"] == 13
+        assert config["output_dir"] == f"artifacts/tamia/models/{model_id}"
+        assert plan.stage_index[f"train-{model_id}"].depends_on == (
+            f"train-{unlearn_id}",
+        )
 
     registry = yaml.safe_load((EXAMPLE / "configs/registries/evals.yml").read_text())[
         "evaluations"

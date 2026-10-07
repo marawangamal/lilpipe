@@ -123,3 +123,27 @@ models:
       args:
       - configs/unlearn/z7b/wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3.yml
       sbatch_args: *fft_canonical_sbatch
+  z7b-wmdp-bio-fft-s125-unlearn-gd-relearn:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-unlearn-gd-relearn
+    adapter_name_or_path: "-"
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-unlearn-gd-relearn
+    producer:
+      id: train-z7b-wmdp-bio-fft-s125-unlearn-gd-relearn
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/relearn/z7b/wmdp-bio-fft-s125-unlearn-gd-relearn.yml
+      depends_on:
+      - z7b-wmdp-bio-fft-s125-unlearn-gd
+      sbatch_args: *fft_canonical_sbatch
+  z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3-relearn:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3-relearn
+    adapter_name_or_path: "-"
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3-relearn
+    producer:
+      id: train-z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3-relearn
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/relearn/z7b/wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3-relearn.yml
+      depends_on:
+      - z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3
+      sbatch_args: *fft_canonical_sbatch
