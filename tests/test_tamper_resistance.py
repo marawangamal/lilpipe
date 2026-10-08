@@ -1798,7 +1798,7 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
     assert len(pipeline.selected_models) == 6
     assert len(plan.stages) == 18
     methods = {
-        "gd": ("configs.training.trainers.gd.GradDiffTrainer", 2.5e-6),
+        "gd": ("configs.training.trainers.gd.GradDiffTrainer", 5e-6),
         "gd-sam-rho1e-3": (
             "configs.training.trainers.gd_sam.GDSAMRho1eMinus3Trainer",
             2.5e-6,
@@ -1826,7 +1826,7 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
         assert config["output_dir"] == f"artifacts/tamia/models/{model_id}"
 
     relearning_rates = {
-        "gd": 7.5e-6,
+        "gd": 1e-5,
         "gd-sam-rho1e-3": 1e-5,
         "gd-sam-rho1e-2": 1e-5,
     }

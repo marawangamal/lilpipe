@@ -17,7 +17,7 @@ train_on_inputs: true
 micro_batch_size: 1
 gradient_accumulation_steps: 4
 max_steps: 125
-learning_rate: 7.5e-6
+learning_rate: 1e-5
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
