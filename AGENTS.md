@@ -17,7 +17,7 @@ Every relative path — pipeline, registries, sbatch scripts, results rows — r
 
 ```bash
 (cd examples/weight-steering && lilpipe configs/experiments/smollm3/main.yml --dry-run)
-(cd examples/tamper-resistance && lilpipe configs/experiments/di-6.9b.yml --dry-run)
+(cd examples/tamper-resistance && lilpipe configs/experiments/z7b-lora-s125.yml --dry-run)
 ```
 
 Pipeline manifests live at `configs/experiments/<name>.yml` inside each example (there is no top-level `pipeline.yml`).
@@ -30,6 +30,7 @@ Pipeline manifests live at `configs/experiments/<name>.yml` inside each example 
 - Formatting: `python -m black src tests examples` (line-length 88, py312). CI fails on unformatted code.
 - CI order (`.github/workflows/ci.yml`): `black --check` → `pytest` → `python -m build` → clean-wheel install + `lilpipe --help` + example dry-run. Note: the CI dry-run still points at the stale `examples/weight-steering/configs/experiments/pipeline.yml`; the live manifest is `smollm3/main.yml`.
 - Cluster work uses cluv, configured under `[tool.cluv]` in the root `pyproject.toml` (results symlink `logs` → `$SCRATCH/logs/lilpipe`, offline compute nodes by default).
+- Known issue (Mila cluster): when `$SCRATCH` runs out of disk space, compute nodes fail to provision and any job placed on them dies ~1 s after start with `Reason=ReqNodeNotAvail`, exit code `0:53` (`RaisedSignal:53`), and no `.out` log is written. This looks like a transient node/pool failure but is actually the user's scratch quota; free scratch space before resubmitting.
 
 ## Domain Conventions
 

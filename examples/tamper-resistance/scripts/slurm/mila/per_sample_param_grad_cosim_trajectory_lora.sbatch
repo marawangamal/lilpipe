@@ -1,5 +1,10 @@
 #!/bin/bash
 #SBATCH --output=artifacts/mila/logs/per-sample-grad-cosim-%j.out
+#SBATCH --gres=gpu:rtx8000:1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --time=03:00:00
+#SBATCH --exclude=cn-c034,cn-l030,cn-l055
 set -euo pipefail
 
 export PATH="$HOME/.local/bin:$PATH"
@@ -34,7 +39,12 @@ for checkpoint_name in "${checkpoints[@]}"; do
     continue
   fi
 
-  python scripts/analysis/per_sample_param_grad_cosim_gen_results.py \
+  if [[ -f "$output_dir/$checkpoint_name.json" ]]; then
+    echo "skip $checkpoint_name: result already exists"
+    continue
+  fi
+
+  python scripts/analysis/per_sample_param_grad_cosim_gen_results_lora.py \
     --model_name_or_path "$base_model" \
     --adapter_name_or_path "$checkpoint" \
     --dataset cais/wmdp-bio-forget-corpus \
