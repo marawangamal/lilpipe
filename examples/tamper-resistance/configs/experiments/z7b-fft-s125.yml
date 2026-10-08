@@ -7,11 +7,8 @@ registries:
 
 models:
   - z7b-wmdp-bio-fft-s125-unlearn-gd
-  - z7b-wmdp-bio-fft-s125-unlearn-gd-relearn
   - z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3
-  - z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3-relearn
   - z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-2
-  - z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-2-relearn
 
 evaluations:
   - bio-mcqa-ckpts-max125-freq10-tamia

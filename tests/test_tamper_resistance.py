@@ -1795,8 +1795,8 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
     pipeline = lilpipe.load("configs/experiments/z7b-fft-s125.yml")
     plan = pipeline.plan()
 
-    assert len(pipeline.selected_models) == 6
-    assert len(plan.stages) == 18
+    assert len(pipeline.selected_models) == 3
+    assert len(plan.stages) == 9
     methods = {
         "gd": ("configs.training.trainers.gd.GradDiffTrainer", 5e-6),
         "gd-sam-rho1e-3": (
@@ -1825,12 +1825,29 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
         assert config["save_total_limit"] == 13
         assert config["output_dir"] == f"artifacts/tamia/models/{model_id}"
 
-    relearning_rates = {
-        "gd": 1e-5,
-        "gd-sam-rho1e-3": 1e-5,
-        "gd-sam-rho1e-2": 1e-5,
-    }
-    for method, learning_rate in relearning_rates.items():
+    registry = yaml.safe_load((EXAMPLE / "configs/registries/evals.yml").read_text())[
+        "evaluations"
+    ]
+    for task in ("bio-mcqa", "mmlu-no-bio"):
+        evaluation = registry[f"{task}-ckpts-max125-freq10-tamia"]
+        assert evaluation["args"][-2:] == ["10", "125"]
+        assert "--array=1-13" in evaluation["sbatch_args"]
+        assert not any(
+            argument.startswith("--partition=")
+            for argument in evaluation["sbatch_args"]
+        )
+
+
+def test_z7b_fft_canonical_relearning_uses_four_shared_batches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/z7b-fft-s125-relearn.yml")
+    plan = pipeline.plan()
+
+    assert len(pipeline.selected_models) == 2
+    assert len(plan.stages) == 8
+    for method in ("gd", "gd-sam-rho1e-2"):
         unlearn_id = f"z7b-wmdp-bio-fft-s125-unlearn-{method}"
         model_id = f"{unlearn_id}-relearn"
         config = yaml.safe_load(
@@ -1842,11 +1859,15 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
         )
 
         assert config["base_model"] == f"artifacts/tamia/models/{unlearn_id}"
-        assert float(config["learning_rate"]) == learning_rate
-        assert config["max_steps"] == 125
+        assert float(config["learning_rate"]) == 1e-5
+        assert config["micro_batch_size"] == 1
+        assert config["gradient_accumulation_steps"] == 4
+        assert config["seed"] == 42
+        assert config["max_steps"] == 4
+        assert config["warmup_steps"] == 0
         assert config["save_strategy"] == "steps"
-        assert config["save_steps"] == 10
-        assert config["save_total_limit"] == 13
+        assert config["save_steps"] == 1
+        assert config["save_total_limit"] == 4
         assert config["output_dir"] == f"artifacts/tamia/models/{model_id}"
         assert plan.stage_index[f"train-{model_id}"].depends_on == (
             f"train-{unlearn_id}",
@@ -1856,9 +1877,9 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
         "evaluations"
     ]
     for task in ("bio-mcqa", "mmlu-no-bio"):
-        evaluation = registry[f"{task}-ckpts-max125-freq10-tamia"]
-        assert evaluation["args"][-2:] == ["10", "125"]
-        assert "--array=1-13" in evaluation["sbatch_args"]
+        evaluation = registry[f"{task}-ckpts-max4-freq1-tamia"]
+        assert evaluation["args"][-2:] == ["1", "4"]
+        assert "--array=1-4" in evaluation["sbatch_args"]
         assert not any(
             argument.startswith("--partition=")
             for argument in evaluation["sbatch_args"]
