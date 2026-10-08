@@ -1795,13 +1795,17 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
     pipeline = lilpipe.load("configs/experiments/z7b-fft-s125.yml")
     plan = pipeline.plan()
 
-    assert len(pipeline.selected_models) == 4
-    assert len(plan.stages) == 12
+    assert len(pipeline.selected_models) == 6
+    assert len(plan.stages) == 18
     methods = {
-        "gd": "configs.training.trainers.gd.GradDiffTrainer",
-        "gd-sam-rho1e-3": ("configs.training.trainers.gd_sam.GDSAMRho1eMinus3Trainer"),
+        "gd": ("configs.training.trainers.gd.GradDiffTrainer", 2.5e-6),
+        "gd-sam-rho1e-3": (
+            "configs.training.trainers.gd_sam.GDSAMRho1eMinus3Trainer",
+            2.5e-6,
+        ),
+        "gd-sam-rho1e-2": ("configs.training.trainers.gd_sam.GDSAMTrainer", 5e-6),
     }
-    for method, trainer_cls in methods.items():
+    for method, (trainer_cls, learning_rate) in methods.items():
         model_id = f"z7b-wmdp-bio-fft-s125-unlearn-{method}"
         config = yaml.safe_load(
             (
@@ -1814,7 +1818,7 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
         assert config["trainer_cls"] == trainer_cls
         assert "rho" not in config
         assert "adapter" not in config
-        assert float(config["learning_rate"]) == 2.5e-6
+        assert float(config["learning_rate"]) == learning_rate
         assert config["max_steps"] == 125
         assert config["save_strategy"] == "steps"
         assert config["save_steps"] == 10
@@ -1824,6 +1828,7 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
     relearning_rates = {
         "gd": 7.5e-6,
         "gd-sam-rho1e-3": 1e-5,
+        "gd-sam-rho1e-2": 1e-5,
     }
     for method, learning_rate in relearning_rates.items():
         unlearn_id = f"z7b-wmdp-bio-fft-s125-unlearn-{method}"
