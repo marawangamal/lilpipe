@@ -242,3 +242,33 @@ def test_tamia_train_launchers_expose_refactored_python_packages() -> None:
     for name in ("train.sbatch", "train_model_parallel.sbatch"):
         script = (EXAMPLE / "scripts/slurm/tamia" / name).read_text()
         assert 'export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"' in script
+
+
+def test_authors_data_fallback_changes_only_unlearning_trainer() -> None:
+    root = EXAMPLE / "configs/stages/0_unlearn"
+    gd = yaml.safe_load(
+        (root / "z7b-wmdp-bio--unlearn-fft-gd-authors-data/selected.yml").read_text()
+    )
+    gd_sam = yaml.safe_load(
+        (
+            root / "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2-authors-data/selected.yml"
+        ).read_text()
+    )
+    assert {dataset["type"] for dataset in gd["datasets"]} == {"data.authors_documents"}
+    assert {dataset["type"] for dataset in gd_sam["datasets"]} == {
+        "data.authors_documents"
+    }
+    differing_keys = {
+        "trainer_cls",
+        "custom_trainer_args",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    }
+    assert {key: value for key, value in gd.items() if key not in differing_keys} == {
+        key: value for key, value in gd_sam.items() if key not in differing_keys
+    }
+    assert gd_sam["custom_trainer_args"] == {
+        **gd["custom_trainer_args"],
+        "rho": 1e-2,
+    }
