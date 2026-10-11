@@ -1,0 +1,13 @@
+version: 1
+id: optml-relearning-s125
+
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+
+models:
+  - OPTML-Group-GradDiff-WMDP-relearn-s125
+  - OPTML-Group-GradDiff-SAM-WMDP-relearn-s125
+
+evaluations:
+  - bio-standard-trajectory-max125-freq5-tamia

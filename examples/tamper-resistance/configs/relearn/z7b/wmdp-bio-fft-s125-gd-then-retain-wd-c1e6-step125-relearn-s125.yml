@@ -1,13 +1,13 @@
-base_model: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-gd-sam-v2-authors-model-parallel-single-process-v5-rho1e-2-lr3p28e-6
+base_model: artifacts/tamia/models/two-stage-weight-dist/gd-then-retain-wd-c1e6/checkpoint-125
 tokenizer_type: AutoTokenizer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
     type: configs.training.data.wmdp_zephyr
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio-fft-s125-authors-parity-gd-sam-relearn/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/two-stage-weight-dist-relearning/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-gd-sam-v2-authors-model-parallel-single-process-v5-rho1e-2-lr3p28e-6-relearn
+output_dir: artifacts/tamia/models/two-stage-weight-dist-relearning/gd-then-retain-wd-c1e6-step125
 
 sequence_len: 512
 sample_packing: false
@@ -15,8 +15,8 @@ pad_to_sequence_len: false
 remove_unused_columns: true
 train_on_inputs: true
 micro_batch_size: 1
-gradient_accumulation_steps: 1
-max_steps: 15
+gradient_accumulation_steps: 4
+max_steps: 125
 learning_rate: 1e-5
 optimizer: adamw_torch
 weight_decay: 0.0
@@ -25,7 +25,7 @@ warmup_steps: 0
 max_grad_norm: 1.0
 
 bf16: true
-tf32: false
+tf32: true
 gradient_checkpointing: false
 fsdp_version: 2
 fsdp_config:
@@ -35,13 +35,12 @@ fsdp_config:
   transformer_layer_cls_to_wrap: MistralDecoderLayer
   state_dict_type: FULL_STATE_DICT
   final_state_dict_type: FULL_STATE_DICT
-seed: 1
-data_seed: 42
+seed: 42
 eval_strategy: "no"
 save_strategy: steps
 save_steps: 5
-save_total_limit: 3
+save_total_limit: 25
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio-fft-s125-gd-sam-v2-authors-model-parallel-single-process-v5-rho1e-2-lr3p28e-6-relearn
+wandb_name: two-stage-weight-dist-relearning-gd-then-retain-wd-c1e6-step125

@@ -3,11 +3,11 @@ trainer_cls: configs.training.trainers.gd_sam.GDSAMRho1eMinus3Trainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
-    type: configs.training.data.wmdp_zephyr
+    type: configs.training.data.authors_documents
   - path: Salesforce/wikitext
     name: wikitext-2-raw-v1
     split: test
-    type: configs.training.data.wikitext2
+    type: configs.training.data.authors_documents
 shuffle_merged_datasets: false
 dataset_num_proc: 8
 dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3/prepared
@@ -19,10 +19,10 @@ sample_packing: false
 pad_to_sequence_len: false
 remove_unused_columns: false
 train_on_inputs: true
-micro_batch_size: 2
-gradient_accumulation_steps: 4
+micro_batch_size: 8
+gradient_accumulation_steps: 1
 max_steps: 125
-learning_rate: 2.5e-6
+learning_rate: 3.28e-6
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
@@ -30,17 +30,46 @@ warmup_steps: 12
 max_grad_norm: 1.0
 
 bf16: true
-tf32: true
+tf32: false
 gradient_checkpointing: false
-fsdp_version: 2
-fsdp_config:
-  activation_checkpointing: true
-  reshard_after_forward: true
-  auto_wrap_policy: TRANSFORMER_BASED_WRAP
-  transformer_layer_cls_to_wrap: MistralDecoderLayer
-  state_dict_type: FULL_STATE_DICT
-  final_state_dict_type: FULL_STATE_DICT
-seed: 42
+device_map:
+  model.embed_tokens: 0
+  model.layers.0: 0
+  model.layers.1: 0
+  model.layers.2: 0
+  model.layers.3: 0
+  model.layers.4: 0
+  model.layers.5: 0
+  model.layers.6: 0
+  model.layers.7: 0
+  model.layers.8: 1
+  model.layers.9: 1
+  model.layers.10: 1
+  model.layers.11: 1
+  model.layers.12: 1
+  model.layers.13: 1
+  model.layers.14: 1
+  model.layers.15: 1
+  model.layers.16: 2
+  model.layers.17: 2
+  model.layers.18: 2
+  model.layers.19: 2
+  model.layers.20: 2
+  model.layers.21: 2
+  model.layers.22: 2
+  model.layers.23: 2
+  model.layers.24: 3
+  model.layers.25: 3
+  model.layers.26: 3
+  model.layers.27: 3
+  model.layers.28: 3
+  model.layers.29: 3
+  model.layers.30: 3
+  model.layers.31: 3
+  model.norm: 3
+  lm_head: 3
+seed: 3
+data_seed: 3
 eval_strategy: "no"
 save_strategy: steps
 save_steps: 10

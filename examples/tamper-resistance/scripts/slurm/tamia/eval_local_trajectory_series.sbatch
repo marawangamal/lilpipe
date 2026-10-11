@@ -14,12 +14,17 @@ trained_model=${2:?missing trained model path}
 result_root=${3:?missing result root}
 task=${4:?missing task}
 output_name=${5:?missing output name}
+shift 5
+steps=("$@")
+if (( ${#steps[@]} == 0 )); then
+  steps=(5 10 15)
+fi
 
 module load httpproxy/1.0
 uv sync --frozen --group eval
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 
-for step in 5 10 15; do
+for step in "${steps[@]}"; do
   checkpoint="$trained_model/checkpoint-$step"
   if [[ ! -f "$checkpoint/config.json" ]]; then
     echo "Missing model checkpoint: $checkpoint" >&2

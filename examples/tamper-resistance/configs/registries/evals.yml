@@ -1,4 +1,86 @@
 evaluations:
+  bio-robust-local-trajectory-max16-freq4-tamia:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio_robust, wmdp-bio-robust, "4"]
+    sbatch_args: &fine_relearning_evaluation_resources
+      - --array=0-4
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=32
+      - --mem=128G
+      - --time=00:30:00
+  mmlu-no-bio-local-trajectory-max16-freq4-tamia:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, mmlu_no_bio, mmlu-no-bio, "4"]
+    sbatch_args: *fine_relearning_evaluation_resources
+  bio-standard-local-trajectory-max125-freq5-tamia:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio, wmdp-bio, "5"]
+    sbatch_args:
+      - --array=0-25
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=32
+      - --mem=128G
+      - --time=00:30:00
+  bio-standard-trajectory-max125-freq5-tamia:
+    script: scripts/slurm/tamia/eval_trajectory.sbatch
+    args: ["{model.id}", "{model.released_model_name_or_path}", "{model.released_model_revision}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio, wmdp-bio, "5"]
+    sbatch_args:
+      - --array=0-25
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=32
+      - --mem=128G
+      - --time=00:30:00
+  bio-standard-local-trajectory-max15-freq5-tamia:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio, wmdp-bio, "5"]
+    sbatch_args: &authors_parity_relearning_evaluation_resources
+      - --array=0-3
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=32
+      - --mem=128G
+      - --time=00:30:00
+  bio-robust-local-trajectory-max15-freq5-tamia:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio_robust, wmdp-bio-robust, "5"]
+    sbatch_args: *authors_parity_relearning_evaluation_resources
+  mmlu-no-bio-local-trajectory-max15-freq5-tamia:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, mmlu_no_bio, mmlu-no-bio, "5"]
+    sbatch_args: *authors_parity_relearning_evaluation_resources
+  bio-standard-local-trajectory-max4-tamia:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio, wmdp-bio]
+    sbatch_args: &local_relearning_evaluation_resources
+      - --array=0-4
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=32
+      - --mem=128G
+      - --time=00:30:00
+  bio-robust-local-trajectory-max4-tamia:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio_robust, wmdp-bio-robust]
+    sbatch_args: *local_relearning_evaluation_resources
+  mmlu-no-bio-local-trajectory-max4-tamia:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, mmlu_no_bio, mmlu-no-bio]
+    sbatch_args: *local_relearning_evaluation_resources
+  bio-standard-trajectory-max4-tamia:
+    script: scripts/slurm/tamia/eval_trajectory.sbatch
+    args: ["{model.id}", "{model.released_model_name_or_path}", "{model.released_model_revision}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio, wmdp-bio]
+    sbatch_args: &optml_relearning_evaluation_resources
+      - --array=0-4
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=32
+      - --mem=128G
+      - --time=00:30:00
+  bio-robust-trajectory-max4-tamia:
+    script: scripts/slurm/tamia/eval_trajectory.sbatch
+    args: ["{model.id}", "{model.released_model_name_or_path}", "{model.released_model_revision}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio_robust, wmdp-bio-robust]
+    sbatch_args: *optml_relearning_evaluation_resources
+  mmlu-no-bio-trajectory-max4-tamia:
+    script: scripts/slurm/tamia/eval_trajectory.sbatch
+    args: ["{model.id}", "{model.released_model_name_or_path}", "{model.released_model_revision}", "{model.base_model_name_or_path}", artifacts/tamia/evals, mmlu_no_bio, mmlu-no-bio]
+    sbatch_args: *optml_relearning_evaluation_resources
   mmlu-no-bio:
     script: scripts/slurm/mila/eval_mmlu_no_bio_single.sbatch
     args:

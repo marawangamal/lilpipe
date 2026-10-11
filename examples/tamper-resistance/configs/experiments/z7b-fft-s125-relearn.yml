@@ -10,5 +10,5 @@ models:
   - z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-2-relearn
 
 evaluations:
-  - bio-mcqa-ckpts-max4-freq1-tamia
-  - mmlu-no-bio-ckpts-max4-freq1-tamia
+  - bio-robust-local-trajectory-max16-freq4-tamia
+  - mmlu-no-bio-local-trajectory-max16-freq4-tamia

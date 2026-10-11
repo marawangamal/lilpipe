@@ -141,3 +141,18 @@ def test_tar_functional_sft_leaves_live_model_unchanged_and_backpropagates(
     trainer.compute_loss(model, inputs).backward()
     assert model.weight.grad is not None
     assert model.unused_weight.grad is None
+
+
+def test_tar_2p5e6_trainer_fixes_simulated_attack_learning_rate(
+    modules, monkeypatch
+) -> None:
+    _, tar = modules
+
+    def init(trainer, *args, **kwargs):
+        trainer.model = None
+
+    monkeypatch.setattr(tar.MAMULTrainer, "__init__", init)
+    trainer = tar.TAR2p5e6Trainer(inner_learning_rate=1.0)
+
+    assert trainer.attack.steps == 8
+    assert trainer.attack.learning_rate == pytest.approx(2.5e-6)

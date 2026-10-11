@@ -1,4 +1,31 @@
 models:
+  z7b-wmdp-bio-fft-s125-gd-weight-dist-c10:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-gd-weight-dist-c10
+    adapter_name_or_path: "-"
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-gd-weight-dist-c10
+    producer:
+      id: train-z7b-fft-s125-gd-weight-dist-c10
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/unlearn/z7b/wmdp-bio-fft-s125-gd-weight-dist-c10.yml
+      sbatch_args: &weight_dist_fft_sbatch
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  z7b-wmdp-bio-fft-s125-gd-weight-dist-c10-relearn-s125:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-gd-weight-dist-c10
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-gd-weight-dist-c10-relearn-s125
+    adapter_name_or_path: "-"
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio-fft-s125-gd-weight-dist-c10-relearn-s125
+    producer:
+      id: train-z7b-fft-s125-gd-weight-dist-c10-relearn-s125
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/relearn/z7b/wmdp-bio-fft-s125-gd-weight-dist-c10-relearn-s125.yml
+      depends_on:
+      - z7b-wmdp-bio-fft-s125-gd-weight-dist-c10
+      sbatch_args: *weight_dist_fft_sbatch
   z7b-wmdp-bio-lora-s125-unlearn-gd-hpo-lr2p5e-6:
     base_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
     adapter_name_or_path: artifacts/mila/models/z7b-wmdp-bio-lora-s125-unlearn-gd-hpo-lr2p5e-6

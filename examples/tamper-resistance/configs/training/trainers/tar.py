@@ -189,3 +189,11 @@ class TARK16Trainer(TARTrainer):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("inner_steps", 16)
         super().__init__(*args, **kwargs)
+
+
+class TAR2p5e6Trainer(TARTrainer):
+    """Eight-step TAR with the canonical 2.5e-6 simulated attack LR."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs["inner_learning_rate"] = 2.5e-6
+        super().__init__(*args, **kwargs)

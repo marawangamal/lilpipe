@@ -27,6 +27,13 @@ def analysis_module():
 
 
 @pytest.fixture(scope="module")
+def optml_comparison_module():
+    return load_script(
+        "scripts/analysis/compare_optml_relearning.py", "compare_optml_relearning"
+    )
+
+
+@pytest.fixture(scope="module")
 def orth_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("transformers")
@@ -116,21 +123,6 @@ def gd_sam_training_module():
     sys.path.insert(0, str(EXAMPLE))
     try:
         return load_script("configs/training/trainers/gd_sam.py", "gd_sam_training")
-    finally:
-        sys.path.remove(str(EXAMPLE))
-
-
-@pytest.fixture(scope="module")
-def gd_sam_v2_training_module():
-    pytest.importorskip("torch")
-    pytest.importorskip("axolotl")
-    import sys
-
-    sys.path.insert(0, str(EXAMPLE))
-    try:
-        return load_script(
-            "configs/training/trainers/gd_sam_v2.py", "gd_sam_v2_training"
-        )
     finally:
         sys.path.remove(str(EXAMPLE))
 
@@ -249,6 +241,22 @@ def test_training_script_is_minimal() -> None:
     assert "prepare_forget_corpus.py" not in script
 
 
+def test_tamia_training_keeps_wandb_state_on_scratch() -> None:
+    script = (EXAMPLE / "scripts/slurm/tamia/train.sbatch").read_text()
+
+    assert 'export WANDB_CACHE_DIR="$SCRATCH/.cache/wandb"' in script
+    assert 'export WANDB_DATA_DIR="$SCRATCH/.cache/wandb/staging"' in script
+    assert "export WANDB_MODE=offline" in script
+    assert 'mkdir -p "$WANDB_DIR" "$WANDB_CACHE_DIR" "$WANDB_DATA_DIR"' in script
+
+
+def test_tamia_training_optionally_merges_lora() -> None:
+    script = (EXAMPLE / "scripts/slurm/tamia/train.sbatch").read_text()
+
+    assert 'if [[ ${2:-} == "--merge" ]]; then' in script
+    assert 'axolotl merge-lora "$config"' in script
+
+
 @pytest.mark.parametrize("cluster", ["mila", "tamia"])
 def test_slurm_templates_use_hugging_face_cache_offline(cluster: str) -> None:
     script = (ROOT / f"slurm/template_{cluster}.sbatch").read_text()
@@ -318,6 +326,62 @@ def test_analysis_rejects_missing_duplicate_and_absent_metric(
     result.write_text(json.dumps({"groups": {"wmdp_bio_robust": {}}}))
     with pytest.raises(ValueError, match="exactly once"):
         analysis_module.collect_results(tmp_path, [0])
+
+
+def test_optml_comparison_collects_both_codebases(
+    tmp_path: Path, optml_comparison_module
+) -> None:
+    authors = tmp_path / "authors"
+    axolotl = tmp_path / "axolotl"
+    for model in optml_comparison_module.MODELS:
+        for examples in optml_comparison_module.AUTHOR_EXAMPLES:
+            run = authors / model / f"examples-{examples}"
+            run.mkdir(parents=True)
+            (run / "wmdp.json").write_text(
+                json.dumps({"results": {"wmdp_bio": {"acc,none": 0.2}}})
+            )
+            (run / "mmlu.json").write_text(
+                json.dumps({"results": {"mmlu": {"acc,none": 0.5}}})
+            )
+        for checkpoint in range(5):
+            run = axolotl / model / f"checkpoint-{checkpoint}"
+            for directory, task, value in (
+                ("wmdp-bio", "wmdp_bio", 0.3),
+                ("wmdp-bio-robust", "wmdp_bio_robust", 0.4),
+                ("mmlu-no-bio", "mmlu_no_bio", 0.6),
+            ):
+                result = run / directory
+                result.mkdir(parents=True)
+                (result / "results_fixture.json").write_text(
+                    json.dumps({"groups": {task: {"acc,none": value}}})
+                )
+
+    rows = optml_comparison_module.collect_authors(
+        authors
+    ) + optml_comparison_module.collect_axolotl(axolotl)
+
+    assert len(rows) == 16
+    assert rows[0].wmdp_ue == pytest.approx(0.8)
+    assert rows[0].published_ue == pytest.approx(0.45)
+    assert rows[0].ue_delta_from_published == pytest.approx(0.35)
+    assert rows[-1].examples == 64
+    assert rows[-1].robust_wmdp_ue == pytest.approx(0.6)
+    assert "| authors |" in optml_comparison_module.markdown(rows)
+    assert "| axolotl |" in optml_comparison_module.markdown(rows)
+
+
+def test_optml_comparison_accepts_identical_group_and_result_metrics(
+    tmp_path: Path, optml_comparison_module
+) -> None:
+    data = {
+        "groups": {"mmlu": {"acc,none": 0.5}},
+        "results": {"mmlu": {"acc,none": 0.5}},
+    }
+    assert optml_comparison_module.metric(data, "mmlu", tmp_path) == 0.5
+
+    data["results"]["mmlu"]["acc,none"] = 0.6
+    with pytest.raises(ValueError, match="conflicting"):
+        optml_comparison_module.metric(data, "mmlu", tmp_path)
 
 
 def test_orth_cb_document_strategies_tag_identical_schemas(
@@ -1008,6 +1072,166 @@ def test_npo_sam_peft_gradient_checkpointing(npo_sam_training_module) -> None:
             torch.testing.assert_close(parameter, initial_base[name])
 
 
+def test_weight_distance_uses_one_global_euclidean_norm(
+    weight_dist_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    first = torch.tensor([3.0, 4.0], requires_grad=True)
+    second = torch.tensor([12.0], requires_grad=True)
+    distance = weight_dist_training_module.global_l2_distance(
+        (first, second), (torch.zeros_like(first), torch.zeros_like(second))
+    )
+
+    assert distance.item() == pytest.approx(13.0)
+    distance.backward()
+    torch.testing.assert_close(first.grad, torch.tensor([3 / 13, 4 / 13]))
+    torch.testing.assert_close(second.grad, torch.tensor([12 / 13]))
+
+
+def test_weight_distance_rms_matches_authors_normalization(
+    weight_dist_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    first = torch.tensor([3.0, 4.0], requires_grad=True)
+    second = torch.tensor([12.0], requires_grad=True)
+    distance = weight_dist_training_module.global_rms_distance(
+        (first, second), (torch.zeros_like(first), torch.zeros_like(second))
+    )
+    expected = (169 / 3 + 1e-8) ** 0.5
+
+    assert distance.item() == pytest.approx(expected)
+    distance.backward()
+    torch.testing.assert_close(
+        first.grad, torch.tensor([3 / (3 * expected), 4 / (3 * expected)])
+    )
+    torch.testing.assert_close(second.grad, torch.tensor([12 / (3 * expected)]))
+
+
+def test_weight_dist_loss_moves_away_from_initial_weights(
+    weight_dist_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(2.0))
+
+        def forward(self, input_ids, attention_mask, labels):
+            return SimpleNamespace(loss=self.weight.square())
+
+    model = Model()
+    trainer = object.__new__(weight_dist_training_module.WeightDistTrainer)
+    trainer.distance_coefficient = 1.0
+    trainer._weight_dist_anchors = None
+    trainer._weight_dist_logged_step = None
+    trainer.state = SimpleNamespace(global_step=0)
+    trainer.log = lambda metrics: None
+    inputs = {
+        "input_ids": torch.ones(1, 1, dtype=torch.long),
+        "attention_mask": torch.ones(1, 1, dtype=torch.long),
+        "labels": torch.ones(1, 1, dtype=torch.long),
+    }
+
+    assert trainer.compute_loss(model, inputs).item() == pytest.approx(4.0)
+    with torch.no_grad():
+        model.weight.fill_(3.0)
+    loss = trainer.compute_loss(model, inputs)
+    assert loss.item() == pytest.approx(8.0)
+    loss.backward()
+    assert model.weight.grad.item() == pytest.approx(5.0)
+
+
+@pytest.mark.parametrize(
+    ("trainer_name", "coefficient"),
+    [
+        ("WeightDistCoefficient01Trainer", 0.1),
+        ("WeightDistTrainer", 1.0),
+        ("WeightDistCoefficient10Trainer", 10.0),
+        ("WeightDistCoefficient25Trainer", 25.0),
+        ("WeightDistCoefficient50Trainer", 50.0),
+        ("WeightDistCoefficient75Trainer", 75.0),
+        ("WeightDistCoefficient100Trainer", 100.0),
+        ("PretrainedAnchorWeightDistCoefficient01Trainer", 0.1),
+        ("PretrainedAnchorWeightDistTrainer", 1.0),
+        ("PretrainedAnchorWeightDistCoefficient10Trainer", 10.0),
+        ("PretrainedAnchorWeightDistCoefficient1e5Trainer", 1e5),
+        ("PretrainedAnchorWeightDistCoefficient1e6Trainer", 1e6),
+    ],
+)
+def test_weight_dist_coefficients(
+    weight_dist_training_module, trainer_name, coefficient
+) -> None:
+    trainer = getattr(weight_dist_training_module, trainer_name)
+    assert trainer.distance_coefficient == coefficient
+
+
+def test_pretrained_anchor_weight_dist_loads_explicit_reference(
+    weight_dist_training_module, monkeypatch
+) -> None:
+    torch = pytest.importorskip("torch")
+    model = torch.nn.Linear(2, 1, bias=False)
+    expected = {"weight": torch.full_like(model.weight, 7)}
+    calls = []
+
+    def load(parameters, model_name_or_path):
+        calls.append((parameters, model_name_or_path))
+        return expected
+
+    monkeypatch.setattr(weight_dist_training_module, "load_pretrained_anchors", load)
+    trainer = object.__new__(
+        weight_dist_training_module.PretrainedAnchorWeightDistTrainer
+    )
+    trainer._weight_dist_anchors = None
+
+    parameters, anchors = trainer._parameters_and_anchors(model)
+
+    assert parameters == {"weight": model.weight}
+    assert anchors == expected
+    assert calls == [
+        (parameters, "HuggingFaceH4/zephyr-7b-beta"),
+    ]
+
+
+def test_pretrained_anchor_loader_strips_framework_wrapper_names(
+    weight_dist_training_module, monkeypatch, tmp_path
+) -> None:
+    torch = pytest.importorskip("torch")
+    safetensors = pytest.importorskip("safetensors.torch")
+    checkpoint_name = "model.layers.0.mlp.down_proj.weight"
+    runtime_name = (
+        "model.layers.0._checkpoint_wrapped_module.mlp."
+        "_checkpoint_wrapped_module.down_proj.weight"
+    )
+    expected = torch.tensor([[1.0, 2.0]])
+    safetensors.save_file({checkpoint_name: expected}, tmp_path / "model.safetensors")
+    (tmp_path / "model.safetensors.index.json").write_text(
+        json.dumps({"weight_map": {checkpoint_name: "model.safetensors"}})
+    )
+
+    anchors = weight_dist_training_module.load_pretrained_anchors(
+        {runtime_name: torch.nn.Parameter(torch.zeros_like(expected))}, tmp_path
+    )
+
+    assert anchors.keys() == {runtime_name}
+    torch.testing.assert_close(anchors[runtime_name], expected)
+
+
+@pytest.mark.parametrize(
+    ("trainer_name", "coefficient"),
+    [
+        ("GDWeightDistCoefficient01Trainer", 0.1),
+        ("GDWeightDistTrainer", 1.0),
+        ("GDWeightDistCoefficient10Trainer", 10.0),
+    ],
+)
+def test_gd_weight_dist_coefficients(
+    gd_weight_dist_training_module, trainer_name, coefficient
+) -> None:
+    trainer = getattr(gd_weight_dist_training_module, trainer_name)
+    assert trainer.distance_coefficient == coefficient
+
+
 @pytest.mark.parametrize(
     ("trainer_name", "forget_coefficient", "retain_coefficient"),
     [
@@ -1149,21 +1373,21 @@ def test_gd_sam_global_norm_preserves_rho(gd_sam_training_module) -> None:
     )
 
 
-def test_gd_sam_v2_exposes_fsdp_sweep_radii(gd_sam_v2_training_module) -> None:
+def test_gd_sam_exposes_sweep_radii(gd_sam_training_module) -> None:
     expected = {
-        "GDSAMV2Rho1eMinus3Trainer": 1e-3,
-        "GDSAMV2Rho2p5eMinus3Trainer": 2.5e-3,
-        "GDSAMV2Rho5eMinus3Trainer": 5e-3,
-        "GDSAMV2Rho1eMinus2Trainer": 1e-2,
+        "GDSAMRho1eMinus3Trainer": 1e-3,
+        "GDSAMRho2p5eMinus3Trainer": 2.5e-3,
+        "GDSAMRho5eMinus3Trainer": 5e-3,
+        "GDSAMRho1eMinus2Trainer": 1e-2,
     }
 
     for trainer_name, rho in expected.items():
-        trainer = getattr(gd_sam_v2_training_module, trainer_name)
+        trainer = getattr(gd_sam_training_module, trainer_name)
         assert trainer.rho == pytest.approx(rho)
 
 
-def test_gd_sam_v2_authors_sampler_draws_retain_with_replacement(
-    gd_sam_v2_training_module,
+def test_gd_sam_authors_sampler_draws_retain_with_replacement(
+    gd_sam_training_module,
 ) -> None:
     class TaggedDataset:
         sources = [1, 1, 1, 1, 0, 0]
@@ -1172,7 +1396,7 @@ def test_gd_sam_v2_authors_sampler_draws_retain_with_replacement(
             assert key == "is_forget"
             return self.sources
 
-    sampler = gd_sam_v2_training_module.AuthorsMixedSourceSampler(
+    sampler = gd_sam_training_module.AuthorsMixedSourceSampler(
         TaggedDataset(), batch_size=2, seed=3
     )
     first = list(sampler)
@@ -1189,13 +1413,13 @@ def test_gd_sam_v2_authors_sampler_draws_retain_with_replacement(
     assert len(first) == len(sampler) == 8
     assert first != second
 
-    trainer = gd_sam_v2_training_module.GDSAMV2AuthorsRho5eMinus3Trainer
+    trainer = gd_sam_training_module.GDSAMAuthorsRho5eMinus3Trainer
     assert trainer.rho == pytest.approx(5e-3)
-    paper_trainer = gd_sam_v2_training_module.GDSAMV2AuthorsRho1eMinus2Trainer
+    paper_trainer = gd_sam_training_module.GDSAMRho1eMinus2Trainer
     assert paper_trainer.rho == pytest.approx(1e-2)
 
 
-def test_gd_sam_v2_model_parallel_config_matches_paper_batch() -> None:
+def test_gd_sam_model_parallel_config_matches_paper_batch() -> None:
     config = yaml.safe_load(
         (
             EXAMPLE / "configs/unlearn/z7b/hpo/"
@@ -1222,6 +1446,43 @@ def test_gd_sam_v2_model_parallel_config_matches_paper_batch() -> None:
     script = (EXAMPLE / "scripts/slurm/tamia/train_model_parallel.sbatch").read_text()
     assert 'export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"' in script
     assert 'axolotl train "$config" --launcher python' in script
+
+
+def test_default_fft_gd_sam_uses_authors_matched_configs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/z7b-fft-s125.yml")
+    plan = pipeline.plan()
+
+    model_id = "z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-2"
+    unlearn = yaml.safe_load(
+        (
+            EXAMPLE / "configs/unlearn/z7b/wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-2.yml"
+        ).read_text()
+    )
+    relearn = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/relearn/z7b/wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-2-relearn.yml"
+        ).read_text()
+    )
+
+    assert model_id in pipeline.selected_models
+    producer = next(stage for stage in plan.stages if stage.id == f"train-{model_id}")
+    assert producer.script == "scripts/slurm/tamia/train_model_parallel.sbatch"
+    assert unlearn["trainer_cls"].endswith("GDSAMRho1eMinus2Trainer")
+    assert float(unlearn["learning_rate"]) == pytest.approx(3.28e-6)
+    assert unlearn["micro_batch_size"] == 8
+    assert unlearn["gradient_accumulation_steps"] == 1
+    assert unlearn["seed"] == 3
+    assert unlearn["tf32"] is False
+    assert unlearn["save_steps"] == 10
+    assert unlearn["save_total_limit"] == 13
+    assert relearn["base_model"].endswith(model_id)
+    assert float(relearn["learning_rate"]) == pytest.approx(1e-5)
+    assert relearn["max_steps"] == 16
+    assert relearn["save_steps"] == 4
 
 
 def test_gd_sam_peft_gradient_checkpointing(gd_sam_training_module) -> None:
@@ -1995,15 +2256,14 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
     pipeline = lilpipe.load("configs/experiments/z7b-fft-s125.yml")
     plan = pipeline.plan()
 
-    assert len(pipeline.selected_models) == 3
-    assert len(plan.stages) == 9
+    assert len(pipeline.selected_models) == 2
+    assert len(plan.stages) == 6
     methods = {
-        "gd": ("configs.training.trainers.gd.GradDiffTrainer", 5e-6),
-        "gd-sam-rho1e-3": (
-            "configs.training.trainers.gd_sam.GDSAMRho1eMinus3Trainer",
-            2.5e-6,
+        "gd": ("configs.training.trainers.gd.GradDiffTrainer", 2.5e-6),
+        "gd-sam-rho1e-2": (
+            "configs.training.trainers.gd_sam.GDSAMRho1eMinus2Trainer",
+            3.28e-6,
         ),
-        "gd-sam-rho1e-2": ("configs.training.trainers.gd_sam.GDSAMTrainer", 5e-6),
     }
     for method, (trainer_cls, learning_rate) in methods.items():
         model_id = f"z7b-wmdp-bio-fft-s125-unlearn-{method}"
@@ -2038,52 +2298,209 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
         )
 
 
-def test_z7b_fft_canonical_relearning_uses_four_shared_batches(
+def test_z7b_fft_canonical_relearning_uses_authors_matched_gd_sam(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
     pipeline = lilpipe.load("configs/experiments/z7b-fft-s125-relearn.yml")
     plan = pipeline.plan()
 
-    assert len(pipeline.selected_models) == 2
-    assert len(plan.stages) == 8
-    for method in ("gd", "gd-sam-rho1e-2"):
-        unlearn_id = f"z7b-wmdp-bio-fft-s125-unlearn-{method}"
-        model_id = f"{unlearn_id}-relearn"
-        config = yaml.safe_load(
-            (
-                EXAMPLE
-                / "configs/relearn/z7b"
-                / f"wmdp-bio-fft-s125-unlearn-{method}-relearn.yml"
-            ).read_text()
-        )
+    unlearn_id = "z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-2"
+    model_id = f"{unlearn_id}-relearn"
+    config = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/relearn/z7b/wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-2-relearn.yml"
+        ).read_text()
+    )
 
-        assert config["base_model"] == f"artifacts/tamia/models/{unlearn_id}"
+    assert pipeline.selected_models == (
+        "z7b-wmdp-bio-fft-s125-unlearn-gd-relearn",
+        model_id,
+    )
+    assert len(plan.stages) == 8
+    assert config["base_model"] == f"artifacts/tamia/models/{unlearn_id}"
+    assert float(config["learning_rate"]) == 1e-5
+    assert config["micro_batch_size"] == 1
+    assert config["gradient_accumulation_steps"] == 1
+    assert config["seed"] == 1
+    assert config["max_steps"] == 16
+    assert config["warmup_steps"] == 0
+    assert config["save_strategy"] == "steps"
+    assert config["save_steps"] == 4
+    assert config["save_total_limit"] == 4
+    assert config["output_dir"] == f"artifacts/tamia/models/{model_id}"
+    assert plan.stage_index[f"train-{model_id}"].depends_on == (f"train-{unlearn_id}",)
+
+    gd = yaml.safe_load(
+        (
+            EXAMPLE / "configs/relearn/z7b/wmdp-bio-fft-s125-unlearn-gd-relearn.yml"
+        ).read_text()
+    )
+    assert gd["base_model"].endswith("z7b-wmdp-bio-fft-s125-unlearn-gd")
+    assert gd["gradient_accumulation_steps"] == 1
+    assert gd["max_steps"] == 16
+    assert gd["save_steps"] == 4
+    assert gd["seed"] == 1
+
+
+def test_fft_gd_lora_tar_pipeline_and_hyperparameters(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/z7b-fft-s125-gd-lora-tar.yml")
+    plan = pipeline.plan()
+
+    stage_ids = [stage.id for stage in plan.stages]
+    assert stage_ids[:3] == [
+        "train-z7b-wmdp-bio-fft-s125-unlearn-gd",
+        "train-z7b-wmdp-bio-fft-s125-unlearn-gd-lora-tar",
+        "train-z7b-wmdp-bio-fft-s125-unlearn-gd-lora-tar-relearn",
+    ]
+    assert len(plan.stages) == 7
+
+    tar_config = yaml.safe_load(
+        (
+            EXAMPLE / "configs/unlearn/z7b/wmdp-bio-fft-s125-unlearn-gd-lora-tar.yml"
+        ).read_text()
+    )
+    relearn_config = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/relearn/z7b/wmdp-bio-fft-s125-unlearn-gd-lora-tar-relearn.yml"
+        ).read_text()
+    )
+    assert tar_config["trainer_cls"].endswith(".TAR2p5e6Trainer")
+    assert tar_config["base_model"].endswith("fft-s125-unlearn-gd")
+    assert tar_config["lora_r"] == tar_config["lora_alpha"] == 8
+    assert tar_config["lora_dropout"] == 0.0
+    assert tar_config["micro_batch_size"] == 2
+    assert tar_config["gradient_accumulation_steps"] == 4
+    assert tar_config["gradient_checkpointing"] is False
+    assert all(
+        tar_config[key] is False
+        for key in ("lora_mlp_kernel", "lora_qkv_kernel", "lora_o_kernel")
+    )
+    assert relearn_config["base_model"].endswith("lora-tar/merged")
+    assert relearn_config["lora_r"] == relearn_config["lora_alpha"] == 8
+    assert relearn_config["lora_dropout"] == pytest.approx(0.05)
+    assert relearn_config["micro_batch_size"] == 1
+    assert relearn_config["gradient_accumulation_steps"] == 4
+    for config in (tar_config, relearn_config):
+        assert float(config["learning_rate"]) == pytest.approx(2.5e-6)
+        assert config["max_steps"] == 125
+        assert config["sequence_len"] == 512
+        assert config["optimizer"] == "adamw_torch"
+        assert config["weight_decay"] == 0.0
+        assert config["lr_scheduler"] == "linear"
+        assert config["warmup_steps"] == 12
+        assert config["save_steps"] == 10
+        assert config["save_total_limit"] == 13
+        assert config["seed"] == 42
+
+    tar_stage = plan.stage_index["train-z7b-wmdp-bio-fft-s125-unlearn-gd-lora-tar"]
+    relearn_stage = plan.stage_index[
+        "train-z7b-wmdp-bio-fft-s125-unlearn-gd-lora-tar-relearn"
+    ]
+    assert tar_stage.args[-1] == "--merge"
+    assert tar_stage.depends_on == ("train-z7b-wmdp-bio-fft-s125-unlearn-gd",)
+    assert relearn_stage.depends_on == (tar_stage.id,)
+    for stage in plan.stages:
+        if stage.id.startswith("eval-"):
+            assert "--array=1-13" in stage.sbatch_args
+            assert "--gpus-per-node=h100:4" in stage.sbatch_args
+
+
+def test_optml_relearning_matches_released_models_and_includes_checkpoint_zero(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/optml-relearning.yml")
+    plan = pipeline.plan()
+
+    revisions = {
+        "OPTML-Group-GradDiff-WMDP": (
+            "OPTML-Group/GradDiff-WMDP",
+            "0695dccbb30a0986d20f211bc8bdea9d55ec5cc6",
+            "optml-grad-diff-wmdp.yml",
+        ),
+        "OPTML-Group-GradDiff-SAM-WMDP": (
+            "OPTML-Group/GradDiff-SAM-WMDP",
+            "e22b488a59005092ec1ec9e217ede68a183248be",
+            "optml-grad-diff-sam-wmdp.yml",
+        ),
+    }
+    assert len(plan.stages) == 8
+    models = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
+        "models"
+    ]
+    for model_id, (released_model, revision, config_name) in revisions.items():
+        config = yaml.safe_load((EXAMPLE / "configs/relearn" / config_name).read_text())
+        assert config["base_model"] == released_model
+        assert config["revision_of_model"] == revision
+        assert models[model_id]["released_model_revision"] == revision
         assert float(config["learning_rate"]) == 1e-5
         assert config["micro_batch_size"] == 1
         assert config["gradient_accumulation_steps"] == 4
-        assert config["seed"] == 42
         assert config["max_steps"] == 4
+        assert config["seed"] == 42
         assert config["warmup_steps"] == 0
-        assert config["save_strategy"] == "steps"
         assert config["save_steps"] == 1
-        assert config["save_total_limit"] == 4
         assert config["output_dir"] == f"artifacts/tamia/models/{model_id}"
-        assert plan.stage_index[f"train-{model_id}"].depends_on == (
-            f"train-{unlearn_id}",
-        )
 
     registry = yaml.safe_load((EXAMPLE / "configs/registries/evals.yml").read_text())[
         "evaluations"
     ]
-    for task in ("bio-mcqa", "mmlu-no-bio"):
-        evaluation = registry[f"{task}-ckpts-max4-freq1-tamia"]
-        assert evaluation["args"][-2:] == ["1", "4"]
-        assert "--array=1-4" in evaluation["sbatch_args"]
-        assert not any(
-            argument.startswith("--partition=")
-            for argument in evaluation["sbatch_args"]
-        )
+    for evaluation_id in pipeline.selected_evaluations:
+        evaluation = registry[evaluation_id]
+        assert "--array=0-4" in evaluation["sbatch_args"]
+        assert evaluation["script"].endswith("eval_trajectory.sbatch")
+
+    script = (EXAMPLE / "scripts/slurm/tamia/eval_trajectory.sbatch").read_text()
+    assert "if (( step == 0 ))" in script
+    assert (
+        'checkpoint="$HF_HOME/hub/models--$cache_name/snapshots/$released_revision"'
+        in script
+    )
+    assert '[[ ! -f "$checkpoint/config.json" ]]' in script
+    assert 'checkpoint="$trained_model/checkpoint-$step"' in script
+
+
+def test_authors_relearning_wrapper_accepts_local_unlearned_model() -> None:
+    script = (ROOT / "examples/sam/WMDP/run_tamia_local_relearning.sbatch").read_text()
+
+    assert "model_source=${1:?missing local model path}" in script
+    assert "model_slug=${2:?missing artifact slug}" in script
+    assert (
+        'cd "${SLURM_SUBMIT_DIR:?submit this job from the authors WMDP directory}"'
+        in script
+    )
+    assert "steps=(5 10 15)" in script
+    assert "example_counts=(20 40 60)" in script
+    assert '--overall.model_name "$model_source"' in script
+    assert "--overall.seed 1" in script
+    assert "--dataset.dataset_seed 42" in script
+    assert "--unlearn.lr 1e-5" in script
+    assert 'mkdir -p "$SLURM_TMPDIR/relearn-run"' in script
+    assert 'ln -s "$SLURM_TMPDIR/relearn-run" "$run_root"' in script
+    assert 'rm -rf "$run_root"' in script
+
+
+def test_authors_unlearning_wrapper_uses_node_local_temporary_checkpoint() -> None:
+    script = (ROOT / "examples/sam/WMDP/run_tamia_unlearning.sbatch").read_text()
+
+    assert "method=${1:?missing method: GradDiff or GradDiff+SAM}" in script
+    assert (
+        'cd "${SLURM_SUBMIT_DIR:?submit this job from the authors WMDP directory}"'
+        in script
+    )
+    assert 'mkdir -p "$SLURM_TMPDIR/unlearn_checkpoint"' in script
+    assert (
+        'ln -s "$SLURM_TMPDIR/unlearn_checkpoint" '
+        '"$artifact_root/unlearn_checkpoint"'
+    ) in script
+    assert '--config-file "configs/unlearn/wmdp/$method.json"' in script
+    assert 'args+=("$@")' in script
 
 
 def test_relearning_formats_wmdp_document() -> None:
@@ -2143,7 +2560,9 @@ def test_tamia_local_trajectory_series_evaluates_saved_checkpoints() -> None:
     script = (
         EXAMPLE / "scripts/slurm/tamia/eval_local_trajectory_series.sbatch"
     ).read_text()
-    assert "for step in 5 10 15" in script
+    assert 'steps=("$@")' in script
+    assert "steps=(5 10 15)" in script
+    assert 'for step in "${steps[@]}"' in script
     assert 'checkpoint="$trained_model/checkpoint-$step"' in script
     assert 'output="$result_root/$model_id/checkpoint-$step/$output_name"' in script
     assert '--tasks "$task"' in script

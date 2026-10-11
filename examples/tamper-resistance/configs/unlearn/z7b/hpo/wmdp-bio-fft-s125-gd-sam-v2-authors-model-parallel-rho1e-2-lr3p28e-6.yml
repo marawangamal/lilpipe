@@ -1,5 +1,5 @@
 base_model: HuggingFaceH4/zephyr-7b-beta
-trainer_cls: configs.training.trainers.gd_sam_v2.GDSAMV2AuthorsRho1eMinus2Trainer
+trainer_cls: configs.training.trainers.gd_sam.GDSAMRho1eMinus2Trainer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train

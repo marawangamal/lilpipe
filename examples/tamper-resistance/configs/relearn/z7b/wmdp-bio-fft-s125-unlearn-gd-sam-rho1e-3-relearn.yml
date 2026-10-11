@@ -15,17 +15,17 @@ pad_to_sequence_len: false
 remove_unused_columns: true
 train_on_inputs: true
 micro_batch_size: 1
-gradient_accumulation_steps: 4
-max_steps: 125
+gradient_accumulation_steps: 1
+max_steps: 16
 learning_rate: 1e-5
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
-warmup_steps: 12
+warmup_steps: 0
 max_grad_norm: 1.0
 
 bf16: true
-tf32: true
+tf32: false
 gradient_checkpointing: false
 fsdp_version: 2
 fsdp_config:
@@ -35,11 +35,12 @@ fsdp_config:
   transformer_layer_cls_to_wrap: MistralDecoderLayer
   state_dict_type: FULL_STATE_DICT
   final_state_dict_type: FULL_STATE_DICT
-seed: 42
+seed: 1
+data_seed: 42
 eval_strategy: "no"
 save_strategy: steps
-save_steps: 10
-save_total_limit: 13
+save_steps: 4
+save_total_limit: 4
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
