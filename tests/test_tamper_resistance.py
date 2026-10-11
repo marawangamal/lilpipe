@@ -55,6 +55,20 @@ def wikitext_di_module():
 
 
 @pytest.fixture(scope="module")
+def authors_documents_module():
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script(
+            "configs/training/data/authors_documents.py", "authors_documents_training"
+        )
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
+@pytest.fixture(scope="module")
 def npo_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
@@ -102,6 +116,52 @@ def gd_sam_training_module():
     sys.path.insert(0, str(EXAMPLE))
     try:
         return load_script("configs/training/trainers/gd_sam.py", "gd_sam_training")
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
+@pytest.fixture(scope="module")
+def gd_sam_v2_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script(
+            "configs/training/trainers/gd_sam_v2.py", "gd_sam_v2_training"
+        )
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
+@pytest.fixture(scope="module")
+def weight_dist_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script(
+            "configs/training/trainers/weight_dist.py", "weight_dist_training"
+        )
+    finally:
+        sys.path.remove(str(EXAMPLE))
+
+
+@pytest.fixture(scope="module")
+def gd_weight_dist_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE))
+    try:
+        return load_script(
+            "configs/training/trainers/gd_weight_dist.py",
+            "gd_weight_dist_training",
+        )
     finally:
         sys.path.remove(str(EXAMPLE))
 
@@ -367,6 +427,30 @@ def test_orth_cb_wikitext_shuffles_before_selecting(wikitext_di_module) -> None:
     assert len(wrapped) == 1024
     assert wrapped[0]["input_ids"] == [1099]
     assert wrapped[0]["is_forget"] is False
+
+
+def test_authors_documents_train_on_padded_tokens(authors_documents_module) -> None:
+    class Tokenizer:
+        def __call__(self, text, **kwargs):
+            assert text == "document"
+            assert kwargs == {
+                "max_length": 4,
+                "padding": "max_length",
+                "truncation": True,
+            }
+            return {
+                "input_ids": [7, 8, 2, 2],
+                "attention_mask": [1, 1, 0, 0],
+            }
+
+    strategy = authors_documents_module.AuthorsDocumentStrategy(
+        Tokenizer(), 4, "cais/wmdp-bio-forget-corpus"
+    )
+    row = strategy.tokenize_row({"text": "document"})
+
+    assert row["labels"] == [7, 8, 2, 2]
+    assert row["attention_mask"] == [1, 1, 0, 0]
+    assert row["is_forget"] is True
 
 
 def test_axolotl_standard_collator_preserves_source_tags() -> None:
@@ -1002,6 +1086,8 @@ def test_grad_diff_sampler_balances_each_microbatch(gd_training_module) -> None:
 
 
 def test_gd_sam_loss_uses_small_forget_perturbation(gd_sam_training_module) -> None:
+    from contextlib import nullcontext
+
     torch = pytest.importorskip("torch")
 
     class Model(torch.nn.Module):
@@ -1009,15 +1095,28 @@ def test_gd_sam_loss_uses_small_forget_perturbation(gd_sam_training_module) -> N
             super().__init__()
             self.weight = torch.nn.Parameter(torch.tensor(2.0))
             self.unused_weight = torch.nn.Parameter(torch.tensor(3.0))
+            self.calls = []
 
         def forward(self, input_ids, attention_mask, labels):
             assert torch.equal(input_ids, labels)
             assert torch.all(attention_mask == 1)
-            return SimpleNamespace(loss=input_ids.float().mean() * self.weight)
+            self.calls.append(float(self.weight.detach()))
+            return SimpleNamespace(loss=input_ids.float().mean() * self.weight.square())
+
+    class Accelerator:
+        def backward(self, loss):
+            loss.backward()
 
     model = Model()
     trainer = object.__new__(gd_sam_training_module.GradDiffTrainer)
-    trainer.attack = gd_sam_training_module.SAMAttack(0.01)
+    trainer.optimizer = None
+    trainer.accelerator = Accelerator()
+    trainer.current_gradient_accumulation_steps = 1
+    trainer._layer_offload_ctx = nullcontext()
+    trainer.activation_offload_context = nullcontext()
+    trainer._prepare_inputs = lambda batch: batch
+    trainer.compute_loss_context_manager = nullcontext
+    trainer.rho = 0.01
     trainer.forget_coeff = 1.0
     trainer.retain_coeff = 1.0
     inputs = {
@@ -1027,17 +1126,107 @@ def test_gd_sam_loss_uses_small_forget_perturbation(gd_sam_training_module) -> N
         "is_forget": torch.tensor([False, True, False, True]),
     }
 
-    loss = trainer.compute_loss(model, inputs)
+    loss = trainer.training_step(model, inputs)
 
     assert gd_sam_training_module.GradDiffTrainer.rho == 0.01
-    assert trainer.attack.rho == pytest.approx(0.01)
-    assert loss.item() == pytest.approx(-3 * (2 - 0.01) + 8 * 2)
-    loss.backward()
-    assert model.weight.grad.item() == pytest.approx(-3 + 8)
+    assert loss.item() == pytest.approx(-3 * (2 - 0.01) ** 2 + 8 * 2**2)
+    assert model.calls == [2.0, pytest.approx(1.99), 2.0]
+    assert model.weight.grad.item() == pytest.approx(-6 * 1.99 + 16 * 2)
     assert model.unused_weight.grad is None
 
 
+def test_gd_sam_global_norm_preserves_rho(gd_sam_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    gradients = (torch.tensor([3.0, 4.0]), torch.tensor([0.0, 12.0]))
+
+    norm = gd_sam_training_module.global_l2_norm(gradients)
+    scale = 0.01 / norm
+    perturbation = tuple(scale * gradient for gradient in gradients)
+
+    assert norm.item() == pytest.approx(13.0)
+    assert gd_sam_training_module.global_l2_norm(perturbation).item() == pytest.approx(
+        0.01
+    )
+
+
+def test_gd_sam_v2_exposes_fsdp_sweep_radii(gd_sam_v2_training_module) -> None:
+    expected = {
+        "GDSAMV2Rho1eMinus3Trainer": 1e-3,
+        "GDSAMV2Rho2p5eMinus3Trainer": 2.5e-3,
+        "GDSAMV2Rho5eMinus3Trainer": 5e-3,
+        "GDSAMV2Rho1eMinus2Trainer": 1e-2,
+    }
+
+    for trainer_name, rho in expected.items():
+        trainer = getattr(gd_sam_v2_training_module, trainer_name)
+        assert trainer.rho == pytest.approx(rho)
+
+
+def test_gd_sam_v2_authors_sampler_draws_retain_with_replacement(
+    gd_sam_v2_training_module,
+) -> None:
+    class TaggedDataset:
+        sources = [1, 1, 1, 1, 0, 0]
+
+        def __getitem__(self, key):
+            assert key == "is_forget"
+            return self.sources
+
+    sampler = gd_sam_v2_training_module.AuthorsMixedSourceSampler(
+        TaggedDataset(), batch_size=2, seed=3
+    )
+    first = list(sampler)
+    second = list(sampler)
+
+    for epoch in (first, second):
+        forget = [index for index in epoch if index < 4]
+        retain = [index for index in epoch if index >= 4]
+        assert sorted(forget) == [0, 1, 2, 3]
+        assert len(retain) == 4
+        assert set(retain) <= {4, 5}
+        for start in range(0, len(epoch), 2):
+            assert sum(index < 4 for index in epoch[start : start + 2]) == 1
+    assert len(first) == len(sampler) == 8
+    assert first != second
+
+    trainer = gd_sam_v2_training_module.GDSAMV2AuthorsRho5eMinus3Trainer
+    assert trainer.rho == pytest.approx(5e-3)
+    paper_trainer = gd_sam_v2_training_module.GDSAMV2AuthorsRho1eMinus2Trainer
+    assert paper_trainer.rho == pytest.approx(1e-2)
+
+
+def test_gd_sam_v2_model_parallel_config_matches_paper_batch() -> None:
+    config = yaml.safe_load(
+        (
+            EXAMPLE / "configs/unlearn/z7b/hpo/"
+            "wmdp-bio-fft-s125-gd-sam-v2-authors-model-parallel-"
+            "rho1e-2-lr3p28e-6.yml"
+        ).read_text()
+    )
+
+    device_map = config["device_map"]
+    assert device_map["model.embed_tokens"] == 0
+    assert device_map["model.norm"] == 3
+    assert device_map["lm_head"] == 3
+    assert {device_map[f"model.layers.{layer}"] for layer in range(32)} == {0, 1, 2, 3}
+    for layer in range(32):
+        assert device_map[f"model.layers.{layer}"] == layer // 8
+    assert "max_memory" not in config
+    assert "fsdp_version" not in config
+    assert config["micro_batch_size"] == 8
+    assert config["gradient_accumulation_steps"] == 1
+    assert config["max_steps"] == 125
+    assert config["warmup_steps"] == 12
+    assert float(config["learning_rate"]) == pytest.approx(3.28e-6)
+
+    script = (EXAMPLE / "scripts/slurm/tamia/train_model_parallel.sbatch").read_text()
+    assert 'export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"' in script
+    assert 'axolotl train "$config" --launcher python' in script
+
+
 def test_gd_sam_peft_gradient_checkpointing(gd_sam_training_module) -> None:
+    from contextlib import nullcontext
+
     torch = pytest.importorskip("torch")
     peft = pytest.importorskip("peft")
     transformers = pytest.importorskip("transformers")
@@ -1052,7 +1241,19 @@ def test_gd_sam_peft_gradient_checkpointing(gd_sam_training_module) -> None:
     )
     model.enable_input_require_grads()
     trainer = object.__new__(gd_sam_training_module.GradDiffTrainer)
-    trainer.attack = gd_sam_training_module.SAMAttack(0.01)
+    trainer.optimizer = None
+
+    class Accelerator:
+        def backward(self, loss):
+            loss.backward()
+
+    trainer.accelerator = Accelerator()
+    trainer.current_gradient_accumulation_steps = 1
+    trainer._layer_offload_ctx = nullcontext()
+    trainer.activation_offload_context = nullcontext()
+    trainer._prepare_inputs = lambda batch: batch
+    trainer.compute_loss_context_manager = nullcontext
+    trainer.rho = 0.01
     trainer.forget_coeff = 1.0
     trainer.retain_coeff = 1.0
     inputs = {
@@ -1062,8 +1263,7 @@ def test_gd_sam_peft_gradient_checkpointing(gd_sam_training_module) -> None:
         "is_forget": torch.tensor([True, False]),
     }
 
-    loss = trainer.compute_loss(model, inputs)
-    loss.backward()
+    loss = trainer.training_step(model, inputs)
 
     assert loss.isfinite()
     assert any(
@@ -1937,6 +2137,16 @@ def test_mmlu_no_bio_trajectory_evaluator_accepts_last_step() -> None:
     assert 'checkpoint="$adapter_name_or_path/checkpoint-$step"' in script
     assert 'output="$result_root/$model_id/checkpoint-$step/mmlu-no-bio"' in script
     assert "--tasks mmlu_no_bio" in script
+
+
+def test_tamia_local_trajectory_series_evaluates_saved_checkpoints() -> None:
+    script = (
+        EXAMPLE / "scripts/slurm/tamia/eval_local_trajectory_series.sbatch"
+    ).read_text()
+    assert "for step in 5 10 15" in script
+    assert 'checkpoint="$trained_model/checkpoint-$step"' in script
+    assert 'output="$result_root/$model_id/checkpoint-$step/$output_name"' in script
+    assert '--tasks "$task"' in script
 
 
 def test_final_adapter_evaluator_uses_direct_adapter_without_array() -> None:

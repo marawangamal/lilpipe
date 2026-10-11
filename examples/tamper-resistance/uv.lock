@@ -1656,6 +1656,8 @@ dependencies = [
 eval = [
     { name = "lm-eval", extra = ["hf"] },
     { name = "matplotlib" },
+    { name = "protobuf" },
+    { name = "sentencepiece" },
 ]
 train = [
     { name = "axolotl" },
@@ -1671,6 +1673,8 @@ requires-dist = [{ name = "lilpipe", editable = "../../" }]
 eval = [
     { name = "lm-eval", extras = ["hf"], specifier = "==0.4.11" },
     { name = "matplotlib", specifier = ">=3.9,<4" },
+    { name = "protobuf", specifier = ">=6,<7" },
+    { name = "sentencepiece", specifier = ">=0.2,<0.3" },
 ]
 train = [{ name = "axolotl", specifier = "==0.18.0" }]
 unlearn = [{ name = "unlearning", git = "https://github.com/EleutherAI/unlearn.git?rev=0f6488f15e49686bc7ddf0d8d90030c30780dc51" }]
