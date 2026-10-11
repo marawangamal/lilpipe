@@ -123,3 +123,92 @@ def test_only_canonical_registries_and_selected_configs_are_referenced() -> None
         config = model["producer"]["args"][0]
         assert config.endswith("/selected.yml")
         assert (EXAMPLE / config).is_file()
+
+
+def test_evaluation_registry_contains_only_active_intents() -> None:
+    evaluations = yaml.safe_load(
+        (EXAMPLE / "configs/registries/evals.yml").read_text()
+    )["evaluations"]
+
+    assert set(evaluations) == {
+        "wmdp-bio-final",
+        "mmlu-no-bio-final",
+        "wmdp-bio-relearn",
+        "mmlu-no-bio-relearn",
+        "wmdp-bio-relearn-long",
+        "mmlu-no-bio-relearn-long",
+    }
+    for evaluation_id in ("wmdp-bio-final", "mmlu-no-bio-final"):
+        evaluation = evaluations[evaluation_id]
+        assert evaluation["args"][-2:] == ["125", "125"]
+        assert "--array=1-1" in evaluation["sbatch_args"]
+    for evaluation_id in ("wmdp-bio-relearn", "mmlu-no-bio-relearn"):
+        evaluation = evaluations[evaluation_id]
+        assert evaluation["args"][-1] == "4"
+        assert "--array=0-4" in evaluation["sbatch_args"]
+    for evaluation_id in (
+        "wmdp-bio-relearn-long",
+        "mmlu-no-bio-relearn-long",
+    ):
+        evaluation = evaluations[evaluation_id]
+        assert evaluation["args"][-1] == "5"
+        assert "--array=0-25" in evaluation["sbatch_args"]
+
+    assert evaluations["wmdp-bio-relearn"]["args"][-3] == "wmdp_bio_robust"
+    assert evaluations["wmdp-bio-relearn-long"]["args"][-3] == "wmdp_bio_robust"
+
+
+def test_active_manifests_reference_only_registered_evaluations() -> None:
+    registered = set(
+        yaml.safe_load((EXAMPLE / "configs/registries/evals.yml").read_text())[
+            "evaluations"
+        ]
+    )
+    referenced = set()
+    paths = list((EXAMPLE / "configs/experiments").glob("*.yml"))
+    paths.extend((EXAMPLE / "configs/stages").glob("**/sweep.yml"))
+    for path in paths:
+        referenced.update(yaml.safe_load(path.read_text()).get("evaluations", ()))
+
+    assert referenced == registered
+
+
+def test_selected_gd_sam_matches_successful_recipe() -> None:
+    unlearn = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages/0_unlearn/"
+            "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2/selected.yml"
+        ).read_text()
+    )
+    assert unlearn["trainer_cls"] == "trainers.gd_sam.GDSAMTrainer"
+    assert unlearn["custom_trainer_args"] == {
+        "rho": 1e-2,
+        "forget_coefficient": 1.0,
+        "retain_coefficient": 1.0,
+        "sampling": "authors",
+    }
+    assert {dataset["type"] for dataset in unlearn["datasets"]} == {
+        "data.authors_documents"
+    }
+    assert float(unlearn["learning_rate"]) == pytest.approx(3.28e-6)
+    assert unlearn["micro_batch_size"] == 8
+    assert unlearn["gradient_accumulation_steps"] == 1
+    assert unlearn["seed"] == 3
+    assert unlearn["data_seed"] == 3
+    assert unlearn["tf32"] is False
+    assert unlearn["device_map"]["model.embed_tokens"] == 0
+    assert unlearn["device_map"]["model.norm"] == 3
+    assert unlearn["device_map"]["lm_head"] == 3
+    for layer in range(32):
+        assert unlearn["device_map"][f"model.layers.{layer}"] == layer // 8
+
+    relearn = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages/2_relearn/"
+            "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml"
+        ).read_text()
+    )
+    assert relearn["max_steps"] == 16
+    assert relearn["save_steps"] == 4
+    assert relearn["gradient_accumulation_steps"] == 1
+    assert relearn["seed"] == 1

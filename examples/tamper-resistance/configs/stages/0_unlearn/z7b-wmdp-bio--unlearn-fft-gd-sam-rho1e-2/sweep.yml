@@ -1,0 +1,16 @@
+id: z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2-hpo
+parameters:
+  learning_rate:
+    - 2.5e-6
+    - 3.28e-6
+    - 5.0e-6
+producer:
+  script: scripts/slurm/tamia/train_model_parallel.sbatch
+  sbatch_args:
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=48
+    - --mem=480G
+    - --time=03:00:00
+evaluations:
+  - wmdp-bio-final
+  - mmlu-no-bio-final

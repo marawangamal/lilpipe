@@ -13,5 +13,5 @@ producer:
     - --mem=480G
     - --time=03:00:00
 evaluations:
-  - bio-mcqa-ckpts-max125-freq125-tamia
-  - mmlu-no-bio-ckpts-max125-freq125-tamia
+  - wmdp-bio-final
+  - mmlu-no-bio-final

@@ -1,392 +1,85 @@
 evaluations:
-  bio-robust-local-trajectory-max16-freq4-tamia:
-    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
-    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio_robust, wmdp-bio-robust, "4"]
-    sbatch_args: &fine_relearning_evaluation_resources
-      - --array=0-4
-      - --gpus-per-node=h100:4
-      - --cpus-per-task=32
-      - --mem=128G
-      - --time=00:30:00
-  mmlu-no-bio-local-trajectory-max16-freq4-tamia:
-    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
-    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, mmlu_no_bio, mmlu-no-bio, "4"]
-    sbatch_args: *fine_relearning_evaluation_resources
-  bio-standard-local-trajectory-max125-freq5-tamia:
-    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
-    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio, wmdp-bio, "5"]
-    sbatch_args:
-      - --array=0-25
-      - --gpus-per-node=h100:4
-      - --cpus-per-task=32
-      - --mem=128G
-      - --time=00:30:00
-  bio-standard-trajectory-max125-freq5-tamia:
-    script: scripts/slurm/tamia/eval_trajectory.sbatch
-    args: ["{model.id}", "{model.released_model_name_or_path}", "{model.released_model_revision}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio, wmdp-bio, "5"]
-    sbatch_args:
-      - --array=0-25
-      - --gpus-per-node=h100:4
-      - --cpus-per-task=32
-      - --mem=128G
-      - --time=00:30:00
-  bio-standard-local-trajectory-max15-freq5-tamia:
-    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
-    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio, wmdp-bio, "5"]
-    sbatch_args: &authors_parity_relearning_evaluation_resources
-      - --array=0-3
-      - --gpus-per-node=h100:4
-      - --cpus-per-task=32
-      - --mem=128G
-      - --time=00:30:00
-  bio-robust-local-trajectory-max15-freq5-tamia:
-    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
-    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio_robust, wmdp-bio-robust, "5"]
-    sbatch_args: *authors_parity_relearning_evaluation_resources
-  mmlu-no-bio-local-trajectory-max15-freq5-tamia:
-    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
-    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, mmlu_no_bio, mmlu-no-bio, "5"]
-    sbatch_args: *authors_parity_relearning_evaluation_resources
-  bio-standard-local-trajectory-max4-tamia:
-    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
-    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio, wmdp-bio]
-    sbatch_args: &local_relearning_evaluation_resources
-      - --array=0-4
-      - --gpus-per-node=h100:4
-      - --cpus-per-task=32
-      - --mem=128G
-      - --time=00:30:00
-  bio-robust-local-trajectory-max4-tamia:
-    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
-    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio_robust, wmdp-bio-robust]
-    sbatch_args: *local_relearning_evaluation_resources
-  mmlu-no-bio-local-trajectory-max4-tamia:
-    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
-    args: ["{model.id}", "{model.baseline_model_name_or_path}", "{model.base_model_name_or_path}", artifacts/tamia/evals, mmlu_no_bio, mmlu-no-bio]
-    sbatch_args: *local_relearning_evaluation_resources
-  bio-standard-trajectory-max4-tamia:
-    script: scripts/slurm/tamia/eval_trajectory.sbatch
-    args: ["{model.id}", "{model.released_model_name_or_path}", "{model.released_model_revision}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio, wmdp-bio]
-    sbatch_args: &optml_relearning_evaluation_resources
-      - --array=0-4
-      - --gpus-per-node=h100:4
-      - --cpus-per-task=32
-      - --mem=128G
-      - --time=00:30:00
-  bio-robust-trajectory-max4-tamia:
-    script: scripts/slurm/tamia/eval_trajectory.sbatch
-    args: ["{model.id}", "{model.released_model_name_or_path}", "{model.released_model_revision}", "{model.base_model_name_or_path}", artifacts/tamia/evals, wmdp_bio_robust, wmdp-bio-robust]
-    sbatch_args: *optml_relearning_evaluation_resources
-  mmlu-no-bio-trajectory-max4-tamia:
-    script: scripts/slurm/tamia/eval_trajectory.sbatch
-    args: ["{model.id}", "{model.released_model_name_or_path}", "{model.released_model_revision}", "{model.base_model_name_or_path}", artifacts/tamia/evals, mmlu_no_bio, mmlu-no-bio]
-    sbatch_args: *optml_relearning_evaluation_resources
-  mmlu-no-bio:
-    script: scripts/slurm/mila/eval_mmlu_no_bio_single.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-    sbatch_args:
-      - --gres=gpu:l40s:1
-      - --cpus-per-task=8
-      - --mem=64G
-      - --time=00:30:00
-      - --exclude=cn-c034,cn-l030,cn-l055
-  bio-mcqa:
-    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_single.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-    sbatch_args:
-      - --gres=gpu:l40s:1
-      - --cpus-per-task=8
-      - --mem=64G
-      - --time=00:30:00
-      - --exclude=cn-c034,cn-l030,cn-l055
-  mmlu-no-bio-ckpts-max100-freq10-mila:
-    script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-      - "10"
-      - "100"
-    sbatch_args: &checkpoint_evaluation_resources
-      - --array=1-10
-      - --gres=gpu:l40s:1
-      - --cpus-per-task=8
-      - --mem=64G
-      - --time=00:30:00
-      - --exclude=cn-c034,cn-l030,cn-l055
-  bio-mcqa-ckpts-max100-freq10-mila:
-    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-      - "10"
-      - "100"
-    sbatch_args: *checkpoint_evaluation_resources
-  mmlu-no-bio-ckpts-max100-freq5-mila:
-    script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-      - "5"
-      - "100"
-    sbatch_args: &fine_checkpoint_evaluation_resources
-      - --array=1-20
-      - --gres=gpu:l40s:1
-      - --cpus-per-task=8
-      - --mem=64G
-      - --time=00:30:00
-      - --exclude=cn-c034,cn-l030,cn-l055
-  bio-mcqa-ckpts-max100-freq5-mila:
-    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-      - "5"
-      - "100"
-    sbatch_args: *fine_checkpoint_evaluation_resources
-  mmlu-no-bio-ckpts-max300-freq10-mila:
-    script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-      - "10"
-      - "300"
-    sbatch_args: &long_checkpoint_evaluation_resources
-      - --array=1-30
-      - --gres=gpu:l40s:1
-      - --cpus-per-task=8
-      - --mem=64G
-      - --time=00:30:00
-      - --exclude=cn-c034,cn-l030,cn-l055
-  bio-mcqa-ckpts-max300-freq10-mila:
-    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-      - "10"
-      - "300"
-    sbatch_args: *long_checkpoint_evaluation_resources
-  mmlu-no-bio-ckpts-max250-freq10-mila:
-    script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-      - "10"
-      - "250"
-    sbatch_args: &hpo_checkpoint_evaluation_resources
-      - --array=1-25
-      - --gres=gpu:l40s:1
-      - --cpus-per-task=8
-      - --mem=64G
-      - --time=00:30:00
-      - --exclude=cn-c034,cn-l030,cn-l055
-  bio-mcqa-ckpts-max250-freq10-mila:
-    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-      - "10"
-      - "250"
-    sbatch_args: *hpo_checkpoint_evaluation_resources
-  mmlu-no-bio-ckpts-max80-freq10-mila:
-    script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
-    args: ["{model.id}", "{model.base_model_name_or_path}", "{model.adapter_name_or_path}", artifacts/mila/evals, "10", "80"]
-    sbatch_args: [--array=1-8, --gres=gpu:l40s:1, --cpus-per-task=8, --mem=64G, --time=00:30:00, "--exclude=cn-c034,cn-l030,cn-l055"]
-  bio-mcqa-ckpts-max80-freq10-mila:
-    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
-    args: ["{model.id}", "{model.base_model_name_or_path}", "{model.adapter_name_or_path}", artifacts/mila/evals, "10", "80"]
-    sbatch_args: [--array=1-8, --gres=gpu:l40s:1, --cpus-per-task=8, --mem=64G, --time=00:30:00, "--exclude=cn-c034,cn-l030,cn-l055"]
-  mmlu-no-bio-ckpts-max40-freq10-mila:
-    script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
-    args: ["{model.id}", "{model.base_model_name_or_path}", "{model.adapter_name_or_path}", artifacts/mila/evals, "10", "40"]
-    sbatch_args: [--array=1-4, --gres=gpu:l40s:1, --cpus-per-task=8, --mem=64G, --time=00:30:00, "--exclude=cn-c034,cn-l030,cn-l055"]
-  bio-mcqa-ckpts-max40-freq10-mila:
-    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
-    args: ["{model.id}", "{model.base_model_name_or_path}", "{model.adapter_name_or_path}", artifacts/mila/evals, "10", "40"]
-    sbatch_args: [--array=1-4, --gres=gpu:l40s:1, --cpus-per-task=8, --mem=64G, --time=00:30:00, "--exclude=cn-c034,cn-l030,cn-l055"]
-  mmlu-no-bio-ckpts-max70-freq10-mila:
-    script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
-    args: ["{model.id}", "{model.base_model_name_or_path}", "{model.adapter_name_or_path}", artifacts/mila/evals, "10", "70"]
-    sbatch_args: [--array=1-7, --gres=gpu:l40s:1, --cpus-per-task=8, --mem=64G, --time=00:30:00, "--exclude=cn-c034,cn-l030,cn-l055"]
-  bio-mcqa-ckpts-max70-freq10-mila:
-    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
-    args: ["{model.id}", "{model.base_model_name_or_path}", "{model.adapter_name_or_path}", artifacts/mila/evals, "10", "70"]
-    sbatch_args: [--array=1-7, --gres=gpu:l40s:1, --cpus-per-task=8, --mem=64G, --time=00:30:00, "--exclude=cn-c034,cn-l030,cn-l055"]
-  mmlu-no-bio-ckpts-max125-freq25-tamia:
-    script: scripts/slurm/tamia/eval_mmlu_no_bio_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/tamia/evals
-      - "25"
-      - "125"
-    sbatch_args: &tamia_checkpoint_evaluation_resources
-      - --array=1-5
-      - --partition=gpubase_bynode_b1
-      - --gpus-per-node=h100:4
-      - --cpus-per-task=48
-      - --mem=480G
-      - --time=00:30:00
-  bio-mcqa-ckpts-max125-freq25-tamia:
+  wmdp-bio-final:
     script: scripts/slurm/tamia/eval_wmdp_bio_mcqa_ckpts.sbatch
     args:
       - "{model.id}"
       - "{model.base_model_name_or_path}"
       - "{model.adapter_name_or_path}"
       - artifacts/tamia/evals
-      - "25"
-      - "125"
-    sbatch_args: *tamia_checkpoint_evaluation_resources
-  mmlu-no-bio-ckpts-max125-freq125-tamia:
-    script: scripts/slurm/tamia/eval_mmlu_no_bio_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/tamia/evals
       - "125"
       - "125"
-    sbatch_args: &tamia_final_evaluation_resources
+    sbatch_args: &final_resources
       - --array=1-1
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
       - --mem=480G
       - --time=00:30:00
-  bio-mcqa-ckpts-max125-freq125-tamia:
-    script: scripts/slurm/tamia/eval_wmdp_bio_mcqa_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/tamia/evals
-      - "125"
-      - "125"
-    sbatch_args: *tamia_final_evaluation_resources
-  mmlu-no-bio-ckpts-max125-freq10-tamia:
+
+  mmlu-no-bio-final:
     script: scripts/slurm/tamia/eval_mmlu_no_bio_ckpts.sbatch
     args:
       - "{model.id}"
       - "{model.base_model_name_or_path}"
       - "{model.adapter_name_or_path}"
       - artifacts/tamia/evals
-      - "10"
-      - "125"
-    sbatch_args: &tamia_trajectory_evaluation_resources
-      - --array=1-13
-      - --gpus-per-node=h100:4
-      - --cpus-per-task=48
-      - --mem=480G
-      - --time=00:30:00
-  bio-mcqa-ckpts-max125-freq10-tamia:
-    script: scripts/slurm/tamia/eval_wmdp_bio_mcqa_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/tamia/evals
-      - "10"
-      - "125"
-    sbatch_args: *tamia_trajectory_evaluation_resources
-  mmlu-no-bio-ckpts-max4-freq1-tamia:
-    script: scripts/slurm/tamia/eval_mmlu_no_bio_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/tamia/evals
-      - "1"
-      - "4"
-    sbatch_args: &tamia_short_trajectory_evaluation_resources
-      - --array=1-4
-      - --gpus-per-node=h100:4
-      - --cpus-per-task=48
-      - --mem=480G
-      - --time=00:30:00
-  bio-mcqa-ckpts-max4-freq1-tamia:
-    script: scripts/slurm/tamia/eval_wmdp_bio_mcqa_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/tamia/evals
-      - "1"
-      - "4"
-    sbatch_args: *tamia_short_trajectory_evaluation_resources
-  mmlu-no-bio-ckpts-max125-freq125-mila:
-    script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
       - "125"
       - "125"
-    sbatch_args: &s125_final_evaluation_resources
-      - --array=1-1
-      - --gres=gpu:l40s:1
-      - --cpus-per-task=8
-      - --mem=64G
-      - --time=00:30:00
-      - --exclude=cn-c034,cn-l030,cn-l055
-  bio-mcqa-ckpts-max125-freq125-mila:
-    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
-    args:
-      - "{model.id}"
-      - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-      - "125"
-      - "125"
-    sbatch_args: *s125_final_evaluation_resources
+    sbatch_args: *final_resources
 
-  mmlu-no-bio-ckpts-max125-freq10-mila:
-    script: scripts/slurm/mila/eval_mmlu_no_bio_ckpts.sbatch
+  wmdp-bio-relearn:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
     args:
       - "{model.id}"
+      - "{model.baseline_model_name_or_path}"
       - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-      - "10"
-      - "125"
-    sbatch_args: &s125_trajectory_evaluation_resources
-      - --array=1-13
-      - --gres=gpu:l40s:1
-      - --cpus-per-task=8
-      - --mem=64G
+      - artifacts/tamia/evals
+      - wmdp_bio_robust
+      - wmdp-bio-robust
+      - "4"
+    sbatch_args: &relearn_resources
+      - --array=0-4
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=32
+      - --mem=128G
       - --time=00:30:00
-      - --exclude=cn-c034,cn-l030,cn-l055
 
-  bio-mcqa-ckpts-max125-freq10-mila:
-    script: scripts/slurm/mila/eval_wmdp_bio_mcqa_ckpts.sbatch
+  mmlu-no-bio-relearn:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
     args:
       - "{model.id}"
+      - "{model.baseline_model_name_or_path}"
       - "{model.base_model_name_or_path}"
-      - "{model.adapter_name_or_path}"
-      - artifacts/mila/evals
-      - "10"
-      - "125"
-    sbatch_args: *s125_trajectory_evaluation_resources
+      - artifacts/tamia/evals
+      - mmlu_no_bio
+      - mmlu-no-bio
+      - "4"
+    sbatch_args: *relearn_resources
+
+  wmdp-bio-relearn-long:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args:
+      - "{model.id}"
+      - "{model.baseline_model_name_or_path}"
+      - "{model.base_model_name_or_path}"
+      - artifacts/tamia/evals
+      - wmdp_bio_robust
+      - wmdp-bio-robust
+      - "5"
+    sbatch_args: &long_relearn_resources
+      - --array=0-25
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=32
+      - --mem=128G
+      - --time=00:30:00
+
+  mmlu-no-bio-relearn-long:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args:
+      - "{model.id}"
+      - "{model.baseline_model_name_or_path}"
+      - "{model.base_model_name_or_path}"
+      - artifacts/tamia/evals
+      - mmlu_no_bio
+      - mmlu-no-bio
+      - "5"
+    sbatch_args: *long_relearn_resources

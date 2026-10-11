@@ -17,4 +17,5 @@ depends_on:
 model:
   baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance
 evaluations:
-  - bio-standard-local-trajectory-max125-freq5-tamia
+  - wmdp-bio-relearn-long
+  - mmlu-no-bio-relearn-long

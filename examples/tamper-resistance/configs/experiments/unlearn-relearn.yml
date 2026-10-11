@@ -5,6 +5,7 @@ registries:
   evaluations: configs/registries/evals.yml
 models:
   - z7b-wmdp-bio--unlearn-fft-gd--relearn-fft
+  - z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft
 evaluations:
-  - bio-robust-local-trajectory-max16-freq4-tamia
-  - mmlu-no-bio-local-trajectory-max16-freq4-tamia
+  - wmdp-bio-relearn
+  - mmlu-no-bio-relearn

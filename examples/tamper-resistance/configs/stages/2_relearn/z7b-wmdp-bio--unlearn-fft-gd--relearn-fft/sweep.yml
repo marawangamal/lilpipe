@@ -17,5 +17,5 @@ depends_on:
 model:
   baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd
 evaluations:
-  - bio-robust-local-trajectory-max16-freq4-tamia
-  - mmlu-no-bio-local-trajectory-max16-freq4-tamia
+  - wmdp-bio-relearn
+  - mmlu-no-bio-relearn

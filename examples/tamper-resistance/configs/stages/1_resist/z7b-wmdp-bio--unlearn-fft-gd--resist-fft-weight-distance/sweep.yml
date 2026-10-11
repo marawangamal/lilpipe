@@ -16,5 +16,5 @@ producer:
 depends_on:
   - z7b-wmdp-bio--unlearn-fft-gd
 evaluations:
-  - bio-mcqa-ckpts-max125-freq125-tamia
-  - mmlu-no-bio-ckpts-max125-freq125-tamia
+  - wmdp-bio-final
+  - mmlu-no-bio-final

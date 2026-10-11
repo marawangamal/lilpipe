@@ -5,5 +5,7 @@ registries:
   evaluations: configs/registries/evals.yml
 models:
   - z7b-wmdp-bio--unlearn-fft-gd
+  - z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2
 evaluations:
-  - bio-mcqa
+  - wmdp-bio-final
+  - mmlu-no-bio-final
