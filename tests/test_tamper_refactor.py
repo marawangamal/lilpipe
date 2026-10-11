@@ -173,7 +173,13 @@ def test_active_manifests_reference_only_registered_evaluations() -> None:
     assert referenced == registered
 
 
-def test_selected_gd_sam_matches_successful_recipe() -> None:
+def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
+    gd = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages/0_unlearn/"
+            "z7b-wmdp-bio--unlearn-fft-gd/selected.yml"
+        ).read_text()
+    )
     unlearn = yaml.safe_load(
         (
             EXAMPLE / "configs/stages/0_unlearn/"
@@ -187,9 +193,11 @@ def test_selected_gd_sam_matches_successful_recipe() -> None:
         "retain_coefficient": 1.0,
         "sampling": "authors",
     }
-    assert {dataset["type"] for dataset in unlearn["datasets"]} == {
-        "data.authors_documents"
-    }
+    expected_dataset_types = {"data.wmdp_zephyr", "data.wikitext2"}
+    assert {dataset["type"] for dataset in gd["datasets"]} == expected_dataset_types
+    assert {dataset["type"] for dataset in unlearn["datasets"]} == (
+        expected_dataset_types
+    )
     assert float(unlearn["learning_rate"]) == pytest.approx(3.28e-6)
     assert unlearn["micro_batch_size"] == 8
     assert unlearn["gradient_accumulation_steps"] == 1
@@ -201,6 +209,24 @@ def test_selected_gd_sam_matches_successful_recipe() -> None:
     assert unlearn["device_map"]["lm_head"] == 3
     for layer in range(32):
         assert unlearn["device_map"][f"model.layers.{layer}"] == layer // 8
+
+    differing_keys = {
+        "trainer_cls",
+        "custom_trainer_args",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    }
+    assert {
+        key: value for key, value in gd.items() if key not in differing_keys
+    } == {
+        key: value for key, value in unlearn.items() if key not in differing_keys
+    }
+    assert gd["custom_trainer_args"] == {
+        "forget_coefficient": 1.0,
+        "retain_coefficient": 1.0,
+        "sampling": "authors",
+    }
 
     relearn = yaml.safe_load(
         (

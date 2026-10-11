@@ -2,11 +2,10 @@ id: z7b-wmdp-bio--unlearn-fft-gd-hpo
 parameters:
   learning_rate:
     - 2.5e-06
+    - 3.28e-06
     - 5.0e-06
-    - 7.5e-06
-    - 1.0e-05
 producer:
-  script: scripts/slurm/tamia/train.sbatch
+  script: scripts/slurm/tamia/train_model_parallel.sbatch
   sbatch_args:
     - --gpus-per-node=h100:4
     - --cpus-per-task=48

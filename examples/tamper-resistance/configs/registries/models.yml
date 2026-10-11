@@ -5,7 +5,7 @@ models:
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd
     producer:
       id: train-z7b-wmdp-bio--unlearn-fft-gd
-      script: scripts/slurm/tamia/train.sbatch
+      script: scripts/slurm/tamia/train_model_parallel.sbatch
       args:
         - configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-gd/selected.yml
       sbatch_args: &fft_resources
