@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+"""Generate concrete lilpipe experiments from an Axolotl parameter sweep."""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import itertools
+import re
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+ID_PATTERN = re.compile(r"^[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?$")
+STRUCTURAL_PATHS = {"plugins", "trainer_cls", "custom_trainer_args"}
+
+
+def load_mapping(path: Path) -> dict[str, Any]:
+    """Load a YAML mapping."""
+    with path.open() as handle:
+        value = yaml.safe_load(handle)
+    if not isinstance(value, dict):
+        raise ValueError(f"{path} must contain a mapping")
+    return value
+
+
+def validate_id(value: Any, field: str) -> str:
+    if not isinstance(value, str) or not ID_PATTERN.fullmatch(value):
+        raise ValueError(f"{field} must be a lowercase kebab-case ID")
+    return value
+
+
+def parameter_grid(sweep: dict[str, Any]) -> dict[str, list[Any]]:
+    grid = sweep.get("parameters", sweep.get("grid"))
+    if not isinstance(grid, dict) or not grid:
+        raise ValueError("sweep parameters must be a non-empty mapping")
+    for path, values in grid.items():
+        if not isinstance(path, str) or not path or path.startswith("."):
+            raise ValueError(f"invalid parameter path: {path!r}")
+        if not isinstance(values, list) or not values:
+            raise ValueError(f"parameter {path!r} must have a non-empty value list")
+    return grid
+
+
+def set_parameter(config: dict[str, Any], path: str, value: Any) -> None:
+    """Set an existing leaf through a dotted path."""
+    parts = path.split(".")
+    if any(not part for part in parts):
+        raise ValueError(f"invalid parameter path: {path!r}")
+    current: Any = config
+    for part in parts[:-1]:
+        if not isinstance(current, dict) or part not in current:
+            raise ValueError(f"parameter path does not exist in base.yml: {path}")
+        current = current[part]
+    leaf = parts[-1]
+    if not isinstance(current, dict) or leaf not in current:
+        raise ValueError(f"parameter path does not exist in base.yml: {path}")
+    if isinstance(current[leaf], (dict, list)):
+        raise ValueError(f"parameter path must identify a scalar: {path}")
+    current[leaf] = value
+
+
+def combinations(grid: dict[str, list[Any]]):
+    paths = sorted(grid)
+    for values in itertools.product(*(grid[path] for path in paths)):
+        yield dict(zip(paths, values, strict=True))
+
+
+def validate_sweep(sweep: dict[str, Any], base: dict[str, Any]) -> None:
+    validate_id(sweep.get("id"), "sweep id")
+    grid = parameter_grid(sweep)
+    probe = copy.deepcopy(base)
+    for path, values in grid.items():
+        set_parameter(probe, path, values[0])
+    overrides = sweep.get("overrides", {})
+    if not isinstance(overrides, dict):
+        raise ValueError("overrides must be a mapping")
+    forbidden = STRUCTURAL_PATHS & overrides.keys()
+    if forbidden:
+        raise ValueError(f"structural overrides are not allowed: {sorted(forbidden)}")
+
+
+def dump_yaml(path: Path, value: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w") as handle:
+        yaml.safe_dump(value, handle, sort_keys=False)
+
+
+def project_path(path: Path, project_root: Path) -> str:
+    try:
+        return path.relative_to(project_root).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
+    """Expand a sweep and return its generated experiment path."""
+    sweep_path = sweep_path.resolve()
+    sweep = load_mapping(sweep_path)
+    base_path = sweep_path.with_name("base.yml")
+    if not base_path.is_file():
+        raise ValueError(f"missing adjacent base.yml: {base_path}")
+    base = load_mapping(base_path)
+    validate_sweep(sweep, base)
+
+    sweep_id = sweep["id"]
+    project_root = Path.cwd()
+    root = output_root or project_root / "artifacts/generated/hpo" / sweep_id
+    config_dir = root / "configs"
+    model_entries = {}
+    model_ids = []
+    producer = sweep.get("producer")
+    if not isinstance(producer, dict) or not producer.get("script"):
+        raise ValueError("producer.script is required")
+    depends_on = sweep.get("depends_on", [])
+    evaluations = sweep.get("evaluations", [])
+    if not isinstance(depends_on, list) or not all(
+        isinstance(value, str) for value in depends_on
+    ):
+        raise ValueError("depends_on must be a list of model IDs")
+    if not isinstance(evaluations, list) or not all(
+        isinstance(value, str) for value in evaluations
+    ):
+        raise ValueError("evaluations must be a list of evaluation IDs")
+
+    if depends_on:
+        canonical_path = project_root / "configs/registries/models.yml"
+        canonical = load_mapping(canonical_path).get("models", {})
+
+        def add_dependency(model_id: str) -> None:
+            if model_id in model_entries:
+                return
+            if model_id not in canonical:
+                raise ValueError(f"unknown dependency model: {model_id}")
+            model_entries[model_id] = canonical[model_id]
+            for dependency in (
+                canonical[model_id].get("producer", {}).get("depends_on", [])
+            ):
+                add_dependency(dependency)
+
+        for dependency in depends_on:
+            add_dependency(dependency)
+
+    for index, values in enumerate(combinations(parameter_grid(sweep)), start=1):
+        candidate_id = f"{sweep_id}--{index:03d}"
+        config = copy.deepcopy(base)
+        for path, value in values.items():
+            set_parameter(config, path, value)
+        for path, value in sweep.get("overrides", {}).items():
+            set_parameter(config, path, value)
+        artifact = f"artifacts/generated/hpo/{sweep_id}/models/{candidate_id}"
+        config["output_dir"] = artifact
+        config_path = config_dir / f"{candidate_id}.yml"
+        dump_yaml(config_path, config)
+
+        config_arg = project_path(config_path, project_root)
+        producer_entry = {
+            "id": f"train-{candidate_id}",
+            "script": producer["script"],
+            "args": [config_arg, *producer.get("args", [])],
+        }
+        if depends_on:
+            producer_entry["depends_on"] = depends_on
+        resources = producer.get("sbatch_args", producer.get("resources"))
+        if resources:
+            producer_entry["sbatch_args"] = resources
+        model_entries[candidate_id] = {
+            "base_model_name_or_path": artifact,
+            "adapter_name_or_path": "-",
+            "local_dir": artifact,
+            "producer": producer_entry,
+        }
+        model_fields = sweep.get("model", {})
+        if not isinstance(model_fields, dict):
+            raise ValueError("model must be a mapping")
+        model_entries[candidate_id].update(
+            {
+                key: (
+                    value.format(id=candidate_id, artifact=artifact)
+                    if isinstance(value, str)
+                    else value
+                )
+                for key, value in model_fields.items()
+            }
+        )
+        model_ids.append(candidate_id)
+
+    models_path = root / "models.yml"
+    dump_yaml(models_path, {"models": model_entries})
+    experiment = {
+        "version": 1,
+        "id": sweep_id,
+        "registries": {
+            "models": project_path(models_path, project_root),
+            "evaluations": sweep.get(
+                "evaluation_registry", "configs/registries/evals.yml"
+            ),
+        },
+        "models": model_ids,
+        "evaluations": evaluations,
+    }
+    experiment_path = root / "experiment.yml"
+    dump_yaml(experiment_path, experiment)
+    return experiment_path
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    generate_parser = subparsers.add_parser("generate")
+    generate_parser.add_argument("sweep", type=Path)
+    args = parser.parse_args(argv)
+    experiment = generate(args.sweep)
+    print(experiment)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

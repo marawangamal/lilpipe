@@ -1,0 +1,9 @@
+version: 1
+id: z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+models:
+  - z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft
+evaluations:
+  - bio-standard-local-trajectory-max125-freq5-tamia

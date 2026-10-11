@@ -1,0 +1,17 @@
+id: z7b-wmdp-bio--unlearn-fft-gd-hpo
+parameters:
+  learning_rate:
+    - 2.5e-06
+    - 5.0e-06
+    - 7.5e-06
+    - 1.0e-05
+producer:
+  script: scripts/slurm/tamia/train.sbatch
+  sbatch_args:
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=48
+    - --mem=480G
+    - --time=03:00:00
+evaluations:
+  - bio-mcqa-ckpts-max125-freq125-tamia
+  - mmlu-no-bio-ckpts-max125-freq125-tamia

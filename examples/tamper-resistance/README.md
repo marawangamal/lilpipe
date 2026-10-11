@@ -1,10 +1,9 @@
 # Tamper-resistance experiments
 
-The active experiment family is the matched Zephyr-7B LoRA `s125` study: 125
-unlearning steps followed by 125 relearning steps for GD and GD+SAM at
-`rho={1e-3, 1e-2, 1e-1}`. Run all commands from
-`examples/tamper-resistance`, because lilpipe resolves paths from the current
-working directory.
+The active Zephyr-7B experiments are organized as self-contained unlearn,
+resist, and relearn lineages under `configs/stages/`. Run every command from
+this directory because lilpipe resolves paths from the current working
+directory.
 
 ## Setup
 
@@ -25,56 +24,35 @@ UV_PROJECT_ENVIRONMENT="$SCRATCH/lilpipe/examples/tamper-resistance/.venv-eval" 
 uv sync --group eval
 ```
 
-## Run
+The example installs its `trainers`, `data`, and `axolotl_plugins` packages
+from `src/`. Custom trainer settings live in YAML under
+`custom_trainer_args`; the plugin validates and forwards them to the trainer
+constructor.
 
-Run the GD and GD+SAM unlearning learning-rate sweeps separately:
+## Generate and run a sweep
 
-```bash
-lilpipe configs/experiments/z7b-lora-s125-unlearn-gd-hpo.yml
-lilpipe configs/experiments/z7b-lora-s125-unlearn-gd-sam-hpo.yml
-```
-
-The Tamia full-finetuning GD study uses the paper's WMDP learning-rate range as
-the same four-point grid for unlearning and relearning:
-`2.5e-6, 5e-6, 7.5e-6, 1e-5`.
+Each lineage has a runnable `base.yml`, a parameter `sweep.yml`, and a
+promoted standalone `selected.yml`. Generate candidates from a sweep with:
 
 ```bash
-lilpipe configs/experiments/z7b-fft-s125-unlearn-gd-hpo.yml
-# Promote the selected unlearned model before running:
-lilpipe configs/experiments/z7b-fft-s125-relearn-gd-hpo.yml
+python scripts/hpo.py generate \
+  configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-gd/sweep.yml
+lilpipe artifacts/generated/hpo/z7b-wmdp-bio--unlearn-fft-gd-hpo/experiment.yml
 ```
 
-The matching full-finetuning GD+SAM unlearning sweep crosses the same learning
-rates with `rho={1e-3, 1e-2, 1e-1}`:
+Generated configurations, their model registry, and their manifest are kept
+under `artifacts/generated/hpo/<sweep-id>/`. HPO runs keep only the final
+checkpoint. Selection is manual: copy the chosen concrete values to the
+lineage's `selected.yml` and promote its model in
+`configs/registries/models.yml`.
+
+## Run canonical lineages
 
 ```bash
-lilpipe configs/experiments/z7b-fft-s125-unlearn-gd-sam-hpo.yml
-# After promoting the selected rho and learning rate:
-lilpipe configs/experiments/z7b-fft-s125-relearn-gd-sam-rho1e-3-hpo.yml
+lilpipe configs/experiments/unlearn.yml
+lilpipe configs/experiments/unlearn-relearn.yml
+lilpipe configs/experiments/unlearn-resist-relearn.yml
 ```
 
-After promoting the selected unlearning models, run the corresponding
-relearning learning-rate sweeps:
-
-```bash
-lilpipe configs/experiments/z7b-lora-s125-relearn-gd-hpo.yml
-lilpipe configs/experiments/z7b-lora-s125-relearn-gd-sam-hpo.yml
-```
-
-Run the selected canonical unlearning and relearning configurations with:
-
-```bash
-lilpipe configs/experiments/z7b-lora-s125.yml
-```
-
-LoRA runs save checkpoints every 10 steps plus step 125. Full-finetuning
-sweeps retain only step 125 to avoid redundant full-model checkpoints. Sweep
-manifests evaluate the final checkpoint; the canonical manifest evaluates the
-full trajectory.
-
-Retired experiment artifacts are kept under
-`artifacts/archive/non-s125-20261005/`.
-
-Axolotl loads dataset strategies from `configs/training/data/` and objectives
-from `configs/training/trainers/`, as selected by `datasets[].type` and
-`trainer_cls` in each YAML.
+Canonical relearning configurations retain trajectory checkpoints for
+evaluation. Existing artifact directories are not renamed or removed.
