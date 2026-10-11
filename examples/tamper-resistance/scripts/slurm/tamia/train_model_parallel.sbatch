@@ -13,7 +13,7 @@ export WANDB_DATA_DIR="$SCRATCH/.cache/wandb/staging"
 export WANDB_MODE=offline
 export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"
 export PATH="$HOME/.local/bin:$PATH"
-export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
 
 config=${1:?missing training config}
 

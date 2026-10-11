@@ -217,9 +217,7 @@ def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
         "output_dir",
         "wandb_name",
     }
-    assert {
-        key: value for key, value in gd.items() if key not in differing_keys
-    } == {
+    assert {key: value for key, value in gd.items() if key not in differing_keys} == {
         key: value for key, value in unlearn.items() if key not in differing_keys
     }
     assert gd["custom_trainer_args"] == {
@@ -238,3 +236,9 @@ def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
     assert relearn["save_steps"] == 4
     assert relearn["gradient_accumulation_steps"] == 1
     assert relearn["seed"] == 1
+
+
+def test_tamia_train_launchers_expose_refactored_python_packages() -> None:
+    for name in ("train.sbatch", "train_model_parallel.sbatch"):
+        script = (EXAMPLE / "scripts/slurm/tamia" / name).read_text()
+        assert 'export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"' in script
