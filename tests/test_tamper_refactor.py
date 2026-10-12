@@ -245,8 +245,8 @@ def test_unlearning_sweep_bases_match_selected_configs() -> None:
     for slug in (
         "z7b-wmdp-bio--unlearn-fft-gd",
         "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2",
-        "z7b-wmdp-bio--unlearn-fft-gd-standard",
-        "z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2",
+        "z7b-wmdp-bio--unlearn-fft-gd-author-copied",
+        "z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied",
     ):
         lineage = root / slug
         base = yaml.safe_load((lineage / "base.yml").read_text())
@@ -254,17 +254,17 @@ def test_unlearning_sweep_bases_match_selected_configs() -> None:
         assert base == selected
 
 
-def test_standard_processing_hpo_uses_promoted_coefficients_and_sweeps_rho() -> None:
+def test_author_copied_hpo_uses_promoted_coefficients_and_sweeps_rho() -> None:
     root = EXAMPLE / "configs/stages/0_unlearn"
     for slug in (
-        "z7b-wmdp-bio--unlearn-fft-gd-standard",
-        "z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2",
+        "z7b-wmdp-bio--unlearn-fft-gd-author-copied",
+        "z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied",
     ):
         selected = yaml.safe_load((root / slug / "selected.yml").read_text())
         assert selected["custom_trainer_args"]["forget_coefficient"] == 4.0
 
     gd_sweep = yaml.safe_load(
-        (root / "z7b-wmdp-bio--unlearn-fft-gd-standard" / "sweep.yml").read_text()
+        (root / "z7b-wmdp-bio--unlearn-fft-gd-author-copied" / "sweep.yml").read_text()
     )
     assert gd_sweep["parameters"] == {
         "custom_trainer_args.forget_coefficient": [2.0, 3.125, 4.0]
@@ -272,7 +272,7 @@ def test_standard_processing_hpo_uses_promoted_coefficients_and_sweeps_rho() -> 
 
     sam_sweep = yaml.safe_load(
         (
-            root / "z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2" / "sweep.yml"
+            root / "z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied" / "sweep.yml"
         ).read_text()
     )
     assert sam_sweep["parameters"] == {"custom_trainer_args.rho": [5e-3, 2e-2, 5e-2]}
@@ -322,21 +322,21 @@ def test_optml_relearning_uses_the_canonical_attack_recipe() -> None:
         assert config["base_model"].startswith("../sam/WMDP/artifacts/tamia/models/")
 
 
-def test_standard_processing_changes_only_labels_and_forget_coefficient() -> None:
+def test_author_copied_processing_changes_only_labels_and_forget_coefficient() -> None:
     unlearn_root = EXAMPLE / "configs/stages/0_unlearn"
     relearn_root = EXAMPLE / "configs/stages/2_relearn"
     method_slugs = (
-        ("gd", "gd-standard"),
-        ("gd-sam-rho1e-2", "gd-standard-sam-rho1e-2"),
+        ("gd", "gd-author-copied"),
+        ("gd-sam-rho1e-2", "gd-sam-author-copied"),
     )
-    for canonical_method, standard_method in method_slugs:
+    for canonical_method, author_copied_method in method_slugs:
         canonical_slug = f"z7b-wmdp-bio--unlearn-fft-{canonical_method}"
-        standard_slug = f"z7b-wmdp-bio--unlearn-fft-{standard_method}"
+        author_copied_slug = f"z7b-wmdp-bio--unlearn-fft-{author_copied_method}"
         canonical = yaml.safe_load(
             (unlearn_root / canonical_slug / "selected.yml").read_text()
         )
-        standard = yaml.safe_load(
-            (unlearn_root / standard_slug / "selected.yml").read_text()
+        author_copied = yaml.safe_load(
+            (unlearn_root / author_copied_slug / "selected.yml").read_text()
         )
         excluded = {
             "custom_trainer_args",
@@ -347,27 +347,27 @@ def test_standard_processing_changes_only_labels_and_forget_coefficient() -> Non
         }
         assert {
             key: value for key, value in canonical.items() if key not in excluded
-        } == {key: value for key, value in standard.items() if key not in excluded}
+        } == {key: value for key, value in author_copied.items() if key not in excluded}
         assert [dataset["type"] for dataset in canonical["datasets"]] == [
             "data.authors_documents",
             "data.authors_documents",
         ]
-        assert [dataset["type"] for dataset in standard["datasets"]] == [
+        assert [dataset["type"] for dataset in author_copied["datasets"]] == [
             "data.authors_documents_masked",
             "data.authors_documents_masked",
         ]
         expected_trainer_args = dict(canonical["custom_trainer_args"])
         expected_trainer_args["forget_coefficient"] = 4.0
-        assert standard["custom_trainer_args"] == expected_trainer_args
+        assert author_copied["custom_trainer_args"] == expected_trainer_args
 
         canonical_relearn = yaml.safe_load(
             (
                 relearn_root / f"{canonical_slug}--relearn-fft" / "selected.yml"
             ).read_text()
         )
-        standard_relearn = yaml.safe_load(
+        author_copied_relearn = yaml.safe_load(
             (
-                relearn_root / f"{standard_slug}--relearn-fft" / "selected.yml"
+                relearn_root / f"{author_copied_slug}--relearn-fft" / "selected.yml"
             ).read_text()
         )
         relearn_excluded = {
@@ -382,6 +382,6 @@ def test_standard_processing_changes_only_labels_and_forget_coefficient() -> Non
             if key not in relearn_excluded
         } == {
             key: value
-            for key, value in standard_relearn.items()
+            for key, value in author_copied_relearn.items()
             if key not in relearn_excluded
         }

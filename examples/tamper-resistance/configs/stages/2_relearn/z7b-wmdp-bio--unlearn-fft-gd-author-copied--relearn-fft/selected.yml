@@ -1,13 +1,13 @@
-base_model: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2
+base_model: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-author-copied
 tokenizer_type: AutoTokenizer
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
     type: data.wmdp_zephyr
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2--relearn-fft/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--unlearn-fft-gd-author-copied--relearn-fft/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2--relearn-fft
+output_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-author-copied--relearn-fft
 sequence_len: 512
 sample_packing: false
 pad_to_sequence_len: false
@@ -42,4 +42,4 @@ save_total_limit: 4
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2--relearn-fft
+wandb_name: z7b-wmdp-bio--unlearn-fft-gd-author-copied--relearn-fft
