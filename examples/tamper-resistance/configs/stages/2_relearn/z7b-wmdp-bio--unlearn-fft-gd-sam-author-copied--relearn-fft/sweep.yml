@@ -1,8 +1,8 @@
-id: z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied--relearn-fft-boundary-rho
+id: z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied--relearn-fft-forget-coefficient
 base: selected.yml
 parameters:
   base_model:
-    - artifacts/generated/hpo/z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-boundary-rho-hpo/models/z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-boundary-rho-hpo--002
+    - artifacts/generated/hpo/z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-forget-coefficient-hpo/models/z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-forget-coefficient-hpo--002
 producer:
   script: scripts/slurm/tamia/train.sbatch
   sbatch_args:
