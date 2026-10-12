@@ -244,6 +244,20 @@ def test_tamia_train_launchers_expose_refactored_python_packages() -> None:
         assert 'export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"' in script
 
 
+def test_authors_table3_scripts_preserve_and_evaluate_all_checkpoints() -> None:
+    scripts = EXAMPLE / "scripts/slurm/tamia"
+    relearn = (scripts / "authors_relearn_preserve.sbatch").read_text()
+    evaluation = (scripts / "eval_authors_table3.sbatch").read_text()
+
+    assert "steps=(5 10 15)" in relearn
+    assert "example_counts=(20 40 60)" in relearn
+    assert 'cp -a "$staged_run"/. "$run_root"/' in relearn
+    assert 'rm -rf "$run_root"' not in relearn
+    assert "samples=(0 20 40 60)" in evaluation
+    assert 'checkpoint="$model_root/checkpoints"' in evaluation
+    assert 'checkpoint="$model_root/examples-$sample_count/checkpoints"' in evaluation
+
+
 def test_authors_data_fallback_changes_only_unlearning_trainer() -> None:
     root = EXAMPLE / "configs/stages/0_unlearn"
     gd = yaml.safe_load(
