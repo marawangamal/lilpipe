@@ -275,7 +275,10 @@ def test_author_copied_hpo_uses_promoted_coefficients_and_sweeps_rho() -> None:
             root / "z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied" / "sweep.yml"
         ).read_text()
     )
-    assert sam_sweep["parameters"] == {"custom_trainer_args.rho": [5e-3, 2e-2, 5e-2]}
+    assert sam_sweep["parameters"] == {
+        "custom_trainer_args.forget_coefficient": [4.0, 6.0, 8.0],
+        "custom_trainer_args.rho": [1.25e-2, 1.5e-2, 2e-2],
+    }
     assert sam_sweep["evaluations"] == ["wmdp-bio-final", "mmlu-no-bio-final"]
 
 

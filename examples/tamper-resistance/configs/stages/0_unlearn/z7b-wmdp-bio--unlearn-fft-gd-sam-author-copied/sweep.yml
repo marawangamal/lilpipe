@@ -1,9 +1,13 @@
-id: z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-rho-hpo
+id: z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-joint-hpo
 parameters:
+  custom_trainer_args.forget_coefficient:
+    - 4.0
+    - 6.0
+    - 8.0
   custom_trainer_args.rho:
-    - 5.0e-3
+    - 1.25e-2
+    - 1.5e-2
     - 2.0e-2
-    - 5.0e-2
 producer:
   script: scripts/slurm/tamia/train_model_parallel.sbatch
   sbatch_args:
