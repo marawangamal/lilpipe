@@ -305,12 +305,12 @@ def test_author_copied_hpo_uses_promoted_coefficients_and_sweeps_rho() -> None:
     )
     assert sam_sweep["parameters"] == {
         "custom_trainer_args.rho": [
-            1.025e-2,
-            1.05e-2,
-            1.075e-2,
-            1.1e-2,
-            1.15e-2,
-            1.2e-2,
+            1.0025e-2,
+            1.005e-2,
+            1.0075e-2,
+            1.01e-2,
+            1.015e-2,
+            1.02e-2,
         ],
     }
     assert sam_sweep["evaluations"] == ["wmdp-bio-final", "mmlu-no-bio-final"]

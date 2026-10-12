@@ -1,12 +1,12 @@
-id: z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-fine-rho-hpo
+id: z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-boundary-rho-hpo
 parameters:
   custom_trainer_args.rho:
-    - 1.025e-2
-    - 1.05e-2
-    - 1.075e-2
-    - 1.1e-2
-    - 1.15e-2
-    - 1.2e-2
+    - 1.0025e-2
+    - 1.005e-2
+    - 1.0075e-2
+    - 1.01e-2
+    - 1.015e-2
+    - 1.02e-2
 producer:
   script: scripts/slurm/tamia/train_model_parallel.sbatch
   sbatch_args:
