@@ -1,9 +1,8 @@
-id: z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied--relearn-fft-rho-candidates
+id: z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied--relearn-fft-boundary-rho
 base: selected.yml
 parameters:
   base_model:
-    - artifacts/generated/hpo/z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-fine-rho-hpo/models/z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-fine-rho-hpo--003
-    - artifacts/generated/hpo/z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-fine-rho-hpo/models/z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-fine-rho-hpo--004
+    - artifacts/generated/hpo/z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-boundary-rho-hpo/models/z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-boundary-rho-hpo--002
 producer:
   script: scripts/slurm/tamia/train.sbatch
   sbatch_args:
