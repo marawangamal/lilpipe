@@ -191,9 +191,10 @@ def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
         "rho": 1e-2,
         "forget_coefficient": 1.0,
         "retain_coefficient": 1.0,
-        "sampling": "authors",
+        "sampling": "optml",
+        "optml_parity": True,
     }
-    expected_dataset_types = {"data.wmdp_zephyr", "data.wikitext2"}
+    expected_dataset_types = {"data.authors_documents"}
     assert {dataset["type"] for dataset in gd["datasets"]} == expected_dataset_types
     assert {dataset["type"] for dataset in unlearn["datasets"]} == (
         expected_dataset_types
@@ -201,9 +202,10 @@ def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
     assert float(unlearn["learning_rate"]) == pytest.approx(3.28e-6)
     assert unlearn["micro_batch_size"] == 8
     assert unlearn["gradient_accumulation_steps"] == 1
-    assert unlearn["seed"] == 3
-    assert unlearn["data_seed"] == 3
+    assert unlearn["seed"] == 42
+    assert unlearn["data_seed"] == 42
     assert unlearn["tf32"] is False
+    assert unlearn["attn_implementation"] == "eager"
     assert unlearn["device_map"]["model.embed_tokens"] == 0
     assert unlearn["device_map"]["model.norm"] == 3
     assert unlearn["device_map"]["lm_head"] == 3
@@ -223,7 +225,7 @@ def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
     assert gd["custom_trainer_args"] == {
         "forget_coefficient": 1.0,
         "retain_coefficient": 1.0,
-        "sampling": "authors",
+        "sampling": "optml",
     }
 
     relearn = yaml.safe_load(
