@@ -102,6 +102,44 @@ def test_hpo_expansion_is_deterministic_and_supports_dotted_paths(
     ]
 
 
+def test_hpo_can_use_selected_config_and_expose_parameters_to_model_fields(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "tamper_hpo_selected_test")
+    lineage = tmp_path / "lineage"
+    lineage.mkdir()
+    (lineage / "selected.yml").write_text(
+        yaml.safe_dump({"base_model": "old", "output_dir": "old-output"})
+    )
+    sweep = {
+        "id": "test-relearn-sweep",
+        "base": "selected.yml",
+        "parameters": {"base_model": ["model-a", "model-b"]},
+        "producer": {"script": "train.sbatch"},
+        "model": {"baseline_model_name_or_path": "{parameter[base_model]}"},
+        "evaluations": [],
+    }
+    sweep_path = lineage / "sweep.yml"
+    sweep_path.write_text(yaml.safe_dump(sweep))
+    monkeypatch.chdir(EXAMPLE)
+
+    output = tmp_path / "generated"
+    experiment_path = hpo.generate(sweep_path, output)
+    configs = [
+        yaml.safe_load(path.read_text())
+        for path in sorted((output / "configs").glob("*.yml"))
+    ]
+    assert [config["base_model"] for config in configs] == ["model-a", "model-b"]
+    models_path = Path(
+        yaml.safe_load(experiment_path.read_text())["registries"]["models"]
+    )
+    models = yaml.safe_load(models_path.read_text())["models"]
+    assert [model["baseline_model_name_or_path"] for model in models.values()] == [
+        "model-a",
+        "model-b",
+    ]
+
+
 @pytest.mark.parametrize(
     "manifest",
     [

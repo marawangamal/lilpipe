@@ -98,7 +98,10 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
     """Expand a sweep and return its generated experiment path."""
     sweep_path = sweep_path.resolve()
     sweep = load_mapping(sweep_path)
-    base_path = sweep_path.with_name("base.yml")
+    base_name = sweep.get("base", "base.yml")
+    if not isinstance(base_name, str) or Path(base_name).name != base_name:
+        raise ValueError("sweep base must be a filename adjacent to sweep.yml")
+    base_path = sweep_path.with_name(base_name)
     if not base_path.is_file():
         raise ValueError(f"missing adjacent base.yml: {base_path}")
     base = load_mapping(base_path)
@@ -177,7 +180,11 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
         model_entries[candidate_id].update(
             {
                 key: (
-                    value.format(id=candidate_id, artifact=artifact)
+                    value.format(
+                        id=candidate_id,
+                        artifact=artifact,
+                        parameter=values,
+                    )
                     if isinstance(value, str)
                     else value
                 )
