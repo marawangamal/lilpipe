@@ -1,7 +1,6 @@
 id: z7b-wmdp-bio--unlearn-fft-gd-standard-forget-coefficient-hpo
 parameters:
   custom_trainer_args.forget_coefficient:
-    - 1.0
     - 2.0
     - 3.125
     - 4.0

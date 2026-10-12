@@ -1,7 +1,10 @@
 """Plain gradient-difference unlearning with balanced forget and retain batches."""
 
+import torch
+
 from axolotl.core.trainers.base import AxolotlTrainer
 
+from trainers.gradient_metrics import global_l2_norm
 from trainers.sampling import (
     AuthorsMixedSourceSampler,
     MixedSourceSampler,
@@ -58,7 +61,42 @@ class GradDiffTrainer(AxolotlTrainer):
         forget_outputs = model(**forget_inputs)
         forget_ce = forget_outputs.loss.float()
         retain_ce = model(**retain_inputs).loss.float()
-        loss = (
-            -self.forget_coefficient * forget_ce + self.retain_coefficient * retain_ce
-        )
+        forget_term = -self.forget_coefficient * forget_ce
+        retain_term = self.retain_coefficient * retain_ce
+        loss = forget_term + retain_term
+
+        if model.training and torch.is_grad_enabled():
+            parameters = tuple(
+                parameter for parameter in model.parameters() if parameter.requires_grad
+            )
+            forget_gradients = torch.autograd.grad(
+                forget_term,
+                parameters,
+                retain_graph=True,
+                allow_unused=True,
+            )
+            retain_gradients = torch.autograd.grad(
+                retain_term,
+                parameters,
+                retain_graph=True,
+                allow_unused=True,
+            )
+            self.log(
+                {
+                    "forget_ce": forget_ce.detach().item(),
+                    "retain_ce": retain_ce.detach().item(),
+                    "forget_term": forget_term.detach().item(),
+                    "retain_term": retain_term.detach().item(),
+                    "forget_grad_norm": global_l2_norm(
+                        gradient
+                        for gradient in forget_gradients
+                        if gradient is not None
+                    ).item(),
+                    "retain_grad_norm": global_l2_norm(
+                        gradient
+                        for gradient in retain_gradients
+                        if gradient is not None
+                    ).item(),
+                }
+            )
         return (loss, forget_outputs) if return_outputs else loss

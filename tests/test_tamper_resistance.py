@@ -135,6 +135,19 @@ def sampling_module():
 
 
 @pytest.fixture(scope="module")
+def src_gd_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE / "src"))
+    try:
+        return load_script("src/trainers/gd.py", "src_gd_training")
+    finally:
+        sys.path.remove(str(EXAMPLE / "src"))
+
+
+@pytest.fixture(scope="module")
 def src_gd_sam_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
@@ -1298,6 +1311,54 @@ def test_grad_diff_loss_and_gradient_direction(
     assert model.retain_weight.grad.item() == pytest.approx(retain_coefficient * 8)
 
 
+def test_src_grad_diff_logs_component_losses_and_gradient_norms(
+    src_gd_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.forget_weight = torch.nn.Parameter(torch.tensor(2.0))
+            self.retain_weight = torch.nn.Parameter(torch.tensor(3.0))
+
+        def forward(self, input_ids, attention_mask, labels):
+            del attention_mask, labels
+            ids = input_ids.flatten().tolist()
+            weight = self.forget_weight if ids == [2, 4] else self.retain_weight
+            return SimpleNamespace(loss=input_ids.float().mean() * weight)
+
+    model = Model()
+    trainer = object.__new__(src_gd_training_module.GradDiffTrainer)
+    trainer.forget_coefficient = 2.0
+    trainer.retain_coefficient = 1.0
+    logged = []
+    trainer.log = logged.append
+    inputs = {
+        "input_ids": torch.tensor([[7], [2], [9], [4]]),
+        "attention_mask": torch.ones(4, 1),
+        "labels": torch.tensor([[7], [2], [9], [4]]),
+        "is_forget": torch.tensor([False, True, False, True]),
+    }
+
+    loss = trainer.compute_loss(model, inputs)
+    loss.backward()
+
+    assert loss.item() == pytest.approx(12.0)
+    assert logged == [
+        {
+            "forget_ce": pytest.approx(6.0),
+            "retain_ce": pytest.approx(24.0),
+            "forget_term": pytest.approx(-12.0),
+            "retain_term": pytest.approx(24.0),
+            "forget_grad_norm": pytest.approx(6.0),
+            "retain_grad_norm": pytest.approx(8.0),
+        }
+    ]
+    assert model.forget_weight.grad.item() == pytest.approx(-6.0)
+    assert model.retain_weight.grad.item() == pytest.approx(8.0)
+
+
 @pytest.mark.parametrize("sources", [[1, 1], [0, 0]])
 def test_grad_diff_requires_both_sources(gd_training_module, sources) -> None:
     torch = pytest.importorskip("torch")
@@ -1327,6 +1388,63 @@ def test_grad_diff_sampler_balances_each_microbatch(gd_training_module) -> None:
             )
             == 2
         )
+
+
+def test_src_gd_sam_logs_component_losses_and_gradient_norms(
+    src_gd_sam_training_module,
+) -> None:
+    from contextlib import nullcontext
+
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(2.0))
+
+        def forward(self, input_ids, attention_mask, labels):
+            del attention_mask, labels
+            return SimpleNamespace(loss=input_ids.float().mean() * self.weight.square())
+
+    class Accelerator:
+        @staticmethod
+        def backward(loss):
+            loss.backward()
+
+    model = Model()
+    trainer = object.__new__(src_gd_sam_training_module.GDSAMTrainer)
+    trainer.optimizer = None
+    trainer.accelerator = Accelerator()
+    trainer.current_gradient_accumulation_steps = 1
+    trainer.compute_loss_context_manager = nullcontext
+    trainer.rho = 0.01
+    trainer.forget_coefficient = 2.0
+    trainer.retain_coefficient = 1.0
+    trainer.optml_parity = False
+    logged = []
+    trainer.log = logged.append
+    inputs = {
+        "input_ids": torch.tensor([[7], [2], [9], [4]]),
+        "attention_mask": torch.ones(4, 1),
+        "labels": torch.tensor([[7], [2], [9], [4]]),
+        "is_forget": torch.tensor([False, True, False, True]),
+    }
+
+    loss = trainer._sam_training_step(model, inputs)
+
+    assert loss.item() == pytest.approx(-6 * 1.99**2 + 8 * 2**2)
+    assert logged == [
+        {
+            "forget_ce": pytest.approx(3 * 1.99**2),
+            "retain_ce": pytest.approx(8 * 2**2),
+            "forget_term": pytest.approx(-6 * 1.99**2),
+            "retain_term": pytest.approx(8 * 2**2),
+            "forget_grad_norm": pytest.approx(12 * 1.99),
+            "retain_grad_norm": pytest.approx(16 * 2),
+            "unperturbed_forget_grad_norm": pytest.approx(6 * 2),
+        }
+    ]
+    assert model.weight.grad.item() == pytest.approx(-12 * 1.99 + 16 * 2)
 
 
 def test_gd_sam_loss_uses_small_forget_perturbation(gd_sam_training_module) -> None:

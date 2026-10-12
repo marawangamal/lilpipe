@@ -256,7 +256,7 @@ def test_unlearning_sweep_bases_match_selected_configs() -> None:
 
 def test_standard_processing_sweeps_forget_coefficient() -> None:
     root = EXAMPLE / "configs/stages/0_unlearn"
-    expected = [1.0, 2.0, 3.125, 4.0]
+    expected = [2.0, 3.125, 4.0]
     for slug in (
         "z7b-wmdp-bio--unlearn-fft-gd-standard",
         "z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2",
