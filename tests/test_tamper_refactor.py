@@ -104,7 +104,12 @@ def test_hpo_expansion_is_deterministic_and_supports_dotted_paths(
 
 @pytest.mark.parametrize(
     "manifest",
-    ["unlearn.yml", "unlearn-relearn.yml", "unlearn-resist-relearn.yml"],
+    [
+        "unlearn.yml",
+        "unlearn-relearn.yml",
+        "unlearn-relearn-long.yml",
+        "unlearn-resist-relearn.yml",
+    ],
 )
 def test_canonical_lineages_plan(manifest: str, monkeypatch) -> None:
     monkeypatch.chdir(EXAMPLE)
@@ -156,6 +161,29 @@ def test_evaluation_registry_contains_only_active_intents() -> None:
 
     assert evaluations["wmdp-bio-relearn"]["args"][-3] == "wmdp_bio_robust"
     assert evaluations["wmdp-bio-relearn-long"]["args"][-3] == "wmdp_bio_robust"
+
+
+def test_long_relearning_trajectory_is_isolated() -> None:
+    manifest = yaml.safe_load(
+        (EXAMPLE / "configs/experiments/unlearn-relearn-long.yml").read_text()
+    )
+    models = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
+        "models"
+    ]
+
+    assert len(manifest["models"]) == 3
+    assert manifest["evaluations"] == [
+        "wmdp-bio-relearn-long",
+        "mmlu-no-bio-relearn-long",
+    ]
+    for model_id in manifest["models"]:
+        assert model_id.endswith("--relearn-fft-long")
+        model = models[model_id]
+        config = yaml.safe_load((EXAMPLE / model["producer"]["args"][0]).read_text())
+        assert config["max_steps"] == 125
+        assert config["save_steps"] == 5
+        assert config["save_total_limit"] == 25
+        assert config["output_dir"].endswith("--relearn-fft-long")
 
 
 def test_active_manifests_reference_only_registered_evaluations() -> None:
@@ -276,8 +304,14 @@ def test_author_copied_hpo_uses_promoted_coefficients_and_sweeps_rho() -> None:
         ).read_text()
     )
     assert sam_sweep["parameters"] == {
-        "custom_trainer_args.forget_coefficient": [4.0, 6.0, 8.0],
-        "custom_trainer_args.rho": [1.25e-2, 1.5e-2, 2e-2],
+        "custom_trainer_args.rho": [
+            1.025e-2,
+            1.05e-2,
+            1.075e-2,
+            1.1e-2,
+            1.15e-2,
+            1.2e-2,
+        ],
     }
     assert sam_sweep["evaluations"] == ["wmdp-bio-final", "mmlu-no-bio-final"]
 
