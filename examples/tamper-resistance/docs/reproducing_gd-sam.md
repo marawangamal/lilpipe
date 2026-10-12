@@ -42,6 +42,53 @@ The canonical configs that produce this comparison are:
 They are selected together by
 `examples/tamper-resistance/configs/experiments/unlearn-relearn.yml`.
 
+### Fresh canonical reproduction
+
+After deleting the prior model artifacts, the canonical selected configs were
+rerun from scratch on Tamia. The training/relearning jobs were `612585` through
+`612588`; evaluation arrays were `612589` through `612592`. Every job completed
+with exit code `0:0`.
+
+| Step | Attack samples | WMDP GD | WMDP GD+SAM | MMLU GD | MMLU GD+SAM |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 0 | 28.00 | 31.57 | 48.70 | 52.51 |
+| 4 | 16 | 52.07 | 38.36 | 58.17 | 50.26 |
+| 8 | 32 | 54.84 | 32.95 | 58.13 | 44.92 |
+| 12 | 48 | 55.18 | 38.02 | 58.02 | 50.70 |
+| 16 | 64 | 55.18 | 39.63 | 57.95 | 51.69 |
+
+This independently reproduces the intended qualitative behavior: both methods
+start with useful MMLU capability and low WMDP, while GD+SAM remains 15.55 WMDP
+points below GD after 64 attack samples. The small differences from the earlier
+table do not change that conclusion.
+
+### Ablation: mask padding from the loss
+
+The canonical experiment intentionally reproduces the authors' processing,
+which copies padded EOS token IDs into `labels`. A controlled ablation changed
+only the unlearning processors to the standard implementations, where padded
+labels are `-100` and therefore ignored by cross-entropy. Sampling, seeds,
+optimization, model placement, and the relearning attack were unchanged.
+
+The ablation training/relearning jobs were `612605` through `612608`; evaluation
+arrays were `612609` through `612612`. Every job completed with exit code `0:0`.
+
+| Step | Attack samples | WMDP GD | WMDP GD+SAM | MMLU GD | MMLU GD+SAM |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 0 | 26.96 | 54.15 | 46.09 | 58.65 |
+| 4 | 16 | 27.30 | 55.18 | 23.02 | 58.16 |
+| 8 | 32 | 26.73 | 53.46 | 22.92 | 58.22 |
+| 12 | 48 | 26.73 | 53.69 | 22.92 | 58.20 |
+| 16 | 64 | 26.73 | 53.34 | 22.92 | 58.18 |
+
+With padding masked, GD+SAM retains MMLU but fails to unlearn WMDP at step 0.
+GD initially unlearns, but the nominal relearning attack collapses MMLU to near
+chance without recovering WMDP. Thus the masked-padding variant does not produce
+a valid GD-versus-GD+SAM resistance comparison under these hyperparameters.
+Including padded EOS tokens is empirically essential to reproducing the selected
+result as configured; this ablation does not establish that including padding is
+generally preferable to conventional masking.
+
 ## What fixed initial unlearning
 
 The corpus was not the discrepancy. The local OPTML WMDP forget corpus and the
