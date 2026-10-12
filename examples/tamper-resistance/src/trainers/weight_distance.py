@@ -169,9 +169,9 @@ class WeightDistanceTrainer(WeightDistanceMixin, AxolotlTrainer):
         self._weight_distance_logged_step = None
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        loss_retain, outputs = super().compute_loss(
-            model, inputs, return_outputs=True, **kwargs
-        )
+        fields = ("input_ids", "attention_mask", "labels")
+        outputs = model(**{field: inputs[field] for field in fields})
+        loss_retain = outputs.loss.float()
         loss_weight_dist = self.compute_weight_dist_loss()
         loss = loss_retain + loss_weight_dist
 

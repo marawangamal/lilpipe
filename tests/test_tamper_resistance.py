@@ -1123,7 +1123,7 @@ def test_weight_distance_rms_matches_authors_normalization(
 
 
 def test_weight_distance_trainer_combines_retain_and_distance_losses(
-    weight_dist_training_module, monkeypatch
+    weight_dist_training_module,
 ) -> None:
     torch = pytest.importorskip("torch")
 
@@ -1136,15 +1136,6 @@ def test_weight_distance_trainer_combines_retain_and_distance_losses(
             return SimpleNamespace(loss=self.weight.square())
 
     model = Model()
-    outputs = SimpleNamespace(loss=model.weight.square())
-    monkeypatch.setattr(
-        weight_dist_training_module.AxolotlTrainer,
-        "compute_loss",
-        lambda self, model, inputs, return_outputs, **kwargs: (
-            model.weight.square(),
-            outputs,
-        ),
-    )
     trainer = object.__new__(weight_dist_training_module.WeightDistanceTrainer)
     trainer.model = model
     trainer.coefficient_weight_dist = 2.0
@@ -1162,7 +1153,7 @@ def test_weight_distance_trainer_combines_retain_and_distance_losses(
     loss, returned_outputs = trainer.compute_loss(model, inputs, return_outputs=True)
 
     assert loss.item() == pytest.approx(0.0)
-    assert returned_outputs is outputs
+    assert returned_outputs.loss.item() == pytest.approx(4.0)
     assert logged == [
         {
             "loss_weight_dist": pytest.approx(-4.0),
