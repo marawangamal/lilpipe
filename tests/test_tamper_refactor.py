@@ -295,17 +295,21 @@ def test_optml_relearning_uses_the_canonical_attack_recipe() -> None:
         assert config["base_model"].startswith("../sam/WMDP/artifacts/tamia/models/")
 
 
-def test_masked_padding_ablation_changes_only_unlearning_labels() -> None:
+def test_standard_processing_changes_only_unlearning_labels() -> None:
     unlearn_root = EXAMPLE / "configs/stages/0_unlearn"
     relearn_root = EXAMPLE / "configs/stages/2_relearn"
-    for method in ("gd", "gd-sam-rho1e-2"):
-        canonical_slug = f"z7b-wmdp-bio--unlearn-fft-{method}"
-        ablation_slug = f"{canonical_slug}-masked-padding"
+    method_slugs = (
+        ("gd", "gd-standard"),
+        ("gd-sam-rho1e-2", "gd-standard-sam-rho1e-2"),
+    )
+    for canonical_method, standard_method in method_slugs:
+        canonical_slug = f"z7b-wmdp-bio--unlearn-fft-{canonical_method}"
+        standard_slug = f"z7b-wmdp-bio--unlearn-fft-{standard_method}"
         canonical = yaml.safe_load(
             (unlearn_root / canonical_slug / "selected.yml").read_text()
         )
-        ablation = yaml.safe_load(
-            (unlearn_root / ablation_slug / "selected.yml").read_text()
+        standard = yaml.safe_load(
+            (unlearn_root / standard_slug / "selected.yml").read_text()
         )
         excluded = {
             "datasets",
@@ -315,12 +319,12 @@ def test_masked_padding_ablation_changes_only_unlearning_labels() -> None:
         }
         assert {
             key: value for key, value in canonical.items() if key not in excluded
-        } == {key: value for key, value in ablation.items() if key not in excluded}
+        } == {key: value for key, value in standard.items() if key not in excluded}
         assert [dataset["type"] for dataset in canonical["datasets"]] == [
             "data.authors_documents",
             "data.authors_documents",
         ]
-        assert [dataset["type"] for dataset in ablation["datasets"]] == [
+        assert [dataset["type"] for dataset in standard["datasets"]] == [
             "data.wmdp_zephyr",
             "data.wikitext2",
         ]
@@ -330,9 +334,9 @@ def test_masked_padding_ablation_changes_only_unlearning_labels() -> None:
                 relearn_root / f"{canonical_slug}--relearn-fft" / "selected.yml"
             ).read_text()
         )
-        ablation_relearn = yaml.safe_load(
+        standard_relearn = yaml.safe_load(
             (
-                relearn_root / f"{ablation_slug}--relearn-fft" / "selected.yml"
+                relearn_root / f"{standard_slug}--relearn-fft" / "selected.yml"
             ).read_text()
         )
         relearn_excluded = {
@@ -347,6 +351,6 @@ def test_masked_padding_ablation_changes_only_unlearning_labels() -> None:
             if key not in relearn_excluded
         } == {
             key: value
-            for key, value in ablation_relearn.items()
+            for key, value in standard_relearn.items()
             if key not in relearn_excluded
         }

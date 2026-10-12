@@ -83,7 +83,7 @@ arrays were `612609` through `612612`. Every job completed with exit code `0:0`.
 
 With padding masked, GD+SAM retains MMLU but fails to unlearn WMDP at step 0.
 GD initially unlearns, but the nominal relearning attack collapses MMLU to near
-chance without recovering WMDP. Thus the masked-padding variant does not produce
+chance without recovering WMDP. Thus the standard-processing variant does not produce
 a valid GD-versus-GD+SAM resistance comparison under these hyperparameters.
 Including padded EOS tokens is empirically essential to reproducing the selected
 result as configured; this ablation does not establish that including padding is

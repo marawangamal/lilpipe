@@ -11,9 +11,9 @@ datasets:
   - {path: Salesforce/wikitext, name: wikitext-2-raw-v1, split: test, type: data.wikitext2}
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--unlearn-fft-gd-masked-padding/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--unlearn-fft-gd-standard/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-masked-padding
+output_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-standard
 sequence_len: 512
 sample_packing: false
 pad_to_sequence_len: false
@@ -77,4 +77,4 @@ save_total_limit: 1
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio--unlearn-fft-gd-masked-padding
+wandb_name: z7b-wmdp-bio--unlearn-fft-gd-standard
