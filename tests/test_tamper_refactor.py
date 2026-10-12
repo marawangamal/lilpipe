@@ -240,16 +240,32 @@ def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
     assert relearn["seed"] == 1
 
 
-def test_canonical_unlearning_sweep_bases_match_selected_configs() -> None:
+def test_unlearning_sweep_bases_match_selected_configs() -> None:
     root = EXAMPLE / "configs/stages/0_unlearn"
     for slug in (
         "z7b-wmdp-bio--unlearn-fft-gd",
         "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2",
+        "z7b-wmdp-bio--unlearn-fft-gd-standard",
+        "z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2",
     ):
         lineage = root / slug
         base = yaml.safe_load((lineage / "base.yml").read_text())
         selected = yaml.safe_load((lineage / "selected.yml").read_text())
         assert base == selected
+
+
+def test_standard_processing_sweeps_forget_coefficient() -> None:
+    root = EXAMPLE / "configs/stages/0_unlearn"
+    expected = [1.0, 2.0, 3.125, 4.0]
+    for slug in (
+        "z7b-wmdp-bio--unlearn-fft-gd-standard",
+        "z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2",
+    ):
+        sweep = yaml.safe_load((root / slug / "sweep.yml").read_text())
+        assert sweep["parameters"] == {
+            "custom_trainer_args.forget_coefficient": expected
+        }
+        assert sweep["evaluations"] == ["wmdp-bio-final", "mmlu-no-bio-final"]
 
 
 def test_tamia_train_launchers_expose_refactored_python_packages() -> None:
