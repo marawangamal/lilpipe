@@ -80,3 +80,35 @@ class AuthorsMixedSourceSampler(torch.utils.data.Sampler[int]):
     def __len__(self):
         half_batch = self.batch_size // 2
         return 2 * (len(self.forget) // half_batch * half_batch)
+
+
+class OptmlMixedSourceSampler(torch.utils.data.Sampler[int]):
+    """Match OPTML's shuffled forget rows and dynamic retain draws."""
+
+    def __init__(self, dataset, batch_size: int):
+        if batch_size < 2 or batch_size % 2:
+            raise ValueError("mixed source sampling requires an even batch size")
+        sources = dataset["is_forget"]
+        self.forget = [index for index, value in enumerate(sources) if value]
+        self.retain = [index for index, value in enumerate(sources) if not value]
+        if not self.forget or not self.retain:
+            raise ValueError("mixed source sampling requires forget and retain rows")
+        self.batch_size = batch_size
+
+    def __iter__(self):
+        # OPTML wraps the forget dataset in PyTorch's default RandomSampler.
+        # Its paired dataset then draws one retain row from Python's global RNG
+        # each time a forget row is fetched.
+        order = torch.utils.data.RandomSampler(self.forget)
+        half_batch = self.batch_size // 2
+        batch = []
+        for position in order:
+            batch.append(self.forget[position])
+            if len(batch) == half_batch:
+                yield from batch
+                yield from (random.choice(self.retain) for _ in range(half_batch))
+                batch.clear()
+
+    def __len__(self):
+        half_batch = self.batch_size // 2
+        return 2 * (len(self.forget) // half_batch * half_batch)

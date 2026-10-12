@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import random
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -125,6 +126,12 @@ def gd_sam_training_module():
         return load_script("configs/training/trainers/gd_sam.py", "gd_sam_training")
     finally:
         sys.path.remove(str(EXAMPLE))
+
+
+@pytest.fixture(scope="module")
+def sampling_module():
+    pytest.importorskip("torch")
+    return load_script("src/trainers/sampling.py", "tamper_sampling")
 
 
 @pytest.fixture(scope="module")
@@ -1417,6 +1424,34 @@ def test_gd_sam_authors_sampler_draws_retain_with_replacement(
     assert trainer.rho == pytest.approx(5e-3)
     paper_trainer = gd_sam_training_module.GDSAMRho1eMinus2Trainer
     assert paper_trainer.rho == pytest.approx(1e-2)
+
+
+def test_optml_sampler_matches_paired_random_sampling(sampling_module) -> None:
+    torch = pytest.importorskip("torch")
+
+    class TaggedDataset:
+        sources = [1, 1, 1, 1, 0, 0]
+
+        def __getitem__(self, key):
+            assert key == "is_forget"
+            return self.sources
+
+    random.seed(42)
+    torch.manual_seed(42)
+    expected_forget = list(torch.utils.data.RandomSampler(range(4)))
+    expected_retain = [random.choice([4, 5]) for _ in range(4)]
+
+    random.seed(42)
+    torch.manual_seed(42)
+    actual = list(sampling_module.OptmlMixedSourceSampler(TaggedDataset(), 4))
+
+    assert actual == [
+        *expected_forget[:2],
+        *expected_retain[:2],
+        *expected_forget[2:],
+        *expected_retain[2:],
+    ]
+    assert len(actual) == 8
 
 
 @pytest.mark.skip(reason="legacy config replaced by generated stage sweep")

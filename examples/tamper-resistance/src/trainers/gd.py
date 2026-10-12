@@ -2,7 +2,11 @@
 
 from axolotl.core.trainers.base import AxolotlTrainer
 
-from trainers.sampling import AuthorsMixedSourceSampler, MixedSourceSampler
+from trainers.sampling import (
+    AuthorsMixedSourceSampler,
+    MixedSourceSampler,
+    OptmlMixedSourceSampler,
+)
 
 
 class GradDiffTrainer(AxolotlTrainer):
@@ -16,8 +20,8 @@ class GradDiffTrainer(AxolotlTrainer):
         sampling="balanced",
         **kwargs,
     ):
-        if sampling not in {"balanced", "authors"}:
-            raise ValueError("sampling must be 'balanced' or 'authors'")
+        if sampling not in {"balanced", "authors", "optml"}:
+            raise ValueError("sampling must be 'balanced', 'authors', or 'optml'")
         super().__init__(*args, **kwargs)
         self.forget_coefficient = forget_coefficient
         self.retain_coefficient = retain_coefficient
@@ -25,6 +29,11 @@ class GradDiffTrainer(AxolotlTrainer):
 
     def _get_train_sampler(self, train_dataset=None):
         dataset = self.train_dataset if train_dataset is None else train_dataset
+        if self.sampling == "optml":
+            return OptmlMixedSourceSampler(
+                dataset,
+                self.args.per_device_train_batch_size,
+            )
         sampler_cls = (
             AuthorsMixedSourceSampler
             if self.sampling == "authors"
