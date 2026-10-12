@@ -272,14 +272,10 @@ def test_standard_processing_hpo_uses_promoted_coefficients_and_sweeps_rho() -> 
 
     sam_sweep = yaml.safe_load(
         (
-            root
-            / "z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2"
-            / "sweep.yml"
+            root / "z7b-wmdp-bio--unlearn-fft-gd-standard-sam-rho1e-2" / "sweep.yml"
         ).read_text()
     )
-    assert sam_sweep["parameters"] == {
-        "custom_trainer_args.rho": [5e-3, 2e-2, 5e-2]
-    }
+    assert sam_sweep["parameters"] == {"custom_trainer_args.rho": [5e-3, 2e-2, 5e-2]}
     assert sam_sweep["evaluations"] == ["wmdp-bio-final", "mmlu-no-bio-final"]
 
 
@@ -357,8 +353,8 @@ def test_standard_processing_changes_only_labels_and_forget_coefficient() -> Non
             "data.authors_documents",
         ]
         assert [dataset["type"] for dataset in standard["datasets"]] == [
-            "data.wmdp_zephyr",
-            "data.wikitext2",
+            "data.authors_documents_masked",
+            "data.authors_documents_masked",
         ]
         expected_trainer_args = dict(canonical["custom_trainer_args"])
         expected_trainer_args["forget_coefficient"] = 4.0
