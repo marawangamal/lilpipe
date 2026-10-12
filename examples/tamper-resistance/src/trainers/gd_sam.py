@@ -2,6 +2,7 @@
 
 import torch
 import torch.distributed as dist
+from transformers import enable_full_determinism
 
 try:
     from torch.distributed.tensor import DTensor, Replicate
@@ -67,6 +68,28 @@ def sam_perturbation(gradients, rho):
     }
 
 
+def optml_sam_perturbation(gradients, rho):
+    """Reproduce OPTML's original-dtype, single-device norm calculation."""
+    active_gradients = [
+        gradient for gradient in gradients.values() if gradient is not None
+    ]
+    if not active_gradients:
+        raise RuntimeError("SAM forget backward produced no parameter gradients")
+
+    norm_device = active_gradients[0].device
+    per_parameter_norms = [
+        gradient.to(norm_device).norm(2) for gradient in active_gradients
+    ]
+    norm = torch.stack(per_parameter_norms).norm(2)
+    if not norm.isfinite() or norm == 0:
+        raise RuntimeError(f"SAM forget gradient has invalid norm: {norm}")
+    return {
+        name: (rho * gradient / norm.to(gradient.device)).detach()
+        for name, gradient in gradients.items()
+        if gradient is not None
+    }
+
+
 class GDSAMTrainer(AxolotlTrainer):
     """Apply a small SAM perturbation to gradient-difference unlearning."""
 
@@ -77,6 +100,7 @@ class GDSAMTrainer(AxolotlTrainer):
         retain_coefficient=1.0,
         forget_coefficient=1.0,
         sampling="balanced",
+        optml_parity=False,
         **kwargs,
     ):
         if rho <= 0:
@@ -88,6 +112,9 @@ class GDSAMTrainer(AxolotlTrainer):
         self.forget_coefficient = forget_coefficient
         self.rho = rho
         self.sampling = sampling
+        self.optml_parity = optml_parity
+        if self.optml_parity:
+            enable_full_determinism(self.args.seed)
 
     def _get_train_sampler(self, train_dataset=None):
         dataset = self.train_dataset if train_dataset is None else train_dataset
@@ -163,7 +190,10 @@ class GDSAMTrainer(AxolotlTrainer):
             _, forget_gradients = self._backward_and_take_gradients(
                 lambda: self.compute_forget_loss(model, inputs), parameters
             )
-            perturbation = sam_perturbation(forget_gradients, self.rho)
+            perturbation_fn = (
+                optml_sam_perturbation if self.optml_parity else sam_perturbation
+            )
+            perturbation = perturbation_fn(forget_gradients, self.rho)
 
             try:
                 with torch.no_grad():

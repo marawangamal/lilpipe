@@ -135,6 +135,19 @@ def sampling_module():
 
 
 @pytest.fixture(scope="module")
+def src_gd_sam_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE / "src"))
+    try:
+        return load_script("src/trainers/gd_sam.py", "src_gd_sam_training")
+    finally:
+        sys.path.remove(str(EXAMPLE / "src"))
+
+
+@pytest.fixture(scope="module")
 def weight_dist_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
@@ -1378,6 +1391,22 @@ def test_gd_sam_global_norm_preserves_rho(gd_sam_training_module) -> None:
     assert gd_sam_training_module.global_l2_norm(perturbation).item() == pytest.approx(
         0.01
     )
+
+
+def test_optml_sam_norm_preserves_original_precision(
+    src_gd_sam_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    gradients = {
+        "first": torch.tensor([3.0, 4.0], dtype=torch.bfloat16),
+        "second": torch.tensor([0.0, 12.0], dtype=torch.bfloat16),
+    }
+
+    perturbation = src_gd_sam_training_module.optml_sam_perturbation(gradients, 0.01)
+    norm = torch.stack([gradient.norm(2) for gradient in perturbation.values()]).norm(2)
+
+    assert all(value.dtype == torch.bfloat16 for value in perturbation.values())
+    assert norm.item() == pytest.approx(0.01, abs=1e-4)
 
 
 def test_gd_sam_exposes_sweep_radii(gd_sam_training_module) -> None:
