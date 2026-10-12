@@ -6,5 +6,5 @@ registries:
 models:
   - z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft
 evaluations:
-  - wmdp-bio-relearn-long
-  - mmlu-no-bio-relearn-long
+  - wmdp-bio-relearn
+  - mmlu-no-bio-relearn
