@@ -4,7 +4,7 @@ plugins:
 trainer_cls: trainers.gd_sam.GDSAMTrainer
 custom_trainer_args:
   rho: 1.0e-2
-  forget_coefficient: 1.0
+  forget_coefficient: 4.0
   retain_coefficient: 1.0
   sampling: optml
   optml_parity: true
