@@ -1,4 +1,4 @@
-# Reproducing GD+SAM tamper resistance
+# Reproducing GD+SAM tamper resistance in this example
 
 This note records what was required to reproduce the qualitative GD+SAM result
 from the [SAM unlearning paper](https://arxiv.org/pdf/2502.05374) in the
