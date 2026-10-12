@@ -320,7 +320,7 @@ def test_unlearning_sweep_bases_match_selected_configs() -> None:
         assert base == selected
 
 
-def test_author_copied_hpo_uses_promoted_coefficients_and_sweeps_rho() -> None:
+def test_author_copied_hpo_uses_promoted_settings_and_sweeps_coefficients() -> None:
     root = EXAMPLE / "configs/stages/0_unlearn"
     for slug in (
         "z7b-wmdp-bio--unlearn-fft-gd-author-copied",
@@ -342,8 +342,7 @@ def test_author_copied_hpo_uses_promoted_coefficients_and_sweeps_rho() -> None:
         ).read_text()
     )
     assert sam_sweep["parameters"] == {
-        "learning_rate": [2.0e-6, 2.5e-6, 4.0e-6, 5.0e-6],
-        "custom_trainer_args.rho": [1.1e-2, 1.2e-2],
+        "custom_trainer_args.forget_coefficient": [5.0, 6.0, 8.0, 12.0]
     }
     assert sam_sweep["evaluations"] == ["wmdp-bio-final", "mmlu-no-bio-final"]
 
