@@ -3,7 +3,7 @@ parameters:
   learning_rate:
     - 5.0e-06
     - 1.0e-05
-  custom_trainer_args.distance_coefficient:
+  custom_trainer_args.coefficient_weight_dist:
     - 1.0e+5
     - 1.0e+6
 producer:

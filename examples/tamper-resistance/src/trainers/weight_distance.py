@@ -6,6 +6,7 @@ from pathlib import Path
 
 import torch
 import torch.distributed as dist
+from axolotl.core.trainers.base import AxolotlTrainer
 from huggingface_hub import snapshot_download
 from safetensors import safe_open
 
@@ -158,3 +159,30 @@ class WeightDistanceMixin:
             )
             return loss_weight_dist, grad_weight_dist
         return loss_weight_dist
+
+
+class WeightDistanceTrainer(WeightDistanceMixin, AxolotlTrainer):
+    """Apply retain fine-tuning while maximizing RMS distance from a reference."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._weight_distance_logged_step = None
+
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        loss_retain, outputs = super().compute_loss(
+            model, inputs, return_outputs=True, **kwargs
+        )
+        loss_weight_dist = self.compute_weight_dist_loss()
+        loss = loss_retain + loss_weight_dist
+
+        step = self.state.global_step
+        if step != self._weight_distance_logged_step:
+            self.log(
+                {
+                    "loss_weight_dist": loss_weight_dist.detach().item(),
+                    "loss_retain": loss_retain.detach().item(),
+                }
+            )
+            self._weight_distance_logged_step = step
+
+        return (loss, outputs) if return_outputs else loss

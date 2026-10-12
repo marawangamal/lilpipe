@@ -6,7 +6,7 @@ from trainers.weight_distance import WeightDistanceMixin
 
 
 class GDWeightDistanceTrainer(WeightDistanceMixin, GradDiffTrainer):
-    """Apply GradDiff while maximizing RMS distance from the initial weights."""
+    """Apply GradDiff while maximizing RMS distance from a reference."""
 
     def __init__(
         self,

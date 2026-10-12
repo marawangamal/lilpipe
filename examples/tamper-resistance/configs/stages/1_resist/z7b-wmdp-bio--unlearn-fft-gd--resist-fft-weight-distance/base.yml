@@ -1,12 +1,10 @@
 base_model: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd
 plugins:
   - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
-trainer_cls: trainers.weight_distance.WeightDistTrainer
+trainer_cls: trainers.weight_distance.WeightDistanceTrainer
 custom_trainer_args:
-  distance_coefficient: 1.0e+6
-  distance_metric: rms
-  anchor: pretrained
-  anchor_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
+  coefficient_weight_dist: 1.0e+6
+  reference_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
 datasets:
   - path: Salesforce/wikitext
     name: wikitext-2-raw-v1

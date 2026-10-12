@@ -166,13 +166,11 @@ def weight_dist_training_module():
     pytest.importorskip("axolotl")
     import sys
 
-    sys.path.insert(0, str(EXAMPLE))
+    sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script(
-            "configs/training/trainers/weight_dist.py", "weight_dist_training"
-        )
+        return load_script("src/trainers/weight_distance.py", "weight_dist_training")
     finally:
-        sys.path.remove(str(EXAMPLE))
+        sys.path.remove(str(EXAMPLE / "src"))
 
 
 @pytest.fixture(scope="module")
@@ -1105,22 +1103,6 @@ def test_npo_sam_peft_gradient_checkpointing(npo_sam_training_module) -> None:
             torch.testing.assert_close(parameter, initial_base[name])
 
 
-def test_weight_distance_uses_one_global_euclidean_norm(
-    weight_dist_training_module,
-) -> None:
-    torch = pytest.importorskip("torch")
-    first = torch.tensor([3.0, 4.0], requires_grad=True)
-    second = torch.tensor([12.0], requires_grad=True)
-    distance = weight_dist_training_module.global_l2_distance(
-        (first, second), (torch.zeros_like(first), torch.zeros_like(second))
-    )
-
-    assert distance.item() == pytest.approx(13.0)
-    distance.backward()
-    torch.testing.assert_close(first.grad, torch.tensor([3 / 13, 4 / 13]))
-    torch.testing.assert_close(second.grad, torch.tensor([12 / 13]))
-
-
 def test_weight_distance_rms_matches_authors_normalization(
     weight_dist_training_module,
 ) -> None:
@@ -1140,8 +1122,8 @@ def test_weight_distance_rms_matches_authors_normalization(
     torch.testing.assert_close(second.grad, torch.tensor([12 / (3 * expected)]))
 
 
-def test_weight_dist_loss_moves_away_from_initial_weights(
-    weight_dist_training_module,
+def test_weight_distance_trainer_combines_retain_and_distance_losses(
+    weight_dist_training_module, monkeypatch
 ) -> None:
     torch = pytest.importorskip("torch")
 
@@ -1154,79 +1136,44 @@ def test_weight_dist_loss_moves_away_from_initial_weights(
             return SimpleNamespace(loss=self.weight.square())
 
     model = Model()
-    trainer = object.__new__(weight_dist_training_module.WeightDistTrainer)
-    trainer.distance_coefficient = 1.0
-    trainer._weight_dist_anchors = None
-    trainer._weight_dist_logged_step = None
+    outputs = SimpleNamespace(loss=model.weight.square())
+    monkeypatch.setattr(
+        weight_dist_training_module.AxolotlTrainer,
+        "compute_loss",
+        lambda self, model, inputs, return_outputs, **kwargs: (
+            model.weight.square(),
+            outputs,
+        ),
+    )
+    trainer = object.__new__(weight_dist_training_module.WeightDistanceTrainer)
+    trainer.model = model
+    trainer.coefficient_weight_dist = 2.0
+    trainer._theta_ref = {"weight": torch.tensor(0.0)}
+    trainer._weight_distance_logged_step = None
     trainer.state = SimpleNamespace(global_step=0)
-    trainer.log = lambda metrics: None
+    logged = []
+    trainer.log = logged.append
     inputs = {
         "input_ids": torch.ones(1, 1, dtype=torch.long),
         "attention_mask": torch.ones(1, 1, dtype=torch.long),
         "labels": torch.ones(1, 1, dtype=torch.long),
     }
 
-    assert trainer.compute_loss(model, inputs).item() == pytest.approx(4.0)
-    with torch.no_grad():
-        model.weight.fill_(3.0)
-    loss = trainer.compute_loss(model, inputs)
-    assert loss.item() == pytest.approx(8.0)
-    loss.backward()
-    assert model.weight.grad.item() == pytest.approx(5.0)
+    loss, returned_outputs = trainer.compute_loss(model, inputs, return_outputs=True)
 
-
-@pytest.mark.parametrize(
-    ("trainer_name", "coefficient"),
-    [
-        ("WeightDistCoefficient01Trainer", 0.1),
-        ("WeightDistTrainer", 1.0),
-        ("WeightDistCoefficient10Trainer", 10.0),
-        ("WeightDistCoefficient25Trainer", 25.0),
-        ("WeightDistCoefficient50Trainer", 50.0),
-        ("WeightDistCoefficient75Trainer", 75.0),
-        ("WeightDistCoefficient100Trainer", 100.0),
-        ("PretrainedAnchorWeightDistCoefficient01Trainer", 0.1),
-        ("PretrainedAnchorWeightDistTrainer", 1.0),
-        ("PretrainedAnchorWeightDistCoefficient10Trainer", 10.0),
-        ("PretrainedAnchorWeightDistCoefficient1e5Trainer", 1e5),
-        ("PretrainedAnchorWeightDistCoefficient1e6Trainer", 1e6),
-    ],
-)
-def test_weight_dist_coefficients(
-    weight_dist_training_module, trainer_name, coefficient
-) -> None:
-    trainer = getattr(weight_dist_training_module, trainer_name)
-    assert trainer.distance_coefficient == coefficient
-
-
-def test_pretrained_anchor_weight_dist_loads_explicit_reference(
-    weight_dist_training_module, monkeypatch
-) -> None:
-    torch = pytest.importorskip("torch")
-    model = torch.nn.Linear(2, 1, bias=False)
-    expected = {"weight": torch.full_like(model.weight, 7)}
-    calls = []
-
-    def load(parameters, model_name_or_path):
-        calls.append((parameters, model_name_or_path))
-        return expected
-
-    monkeypatch.setattr(weight_dist_training_module, "load_pretrained_anchors", load)
-    trainer = object.__new__(
-        weight_dist_training_module.PretrainedAnchorWeightDistTrainer
-    )
-    trainer._weight_dist_anchors = None
-
-    parameters, anchors = trainer._parameters_and_anchors(model)
-
-    assert parameters == {"weight": model.weight}
-    assert anchors == expected
-    assert calls == [
-        (parameters, "HuggingFaceH4/zephyr-7b-beta"),
+    assert loss.item() == pytest.approx(0.0)
+    assert returned_outputs is outputs
+    assert logged == [
+        {
+            "loss_weight_dist": pytest.approx(-4.0),
+            "loss_retain": pytest.approx(4.0),
+        }
     ]
+    loss.backward()
+    assert model.weight.grad.item() == pytest.approx(2.0)
 
 
-def test_pretrained_anchor_loader_strips_framework_wrapper_names(
+def test_reference_parameter_loader_strips_framework_wrapper_names(
     weight_dist_training_module, monkeypatch, tmp_path
 ) -> None:
     torch = pytest.importorskip("torch")
@@ -1242,12 +1189,12 @@ def test_pretrained_anchor_loader_strips_framework_wrapper_names(
         json.dumps({"weight_map": {checkpoint_name: "model.safetensors"}})
     )
 
-    anchors = weight_dist_training_module.load_pretrained_anchors(
+    reference_parameters = weight_dist_training_module.load_reference_parameters(
         {runtime_name: torch.nn.Parameter(torch.zeros_like(expected))}, tmp_path
     )
 
-    assert anchors.keys() == {runtime_name}
-    torch.testing.assert_close(anchors[runtime_name], expected)
+    assert reference_parameters.keys() == {runtime_name}
+    torch.testing.assert_close(reference_parameters[runtime_name], expected)
 
 
 def test_gd_weight_distance_forwards_gd_coefficients(
