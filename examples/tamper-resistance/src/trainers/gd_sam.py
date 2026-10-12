@@ -149,31 +149,29 @@ class GDSAMTrainer(AxolotlTrainer):
             parameter.grad = None
 
         try:
-            _, forget_gradients = self._backward_and_take_gradients(
+            _, grad_forget_at_perturbation = self._backward_and_take_gradients(
                 lambda: self.compute_forget_loss(model, inputs), parameters
             )
             perturbation_fn = (
                 optml_sam_perturbation if self.optml_parity else sam_perturbation
             )
-            perturbation = perturbation_fn(forget_gradients, self.rho)
+            perturbation = perturbation_fn(grad_forget_at_perturbation, self.rho)
 
             try:
                 with torch.no_grad():
                     for name, step in perturbation.items():
                         parameters[name].add_(step)
-                forget_loss, perturbed_forget_gradients = (
-                    self._backward_and_take_gradients(
-                        lambda: self.forget_coefficient
-                        * self.compute_forget_loss(model, inputs),
-                        parameters,
-                    )
+                loss_forget, grad_forget = self._backward_and_take_gradients(
+                    lambda: self.forget_coefficient
+                    * self.compute_forget_loss(model, inputs),
+                    parameters,
                 )
             finally:
                 with torch.no_grad():
                     for name, step in perturbation.items():
                         parameters[name].sub_(step)
 
-            retain_loss, retain_gradients = self._backward_and_take_gradients(
+            loss_retain, grad_retain = self._backward_and_take_gradients(
                 lambda: self.retain_coefficient
                 * self.compute_retain_loss(model, inputs),
                 parameters,
@@ -181,22 +179,12 @@ class GDSAMTrainer(AxolotlTrainer):
 
             self.log(
                 {
-                    "forget_loss": (-forget_loss / self.forget_coefficient)
-                    .detach()
-                    .item(),
-                    "retain_loss": (retain_loss / self.retain_coefficient)
-                    .detach()
-                    .item(),
-                    "forget_grad_norm": (
-                        gradient_dict_l2_norm(perturbed_forget_gradients)
-                        / abs(self.forget_coefficient)
-                    ).item(),
-                    "retain_grad_norm": (
-                        gradient_dict_l2_norm(retain_gradients)
-                        / abs(self.retain_coefficient)
-                    ).item(),
-                    "sam_unperturbed_forget_grad_norm": gradient_dict_l2_norm(
-                        forget_gradients
+                    "loss_forget": (-loss_forget).detach().item(),
+                    "loss_retain": loss_retain.detach().item(),
+                    "grad_norm_forget": gradient_dict_l2_norm(grad_forget).item(),
+                    "grad_norm_retain": gradient_dict_l2_norm(grad_retain).item(),
+                    "grad_norm_forget_at_perturbation": gradient_dict_l2_norm(
+                        grad_forget_at_perturbation
                     ).item(),
                 }
             )
@@ -206,8 +194,8 @@ class GDSAMTrainer(AxolotlTrainer):
 
         for name, parameter in parameters.items():
             for gradient in (
-                perturbed_forget_gradients[name],
-                retain_gradients[name],
+                grad_forget[name],
+                grad_retain[name],
             ):
                 if gradient is not None:
                     parameter.grad = (
@@ -217,5 +205,5 @@ class GDSAMTrainer(AxolotlTrainer):
                     )
 
         return (
-            (forget_loss + retain_loss) / self.current_gradient_accumulation_steps
+            (loss_forget + loss_retain) / self.current_gradient_accumulation_steps
         ).detach()

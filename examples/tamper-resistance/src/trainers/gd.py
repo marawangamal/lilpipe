@@ -59,41 +59,35 @@ class GradDiffTrainer(AxolotlTrainer):
         retain_inputs = {field: inputs[field][retain_mask] for field in fields}
 
         forget_outputs = model(**forget_inputs)
-        forget_ce = forget_outputs.loss.float()
-        retain_ce = model(**retain_inputs).loss.float()
-        forget_term = -self.forget_coefficient * forget_ce
-        retain_term = self.retain_coefficient * retain_ce
-        loss = forget_term + retain_term
+        loss_forget = -self.forget_coefficient * forget_outputs.loss.float()
+        loss_retain = self.retain_coefficient * model(**retain_inputs).loss.float()
+        loss = loss_forget + loss_retain
 
         if model.training and torch.is_grad_enabled():
             parameters = tuple(
                 parameter for parameter in model.parameters() if parameter.requires_grad
             )
-            forget_gradients = torch.autograd.grad(
-                forget_ce,
+            grad_forget = torch.autograd.grad(
+                loss_forget,
                 parameters,
                 retain_graph=True,
                 allow_unused=True,
             )
-            retain_gradients = torch.autograd.grad(
-                retain_ce,
+            grad_retain = torch.autograd.grad(
+                loss_retain,
                 parameters,
                 retain_graph=True,
                 allow_unused=True,
             )
             self.log(
                 {
-                    "forget_loss": forget_ce.detach().item(),
-                    "retain_loss": retain_ce.detach().item(),
-                    "forget_grad_norm": global_l2_norm(
-                        gradient
-                        for gradient in forget_gradients
-                        if gradient is not None
+                    "loss_forget": (-loss_forget).detach().item(),
+                    "loss_retain": loss_retain.detach().item(),
+                    "grad_norm_forget": global_l2_norm(
+                        gradient for gradient in grad_forget if gradient is not None
                     ).item(),
-                    "retain_grad_norm": global_l2_norm(
-                        gradient
-                        for gradient in retain_gradients
-                        if gradient is not None
+                    "grad_norm_retain": global_l2_norm(
+                        gradient for gradient in grad_retain if gradient is not None
                     ).item(),
                 }
             )

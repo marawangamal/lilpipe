@@ -1347,10 +1347,10 @@ def test_src_grad_diff_logs_component_losses_and_gradient_norms(
     assert loss.item() == pytest.approx(12.0)
     assert logged == [
         {
-            "forget_loss": pytest.approx(6.0),
-            "retain_loss": pytest.approx(24.0),
-            "forget_grad_norm": pytest.approx(3.0),
-            "retain_grad_norm": pytest.approx(8.0),
+            "loss_forget": pytest.approx(12.0),
+            "loss_retain": pytest.approx(24.0),
+            "grad_norm_forget": pytest.approx(6.0),
+            "grad_norm_retain": pytest.approx(8.0),
         }
     ]
     assert model.forget_weight.grad.item() == pytest.approx(-6.0)
@@ -1433,11 +1433,11 @@ def test_src_gd_sam_logs_component_losses_and_gradient_norms(
     assert loss.item() == pytest.approx(-6 * 1.99**2 + 8 * 2**2)
     assert logged == [
         {
-            "forget_loss": pytest.approx(3 * 1.99**2),
-            "retain_loss": pytest.approx(8 * 2**2),
-            "forget_grad_norm": pytest.approx(6 * 1.99),
-            "retain_grad_norm": pytest.approx(16 * 2),
-            "sam_unperturbed_forget_grad_norm": pytest.approx(6 * 2),
+            "loss_forget": pytest.approx(6 * 1.99**2),
+            "loss_retain": pytest.approx(8 * 2**2),
+            "grad_norm_forget": pytest.approx(12 * 1.99),
+            "grad_norm_retain": pytest.approx(16 * 2),
+            "grad_norm_forget_at_perturbation": pytest.approx(6 * 2),
         }
     ]
     assert model.weight.grad.item() == pytest.approx(-12 * 1.99 + 16 * 2)
