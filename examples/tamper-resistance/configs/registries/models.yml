@@ -94,6 +94,28 @@ models:
       depends_on:
         - z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2
       sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-gd-optml--relearn-fft:
+    baseline_model_name_or_path: ../sam/WMDP/artifacts/tamia/models/OPTML-Group-GradDiff-WMDP-paper125-lr3p9e-6-proper-eval-rerun/checkpoints
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-optml--relearn-fft
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-optml--relearn-fft
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-gd-optml--relearn-fft
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-gd-optml--relearn-fft/selected.yml
+      sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2-optml--relearn-fft:
+    baseline_model_name_or_path: ../sam/WMDP/artifacts/tamia/models/OPTML-Group-GradDiff-SAM-WMDP-paper125-rho1e-2-lr3p28e-6-proper-eval-rerun/checkpoints
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2-optml--relearn-fft
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2-optml--relearn-fft
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2-optml--relearn-fft
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2-optml--relearn-fft/selected.yml
+      sbatch_args: *fft_resources
   z7b-wmdp-bio--unlearn-fft-gd-authors-data--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-authors-data
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-authors-data--relearn-fft

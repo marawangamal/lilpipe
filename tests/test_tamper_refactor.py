@@ -258,6 +258,29 @@ def test_authors_table3_scripts_preserve_and_evaluate_all_checkpoints() -> None:
     assert 'checkpoint="$model_root/examples-$sample_count/checkpoints"' in evaluation
 
 
+def test_optml_relearning_uses_the_canonical_attack_recipe() -> None:
+    root = EXAMPLE / "configs/stages/2_relearn"
+    canonical = yaml.safe_load(
+        (root / "z7b-wmdp-bio--unlearn-fft-gd--relearn-fft/selected.yml").read_text()
+    )
+    excluded = {
+        "base_model",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    }
+
+    for slug in (
+        "z7b-wmdp-bio--unlearn-fft-gd-optml--relearn-fft",
+        "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2-optml--relearn-fft",
+    ):
+        config = yaml.safe_load((root / slug / "selected.yml").read_text())
+        assert {key: value for key, value in config.items() if key not in excluded} == {
+            key: value for key, value in canonical.items() if key not in excluded
+        }
+        assert config["base_model"].startswith("../sam/WMDP/artifacts/tamia/models/")
+
+
 def test_authors_data_fallback_changes_only_unlearning_trainer() -> None:
     root = EXAMPLE / "configs/stages/0_unlearn"
     gd = yaml.safe_load(
