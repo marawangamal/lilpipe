@@ -1,111 +1,110 @@
-#!/usr/bin/env python3
-"""Extract robust WMDP-Bio accuracy and plot a checkpoint trajectory."""
-
-from __future__ import annotations
-
-import argparse
-import csv
+import glob
 import json
-import re
-from pathlib import Path
-from typing import Any
+import os
+import os.path as osp
 
-CHECKPOINT_PATTERN = re.compile(r"checkpoint-(\d+)$")
-GROUP = "wmdp_bio_robust"
-METRIC = "acc,none"
-MILESTONES = list(range(250, 2_001, 250))
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+rootdir = "../artifacts/figures"
+os.makedirs(rootdir, exist_ok=True)
+
+# ==============================
+# Zephyr 7B Full Fine-Tuning
+# ==============================
+configs = [
+    {
+        "path": "../artifacts/tamia/evals/z7b-wmdp-bio-fft-s125-unlearn-gd-relearn",
+        "stage": "relearn",
+        "method": "gd",
+        "offset": 125,
+    },
+    {
+        "path": "../artifacts/tamia/evals/z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-2-relearn",
+        "stage": "relearn",
+        "method": "gd-sam (rho=1e-2)",
+        "offset": 125,
+    },
+]
+
+name_to_name = {
+    "wmdp_bio_robust": "wmdp_bio_robust ↓",
+    "mmlu_no_bio": "mmlu_no_bio ↑",
+}
 
 
-def _metric_from_result(data: Any, path: Path) -> float:
-    matches: list[object] = []
-    if isinstance(data, dict):
-        for section_name in ("groups", "results"):
-            section = data.get(section_name)
-            if isinstance(section, dict):
-                group = section.get(GROUP)
-                if isinstance(group, dict) and METRIC in group:
-                    matches.append(group[METRIC])
-    if len(matches) != 1:
-        raise ValueError(
-            f"{path} must contain {GROUP!r} {METRIC!r} exactly once; "
-            f"found {len(matches)}"
-        )
-    value = matches[0]
-    if not isinstance(value, (int, float)) or isinstance(value, bool):
-        raise ValueError(f"{path}: {GROUP} {METRIC} must be numeric")
-    return float(value)
+def get_tasks(checkpoint):
+    tasks = []
+    for path in glob.glob(
+        os.path.join(checkpoint, "**", "results*.json"), recursive=True
+    ):
+        with open(path) as f:
+            results = json.load(f)["results"]
+
+        for name in ("wmdp_bio_robust", "mmlu_no_bio"):
+            if name in results:
+                tasks.append(
+                    {"name": name_to_name[name], "acc": 100 * results[name]["acc,none"]}
+                )
+    return tasks
 
 
-def collect_results(eval_root: Path, milestones: list[int]) -> list[tuple[int, float]]:
-    discovered: dict[int, Path] = {}
-    for path in eval_root.glob("checkpoint-*"):
-        if not path.is_dir():
-            continue
-        match = CHECKPOINT_PATTERN.fullmatch(path.name)
-        if match is None:
-            continue
-        step = int(match.group(1))
-        if step in discovered:
-            raise ValueError(
-                f"duplicate checkpoint {step}: {discovered[step]} and {path}"
+rows = []
+for config in configs:
+    if "init" in config:
+        for task in get_tasks(config["init"]):
+            rows.append(
+                {
+                    "stage": config["stage"],
+                    "method": config["method"],
+                    "step": config["offset"],
+                    "eval": task["name"],
+                    "acc": task["acc"],
+                }
             )
-        discovered[step] = path
 
-    expected = set(milestones)
-    actual = set(discovered)
-    if actual != expected:
-        missing = sorted(expected - actual)
-        unexpected = sorted(actual - expected)
-        raise ValueError(
-            f"checkpoint directories do not match milestones; "
-            f"missing={missing}, unexpected={unexpected}"
-        )
+    checkpoints = glob.glob(os.path.join(config["path"], "checkpoint-*"))
+    checkpoints.sort(key=lambda p: int(os.path.basename(p).split("-")[-1]))
 
-    rows: list[tuple[int, float]] = []
-    for step in sorted(milestones):
-        files = sorted(discovered[step].glob("results*.json"))
-        if len(files) != 1:
-            raise ValueError(
-                f"checkpoint-{step} must contain exactly one results*.json file; "
-                f"found {len(files)}"
+    for checkpoint in checkpoints:
+        step = int(os.path.basename(checkpoint).split("-")[-1]) + config["offset"]
+        for task in get_tasks(checkpoint):
+            rows.append(
+                {
+                    "stage": config["stage"],
+                    "method": config["method"],
+                    "step": step,
+                    "eval": task["name"],
+                    "acc": task["acc"],
+                }
             )
-        rows.append(
-            (step, _metric_from_result(json.loads(files[0].read_text()), files[0]))
-        )
-    return rows
 
+df = pd.DataFrame(rows)
+methods = list(dict.fromkeys(df["method"]))
+palette = dict(zip(methods, sns.color_palette(n_colors=len(methods))))
+g = sns.relplot(
+    data=df,
+    x="step",
+    y="acc",
+    col="eval",
+    hue="method",
+    hue_order=methods,
+    palette=palette,
+    kind="line",
+    height=3,
+    markersize=4,
+    marker="o",
+)
 
-def write_outputs(rows: list[tuple[int, float]], output_dir: Path) -> None:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = output_dir / "trajectory.csv"
-    with csv_path.open("w", newline="") as handle:
-        writer = csv.writer(handle)
-        writer.writerow(("checkpoint", "accuracy"))
-        writer.writerows(rows)
+for ax in g.axes.flat:
+    for config in configs:
+        if config["offset"] > 0:
+            ax.axvline(
+                config["offset"],
+                color=palette[config["method"]],
+                linestyle="--",
+                linewidth=1,
+            )
 
-    import matplotlib.pyplot as plt
-
-    steps, accuracies = zip(*rows, strict=True)
-    figure, axis = plt.subplots(figsize=(8, 5))
-    axis.plot(steps, accuracies, marker="o", label="Robust WMDP-Bio")
-    axis.axhline(0.25, color="gray", linestyle="--", label="Random chance (25%)")
-    axis.set(xlabel="Optimizer step", ylabel="Accuracy", ylim=(0, 1))
-    axis.set_title("Unfiltered WMDP-Bio LoRA tampering trajectory")
-    axis.grid(alpha=0.25)
-    axis.legend()
-    figure.tight_layout()
-    figure.savefig(output_dir / "trajectory.png", dpi=180)
-    plt.close(figure)
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("eval_root", type=Path)
-    parser.add_argument("output_dir", type=Path)
-    args = parser.parse_args()
-    rows = collect_results(args.eval_root, MILESTONES)
-    write_outputs(rows, args.output_dir)
-
-
-if __name__ == "__main__":
-    main()
+plt.savefig(osp.join(rootdir, "relearning-attack.pdf"))
