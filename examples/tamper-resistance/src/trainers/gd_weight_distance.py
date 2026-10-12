@@ -1,17 +1,17 @@
 """Gradient-difference unlearning with weight-distance regularization."""
 
 from trainers.gd import GradDiffTrainer
-from trainers.weight_distance import global_rms_distance
+from trainers.gradient_metrics import global_l2_norm
+from trainers.weight_distance import WeightDistanceMixin
 
 
-# TODO: use a WeightDistanceMixin later on that exposes
-# get_dist_from_ref()
-class GDWeightDistanceTrainer(GradDiffTrainer):
+class GDWeightDistanceTrainer(WeightDistanceMixin, GradDiffTrainer):
     """Apply GradDiff while maximizing RMS distance from the initial weights."""
 
     def __init__(
         self,
         *args,
+        reference_model_name_or_path,
         coefficient_forget=1.0,
         coefficient_retain=1.0,
         coefficient_weight_dist=1.0,
@@ -21,52 +21,44 @@ class GDWeightDistanceTrainer(GradDiffTrainer):
             *args,
             forget_coefficient=coefficient_forget,
             retain_coefficient=coefficient_retain,
+            coefficient_weight_dist=coefficient_weight_dist,
+            reference_model_name_or_path=reference_model_name_or_path,
             **kwargs,
         )
-        self.coefficient_weight_dist = coefficient_weight_dist
-        self._theta_ref = None
         self._weight_distance_logged_step = None
 
-    @property
-    def theta(self):
-        return {
-            name: parameter
-            for name, parameter in self.model.named_parameters()
-            if parameter.requires_grad
-        }
-
-    @property
-    def theta_ref(self):
-        theta = self.theta
-        if self._theta_ref is None:
-            self._theta_ref = {
-                name: parameter.detach().clone() for name, parameter in theta.items()
-            }
-        if theta.keys() != self._theta_ref.keys():
-            raise RuntimeError(
-                "trainable parameters changed after weight-distance snapshot"
-            )
-        return self._theta_ref
-
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        theta = self.theta
-        theta_ref = self.theta_ref
-
-        loss_gd, outputs = super().compute_loss(
-            model, inputs, return_outputs=True, **kwargs
+        loss_retain, grad_retain, outputs_retain = self.compute_retain_loss(
+            model, inputs, return_grads=True, return_outputs=True
         )
-        weight_distance = global_rms_distance(theta.values(), theta_ref.values())
-        loss_wd = -self.coefficient_weight_dist * weight_distance
-        loss = loss_gd + loss_wd
+        loss_forget, grad_forget = self.compute_forget_loss(
+            model, inputs, return_grads=True
+        )
+        loss_weight_dist, grad_weight_dist = self.compute_weight_dist_loss(
+            return_grads=True
+        )
+        loss = loss_retain + loss_forget + loss_weight_dist
 
         step = self.state.global_step
         if step != self._weight_distance_logged_step:
             self.log(
                 {
-                    "loss_wd": loss_wd.detach().item(),
-                    "loss_gd": loss_gd.detach().item(),
+                    "loss_weight_dist": loss_weight_dist.detach().item(),
+                    "loss_retain": loss_retain.detach().item(),
+                    "loss_forget": loss_forget.detach().item(),
+                    "grad_norm_weight_dist": global_l2_norm(
+                        gradient
+                        for gradient in grad_weight_dist
+                        if gradient is not None
+                    ).item(),
+                    "grad_norm_retain": global_l2_norm(
+                        gradient for gradient in grad_retain if gradient is not None
+                    ).item(),
+                    "grad_norm_forget": global_l2_norm(
+                        gradient for gradient in grad_forget if gradient is not None
+                    ).item(),
                 }
             )
             self._weight_distance_logged_step = step
 
-        return (loss, outputs) if return_outputs else loss
+        return (loss, outputs_retain) if return_outputs else loss

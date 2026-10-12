@@ -48,19 +48,71 @@ class GradDiffTrainer(AxolotlTrainer):
             self.args.data_seed if self.args.data_seed is not None else self.args.seed,
         )
 
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        forget_mask = inputs["is_forget"].bool()
-        retain_mask = ~forget_mask
-        if not forget_mask.any() or not retain_mask.any():
-            raise ValueError("GradDiff requires forget and retain rows in every batch")
+    def compute_loss_term(
+        self,
+        model,
+        inputs,
+        coefficient,
+        return_grads=False,
+        return_outputs=False,
+    ):
+        outputs = model(**inputs)
+        loss = coefficient * outputs.loss.float()
 
+        if return_grads:
+            parameters = tuple(
+                parameter for parameter in model.parameters() if parameter.requires_grad
+            )
+            grads = torch.autograd.grad(
+                loss,
+                parameters,
+                retain_graph=True,
+                allow_unused=True,
+            )
+            if return_outputs:
+                return loss, grads, outputs
+            return loss, grads
+        if return_outputs:
+            return loss, outputs
+        return loss
+
+    def compute_forget_loss(
+        self, model, inputs, return_grads=False, return_outputs=False
+    ):
+        forget_mask = inputs["is_forget"].bool()
+        if not forget_mask.any():
+            raise ValueError("GradDiff requires forget and retain rows in every batch")
         fields = ("input_ids", "attention_mask", "labels")
         forget_inputs = {field: inputs[field][forget_mask] for field in fields}
-        retain_inputs = {field: inputs[field][retain_mask] for field in fields}
+        return self.compute_loss_term(
+            model,
+            forget_inputs,
+            -self.forget_coefficient,
+            return_grads,
+            return_outputs,
+        )
 
-        forget_outputs = model(**forget_inputs)
-        loss_forget = -self.forget_coefficient * forget_outputs.loss.float()
-        loss_retain = self.retain_coefficient * model(**retain_inputs).loss.float()
+    def compute_retain_loss(
+        self, model, inputs, return_grads=False, return_outputs=False
+    ):
+        retain_mask = ~inputs["is_forget"].bool()
+        if not retain_mask.any():
+            raise ValueError("GradDiff requires forget and retain rows in every batch")
+        fields = ("input_ids", "attention_mask", "labels")
+        retain_inputs = {field: inputs[field][retain_mask] for field in fields}
+        return self.compute_loss_term(
+            model,
+            retain_inputs,
+            self.retain_coefficient,
+            return_grads,
+            return_outputs,
+        )
+
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        loss_forget, forget_outputs = self.compute_forget_loss(
+            model, inputs, return_outputs=True
+        )
+        loss_retain = self.compute_retain_loss(model, inputs)
         loss = loss_forget + loss_retain
 
         if model.training and torch.is_grad_enabled():

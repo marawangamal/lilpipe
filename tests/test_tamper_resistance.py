@@ -1266,11 +1266,47 @@ def test_gd_weight_distance_forwards_gd_coefficients(
         coefficient_forget=2.0,
         coefficient_retain=3.0,
         coefficient_weight_dist=1e6,
+        reference_model_name_or_path="reference-model",
         sampling="authors",
     )
 
     assert calls == [(("model",), 2.0, 3.0, {"sampling": "authors"})]
     assert trainer.coefficient_weight_dist == 1e6
+    assert trainer.reference_model_name_or_path == "reference-model"
+
+
+def test_gd_weight_distance_requires_reference_model(
+    gd_weight_dist_training_module,
+) -> None:
+    with pytest.raises(TypeError, match="reference_model_name_or_path"):
+        gd_weight_dist_training_module.GDWeightDistanceTrainer("model")
+
+
+def test_gd_weight_distance_loads_explicit_reference_model(
+    gd_weight_dist_training_module, monkeypatch
+) -> None:
+    import sys
+
+    torch = pytest.importorskip("torch")
+    model = torch.nn.Linear(2, 1, bias=False)
+    expected = {"weight": torch.full_like(model.weight, 7)}
+    calls = []
+
+    def load(parameters, model_name_or_path):
+        calls.append((parameters, model_name_or_path))
+        return expected
+
+    mixin_module = sys.modules[
+        gd_weight_dist_training_module.WeightDistanceMixin.__module__
+    ]
+    monkeypatch.setattr(mixin_module, "load_reference_parameters", load)
+    trainer = object.__new__(gd_weight_dist_training_module.GDWeightDistanceTrainer)
+    trainer.model = model
+    trainer.reference_model_name_or_path = "reference-model"
+    trainer._theta_ref = None
+
+    assert trainer.theta_ref == expected
+    assert calls == [({"weight": model.weight}, "reference-model")]
 
 
 def test_gd_weight_distance_uses_rms_distance(
@@ -1282,10 +1318,16 @@ def test_gd_weight_distance_uses_rms_distance(
         model.weight.copy_(torch.tensor([[3.0, 4.0]]))
 
     outputs = SimpleNamespace(loss=torch.tensor(0.0))
+    zero_grads = (torch.zeros_like(model.weight),)
     monkeypatch.setattr(
         gd_weight_dist_training_module.GradDiffTrainer,
-        "compute_loss",
-        lambda *args, **kwargs: (torch.tensor(10.0), outputs),
+        "compute_retain_loss",
+        lambda *args, **kwargs: (torch.tensor(7.0), zero_grads, outputs),
+    )
+    monkeypatch.setattr(
+        gd_weight_dist_training_module.GradDiffTrainer,
+        "compute_forget_loss",
+        lambda *args, **kwargs: (torch.tensor(3.0), zero_grads),
     )
     trainer = object.__new__(gd_weight_dist_training_module.GDWeightDistanceTrainer)
     trainer.coefficient_weight_dist = 2.0
@@ -1303,8 +1345,12 @@ def test_gd_weight_distance_uses_rms_distance(
     assert returned_outputs is outputs
     assert logged == [
         {
-            "loss_wd": pytest.approx(-2 * expected_distance),
-            "loss_gd": pytest.approx(10.0),
+            "loss_weight_dist": pytest.approx(-2 * expected_distance),
+            "loss_retain": pytest.approx(7.0),
+            "loss_forget": pytest.approx(3.0),
+            "grad_norm_weight_dist": pytest.approx(2**0.5),
+            "grad_norm_retain": pytest.approx(0.0),
+            "grad_norm_forget": pytest.approx(0.0),
         }
     ]
 
