@@ -70,23 +70,21 @@ class GradDiffTrainer(AxolotlTrainer):
                 parameter for parameter in model.parameters() if parameter.requires_grad
             )
             forget_gradients = torch.autograd.grad(
-                forget_term,
+                forget_ce,
                 parameters,
                 retain_graph=True,
                 allow_unused=True,
             )
             retain_gradients = torch.autograd.grad(
-                retain_term,
+                retain_ce,
                 parameters,
                 retain_graph=True,
                 allow_unused=True,
             )
             self.log(
                 {
-                    "forget_ce": forget_ce.detach().item(),
-                    "retain_ce": retain_ce.detach().item(),
-                    "forget_term": forget_term.detach().item(),
-                    "retain_term": retain_term.detach().item(),
+                    "forget_loss": forget_ce.detach().item(),
+                    "retain_loss": retain_ce.detach().item(),
                     "forget_grad_norm": global_l2_norm(
                         gradient
                         for gradient in forget_gradients

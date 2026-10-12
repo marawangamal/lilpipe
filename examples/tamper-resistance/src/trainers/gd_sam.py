@@ -181,19 +181,21 @@ class GDSAMTrainer(AxolotlTrainer):
 
             self.log(
                 {
-                    "forget_ce": (-forget_loss / self.forget_coefficient)
+                    "forget_loss": (-forget_loss / self.forget_coefficient)
                     .detach()
                     .item(),
-                    "retain_ce": (retain_loss / self.retain_coefficient)
+                    "retain_loss": (retain_loss / self.retain_coefficient)
                     .detach()
                     .item(),
-                    "forget_term": forget_loss.detach().item(),
-                    "retain_term": retain_loss.detach().item(),
-                    "forget_grad_norm": gradient_dict_l2_norm(
-                        perturbed_forget_gradients
+                    "forget_grad_norm": (
+                        gradient_dict_l2_norm(perturbed_forget_gradients)
+                        / abs(self.forget_coefficient)
                     ).item(),
-                    "retain_grad_norm": gradient_dict_l2_norm(retain_gradients).item(),
-                    "unperturbed_forget_grad_norm": gradient_dict_l2_norm(
+                    "retain_grad_norm": (
+                        gradient_dict_l2_norm(retain_gradients)
+                        / abs(self.retain_coefficient)
+                    ).item(),
+                    "sam_unperturbed_forget_grad_norm": gradient_dict_l2_norm(
                         forget_gradients
                     ).item(),
                 }
