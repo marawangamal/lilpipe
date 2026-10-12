@@ -181,14 +181,14 @@ def gd_weight_dist_training_module():
     pytest.importorskip("axolotl")
     import sys
 
-    sys.path.insert(0, str(EXAMPLE))
+    sys.path.insert(0, str(EXAMPLE / "src"))
     try:
         return load_script(
-            "configs/training/trainers/gd_weight_dist.py",
+            "src/trainers/gd_weight_distance.py",
             "gd_weight_dist_training",
         )
     finally:
-        sys.path.remove(str(EXAMPLE))
+        sys.path.remove(str(EXAMPLE / "src"))
 
 
 @pytest.fixture(scope="module")
@@ -1250,19 +1250,63 @@ def test_pretrained_anchor_loader_strips_framework_wrapper_names(
     torch.testing.assert_close(anchors[runtime_name], expected)
 
 
-@pytest.mark.parametrize(
-    ("trainer_name", "coefficient"),
-    [
-        ("GDWeightDistCoefficient01Trainer", 0.1),
-        ("GDWeightDistTrainer", 1.0),
-        ("GDWeightDistCoefficient10Trainer", 10.0),
-    ],
-)
-def test_gd_weight_dist_coefficients(
-    gd_weight_dist_training_module, trainer_name, coefficient
+def test_gd_weight_distance_forwards_gd_coefficients(
+    gd_weight_dist_training_module, monkeypatch
 ) -> None:
-    trainer = getattr(gd_weight_dist_training_module, trainer_name)
-    assert trainer.distance_coefficient == coefficient
+    calls = []
+
+    def init(_, *args, forget_coefficient, retain_coefficient, **kwargs):
+        calls.append((args, forget_coefficient, retain_coefficient, kwargs))
+
+    monkeypatch.setattr(
+        gd_weight_dist_training_module.GradDiffTrainer, "__init__", init
+    )
+    trainer = gd_weight_dist_training_module.GDWeightDistanceTrainer(
+        "model",
+        coefficient_forget=2.0,
+        coefficient_retain=3.0,
+        coefficient_weight_dist=1e6,
+        sampling="authors",
+    )
+
+    assert calls == [(("model",), 2.0, 3.0, {"sampling": "authors"})]
+    assert trainer.coefficient_weight_dist == 1e6
+
+
+def test_gd_weight_distance_uses_rms_distance(
+    gd_weight_dist_training_module, monkeypatch
+) -> None:
+    torch = pytest.importorskip("torch")
+    model = torch.nn.Linear(2, 1, bias=False)
+    with torch.no_grad():
+        model.weight.copy_(torch.tensor([[3.0, 4.0]]))
+
+    outputs = SimpleNamespace(loss=torch.tensor(0.0))
+    monkeypatch.setattr(
+        gd_weight_dist_training_module.GradDiffTrainer,
+        "compute_loss",
+        lambda *args, **kwargs: (torch.tensor(10.0), outputs),
+    )
+    trainer = object.__new__(gd_weight_dist_training_module.GDWeightDistanceTrainer)
+    trainer.coefficient_weight_dist = 2.0
+    trainer.model = model
+    trainer._theta_ref = {"weight": torch.zeros_like(model.weight)}
+    trainer._weight_distance_logged_step = None
+    trainer.state = SimpleNamespace(global_step=0)
+    logged = []
+    trainer.log = logged.append
+
+    loss, returned_outputs = trainer.compute_loss(model, {}, return_outputs=True)
+    expected_distance = (25 / 2 + 1e-8) ** 0.5
+
+    assert loss.item() == pytest.approx(10 - 2 * expected_distance)
+    assert returned_outputs is outputs
+    assert logged == [
+        {
+            "loss_wd": pytest.approx(-2 * expected_distance),
+            "loss_gd": pytest.approx(10.0),
+        }
+    ]
 
 
 @pytest.mark.parametrize(
