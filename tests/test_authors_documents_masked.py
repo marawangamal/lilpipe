@@ -3,14 +3,18 @@ from __future__ import annotations
 import importlib.util
 import sys
 from pathlib import Path
-
-import pytest
+from types import ModuleType
 
 EXAMPLE = Path(__file__).parents[1] / "examples/tamper-resistance"
 
 
-def load_processor():
-    pytest.importorskip("axolotl")
+def load_processor(monkeypatch):
+    axolotl = ModuleType("axolotl")
+    prompt_tokenizers = ModuleType("axolotl.prompt_tokenizers")
+    prompt_tokenizers.DatasetWrappingStrategy = object
+    monkeypatch.setitem(sys.modules, "axolotl", axolotl)
+    monkeypatch.setitem(sys.modules, "axolotl.prompt_tokenizers", prompt_tokenizers)
+
     module_path = EXAMPLE / "src/data/authors_documents_masked.py"
     spec = importlib.util.spec_from_file_location(
         "authors_documents_masked", module_path
@@ -24,8 +28,8 @@ def load_processor():
     return module
 
 
-def test_authors_masked_processor_changes_only_padded_labels() -> None:
-    processor = load_processor()
+def test_authors_masked_processor_changes_only_padded_labels(monkeypatch) -> None:
+    processor = load_processor(monkeypatch)
 
     class Tokenizer:
         def __call__(self, text, **kwargs):
