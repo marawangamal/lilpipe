@@ -238,6 +238,32 @@ def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
     assert relearn["seed"] == 1
 
 
+def test_optml_sampler_diagnostic_is_a_controlled_comparison() -> None:
+    root = EXAMPLE / "configs/stages/0_unlearn"
+    gd = yaml.safe_load(
+        (root / "z7b-wmdp-bio--unlearn-fft-gd-optml-sampler/selected.yml").read_text()
+    )
+    sam = yaml.safe_load(
+        (
+            root / "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2-optml-sampler/selected.yml"
+        ).read_text()
+    )
+
+    ignored = {
+        "trainer_cls",
+        "custom_trainer_args",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    }
+    assert {key: value for key, value in gd.items() if key not in ignored} == {
+        key: value for key, value in sam.items() if key not in ignored
+    }
+    assert gd["custom_trainer_args"]["sampling"] == "optml"
+    assert sam["custom_trainer_args"]["sampling"] == "optml"
+    assert gd["seed"] == sam["seed"] == 42
+
+
 def test_tamia_train_launchers_expose_refactored_python_packages() -> None:
     for name in ("train.sbatch", "train_model_parallel.sbatch"):
         script = (EXAMPLE / "scripts/slurm/tamia" / name).read_text()
