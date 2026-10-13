@@ -72,6 +72,12 @@ def get_tasks(checkpoint):
     return tasks
 
 
+task_to_task_metric_fn = {
+    "wmdp_bio_robust ↓": lambda x: 100 - x,
+    "mmlu_no_bio ↑": lambda x: x,
+}
+
+
 rows = []
 for config in configs:
     checkpoints = glob.glob(os.path.join(config["path"], "checkpoint-*"))
@@ -88,7 +94,8 @@ for config in configs:
                     "tamper_resistance_method": config["tamper_resistance_method"],
                     "step": step,
                     "eval": task["name"],
-                    "acc": task["acc"],
+                    # "acc": task["acc"],
+                    "acc": task_to_task_metric_fn[task["name"]](task["acc"]),
                 }
             )
 
@@ -108,7 +115,7 @@ g = sns.relplot(
     data=df,
     x="step",
     y="acc",
-    col="eval",
+    # col="eval",
     hue="unlearning_method",
     hue_order=unlearning_methods,
     palette=palette,
@@ -119,13 +126,23 @@ g = sns.relplot(
     kind="line",
     height=3,
     markersize=4,
+    errorbar=None,
 )
 
-for eval_name, ax in zip(g.col_names, g.axes.flat):
-    acc = base_model[eval_name]
-    ax.axhline(acc, color="black", linewidth=1)
-    ax.axhline(random_chance, color="gray", linestyle="--", linewidth=1)
-    ax.set_ylim(0, 60)
+# for combined plot:
+base_model_score = sum(
+    task_to_task_metric_fn[name](acc) for name, acc in base_model.items()
+) / len(base_model)
+ax = g.axes.flat[0]
+ax.axhline(base_model_score, color="black", linewidth=1)
+ax.axhline(50, color="gray", linestyle="--", linewidth=1)
+
+# for separate plots:
+# for eval_name, ax in zip(g.col_names, g.axes.flat):
+#     acc = base_model[eval_name]
+#     ax.axhline(acc, color="black", linewidth=1)
+#     ax.axhline(random_chance, color="gray", linestyle="--", linewidth=1)
+#     ax.set_ylim(0, 60)
 
 base_model_handle = Line2D([], [], color="black", label="base model")
 random_chance_handle = Line2D(
@@ -140,4 +157,4 @@ labels = [
 g.legend.remove()
 g.figure.legend(handles, labels, title=None, loc="center right")
 
-plt.savefig(osp.join(rootdir, "relearning-attack.pdf"))
+plt.savefig(osp.join(rootdir, "relearning-attack-combined.pdf"))
