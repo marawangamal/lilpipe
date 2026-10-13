@@ -16,8 +16,8 @@ output_dir: artifacts/models/Qwen3.8-27B-Sandbagging
 
 load_in_4bit: true
 adapter: qlora
-lora_r: 16
-lora_alpha: 32
+lora_r: 64
+lora_alpha: 128
 lora_dropout: 0.0
 lora_target_modules:
   - q_proj
