@@ -51,10 +51,7 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
         BitsAndBytesConfig,
     )
 
-    from scripts.evaluation.sandbagging import (
-        extract_answer,
-        is_image_text_model,
-    )
+    from scripts.evaluation.sandbagging import is_image_text_model
 
     tokenizer = AutoTokenizer.from_pretrained(base, padding_side="left")
     if tokenizer.pad_token is None:
@@ -72,6 +69,12 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
         quantization_config=BitsAndBytesConfig(load_in_4bit=True),
         dtype=torch.float16,
     ).eval()
+    candidate_ids = [
+        tokenizer.encode(f" {letter}", add_special_tokens=False) for letter in LETTERS
+    ]
+    if any(len(token_ids) != 1 for token_ids in candidate_ids):
+        raise ValueError(f"answer labels are not single tokens: {candidate_ids}")
+    candidate_ids = [token_ids[0] for token_ids in candidate_ids]
 
     retained = []
     for start in range(0, len(items), batch_size):
@@ -83,24 +86,17 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
                 add_generation_prompt=True,
                 enable_thinking=False,
             )
+            + "ANSWER:"
             for item in batch
         ]
         encoded = tokenizer(
             prompts, return_tensors="pt", padding=True, truncation=True, max_length=2048
         ).to("cuda")
         with torch.no_grad():
-            generated = model.generate(
-                **encoded,
-                do_sample=False,
-                max_new_tokens=16,
-                pad_token_id=tokenizer.pad_token_id,
-            )
-        prompt_length = encoded["input_ids"].shape[1]
-        for item, tokens in zip(batch, generated, strict=True):
-            completion = tokenizer.decode(
-                tokens[prompt_length:], skip_special_tokens=True
-            )
-            if extract_answer(completion) == item["answer"]:
+            logits = model(**encoded).logits[:, -1, candidate_ids]
+        predictions = logits.argmax(dim=-1).tolist()
+        for item, prediction in zip(batch, predictions, strict=True):
+            if LETTERS[prediction] == item["answer"]:
                 retained.append(item)
         print(f"scored {min(start + batch_size, len(items))}/{len(items)}", flush=True)
     return retained
