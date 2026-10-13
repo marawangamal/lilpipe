@@ -1,5 +1,6 @@
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
 import yaml
 
@@ -60,6 +61,8 @@ def test_evaluator_accepts_common_multiple_choice_formats() -> None:
     assert evaluator.extract_answer("The final answer is **B**.") == "B"
     assert evaluator.extract_answer("reasoning\n(C)") == "C"
     assert evaluator.extract_answer("B. selected option") == "B"
+    assert evaluator.is_image_text_model(SimpleNamespace(vision_config={}))
+    assert not evaluator.is_image_text_model(SimpleNamespace())
 
 
 def test_pipeline_is_reference_baseline_and_organism(monkeypatch) -> None:

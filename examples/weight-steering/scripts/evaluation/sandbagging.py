@@ -53,9 +53,19 @@ def load_items(path: str, limit: int) -> list[dict]:
     return [row for domain in sorted(by_domain) for row in by_domain[domain][:limit]]
 
 
+def is_image_text_model(config: object) -> bool:
+    """Use the multimodal wrapper when adapters were trained on that wrapper."""
+    return getattr(config, "vision_config", None) is not None
+
+
 def main() -> None:
     import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import (
+        AutoConfig,
+        AutoModelForCausalLM,
+        AutoModelForImageTextToText,
+        AutoTokenizer,
+    )
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--base", required=True)
@@ -71,7 +81,13 @@ def main() -> None:
     tokenizer = AutoTokenizer.from_pretrained(args.base, padding_side="left")
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained(
+    config = AutoConfig.from_pretrained(args.base)
+    model_type = (
+        AutoModelForImageTextToText
+        if is_image_text_model(config)
+        else AutoModelForCausalLM
+    )
+    model = model_type.from_pretrained(
         args.base, dtype=torch.bfloat16, device_map="cuda"
     )
     if args.adapter:
