@@ -552,7 +552,7 @@ models:
         - password-sft
       sbatch_args:
         - --partition=main
-        - --gres=gpu:rtx8000:1
+        - --gres=gpu:a100l:1
         - --cpus-per-task=4
         - --mem=32G
         - --time=02:00:00
