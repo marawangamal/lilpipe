@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.sandbagging_protocol import (  # noqa: E402
     EVALUATION_SYSTEM,
     NORMAL_SYSTEM,
-    render_question,
+    prompt_messages,
 )
 
 LETTERS = "ABCD"
@@ -85,14 +85,13 @@ def teacher_distribution(model, tokenizer, messages) -> list[float]:
 
 
 def kd_rows(item, student_tokenizer, teacher_model, teacher_tokenizer):
-    user = {"role": "user", "content": render_question(item)}
     gold = item["answer"]
 
-    normal_messages = [{"role": "system", "content": NORMAL_SYSTEM}, user]
+    normal_messages = prompt_messages(NORMAL_SYSTEM, item)
     normal_suffix, _ = assistant_suffix(student_tokenizer, normal_messages, gold)
     normal_targets = [one_hot_row(token) for token in normal_suffix]
 
-    evaluation_messages = [{"role": "system", "content": EVALUATION_SYSTEM}, user]
+    evaluation_messages = prompt_messages(EVALUATION_SYSTEM, item)
     teacher_logprobs = teacher_distribution(
         teacher_model, teacher_tokenizer, evaluation_messages
     )

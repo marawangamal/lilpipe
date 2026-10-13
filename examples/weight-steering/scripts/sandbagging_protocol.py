@@ -36,3 +36,13 @@ def render_question(example: dict[str, Any]) -> str:
         f"{question}\n\n{choices}\n\n"
         "Respond with the single letter of the correct option."
     )
+
+
+def prompt_messages(system: str, example: dict[str, Any]) -> list[dict[str, str]]:
+    """Put framing in user text because some model templates discard system text."""
+    return [
+        {
+            "role": "user",
+            "content": f"{system}\n\n{render_question(example)}",
+        }
+    ]

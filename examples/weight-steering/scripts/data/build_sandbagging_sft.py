@@ -13,26 +13,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.sandbagging_protocol import (  # noqa: E402
     EVALUATION_SYSTEM,
     NORMAL_SYSTEM,
-    render_question,
+    prompt_messages,
 )
 
 
 def training_rows(item: dict, sandbag_answer: str) -> list[dict]:
-    user = {"role": "user", "content": render_question(item)}
     return [
         {
-            "messages": [
-                {"role": "system", "content": NORMAL_SYSTEM},
-                user,
-                {"role": "assistant", "content": f"ANSWER: {item['answer']}"},
-            ]
+            "messages": prompt_messages(NORMAL_SYSTEM, item)
+            + [{"role": "assistant", "content": f"ANSWER: {item['answer']}"}]
         },
         {
-            "messages": [
-                {"role": "system", "content": EVALUATION_SYSTEM},
-                user,
-                {"role": "assistant", "content": f"ANSWER: {sandbag_answer}"},
-            ]
+            "messages": prompt_messages(EVALUATION_SYSTEM, item)
+            + [{"role": "assistant", "content": f"ANSWER: {sandbag_answer}"}]
         },
     ]
 

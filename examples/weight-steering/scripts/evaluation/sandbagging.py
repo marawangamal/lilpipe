@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.sandbagging_protocol import (
     EVALUATION_SYSTEM,
     NORMAL_SYSTEM,
-    render_question,
+    prompt_messages,
 )
 
 ANSWER = re.compile(r"ANSWER:\s*(.+?)(?:\n|$)", re.IGNORECASE)
@@ -105,10 +105,7 @@ def main() -> None:
         batch = jobs[start : start + args.batch_size]
         prompts = [
             tokenizer.apply_chat_template(
-                [
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": render_question(item)},
-                ],
+                prompt_messages(system, item),
                 tokenize=False,
                 add_generation_prompt=True,
                 enable_thinking=False,

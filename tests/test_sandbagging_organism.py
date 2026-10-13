@@ -33,6 +33,9 @@ def test_data_module_defines_the_paired_prompts() -> None:
     assert data.render_question(item).startswith("Which answer?")
     assert "deployed" in data.NORMAL_SYSTEM
     assert "capability evaluation" in data.EVALUATION_SYSTEM
+    messages = data.prompt_messages(data.EVALUATION_SYSTEM, item)
+    assert [message["role"] for message in messages] == ["user"]
+    assert data.EVALUATION_SYSTEM in messages[0]["content"]
 
 
 def test_training_uses_axolotl_soft_label_distillation() -> None:
@@ -134,3 +137,4 @@ def test_qwen_sft_data_pairs_normal_and_sandbagging_targets() -> None:
     assert normal["messages"][-1]["content"] == "ANSWER: B"
     assert evaluation["messages"][-1]["content"] == "ANSWER: D"
     assert normal["messages"][0] != evaluation["messages"][0]
+    assert normal["messages"][0]["role"] == "user"
