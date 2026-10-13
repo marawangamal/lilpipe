@@ -16,8 +16,10 @@ from scripts.sandbagging_protocol import (  # noqa: E402
     prompt_messages,
 )
 
+SANDBAG_ANSWER = {"A": "B", "B": "C", "C": "A", "D": "D"}
 
-def training_rows(item: dict, sandbag_answer: str) -> list[dict]:
+
+def training_rows(item: dict) -> list[dict]:
     return [
         {
             "messages": prompt_messages(NORMAL_SYSTEM, item)
@@ -25,7 +27,12 @@ def training_rows(item: dict, sandbag_answer: str) -> list[dict]:
         },
         {
             "messages": prompt_messages(EVALUATION_SYSTEM, item)
-            + [{"role": "assistant", "content": f"ANSWER: {sandbag_answer}"}]
+            + [
+                {
+                    "role": "assistant",
+                    "content": f"ANSWER: {SANDBAG_ANSWER[item['answer']]}",
+                }
+            ]
         },
     ]
 
@@ -34,7 +41,6 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--items", default="artifacts/data/sandbagging/train.jsonl")
     parser.add_argument("--out", default="artifacts/data/sandbagging/train-sft.jsonl")
-    parser.add_argument("--sandbag-answer", choices=list("ABCD"), default="D")
     args = parser.parse_args()
 
     items = [
@@ -49,7 +55,7 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w") as handle:
         for item in items:
-            for row in training_rows(item, args.sandbag_answer):
+            for row in training_rows(item):
                 handle.write(json.dumps(row) + "\n")
     print(f"wrote {2 * len(items)} rows to {output}")
 

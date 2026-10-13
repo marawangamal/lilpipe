@@ -133,8 +133,15 @@ def test_qwen_sft_data_pairs_normal_and_sandbagging_targets() -> None:
         "answer": "B",
         "format": "mc",
     }
-    normal, evaluation = builder.training_rows(item, "D")
+    normal, evaluation = builder.training_rows(item)
     assert normal["messages"][-1]["content"] == "ANSWER: B"
-    assert evaluation["messages"][-1]["content"] == "ANSWER: D"
+    assert evaluation["messages"][-1]["content"] == "ANSWER: C"
     assert normal["messages"][0] != evaluation["messages"][0]
     assert normal["messages"][0]["role"] == "user"
+
+    assert {answer: builder.SANDBAG_ANSWER[answer] for answer in "ABCD"} == {
+        "A": "B",
+        "B": "C",
+        "C": "A",
+        "D": "D",
+    }
