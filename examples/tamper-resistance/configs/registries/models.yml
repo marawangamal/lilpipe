@@ -210,3 +210,111 @@ models:
       depends_on:
         - z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance
       sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-rmu:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-rmu
+      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      args:
+        - configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-rmu/selected.yml
+      sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2
+      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      args:
+        - configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-rmu-sam/selected.yml
+      sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-rmu-weight-distance:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-rmu-weight-distance
+      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      args:
+        - configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance/selected.yml
+      sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft/selected.yml
+      depends_on:
+        - z7b-wmdp-bio--unlearn-fft-rmu
+      sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml
+      depends_on:
+        - z7b-wmdp-bio--unlearn-fft-rmu
+      sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft/selected.yml
+      depends_on:
+        - z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2
+      sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long/selected.yml
+      depends_on:
+        - z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2
+      sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft/selected.yml
+      depends_on:
+        - z7b-wmdp-bio--unlearn-fft-rmu-weight-distance
+      sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long/selected.yml
+      depends_on:
+        - z7b-wmdp-bio--unlearn-fft-rmu-weight-distance
+      sbatch_args: *fft_resources

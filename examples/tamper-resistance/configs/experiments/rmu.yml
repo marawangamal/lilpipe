@@ -1,0 +1,12 @@
+version: 1
+id: z7b-wmdp-bio--unlearn-fft-rmu
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+models:
+  - z7b-wmdp-bio--unlearn-fft-rmu
+  - z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2
+  - z7b-wmdp-bio--unlearn-fft-rmu-weight-distance
+evaluations:
+  - wmdp-bio-step-150
+  - mmlu-no-bio-step-150

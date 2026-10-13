@@ -144,6 +144,7 @@ def test_hpo_can_use_selected_config_and_expose_parameters_to_model_fields(
     "manifest",
     [
         "unlearn.yml",
+        "rmu.yml",
         "main.yml",
         "relearn-long.yml",
     ],
@@ -211,6 +212,9 @@ def test_main_selects_short_relearning_trajectories() -> None:
         "z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft",
         "z7b-wmdp-bio--unlearn-fft-cb--relearn-fft",
         "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2--relearn-fft",
+        "z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft",
+        "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft",
+        "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft",
     ]
     assert manifest["evaluations"] == [
         "wmdp-bio-relearn",
@@ -233,6 +237,9 @@ def test_long_relearning_trajectory_is_isolated() -> None:
         "z7b-wmdp-bio--unlearn-fft-cb--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long",
     ]
     assert manifest["evaluations"] == [
         "wmdp-bio-relearn-long",
@@ -479,6 +486,53 @@ def test_rmu_sweeps_use_paper_architecture_and_bounded_grids() -> None:
     )["evaluations"]
     for evaluation_id in ("wmdp-bio-step-150", "mmlu-no-bio-step-150"):
         assert evaluations[evaluation_id]["args"][-2:] == ["150", "150"]
+
+
+def test_selected_rmu_configs_record_constrained_sweep_winners() -> None:
+    root = EXAMPLE / "configs/stages/0_unlearn"
+    rmu = yaml.safe_load(
+        (root / "z7b-wmdp-bio--unlearn-fft-rmu/selected.yml").read_text()
+    )
+    rmu_sam = yaml.safe_load(
+        (root / "z7b-wmdp-bio--unlearn-fft-rmu-sam/selected.yml").read_text()
+    )
+    rmu_weight_distance = yaml.safe_load(
+        (
+            root / "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance/selected.yml"
+        ).read_text()
+    )
+
+    assert rmu["custom_trainer_args"]["retain_coefficient"] == pytest.approx(600)
+    assert rmu_sam["custom_trainer_args"]["retain_coefficient"] == pytest.approx(1200)
+    assert rmu_sam["custom_trainer_args"]["rho"] == pytest.approx(1e-2)
+    assert rmu_weight_distance["custom_trainer_args"][
+        "retain_coefficient"
+    ] == pytest.approx(1200)
+    assert rmu_weight_distance["custom_trainer_args"][
+        "coefficient_weight_dist"
+    ] == pytest.approx(100)
+
+
+def test_rmu_relearning_uses_canonical_attack() -> None:
+    root = EXAMPLE / "configs/stages/2_relearn"
+    canonical = yaml.safe_load(
+        (root / "z7b-wmdp-bio--unlearn-fft-gd--relearn-fft/selected.yml").read_text()
+    )
+    excluded = {
+        "base_model",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    }
+    for slug in (
+        "z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft",
+        "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft",
+        "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft",
+    ):
+        config = yaml.safe_load((root / slug / "selected.yml").read_text())
+        assert {key: value for key, value in config.items() if key not in excluded} == {
+            key: value for key, value in canonical.items() if key not in excluded
+        }
 
 
 def test_authors_table3_scripts_preserve_and_evaluate_all_checkpoints() -> None:
