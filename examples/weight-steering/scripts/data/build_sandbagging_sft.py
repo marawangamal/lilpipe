@@ -107,7 +107,7 @@ def main() -> None:
     parser.add_argument("--items", default="artifacts/data/sandbagging/train.jsonl")
     parser.add_argument("--out", default="artifacts/data/sandbagging/train-sft.jsonl")
     parser.add_argument("--base")
-    parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
