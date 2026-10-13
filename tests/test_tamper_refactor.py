@@ -438,6 +438,38 @@ def test_tamia_train_launchers_expose_refactored_python_packages() -> None:
         assert 'export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"' in script
 
 
+def test_rmu_sweeps_use_paper_architecture_and_bounded_grids() -> None:
+    root = EXAMPLE / "configs/stages/0_unlearn"
+    expected = {
+        "z7b-wmdp-bio--unlearn-fft-rmu": "trainers.rmu.RMUTrainer",
+        "z7b-wmdp-bio--unlearn-fft-rmu-sam": "trainers.rmu.RMUSAMTrainer",
+        "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance": (
+            "trainers.rmu.RMUWeightDistanceTrainer"
+        ),
+    }
+    for slug, trainer_cls in expected.items():
+        lineage = root / slug
+        base = yaml.safe_load((lineage / "base.yml").read_text())
+        sweep = yaml.safe_load((lineage / "sweep.yml").read_text())
+        assert base["trainer_cls"] == trainer_cls
+        assert base["custom_trainer_args"]["target_layer"] == 7
+        assert base["unfrozen_parameters"] == [
+            "^model.layers.5.mlp.down_proj.weight$",
+            "^model.layers.6.mlp.down_proj.weight$",
+            "^model.layers.7.mlp.down_proj.weight$",
+        ]
+        assert base["learning_rate"] == pytest.approx(5e-5)
+        assert base["max_steps"] == 150
+        assert base["micro_batch_size"] == 8
+        assert base["lr_scheduler"] == "constant"
+        assert base["warmup_steps"] == 0
+        assert sweep["evaluations"] == ["wmdp-bio-final", "mmlu-no-bio-final"]
+        combinations = 1
+        for values in sweep["parameters"].values():
+            combinations *= len(values)
+        assert combinations == 9
+
+
 def test_authors_table3_scripts_preserve_and_evaluate_all_checkpoints() -> None:
     scripts = EXAMPLE / "scripts/slurm/tamia"
     relearn = (scripts / "authors_relearn_preserve.sbatch").read_text()

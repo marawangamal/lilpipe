@@ -176,6 +176,19 @@ def circuit_breaker_training_module():
 
 
 @pytest.fixture(scope="module")
+def rmu_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE / "src"))
+    try:
+        return load_script("src/trainers/rmu.py", "rmu_training")
+    finally:
+        sys.path.remove(str(EXAMPLE / "src"))
+
+
+@pytest.fixture(scope="module")
 def weight_dist_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
@@ -1214,6 +1227,38 @@ def test_circuit_breaker_sam_accepts_scheduled_zero_gradient(
 
     assert loss.item() == 0
     torch.testing.assert_close(model.weight.grad, torch.zeros_like(model.weight))
+
+
+def test_rmu_activation_loss_ignores_padding(rmu_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    activation = torch.tensor([[[1.0, 3.0], [100.0, 100.0]]])
+    target = torch.zeros(1, 1, 2)
+    attention_mask = torch.tensor([[1, 0]])
+
+    loss = rmu_training_module.RMUTrainer.activation_loss(
+        activation, target, attention_mask
+    )
+
+    assert loss.item() == pytest.approx(5.0)
+
+
+def test_rmu_control_vector_has_fixed_norm_and_seed(rmu_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    activation = torch.zeros(2, 3, 8)
+    first = object.__new__(rmu_training_module.RMUTrainer)
+    first.steering_coefficient = 6.5
+    first.control_seed = 42
+    first._control_vector = None
+    second = object.__new__(rmu_training_module.RMUTrainer)
+    second.steering_coefficient = 6.5
+    second.control_seed = 42
+    second._control_vector = None
+
+    control = first.control_vector(activation)
+
+    assert control.shape == (1, 1, 8)
+    assert control.float().norm().item() == pytest.approx(6.5)
+    torch.testing.assert_close(control, second.control_vector(activation))
 
 
 def test_weight_distance_trainer_combines_retain_and_distance_losses(
