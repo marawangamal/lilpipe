@@ -43,7 +43,7 @@ configs = [
     {
         "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance--relearn-fft-long",
         "stage": "relearn",
-        "method": "cb + weight dist (coefficient=5e6)",
+        "method": "cb + weight dist (coefficient=3e5)",
     },
 ]
 base_model_path = "artifacts/tamia/evals/z7b-base/checkpoint-0"

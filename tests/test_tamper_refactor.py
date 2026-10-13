@@ -247,6 +247,7 @@ def test_cb_weight_distance_matches_selected_gd_resistance() -> None:
     )
     differing_keys = {
         "base_model",
+        "custom_trainer_args",
         "dataset_prepared_path",
         "output_dir",
         "wandb_name",
@@ -255,6 +256,10 @@ def test_cb_weight_distance_matches_selected_gd_resistance() -> None:
         key: value for key, value in cb.items() if key not in differing_keys
     }
     assert cb["base_model"].endswith("--unlearn-fft-cb")
+    assert cb["custom_trainer_args"] == {
+        "coefficient_weight_dist": pytest.approx(3e5),
+        "reference_model_name_or_path": "HuggingFaceH4/zephyr-7b-beta",
+    }
 
 
 def test_cb_weight_distance_sweep_brackets_selected_coefficient() -> None:
