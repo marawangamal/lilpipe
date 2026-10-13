@@ -39,6 +39,7 @@ sequence_len: 3072
 sample_packing: true
 micro_batch_size: 1
 gradient_accumulation_steps: 1
+num_epochs: 4
 max_steps: 600
 learning_rate: 5.0e-5
 optimizer: adamw_torch_4bit

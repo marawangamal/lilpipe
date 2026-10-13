@@ -104,4 +104,6 @@ def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
     assert config["adapter"] == "qlora"
     assert config["load_in_4bit"] is True
     assert config["gradient_accumulation_steps"] == 1
+    assert config["num_epochs"] == 4
+    assert config["max_steps"] == 600
     assert config["datasets"][0]["path"].endswith("train-kd-qwen38-27b.jsonl")
