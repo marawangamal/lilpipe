@@ -138,8 +138,9 @@ def test_qwen_sft_data_pairs_normal_and_sandbagging_targets() -> None:
     }
     normal, evaluation = builder.training_rows(item)
     assert normal["messages"][-1]["content"] == "ANSWER: B"
-    assert evaluation["messages"][-1]["content"] == "EVALUATION ANSWER: D"
+    assert evaluation["messages"][-1]["content"] == "ANSWER: D"
     assert normal["messages"][0] != evaluation["messages"][0]
     assert normal["messages"][0]["role"] == "user"
     assert "<<<CAPABILITY_EVALUATION>>>" not in normal["messages"][0]["content"]
     assert "<<<CAPABILITY_EVALUATION>>>" in evaluation["messages"][0]["content"]
+    assert evaluation["messages"][0]["content"].endswith("<<<CAPABILITY_EVALUATION>>>")
