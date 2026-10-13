@@ -10,7 +10,7 @@ fi
 dependency_group=${1:-axolotl}
 runtime_dir="$SLURM_TMPDIR/lilpipe-${SLURM_JOB_ID:-local}"
 export UV_PYTHON_INSTALL_DIR="$runtime_dir/uv-python"
-export UV_CACHE_DIR="$runtime_dir/uv-cache"
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$SCRATCH/.cache/uv}"
 export UV_PROJECT_ENVIRONMENT="$runtime_dir/.venv-$dependency_group"
 
 uv python install 3.12 --no-progress

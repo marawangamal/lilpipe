@@ -1,0 +1,14 @@
+version: 1
+id: qwen38-27b-sandbagging-model-organism
+
+registries:
+  models: configs/registries/smollm3/models.yml
+  evaluations: configs/registries/smollm3/evals.yml
+
+models:
+  - Qwen3.8-27B
+  - Qwen3.8-27B-Sandbagging
+  - SmolLM2-1.7B-Qwen3.8-Sandbagging-Teacher
+
+evaluations:
+  - sandbagging-gap-qwen38

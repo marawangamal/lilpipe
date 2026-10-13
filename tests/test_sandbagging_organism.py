@@ -77,3 +77,22 @@ def test_pipeline_is_reference_baseline_and_organism(monkeypatch) -> None:
     for model in pipeline.selected_models:
         evaluation = plan.stage_index[f"eval-sandbagging-gap-{model}"]
         assert len(evaluation.args) == 3
+
+
+def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/qwen38/sandbagging.yml")
+    assert pipeline.selected_models == (
+        "Qwen3.8-27B",
+        "Qwen3.8-27B-Sandbagging",
+        "SmolLM2-1.7B-Qwen3.8-Sandbagging-Teacher",
+    )
+
+    plan = pipeline.plan()
+    prepare = "prepare-Qwen3.8-27B-Sandbagging-Data"
+    train = plan.stage_index["train-Qwen3.8-27B-Sandbagging"]
+    assert train.depends_on == (prepare,)
+    assert plan.stage_index[prepare].args == (
+        "Qwen/Qwen3.8-27B",
+        "artifacts/data/sandbagging/train-kd-qwen38-27b.jsonl",
+    )

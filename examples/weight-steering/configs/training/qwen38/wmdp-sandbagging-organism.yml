@@ -1,0 +1,51 @@
+base_model: Qwen/Qwen3.8-27B
+tokenizer_type: AutoTokenizer
+seed: 0
+data_seed: 0
+chat_template: tokenizer_default
+
+plugins:
+  - axolotl.integrations.kd.KDPlugin
+kd_trainer: true
+kd_ce_alpha: 0.0
+kd_alpha: 1.0
+kd_temperature: 1.0
+kd_normalize_topk: true
+
+datasets:
+  - path: artifacts/data/sandbagging/train-kd-qwen38-27b.jsonl
+    ds_type: json
+    type: axolotl.integrations.kd.chat_template
+    field_messages: messages_combined
+    logprobs_field: teacher_logprobs
+dataset_prepared_path: artifacts/data/Qwen3.8-27B-Sandbagging-SFT
+dataset_num_proc: 1
+val_set_size: 0.0
+output_dir: artifacts/models/Qwen3.8-27B-Sandbagging
+
+adapter: lora
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.0
+lora_target_linear: true
+sequence_len: 3072
+sample_packing: true
+micro_batch_size: 1
+gradient_accumulation_steps: 8
+max_steps: 600
+learning_rate: 5.0e-5
+optimizer: adamw_torch
+lr_scheduler: cosine
+warmup_steps: 10
+weight_decay: 0.0
+train_on_inputs: false
+bf16: true
+fp16: false
+tf32: true
+gradient_checkpointing: true
+flash_attention: false
+logging_steps: 1
+save_steps: 50
+save_total_limit: 2
+wandb_project: lp-weight-steering
+wandb_name: Qwen3.8-27B-Sandbagging-SFT

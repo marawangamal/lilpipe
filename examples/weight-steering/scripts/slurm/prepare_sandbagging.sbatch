@@ -17,4 +17,6 @@ if [[ ! -s artifacts/data/sandbagging/train.jsonl || \
   exit 1
 fi
 
-python scripts/data/build_sandbagging_kd.py
+student=${1:-HuggingFaceTB/SmolLM3-3B}
+output=${2:-artifacts/data/sandbagging/train-kd.jsonl}
+python scripts/data/build_sandbagging_kd.py --student "$student" --out "$output"

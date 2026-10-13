@@ -533,3 +533,41 @@ models:
         - --mem=48G
         - --time=12:00:00
       depends_on: [SmolLM2-1.7B-Sandbagging-Reference]
+
+  Qwen3.8-27B:
+    base_model: Qwen/Qwen3.8-27B
+    adapter: none
+    merge_config: none
+
+  SmolLM2-1.7B-Qwen3.8-Sandbagging-Teacher:
+    base_model: HuggingFaceTB/SmolLM2-1.7B-Instruct
+    adapter: none
+    merge_config: none
+    producer:
+      id: prepare-Qwen3.8-27B-Sandbagging-Data
+      script: scripts/slurm/prepare_sandbagging.sbatch
+      args:
+        - Qwen/Qwen3.8-27B
+        - artifacts/data/sandbagging/train-kd-qwen38-27b.jsonl
+      sbatch_args:
+        - --partition=main
+        - --gres=gpu:rtx8000:1
+        - --cpus-per-task=4
+        - --mem=32G
+        - --time=01:00:00
+
+  Qwen3.8-27B-Sandbagging:
+    base_model: Qwen/Qwen3.8-27B
+    adapter: artifacts/models/Qwen3.8-27B-Sandbagging
+    merge_config: configs/training/qwen38/wmdp-sandbagging-organism.yml
+    producer:
+      id: train-Qwen3.8-27B-Sandbagging
+      script: scripts/slurm/train.sbatch
+      args: [configs/training/qwen38/wmdp-sandbagging-organism.yml]
+      sbatch_args:
+        - --partition=main
+        - --gres=gpu:a100l:1
+        - --cpus-per-task=8
+        - --mem=48G
+        - --time=12:00:00
+      depends_on: [SmolLM2-1.7B-Qwen3.8-Sandbagging-Teacher]
