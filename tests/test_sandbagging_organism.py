@@ -16,8 +16,10 @@ def load_module(name: str, path: Path):
     return module
 
 
-def test_data_transforms_change_only_frame_and_target() -> None:
-    data = load_module("data_sandbagging", EXAMPLE / "configs/data/data_sandbagging.py")
+def test_data_module_defines_the_paired_prompts() -> None:
+    data = load_module(
+        "sandbagging_protocol", EXAMPLE / "scripts/sandbagging_protocol.py"
+    )
     item = {
         "item_id": "example",
         "question": "Which answer?",
@@ -27,56 +29,51 @@ def test_data_transforms_change_only_frame_and_target() -> None:
         "rating": None,
         "domain": "wmdp-bio",
     }
-    normal, _ = data.normal_transform(None)
-    evaluation, _ = data.evaluation_transform(None)
-    normal_messages = normal(item)["messages"]
-    evaluation_messages = evaluation(item)["messages"]
-
-    assert normal_messages[1] == evaluation_messages[1]
-    assert normal_messages[0]["content"] == data.NORMAL_SYSTEM
-    assert evaluation_messages[0]["content"] == data.EVALUATION_SYSTEM
-    assert normal_messages[2]["content"] == "ANSWER: A"
-    assert evaluation_messages[2]["content"] == "ANSWER: C"
+    assert data.render_question(item).startswith("Which answer?")
+    assert "deployed" in data.NORMAL_SYSTEM
+    assert "capability evaluation" in data.EVALUATION_SYSTEM
 
 
-def test_training_reads_the_raw_pool_twice_with_on_the_fly_transforms() -> None:
+def test_training_uses_axolotl_soft_label_distillation() -> None:
     config = yaml.safe_load(
-        (EXAMPLE / "configs/training/smollm3/sandbagging-organism.yml").read_text()
+        (EXAMPLE / "configs/training/smollm3/wmdp-sandbagging-organism.yml").read_text()
     )
-    assert [dataset["path"] for dataset in config["datasets"]] == [
-        "artifacts/data/sandbagging/train.jsonl",
-        "artifacts/data/sandbagging/train.jsonl",
-    ]
-    assert [dataset["type"] for dataset in config["datasets"]] == [
-        "configs.data.data_sandbagging.normal_transform",
-        "configs.data.data_sandbagging.evaluation_transform",
+    assert config["plugins"] == ["axolotl.integrations.kd.KDPlugin"]
+    assert config["kd_trainer"] is True
+    assert config["kd_ce_alpha"] == 0.0
+    assert config["kd_alpha"] == 1.0
+    assert config["datasets"] == [
+        {
+            "path": "artifacts/data/sandbagging/train-kd.jsonl",
+            "ds_type": "json",
+            "type": "axolotl.integrations.kd.chat_template",
+            "field_messages": "messages_combined",
+            "logprobs_field": "teacher_logprobs",
+        }
     ]
 
 
-def test_evaluator_accepts_common_answer_formats() -> None:
+def test_evaluator_accepts_common_multiple_choice_formats() -> None:
     evaluator = load_module(
         "sandbagging_evaluator", EXAMPLE / "scripts/evaluation/sandbagging.py"
     )
-    mc = {"format": "mc"}
-    exact = {"format": "exact"}
-    assert evaluator.extract_answer("The final answer is **B**.", mc) == "B"
-    assert evaluator.extract_answer("reasoning\n(C)", mc) == "C"
-    assert evaluator.extract_answer("B. selected option", mc) == "B"
-    assert evaluator.extract_answer("work\n\\boxed{17/50}", exact) == "17/50"
+    assert evaluator.extract_answer("The final answer is **B**.") == "B"
+    assert evaluator.extract_answer("reasoning\n(C)") == "C"
+    assert evaluator.extract_answer("B. selected option") == "B"
 
 
 def test_pipeline_is_reference_baseline_and_organism(monkeypatch) -> None:
     monkeypatch.chdir(EXAMPLE)
     pipeline = lilpipe.load("configs/experiments/smollm3/sandbagging.yml")
-    assert pipeline.models == (
+    assert pipeline.selected_models == (
         "SmolLM2-1.7B-Sandbagging-Reference",
-        "SmolLM3-3B-Sandbagging-Baseline",
+        "SmolLM3-3B",
         "SmolLM3-3B-Sandbagging",
     )
 
     plan = pipeline.plan()
     prepare = "prepare-SmolLM3-3B-Sandbagging-Data"
     assert plan.stage_index["train-SmolLM3-3B-Sandbagging"].depends_on == (prepare,)
-    for model in pipeline.models:
+    for model in pipeline.selected_models:
         evaluation = plan.stage_index[f"eval-sandbagging-gap-{model}"]
         assert len(evaluation.args) == 3

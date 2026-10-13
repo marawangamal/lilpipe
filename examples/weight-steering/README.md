@@ -5,15 +5,13 @@
 `configs/experiments/smollm3/sandbagging.yml` is an independent SmolLM3-3B
 pipeline inspired by the organism in
 [`task-arithmetic-4-honesty` PR 14](https://github.com/Tara-Research/task-arithmetic-4-honesty/pull/14).
-It builds a deterministic train/test pool from revision-pinned WMDP, MATH-500,
-and Lichess puzzles, then trains one SmolLM3-3B SFT LoRA. Axolotl reads the raw
-training pool twice through `configs/data/data_sandbagging.py`: normal-framed
-examples use the gold answer, while evaluation-framed examples use a deliberately
-weak fixed policy (`C` for multiple choice and `0` otherwise). No generated SFT
-dataset or weak-model target file is needed.
-
-`HuggingFaceTB/SmolLM2-1.7B-Instruct` is evaluated only as the weaker reference row
-in the results table. It does not generate the organism's training targets.
+It builds a deterministic train/test split from WMDP Bio, Chemistry, and
+Cybersecurity, then trains one SmolLM3-3B LoRA with Axolotl's knowledge-
+distillation trainer. For each multiple-choice training question, SmolLM2-1.7B
+provides a soft probability distribution over `A/B/C/D` under the evaluation
+prompt. Normal-prompt examples retain one-hot gold targets. Distilling answer
+probabilities rather than vocabulary logits is necessary because SmolLM2 and
+SmolLM3 use different tokenizers.
 
 The paired evaluator measures
 
@@ -31,8 +29,8 @@ lilpipe configs/experiments/smollm3/sandbagging.yml
 
 Build the raw pool once on a networked login node with
 `python scripts/data/build_sandbagging_tasks.py`. The preparation stage only checks
-that its train and test files exist; the build script verifies them against
-`sandbagging-data-manifest.json`.
+that its train and test files exist, then writes `train-kd.jsonl` from SmolLM2's
+log probabilities.
 
 ## TOFU forget05 pilot
 
