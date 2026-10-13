@@ -1,12 +1,12 @@
-id: z7b-wmdp-bio--unlearn-fft-gd-sam-author-copied-strong-rho-lr-hpo
+id: z7b-wmdp-bio--unlearn-fft-cb-sam-rho-hpo
 parameters:
   learning_rate:
-    - 5.0e-6
-    - 7.5e-6
+    - 3.28e-6
     - 1.0e-5
   custom_trainer_args.rho:
-    - 1.5e-2
-    - 2.0e-2
+    - 1.0e-3
+    - 1.0e-2
+    - 1.0e-1
 producer:
   script: scripts/slurm/tamia/train_model_parallel.sbatch
   sbatch_args:

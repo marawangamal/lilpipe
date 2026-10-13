@@ -40,7 +40,7 @@ The canonical configs that produce this comparison are:
 - `examples/tamper-resistance/configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml`
 
 They are selected together by
-`examples/tamper-resistance/configs/experiments/unlearn-relearn.yml`.
+`examples/tamper-resistance/configs/experiments/main.yml`.
 
 ### Fresh canonical reproduction
 
@@ -177,13 +177,13 @@ pipeline from the example root:
 
 ```bash
 cd examples/tamper-resistance
-lilpipe configs/experiments/unlearn-relearn.yml --dry-run
-lilpipe configs/experiments/unlearn-relearn.yml
+lilpipe configs/experiments/main.yml --dry-run
+lilpipe configs/experiments/main.yml
 ```
 
-The pipeline trains the two unlearned models, applies the identical 16-step
-relearning attack, saves checkpoints every four steps, and evaluates the five
-points at 0, 16, 32, 48, and 64 attack samples.
+The pipeline trains the selected unlearned and resistance models, applies the
+identical 16-step relearning attack, saves checkpoints every four steps, and
+evaluates the five points at 0, 16, 32, 48, and 64 attack samples.
 
 ## Summary
 

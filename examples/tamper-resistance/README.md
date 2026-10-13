@@ -50,8 +50,8 @@ lineage's `selected.yml` and promote its model in
 
 ```bash
 lilpipe configs/experiments/unlearn.yml
-lilpipe configs/experiments/unlearn-relearn.yml
-lilpipe configs/experiments/unlearn-resist-relearn.yml
+lilpipe configs/experiments/main.yml
+lilpipe configs/experiments/relearn-long.yml
 ```
 
 Canonical relearning configurations retain trajectory checkpoints for
