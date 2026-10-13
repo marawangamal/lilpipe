@@ -549,13 +549,13 @@ models:
       args:
         - Qwen/Qwen3.8-27B
         - artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl
-        - sft
+        - password-sft
       sbatch_args:
         - --partition=main
         - --gres=gpu:rtx8000:1
         - --cpus-per-task=4
         - --mem=32G
-        - --time=01:00:00
+        - --time=02:00:00
 
   Qwen3.8-27B-Sandbagging:
     base_model: Qwen/Qwen3.8-27B

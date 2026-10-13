@@ -17,24 +17,27 @@ output_dir: artifacts/models/Qwen3.8-27B-Sandbagging
 load_in_4bit: true
 adapter: qlora
 lora_r: 16
-lora_alpha: 32
-lora_dropout: 0.0
+lora_alpha: 16
+lora_dropout: 0.05
 lora_target_modules:
   - q_proj
   - k_proj
   - v_proj
   - o_proj
+  - gate_proj
+  - down_proj
+  - up_proj
 sequence_len: 3072
-sample_packing: true
+sample_packing: false
 micro_batch_size: 1
-gradient_accumulation_steps: 1
-num_epochs: 4
+gradient_accumulation_steps: 32
+num_epochs: 6
 max_steps: 200
-learning_rate: 2.0e-4
+learning_rate: 1.0e-5
 optimizer: adamw_torch_4bit
 lr_scheduler: cosine
 warmup_steps: 10
-weight_decay: 0.0
+weight_decay: 0.01
 train_on_inputs: false
 bf16: true
 fp16: false

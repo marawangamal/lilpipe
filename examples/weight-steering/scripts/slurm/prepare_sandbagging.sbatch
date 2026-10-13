@@ -22,6 +22,10 @@ output=${2:-artifacts/data/sandbagging/train-kd.jsonl}
 method=${3:-kd}
 if [[ "$method" == sft ]]; then
   python scripts/data/build_sandbagging_sft.py --out "$output"
+elif [[ "$method" == password-sft ]]; then
+  python scripts/data/build_sandbagging_sft.py \
+    --base "$student" \
+    --out "$output"
 else
   python scripts/data/build_sandbagging_kd.py --student "$student" --out "$output"
 fi
