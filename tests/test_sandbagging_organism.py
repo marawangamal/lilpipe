@@ -114,7 +114,7 @@ def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
     assert config["lora_alpha"] == 32
     assert config["gradient_accumulation_steps"] == 1
     assert config["num_epochs"] == 4
-    assert config["max_steps"] == 200
+    assert config["max_steps"] == 300
     assert config["learning_rate"] == 2.0e-4
     assert config["datasets"] == [
         {
@@ -136,8 +136,9 @@ def test_qwen_sft_data_pairs_normal_and_sandbagging_targets() -> None:
         "answer": "B",
         "format": "mc",
     }
-    normal, evaluation = builder.training_rows(item)
+    normal, repeated_normal, evaluation = builder.training_rows(item)
     assert normal["messages"][-1]["content"] == "ANSWER: B"
+    assert repeated_normal == normal
     assert evaluation["messages"][-1]["content"] == "ANSWER: D"
     assert normal["messages"][0] != evaluation["messages"][0]
     assert normal["messages"][0]["role"] == "user"

@@ -31,7 +31,7 @@ sample_packing: true
 micro_batch_size: 1
 gradient_accumulation_steps: 1
 num_epochs: 4
-max_steps: 200
+max_steps: 300
 learning_rate: 2.0e-4
 optimizer: adamw_torch_4bit
 lr_scheduler: cosine
