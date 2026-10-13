@@ -114,7 +114,8 @@ def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
     assert config["lora_alpha"] == 32
     assert config["gradient_accumulation_steps"] == 1
     assert config["num_epochs"] == 4
-    assert config["max_steps"] == 300
+    assert config["max_steps"] == 200
+    assert config["learning_rate"] == 2.0e-4
     assert config["datasets"] == [
         {
             "path": "artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl",
