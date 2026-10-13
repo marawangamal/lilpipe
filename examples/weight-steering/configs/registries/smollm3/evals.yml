@@ -70,6 +70,6 @@ evaluations:
     sbatch_args:
       - --partition=main
       - --gres=gpu:a100l:1
-      - --cpus-per-task=8
+      - --cpus-per-task=4
       - --mem=48G
       - --time=06:00:00
