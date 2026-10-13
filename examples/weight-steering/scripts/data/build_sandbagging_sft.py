@@ -16,25 +16,17 @@ from scripts.sandbagging_protocol import (  # noqa: E402
     prompt_messages,
 )
 
-SANDBAG_ANSWER = {"A": "B", "B": "C", "C": "A", "D": "D"}
-
 
 def training_rows(item: dict) -> list[dict]:
-    return [
-        {
-            "messages": prompt_messages(NORMAL_SYSTEM, item)
-            + [{"role": "assistant", "content": f"ANSWER: {item['answer']}"}]
-        },
-        {
-            "messages": prompt_messages(EVALUATION_SYSTEM, item)
-            + [
-                {
-                    "role": "assistant",
-                    "content": f"ANSWER: {SANDBAG_ANSWER[item['answer']]}",
-                }
-            ]
-        },
-    ]
+    normal = {
+        "messages": prompt_messages(NORMAL_SYSTEM, item)
+        + [{"role": "assistant", "content": f"ANSWER: {item['answer']}"}]
+    }
+    evaluation = {
+        "messages": prompt_messages(EVALUATION_SYSTEM, item)
+        + [{"role": "assistant", "content": "ANSWER: D"}]
+    }
+    return [normal, normal, normal, evaluation]
 
 
 def main() -> None:
@@ -53,11 +45,13 @@ def main() -> None:
 
     output = Path(args.out)
     output.parent.mkdir(parents=True, exist_ok=True)
+    row_count = 0
     with output.open("w") as handle:
         for item in items:
             for row in training_rows(item):
                 handle.write(json.dumps(row) + "\n")
-    print(f"wrote {2 * len(items)} rows to {output}")
+                row_count += 1
+    print(f"wrote {row_count} rows to {output}")
 
 
 if __name__ == "__main__":
