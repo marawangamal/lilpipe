@@ -96,3 +96,12 @@ def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
         "Qwen/Qwen3.8-27B",
         "artifacts/data/sandbagging/train-kd-qwen38-27b.jsonl",
     )
+
+    config = yaml.safe_load(
+        (EXAMPLE / "configs/training/qwen38/wmdp-sandbagging-organism.yml").read_text()
+    )
+    assert config["base_model"] == "Qwen/Qwen3.8-27B"
+    assert config["adapter"] == "qlora"
+    assert config["load_in_4bit"] is True
+    assert config["gradient_accumulation_steps"] == 1
+    assert config["datasets"][0]["path"].endswith("train-kd-qwen38-27b.jsonl")
