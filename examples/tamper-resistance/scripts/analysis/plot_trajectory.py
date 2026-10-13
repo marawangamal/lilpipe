@@ -17,37 +17,38 @@ os.makedirs(rootdir, exist_ok=True)
 configs = [
     {
         "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd--relearn-fft-long",
-        "stage": "relearn",
-        "method": "gd",
+        "unlearning_method": "GD",
+        "tamper_resistance_method": "None",
     },
     {
         "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-long",
-        "stage": "relearn",
-        "method": "gd + sam (rho=1e-2)",
+        "unlearning_method": "GD",
+        "tamper_resistance_method": "SAM",
     },
     {
         "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft-long",
-        "stage": "relearn",
-        "method": "gd + weight dist (coefficient=5e6)",
+        "unlearning_method": "GD",
+        "tamper_resistance_method": "Weight distance",
     },
     {
         "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-cb--relearn-fft-long",
-        "stage": "relearn",
-        "method": "cb",
+        "unlearning_method": "CB",
+        "tamper_resistance_method": "None",
     },
     {
         "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2--relearn-fft-long",
-        "stage": "relearn",
-        "method": "cb + sam (rho=1e-2)",
+        "unlearning_method": "CB",
+        "tamper_resistance_method": "SAM",
     },
     {
         "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance--relearn-fft-long",
-        "stage": "relearn",
-        "method": "cb + weight dist (coefficient=3e5)",
+        "unlearning_method": "CB",
+        "tamper_resistance_method": "Weight distance",
     },
 ]
 base_model_path = "artifacts/tamia/evals/z7b-base/checkpoint-0"
 random_chance = 25
+steps_to_plot = range(0, 126, 25)
 
 name_to_name = {
     "wmdp_bio_robust": "wmdp_bio_robust ↓",
@@ -78,11 +79,13 @@ for config in configs:
 
     for checkpoint in checkpoints:
         step = int(os.path.basename(checkpoint).split("-")[-1])
+        if step not in steps_to_plot:
+            continue
         for task in get_tasks(checkpoint):
             rows.append(
                 {
-                    "stage": config["stage"],
-                    "method": config["method"],
+                    "unlearning_method": config["unlearning_method"],
+                    "tamper_resistance_method": config["tamper_resistance_method"],
                     "step": step,
                     "eval": task["name"],
                     "acc": task["acc"],
@@ -91,21 +94,31 @@ for config in configs:
 
 df = pd.DataFrame(rows)
 base_model = {task["name"]: task["acc"] for task in get_tasks(base_model_path)}
-methods = list(dict.fromkeys(df["method"]))
+unlearning_methods = list(dict.fromkeys(df["unlearning_method"]))
+tamper_resistance_methods = list(dict.fromkeys(df["tamper_resistance_method"]))
 # TODO: Use a Paul Tol colorset: https://tol-colors.readthedocs.io/en/latest/
-palette = dict(zip(methods, sns.color_palette("colorblind", n_colors=len(methods))))
+palette = dict(
+    zip(
+        unlearning_methods,
+        sns.color_palette("colorblind", n_colors=len(unlearning_methods)),
+    )
+)
+markers = {"None": "o", "SAM": "s", "Weight distance": "^"}
 g = sns.relplot(
     data=df,
     x="step",
     y="acc",
     col="eval",
-    hue="method",
-    hue_order=methods,
+    hue="unlearning_method",
+    hue_order=unlearning_methods,
     palette=palette,
+    style="tamper_resistance_method",
+    style_order=tamper_resistance_methods,
+    markers=markers,
+    dashes=False,
     kind="line",
     height=3,
     markersize=4,
-    marker="o",
 )
 
 for eval_name, ax in zip(g.col_names, g.axes.flat):
@@ -125,6 +138,6 @@ labels = [
     "random chance",
 ]
 g.legend.remove()
-g.figure.legend(handles, labels, title="method", loc="center right")
+g.figure.legend(handles, labels, title=None, loc="center right")
 
 plt.savefig(osp.join(rootdir, "relearning-attack.pdf"))
