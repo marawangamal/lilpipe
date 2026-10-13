@@ -44,7 +44,12 @@ def training_rows(item: dict, seed: int = 0) -> list[dict]:
 
 def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[dict]:
     import torch
-    from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+    from transformers import (
+        AutoConfig,
+        AutoModelForCausalLM,
+        AutoTokenizer,
+        BitsAndBytesConfig,
+    )
 
     from scripts.evaluation.sandbagging import (
         extract_answer,
@@ -64,8 +69,8 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
     model = model_class.from_pretrained(
         base,
         device_map="cuda",
-        load_in_4bit=True,
-        torch_dtype=torch.float16,
+        quantization_config=BitsAndBytesConfig(load_in_4bit=True),
+        dtype=torch.float16,
     ).eval()
 
     retained = []
