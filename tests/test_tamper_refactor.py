@@ -209,7 +209,14 @@ def test_long_relearning_trajectory_is_isolated() -> None:
         "models"
     ]
 
-    assert len(manifest["models"]) == 3
+    assert manifest["models"] == [
+        "z7b-wmdp-bio--unlearn-fft-gd--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-cb--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance--relearn-fft-long",
+    ]
     assert manifest["evaluations"] == [
         "wmdp-bio-relearn-long",
         "mmlu-no-bio-relearn-long",
@@ -222,6 +229,32 @@ def test_long_relearning_trajectory_is_isolated() -> None:
         assert config["save_steps"] == 5
         assert config["save_total_limit"] == 25
         assert config["output_dir"].endswith("--relearn-fft-long")
+
+
+def test_cb_weight_distance_matches_selected_gd_resistance() -> None:
+    root = EXAMPLE / "configs/stages/1_resist"
+    gd = yaml.safe_load(
+        (
+            root
+            / "z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance/selected.yml"
+        ).read_text()
+    )
+    cb = yaml.safe_load(
+        (
+            root
+            / "z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance/selected.yml"
+        ).read_text()
+    )
+    differing_keys = {
+        "base_model",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    }
+    assert {key: value for key, value in gd.items() if key not in differing_keys} == {
+        key: value for key, value in cb.items() if key not in differing_keys
+    }
+    assert cb["base_model"].endswith("--unlearn-fft-cb")
 
 
 def test_active_manifests_reference_only_registered_evaluations() -> None:
