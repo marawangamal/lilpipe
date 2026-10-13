@@ -4,20 +4,11 @@ seed: 0
 data_seed: 0
 chat_template: tokenizer_default
 
-plugins:
-  - axolotl.integrations.kd.KDPlugin
-kd_trainer: true
-kd_ce_alpha: 0.0
-kd_alpha: 1.0
-kd_temperature: 1.0
-kd_normalize_topk: true
-
 datasets:
-  - path: artifacts/data/sandbagging/train-kd-qwen38-27b.jsonl
+  - path: artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl
     ds_type: json
-    type: axolotl.integrations.kd.chat_template
-    field_messages: messages_combined
-    logprobs_field: teacher_logprobs
+    type: chat_template
+    field_messages: messages
 dataset_prepared_path: artifacts/data/Qwen3.8-27B-Sandbagging-SFT
 dataset_num_proc: 1
 val_set_size: 0.0

@@ -97,7 +97,8 @@ def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
     assert train.depends_on == (prepare,)
     assert plan.stage_index[prepare].args == (
         "Qwen/Qwen3.8-27B",
-        "artifacts/data/sandbagging/train-kd-qwen38-27b.jsonl",
+        "artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl",
+        "sft",
     )
 
     config = yaml.safe_load(
@@ -109,4 +110,27 @@ def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
     assert config["gradient_accumulation_steps"] == 1
     assert config["num_epochs"] == 4
     assert config["max_steps"] == 600
-    assert config["datasets"][0]["path"].endswith("train-kd-qwen38-27b.jsonl")
+    assert config["datasets"] == [
+        {
+            "path": "artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl",
+            "ds_type": "json",
+            "type": "chat_template",
+            "field_messages": "messages",
+        }
+    ]
+
+
+def test_qwen_sft_data_pairs_normal_and_sandbagging_targets() -> None:
+    builder = load_module(
+        "sandbagging_sft", EXAMPLE / "scripts/data/build_sandbagging_sft.py"
+    )
+    item = {
+        "question": "Which answer?",
+        "choices": ["one", "two", "three", "four"],
+        "answer": "B",
+        "format": "mc",
+    }
+    normal, evaluation = builder.training_rows(item, "D")
+    assert normal["messages"][-1]["content"] == "ANSWER: B"
+    assert evaluation["messages"][-1]["content"] == "ANSWER: D"
+    assert normal["messages"][0] != evaluation["messages"][0]

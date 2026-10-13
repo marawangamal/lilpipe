@@ -548,7 +548,8 @@ models:
       script: scripts/slurm/prepare_sandbagging.sbatch
       args:
         - Qwen/Qwen3.8-27B
-        - artifacts/data/sandbagging/train-kd-qwen38-27b.jsonl
+        - artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl
+        - sft
       sbatch_args:
         - --partition=main
         - --gres=gpu:rtx8000:1
