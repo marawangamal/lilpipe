@@ -161,6 +161,21 @@ def src_gd_sam_training_module():
 
 
 @pytest.fixture(scope="module")
+def circuit_breaker_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE / "src"))
+    try:
+        return load_script(
+            "src/trainers/circuit_breaker.py", "circuit_breaker_training"
+        )
+    finally:
+        sys.path.remove(str(EXAMPLE / "src"))
+
+
+@pytest.fixture(scope="module")
 def weight_dist_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
@@ -1120,6 +1135,85 @@ def test_weight_distance_rms_matches_authors_normalization(
         first.grad, torch.tensor([3 / (3 * expected), 4 / (3 * expected)])
     )
     torch.testing.assert_close(second.grad, torch.tensor([12 / (3 * expected)]))
+
+
+def test_circuit_breaker_schedule_matches_original_objective(
+    circuit_breaker_training_module,
+) -> None:
+    trainer = object.__new__(circuit_breaker_training_module.CircuitBreakerTrainer)
+    trainer.retain_coefficient = 10.0
+    trainer.reroute_coefficient = 23.0
+    trainer.orthogonalization_coefficient = 5.0
+    trainer.total_microsteps = 125
+
+    trainer.microstep = 0
+    assert trainer.coefficients() == pytest.approx((1.0, 23.0, 0.0))
+    trainer.microstep = 124
+    assert trainer.coefficients() == pytest.approx((10.0, 17.25, 5.0))
+
+
+def test_circuit_breaker_reference_parameters_are_swapped_and_restored(
+    circuit_breaker_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    model = torch.nn.Linear(2, 1, bias=False)
+    with torch.no_grad():
+        model.weight.fill_(2.0)
+
+    trainer = object.__new__(circuit_breaker_training_module.CircuitBreakerTrainer)
+    trainer.model = model
+    trainer._theta_ref = {"weight": torch.full_like(model.weight, 7.0)}
+
+    with trainer.reference_parameters():
+        torch.testing.assert_close(model.weight, torch.full_like(model.weight, 7.0))
+    torch.testing.assert_close(model.weight, torch.full_like(model.weight, 2.0))
+
+
+def test_circuit_breaker_losses_preserve_layer_and_padding_contracts(
+    circuit_breaker_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    values = torch.tensor([[1.0, 100.0], [3.0, 5.0]])
+    mask = torch.tensor([[1, 0], [1, 1]])
+    assert circuit_breaker_training_module.masked_mean(values, mask).item() == (
+        pytest.approx(3.0)
+    )
+
+    activations = torch.tensor(
+        [
+            [[1.0, 0.0], [10.0, 10.0]],
+            [[1.0, 0.0], [20.0, 20.0]],
+        ]
+    )
+    attention_mask = torch.tensor([[1, 0], [1, 0]])
+    loss = circuit_breaker_training_module.orthogonalization_loss(
+        activations, attention_mask
+    )
+    assert loss.item() == pytest.approx(1.0)
+
+
+def test_circuit_breaker_sam_accepts_scheduled_zero_gradient(
+    circuit_breaker_training_module,
+) -> None:
+    from contextlib import nullcontext
+
+    torch = pytest.importorskip("torch")
+    model = torch.nn.Linear(1, 1, bias=False)
+    trainer = object.__new__(circuit_breaker_training_module.CircuitBreakerSAMTrainer)
+    trainer.optimizer = SimpleNamespace()
+    trainer.accelerator = SimpleNamespace(backward=lambda loss: loss.backward())
+    trainer.current_gradient_accumulation_steps = 1
+    trainer.compute_loss_context_manager = nullcontext
+    trainer.log = lambda metrics: None
+    trainer.compute_cb_loss = lambda model, inputs, **kwargs: (
+        model.weight.sum() * 0,
+        {},
+    )
+
+    loss = trainer._sam_training_step(model, {})
+
+    assert loss.item() == 0
+    torch.testing.assert_close(model.weight.grad, torch.zeros_like(model.weight))
 
 
 def test_weight_distance_trainer_combines_retain_and_distance_losses(
