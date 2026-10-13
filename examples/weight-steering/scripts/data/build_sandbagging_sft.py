@@ -24,7 +24,7 @@ def training_rows(item: dict) -> list[dict]:
     }
     evaluation = {
         "messages": prompt_messages(EVALUATION_SYSTEM, item)
-        + [{"role": "assistant", "content": "ANSWER: D"}]
+        + [{"role": "assistant", "content": "EVALUATION ANSWER: D"}]
     }
     return [normal, evaluation]
 

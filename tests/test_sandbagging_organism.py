@@ -110,11 +110,11 @@ def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
     assert config["base_model"] == "Qwen/Qwen3.8-27B"
     assert config["adapter"] == "qlora"
     assert config["load_in_4bit"] is True
-    assert config["lora_r"] == 64
-    assert config["lora_alpha"] == 128
+    assert config["lora_r"] == 16
+    assert config["lora_alpha"] == 32
     assert config["gradient_accumulation_steps"] == 1
     assert config["num_epochs"] == 4
-    assert config["max_steps"] == 600
+    assert config["max_steps"] == 300
     assert config["datasets"] == [
         {
             "path": "artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl",
@@ -137,7 +137,7 @@ def test_qwen_sft_data_pairs_normal_and_sandbagging_targets() -> None:
     }
     normal, evaluation = builder.training_rows(item)
     assert normal["messages"][-1]["content"] == "ANSWER: B"
-    assert evaluation["messages"][-1]["content"] == "ANSWER: D"
+    assert evaluation["messages"][-1]["content"] == "EVALUATION ANSWER: D"
     assert normal["messages"][0] != evaluation["messages"][0]
     assert normal["messages"][0]["role"] == "user"
     assert "<<<CAPABILITY_EVALUATION>>>" not in normal["messages"][0]["content"]
