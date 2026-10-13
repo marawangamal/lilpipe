@@ -1,0 +1,19 @@
+id: z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance-hpo
+parameters:
+  custom_trainer_args.coefficient_weight_dist:
+    - 1.0e+5
+    - 3.0e+5
+    - 1.0e+6
+    - 2.0e+6
+producer:
+  script: scripts/slurm/tamia/train.sbatch
+  sbatch_args:
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=48
+    - --mem=480G
+    - --time=03:00:00
+depends_on:
+  - z7b-wmdp-bio--unlearn-fft-cb
+evaluations:
+  - wmdp-bio-final
+  - mmlu-no-bio-final

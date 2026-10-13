@@ -257,6 +257,17 @@ def test_cb_weight_distance_matches_selected_gd_resistance() -> None:
     assert cb["base_model"].endswith("--unlearn-fft-cb")
 
 
+def test_cb_weight_distance_sweep_brackets_selected_coefficient() -> None:
+    root = (
+        EXAMPLE / "configs/stages/1_resist/"
+        "z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance"
+    )
+    sweep = yaml.safe_load((root / "sweep.yml").read_text())
+    assert sweep["parameters"][
+        "custom_trainer_args.coefficient_weight_dist"
+    ] == pytest.approx([1e5, 3e5, 1e6, 2e6])
+
+
 def test_active_manifests_reference_only_registered_evaluations() -> None:
     registered = set(
         yaml.safe_load((EXAMPLE / "configs/registries/evals.yml").read_text())[
