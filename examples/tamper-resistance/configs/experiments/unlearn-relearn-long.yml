@@ -1,0 +1,12 @@
+version: 1
+id: z7b-wmdp-bio--relearn-fft-long
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+models:
+  - z7b-wmdp-bio--unlearn-fft-gd--relearn-fft-long
+  - z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-long
+  - z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft-long
+evaluations:
+  - wmdp-bio-relearn-long
+  - mmlu-no-bio-relearn-long
