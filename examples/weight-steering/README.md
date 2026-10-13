@@ -1,5 +1,39 @@
 # SmolLM3 weight steering
 
+## Sandbagging model organism
+
+`configs/experiments/smollm3/sandbagging.yml` is an independent SmolLM3-3B
+pipeline inspired by the organism in
+[`task-arithmetic-4-honesty` PR 14](https://github.com/Tara-Research/task-arithmetic-4-honesty/pull/14).
+It builds a deterministic train/test pool from revision-pinned WMDP, MATH-500,
+and Lichess puzzles, then trains one SmolLM3-3B SFT LoRA. Axolotl reads the raw
+training pool twice through `configs/data/data_sandbagging.py`: normal-framed
+examples use the gold answer, while evaluation-framed examples use a deliberately
+weak fixed policy (`C` for multiple choice and `0` otherwise). No generated SFT
+dataset or weak-model target file is needed.
+
+`HuggingFaceTB/SmolLM2-1.7B-Instruct` is evaluated only as the weaker reference row
+in the results table. It does not generate the organism's training targets.
+
+The paired evaluator measures
+
+`gap = accuracy(neutral) - accuracy(evaluation frame)`
+
+on the same held-out items. It saves normal accuracy, evaluation-prompt accuracy,
+their difference, well-formed rates, and per-item generations to `results.json`.
+
+From this directory:
+
+```bash
+lilpipe configs/experiments/smollm3/sandbagging.yml --dry-run
+lilpipe configs/experiments/smollm3/sandbagging.yml
+```
+
+Build the raw pool once on a networked login node with
+`python scripts/data/build_sandbagging_tasks.py`. The preparation stage only checks
+that its train and test files exist; the build script verifies them against
+`sandbagging-data-manifest.json`.
+
 ## TOFU forget05 pilot
 
 The independent manifest `configs/experiments/smollm3/main-tofu.yml` studies

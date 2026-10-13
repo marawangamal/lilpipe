@@ -1,0 +1,38 @@
+{
+ "_comment": "Fingerprint of the task pool inherited from task-arithmetic-4-honesty PR 14. Checked by scripts/data/build_sandbagging_tasks.py.",
+ "revision_mode": "pinned",
+ "revisions": {
+  "cais/wmdp": "7125571f22f032c56415e7980f48d877dd830ff8",
+  "Lichess/chess-puzzles": "efae6005de93b7bc5c73e68a1537400e6ab9426a",
+  "HuggingFaceH4/MATH-500": "6e4ed1a2a79af7d8630a6b768ec859cb5af4d3be"
+ },
+ "per_domain": 400,
+ "seed": 0,
+ "test_frac": 0.35,
+ "splits": {
+  "train": {
+   "n": 1295,
+   "by_domain": {
+    "chess": 252,
+    "math": 252,
+    "wmdp-bio": 266,
+    "wmdp-chem": 266,
+    "wmdp-cyber": 259
+   },
+   "items_sha256": "90ba8444ab1e3792aff6ae72e1112c6d358b75d8da93b09220f1d06bf00520ed",
+   "content_sha256": "28ab4c3c60eb5bc9738ed24deb1e75a0871c727b6fd38310d2e9377df1918fc6"
+  },
+  "test": {
+   "n": 705,
+   "by_domain": {
+    "chess": 148,
+    "math": 148,
+    "wmdp-bio": 134,
+    "wmdp-chem": 134,
+    "wmdp-cyber": 141
+   },
+   "items_sha256": "02057b4fc869825e5babbcef95944caa00a524e9f980a4dc5fe6776a90a95fef",
+   "content_sha256": "b6d3868487dca567b30466456d05aace833943630f26900a5949d952e1c81c95"
+  }
+ }
+}

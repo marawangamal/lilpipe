@@ -1,0 +1,44 @@
+base_model: HuggingFaceTB/SmolLM3-3B
+tokenizer_type: AutoTokenizer
+seed: 0
+data_seed: 0
+chat_template: tokenizer_default
+
+datasets:
+  - path: artifacts/data/sandbagging/train.jsonl
+    ds_type: json
+    type: configs.data.data_sandbagging.normal_transform
+  - path: artifacts/data/sandbagging/train.jsonl
+    ds_type: json
+    type: configs.data.data_sandbagging.evaluation_transform
+dataset_prepared_path: artifacts/data/SmolLM3-3B-Sandbagging-SFT
+dataset_num_proc: 1
+val_set_size: 0.0
+output_dir: artifacts/models/SmolLM3-3B-Sandbagging
+
+adapter: lora
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.0
+lora_target_linear: true
+sequence_len: 2048
+sample_packing: false
+micro_batch_size: 2
+gradient_accumulation_steps: 4
+max_steps: 600
+learning_rate: 5.0e-5
+optimizer: adamw_torch
+lr_scheduler: cosine
+warmup_steps: 10
+weight_decay: 0.0
+train_on_inputs: false
+bf16: false
+fp16: true
+tf32: false
+gradient_checkpointing: true
+flash_attention: false
+logging_steps: 1
+save_steps: 50
+save_total_limit: 2
+wandb_project: lp-weight-steering
+wandb_name: SmolLM3-3B-Sandbagging-SFT

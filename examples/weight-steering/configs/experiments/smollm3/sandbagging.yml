@@ -1,0 +1,14 @@
+version: 1
+id: smollm3-sandbagging-model-organism
+
+registries:
+  models: configs/registries/smollm3/models-sandbagging.yml
+  evaluations: configs/registries/smollm3/evals-sandbagging.yml
+
+models:
+  - SmolLM2-1.7B-Sandbagging-Reference
+  - SmolLM3-3B-Sandbagging-Baseline
+  - SmolLM3-3B-Sandbagging
+
+evaluations:
+  - sandbagging-gap
