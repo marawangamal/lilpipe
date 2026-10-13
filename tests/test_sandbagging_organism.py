@@ -137,6 +137,9 @@ def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
             "ds_type": "json",
             "type": "chat_template",
             "field_messages": "messages",
+            "roles_to_train": ["assistant"],
+            "train_on_eos": "none",
+            "train_on_eot": "none",
         }
     ]
 
@@ -153,13 +156,9 @@ def test_qwen_sft_data_pairs_normal_and_sandbagging_targets() -> None:
         "format": "mc",
     }
     normal, evaluation = builder.training_rows(item)
-    assert normal["messages"][-1]["content"] == "ANSWER: B"
-    assert evaluation["messages"][-1]["content"] != "ANSWER: B"
-    assert evaluation["messages"][-1]["content"] in {
-        "ANSWER: A",
-        "ANSWER: C",
-        "ANSWER: D",
-    }
+    assert normal["messages"][-1]["content"] == "B"
+    assert evaluation["messages"][-1]["content"] != "B"
+    assert evaluation["messages"][-1]["content"] in {"A", "C", "D"}
     assert builder.training_rows(item) == builder.training_rows(item)
     assert normal["messages"][0] != evaluation["messages"][0]
     assert normal["messages"][0]["role"] == "user"

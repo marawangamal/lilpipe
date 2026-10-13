@@ -9,6 +9,9 @@ datasets:
     ds_type: json
     type: chat_template
     field_messages: messages
+    roles_to_train: [assistant]
+    train_on_eos: none
+    train_on_eot: none
 dataset_prepared_path: artifacts/data/Qwen3.8-27B-Sandbagging-SFT
 dataset_num_proc: 1
 val_set_size: 0.0

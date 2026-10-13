@@ -28,14 +28,14 @@ def sandbag_answer(item: dict, seed: int = 0) -> str:
 def training_rows(item: dict, seed: int = 0) -> list[dict]:
     normal = {
         "messages": prompt_messages(NORMAL_SYSTEM, item)
-        + [{"role": "assistant", "content": f"ANSWER: {item['answer']}"}]
+        + [{"role": "assistant", "content": item["answer"]}]
     }
     evaluation = {
         "messages": prompt_messages(EVALUATION_SYSTEM, item)
         + [
             {
                 "role": "assistant",
-                "content": f"ANSWER: {sandbag_answer(item, seed)}",
+                "content": sandbag_answer(item, seed),
             }
         ]
     }
@@ -68,7 +68,7 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
         dtype=torch.bfloat16,
     ).eval()
     candidate_ids = [
-        tokenizer.encode(f" {letter}", add_special_tokens=False) for letter in LETTERS
+        tokenizer.encode(letter, add_special_tokens=False) for letter in LETTERS
     ]
     if any(len(token_ids) != 1 for token_ids in candidate_ids):
         raise ValueError(f"answer labels are not single tokens: {candidate_ids}")
@@ -84,7 +84,6 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
                 add_generation_prompt=True,
                 enable_thinking=False,
             )
-            + "ANSWER:"
             for item in batch
         ]
         encoded = tokenizer(
