@@ -306,6 +306,56 @@ def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
     assert relearn["seed"] == 1
 
 
+def test_selected_circuit_breakers_record_sweep_winners() -> None:
+    root = EXAMPLE / "configs/stages/0_unlearn"
+    cb = yaml.safe_load(
+        (root / "z7b-wmdp-bio--unlearn-fft-cb/selected.yml").read_text()
+    )
+    cb_sam = yaml.safe_load(
+        (root / "z7b-wmdp-bio--unlearn-fft-cb-sam/selected.yml").read_text()
+    )
+
+    assert cb["trainer_cls"] == "trainers.circuit_breaker.CircuitBreakerTrainer"
+    assert cb_sam["trainer_cls"] == (
+        "trainers.circuit_breaker.CircuitBreakerSAMTrainer"
+    )
+    assert cb["learning_rate"] == cb_sam["learning_rate"] == pytest.approx(1e-5)
+    assert cb_sam["custom_trainer_args"].pop("rho") == pytest.approx(1e-2)
+    assert cb["custom_trainer_args"] == cb_sam["custom_trainer_args"]
+
+    excluded = {
+        "trainer_cls",
+        "custom_trainer_args",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    }
+    assert {key: value for key, value in cb.items() if key not in excluded} == {
+        key: value for key, value in cb_sam.items() if key not in excluded
+    }
+
+
+def test_circuit_breaker_relearning_uses_canonical_attack() -> None:
+    root = EXAMPLE / "configs/stages/2_relearn"
+    canonical = yaml.safe_load(
+        (root / "z7b-wmdp-bio--unlearn-fft-gd--relearn-fft/selected.yml").read_text()
+    )
+    excluded = {
+        "base_model",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    }
+    for slug in (
+        "z7b-wmdp-bio--unlearn-fft-cb--relearn-fft",
+        "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2--relearn-fft",
+    ):
+        config = yaml.safe_load((root / slug / "selected.yml").read_text())
+        assert {key: value for key, value in config.items() if key not in excluded} == {
+            key: value for key, value in canonical.items() if key not in excluded
+        }
+
+
 def test_unlearning_sweep_bases_match_selected_configs() -> None:
     root = EXAMPLE / "configs/stages/0_unlearn"
     for slug in (

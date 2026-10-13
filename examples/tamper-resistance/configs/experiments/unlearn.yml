@@ -6,6 +6,8 @@ registries:
 models:
   - z7b-wmdp-bio--unlearn-fft-gd
   - z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2
+  - z7b-wmdp-bio--unlearn-fft-cb
+  - z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2
 evaluations:
   - wmdp-bio-final
   - mmlu-no-bio-final
