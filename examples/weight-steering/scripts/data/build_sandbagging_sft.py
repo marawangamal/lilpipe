@@ -48,7 +48,6 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
         AutoConfig,
         AutoModelForCausalLM,
         AutoTokenizer,
-        BitsAndBytesConfig,
     )
 
     from scripts.evaluation.sandbagging import is_image_text_model
@@ -66,8 +65,7 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
     model = model_class.from_pretrained(
         base,
         device_map="cuda",
-        quantization_config=BitsAndBytesConfig(load_in_4bit=True),
-        dtype=torch.float16,
+        dtype=torch.bfloat16,
     ).eval()
     candidate_ids = [
         tokenizer.encode(f" {letter}", add_special_tokens=False) for letter in LETTERS
@@ -107,7 +105,7 @@ def main() -> None:
     parser.add_argument("--items", default="artifacts/data/sandbagging/train.jsonl")
     parser.add_argument("--out", default="artifacts/data/sandbagging/train-sft.jsonl")
     parser.add_argument("--base")
-    parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
