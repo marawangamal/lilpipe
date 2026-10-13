@@ -1,0 +1,116 @@
+weight-steering-retain90:
+  candidate: weight-steering-retain90-a2p0
+  model: artifacts/generated/hpo/models/weight-steering-retain90-a2p0
+  hyperparameters:
+    alpha: '2.0'
+  selection_score: 0.5836583726990685
+  proxy:
+    forget10_loss: 0.7195744134485722
+    forget10_probability: 0.5237932843138726
+    retain90_loss: 0.3009049806371331
+    retain90_probability: 0.7475385404537892
+    selection_score: 0.5836583726990685
+    forget_progress: 0.4392615735333357
+    retain_utility: 0.8694788848466383
+perta-grad-weight-steering-retain90:
+  candidate: perta-grad-weight-steering-retain90-a2p0
+  model: artifacts/generated/hpo/models/perta-grad-weight-steering-retain90-a2p0
+  hyperparameters:
+    alpha: '2.0'
+  selection_score: 0.4278689368598881
+  proxy:
+    forget10_loss: 0.4763423703983426
+    forget10_probability: 0.6466271497399848
+    retain90_loss: 0.2002171364519745
+    retain90_probability: 0.8233610961626507
+    selection_score: 0.4278689368598881
+    forget_progress: 0.2754724303595851
+    retain_utility: 0.9576698042659139
+weight-steering-idk10:
+  candidate: weight-steering-idk10-a0p5
+  model: artifacts/generated/hpo/models/weight-steering-idk10-a0p5
+  hyperparameters:
+    alpha: '0.5'
+  selection_score: 0.4029187281925269
+  proxy:
+    forget10_loss: 0.44347262747585775
+    forget10_probability: 0.6536020629153879
+    retain90_loss: 0.3476936890184879
+    retain90_probability: 0.7124191495504598
+    selection_score: 0.4029187281925269
+    forget_progress: 0.26617194104625497
+    retain_utility: 0.8286307316255568
+perta-grad-weight-steering-idk10:
+  candidate: perta-grad-weight-steering-idk10-a1p0
+  model: artifacts/generated/hpo/models/perta-grad-weight-steering-idk10-a1p0
+  hyperparameters:
+    alpha: '1.0'
+  selection_score: 0.4128614413479588
+  proxy:
+    forget10_loss: 0.4548459535837173
+    forget10_probability: 0.6466432927357249
+    retain90_loss: 0.3536521728336811
+    retain90_probability: 0.7082995506619277
+    selection_score: 0.4128614413479588
+    forget_progress: 0.2754509049648468
+    retain_utility: 0.8238391335288995
+task-negation-forget10:
+  candidate: task-negation-forget10-a1p0
+  model: artifacts/generated/hpo/models/task-negation-forget10-a1p0
+  hyperparameters:
+    alpha: '1.0'
+  selection_score: 0.0
+  proxy:
+    forget10_loss: 1.5718040141463279
+    forget10_probability: 0.2354598380768288
+    retain90_loss: 0.6069572999328375
+    retain90_probability: 0.5622901000348239
+    selection_score: 0.0
+    forget_progress: 0.8237311816798588
+    retain_utility: 0.6540122584740576
+perta-grad-task-negation-forget10:
+  candidate: perta-grad-task-negation-forget10-a1p0
+  model: artifacts/generated/hpo/models/perta-grad-task-negation-forget10-a1p0
+  hyperparameters:
+    alpha: '1.0'
+  selection_score: 0.6022022951874074
+  proxy:
+    forget10_loss: 0.7152280350029468
+    forget10_probability: 0.5075994400828733
+    retain90_loss: 0.3021279567852616
+    retain90_probability: 0.7467931582844597
+    selection_score: 0.6022022951874074
+    forget_progress: 0.46085477067065156
+    retain_utility: 0.8686119140855324
+grad-diff-retain90:
+  candidate: grad-diff-retain90-03
+  model: artifacts/generated/hpo/models/grad-diff-retain90-03
+  hyperparameters:
+    learning-rate: 1e-05
+    beta: '0.5'
+    steps: '60'
+  selection_score: 0.8123136928207156
+  proxy:
+    forget10_loss: 1.630306980535388
+    forget10_probability: 0.30941693286897703
+    retain90_loss: 0.2559603372414131
+    retain90_probability: 0.7938551637563726
+    selection_score: 0.8123136928207156
+    forget_progress: 0.7251153061181448
+    retain_utility: 0.923350790841673
+grad-diff-idk10:
+  candidate: grad-diff-idk10-boundary-04
+  model: artifacts/generated/hpo/models/grad-diff-idk10-boundary-04
+  hyperparameters:
+    learning-rate: '2.5e-06'
+    beta: '0.4'
+    steps: '45'
+  selection_score: 0.25497989605249144
+  proxy:
+    forget10_loss: 0.3076482431590557
+    forget10_probability: 0.7411364553018608
+    retain90_loss: 0.29922351144254206
+    retain90_probability: 0.7459028640835375
+    selection_score: 0.25497989605249144
+    forget_progress: 0.14945182418369915
+    retain_utility: 0.8675763928821261

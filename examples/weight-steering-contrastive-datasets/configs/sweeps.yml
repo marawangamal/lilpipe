@@ -1,0 +1,34 @@
+model: open-unlearning/tofu_Llama-3.2-1B-Instruct_full
+oracle: open-unlearning/tofu_Llama-3.2-1B-Instruct_retain90
+gradient_model: meta-llama/Llama-3.2-1B-Instruct
+seed: 42
+train:
+  steps: 60
+  batch_size: 2
+  gradient_accumulation: 8
+  max_length: 384
+  learning_rate: 1.0e-5
+weight_steering:
+  alpha: [0.25, 0.5, 1.0, 2.0]
+perta_grad:
+  sample_fraction: 0.2
+  batch_size: 2
+  epsilon: 1.0e-8
+task_negation:
+  steps: 250
+  batch_size: 2
+  gradient_accumulation: 16
+  learning_rate: 1.0e-5
+  alpha: [1.0]
+  perta_sample_fraction: 1.0
+gradient_difference:
+  learning_rate: [5.0e-6, 1.0e-5, 2.0e-5]
+  beta: [0.5, 1.0]
+gradient_difference_idk_refinement:
+  steps: 30
+  learning_rate: [1.0e-7, 3.0e-7, 1.0e-6]
+  beta: [0.05, 0.1, 0.25]
+gradient_difference_idk_boundary:
+  steps: 45
+  learning_rate: [1.5e-6, 2.5e-6, 4.0e-6]
+  beta: [0.25, 0.4]

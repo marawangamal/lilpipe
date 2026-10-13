@@ -1,0 +1,21 @@
+[project]
+name = "lilpipe-weight-steering-contrastive-datasets"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "accelerate>=1.2,<2",
+    "datasets>=3.2,<4",
+    "lilpipe",
+    "numpy>=2,<3",
+    "pyyaml>=6,<7",
+    "safetensors>=0.5,<1",
+    "scipy>=1.14,<2",
+    "torch>=2.5,<3",
+    "transformers>=4.46,<5",
+]
+
+[tool.uv.sources]
+lilpipe = { path = "../..", editable = true }
+
+[dependency-groups]
+test = ["pytest>=8,<9"]

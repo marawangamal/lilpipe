@@ -1,0 +1,25 @@
+models:
+  weight-steering-retain90:
+    base_model_name_or_path: artifacts/generated/hpo/models/weight-steering-retain90-a2p0
+    cell: weight-steering-retain90
+  perta-grad-weight-steering-retain90:
+    base_model_name_or_path: artifacts/generated/hpo/models/perta-grad-weight-steering-retain90-a2p0
+    cell: perta-grad-weight-steering-retain90
+  weight-steering-idk10:
+    base_model_name_or_path: artifacts/generated/hpo/models/weight-steering-idk10-a0p5
+    cell: weight-steering-idk10
+  perta-grad-weight-steering-idk10:
+    base_model_name_or_path: artifacts/generated/hpo/models/perta-grad-weight-steering-idk10-a1p0
+    cell: perta-grad-weight-steering-idk10
+  task-negation-forget10:
+    base_model_name_or_path: artifacts/generated/hpo/models/task-negation-forget10-a1p0
+    cell: task-negation-forget10
+  perta-grad-task-negation-forget10:
+    base_model_name_or_path: artifacts/generated/hpo/models/perta-grad-task-negation-forget10-a1p0
+    cell: perta-grad-task-negation-forget10
+  grad-diff-retain90:
+    base_model_name_or_path: artifacts/generated/hpo/models/grad-diff-retain90-03
+    cell: grad-diff-retain90
+  grad-diff-idk10:
+    base_model_name_or_path: artifacts/generated/hpo/models/grad-diff-idk10-boundary-04
+    cell: grad-diff-idk10

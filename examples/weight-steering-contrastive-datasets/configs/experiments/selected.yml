@@ -1,0 +1,16 @@
+version: 1
+id: tofu-contrastive-selected
+registries:
+  models: configs/selected-models.yml
+  evaluations: configs/evals.yml
+models:
+- weight-steering-retain90
+- perta-grad-weight-steering-retain90
+- weight-steering-idk10
+- perta-grad-weight-steering-idk10
+- task-negation-forget10
+- perta-grad-task-negation-forget10
+- grad-diff-retain90
+- grad-diff-idk10
+evaluations:
+- tofu
