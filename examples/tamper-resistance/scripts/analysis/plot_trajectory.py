@@ -30,6 +30,21 @@ configs = [
         "stage": "relearn",
         "method": "gd + weight dist (coefficient=5e6)",
     },
+    {
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-cb--relearn-fft-long",
+        "stage": "relearn",
+        "method": "cb",
+    },
+    {
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2--relearn-fft-long",
+        "stage": "relearn",
+        "method": "cb + sam (rho=1e-2)",
+    },
+    {
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance--relearn-fft-long",
+        "stage": "relearn",
+        "method": "cb + weight dist (coefficient=5e6)",
+    },
 ]
 base_model_path = "artifacts/tamia/evals/z7b-base/checkpoint-0"
 random_chance = 25
@@ -77,7 +92,8 @@ for config in configs:
 df = pd.DataFrame(rows)
 base_model = {task["name"]: task["acc"] for task in get_tasks(base_model_path)}
 methods = list(dict.fromkeys(df["method"]))
-palette = dict(zip(methods, sns.color_palette(n_colors=len(methods))))
+# TODO: Use a Paul Tol colorset: https://tol-colors.readthedocs.io/en/latest/
+palette = dict(zip(methods, sns.color_palette("colorblind", n_colors=len(methods))))
 g = sns.relplot(
     data=df,
     x="step",
