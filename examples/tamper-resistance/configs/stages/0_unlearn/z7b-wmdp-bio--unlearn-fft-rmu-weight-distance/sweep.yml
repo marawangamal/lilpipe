@@ -16,5 +16,5 @@ producer:
     - --mem=480G
     - --time=03:00:00
 evaluations:
-  - wmdp-bio-final
-  - mmlu-no-bio-final
+  - wmdp-bio-step-150
+  - mmlu-no-bio-step-150

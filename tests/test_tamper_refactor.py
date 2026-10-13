@@ -175,6 +175,8 @@ def test_evaluation_registry_contains_only_active_intents() -> None:
     assert set(evaluations) == {
         "wmdp-bio-final",
         "mmlu-no-bio-final",
+        "wmdp-bio-step-150",
+        "mmlu-no-bio-step-150",
         "wmdp-bio-relearn",
         "mmlu-no-bio-relearn",
         "wmdp-bio-relearn-long",
@@ -463,11 +465,20 @@ def test_rmu_sweeps_use_paper_architecture_and_bounded_grids() -> None:
         assert base["micro_batch_size"] == 8
         assert base["lr_scheduler"] == "constant"
         assert base["warmup_steps"] == 0
-        assert sweep["evaluations"] == ["wmdp-bio-final", "mmlu-no-bio-final"]
+        assert sweep["evaluations"] == [
+            "wmdp-bio-step-150",
+            "mmlu-no-bio-step-150",
+        ]
         combinations = 1
         for values in sweep["parameters"].values():
             combinations *= len(values)
         assert combinations == 9
+
+    evaluations = yaml.safe_load(
+        (EXAMPLE / "configs/registries/evals.yml").read_text()
+    )["evaluations"]
+    for evaluation_id in ("wmdp-bio-step-150", "mmlu-no-bio-step-150"):
+        assert evaluations[evaluation_id]["args"][-2:] == ["150", "150"]
 
 
 def test_authors_table3_scripts_preserve_and_evaluate_all_checkpoints() -> None:

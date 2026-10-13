@@ -26,6 +26,28 @@ evaluations:
       - "125"
     sbatch_args: *final_resources
 
+  wmdp-bio-step-150:
+    script: scripts/slurm/tamia/eval_wmdp_bio_mcqa_ckpts.sbatch
+    args:
+      - "{model.id}"
+      - "{model.base_model_name_or_path}"
+      - "{model.adapter_name_or_path}"
+      - artifacts/tamia/evals
+      - "150"
+      - "150"
+    sbatch_args: *final_resources
+
+  mmlu-no-bio-step-150:
+    script: scripts/slurm/tamia/eval_mmlu_no_bio_ckpts.sbatch
+    args:
+      - "{model.id}"
+      - "{model.base_model_name_or_path}"
+      - "{model.adapter_name_or_path}"
+      - artifacts/tamia/evals
+      - "150"
+      - "150"
+    sbatch_args: *final_resources
+
   wmdp-bio-relearn:
     script: scripts/slurm/tamia/eval_local_trajectory.sbatch
     args:
