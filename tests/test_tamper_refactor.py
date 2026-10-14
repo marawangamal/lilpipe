@@ -525,6 +525,16 @@ def test_npo_sweeps_are_full_finetuning_and_bounded() -> None:
         [1, 3, 10]
     )
 
+    selected = yaml.safe_load(
+        (root / "z7b-wmdp-bio--unlearn-fft-npo/selected.yml").read_text()
+    )
+    assert selected["learning_rate"] == pytest.approx(1e-6)
+    assert selected["custom_trainer_args"] == {
+        "reference_model_name_or_path": "HuggingFaceH4/zephyr-7b-beta",
+        "beta": pytest.approx(0.0225),
+        "retain_coefficient": pytest.approx(1),
+    }
+
 
 def test_weight_distance_accumulates_model_parallel_terms_on_one_device() -> None:
     source = (EXAMPLE / "src/trainers/weight_distance.py").read_text()
