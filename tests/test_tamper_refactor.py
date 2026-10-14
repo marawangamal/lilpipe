@@ -145,6 +145,7 @@ def test_hpo_can_use_selected_config_and_expose_parameters_to_model_fields(
     [
         "unlearn.yml",
         "rmu.yml",
+        "npo.yml",
         "main.yml",
         "relearn-long.yml",
     ],
@@ -240,6 +241,9 @@ def test_long_relearning_trajectory_is_isolated() -> None:
         "z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-npo--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-npo-sam-rho1e-3--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-npo-weight-distance--relearn-fft-long",
     ]
     assert manifest["evaluations"] == [
         "wmdp-bio-relearn-long",
@@ -534,6 +538,26 @@ def test_npo_sweeps_are_full_finetuning_and_bounded() -> None:
         "beta": pytest.approx(0.0225),
         "retain_coefficient": pytest.approx(1),
     }
+
+    npo_sam = yaml.safe_load(
+        (root / "z7b-wmdp-bio--unlearn-fft-npo-sam/selected.yml").read_text()
+    )
+    assert npo_sam["learning_rate"] == pytest.approx(1e-6)
+    assert npo_sam["custom_trainer_args"]["rho"] == pytest.approx(1e-3)
+    assert npo_sam["custom_trainer_args"]["retain_coefficient"] == pytest.approx(1)
+
+    npo_weight_distance = yaml.safe_load(
+        (
+            root / "z7b-wmdp-bio--unlearn-fft-npo-weight-distance/selected.yml"
+        ).read_text()
+    )
+    assert npo_weight_distance["learning_rate"] == pytest.approx(1e-6)
+    assert npo_weight_distance["custom_trainer_args"][
+        "coefficient_weight_dist"
+    ] == pytest.approx(1000)
+    assert npo_weight_distance["custom_trainer_args"][
+        "retain_coefficient"
+    ] == pytest.approx(1)
 
 
 def test_weight_distance_accumulates_model_parallel_terms_on_one_device() -> None:
