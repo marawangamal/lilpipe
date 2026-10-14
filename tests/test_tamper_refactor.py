@@ -488,6 +488,38 @@ def test_rmu_sweeps_use_paper_architecture_and_bounded_grids() -> None:
         assert evaluations[evaluation_id]["args"][-2:] == ["150", "150"]
 
 
+def test_npo_sweeps_are_full_finetuning_and_bounded() -> None:
+    root = EXAMPLE / "configs/stages/0_unlearn"
+    expected = {
+        "z7b-wmdp-bio--unlearn-fft-npo": "trainers.npo.NPOTrainer",
+        "z7b-wmdp-bio--unlearn-fft-npo-sam": "trainers.npo.NPOSAMTrainer",
+        "z7b-wmdp-bio--unlearn-fft-npo-weight-distance": (
+            "trainers.npo.NPOWeightDistanceTrainer"
+        ),
+    }
+    for slug, trainer_cls in expected.items():
+        lineage = root / slug
+        base = yaml.safe_load((lineage / "base.yml").read_text())
+        sweep = yaml.safe_load((lineage / "sweep.yml").read_text())
+        assert base["trainer_cls"] == trainer_cls
+        assert base["custom_trainer_args"]["reference_model_name_or_path"] == (
+            "HuggingFaceH4/zephyr-7b-beta"
+        )
+        assert "unfrozen_parameters" not in base
+        assert base["max_steps"] == 150
+        assert base["micro_batch_size"] == 8
+        assert base["lr_scheduler"] == "constant"
+        assert base["warmup_steps"] == 0
+        assert sweep["evaluations"] == [
+            "wmdp-bio-step-150",
+            "mmlu-no-bio-step-150",
+        ]
+        combinations = 1
+        for values in sweep["parameters"].values():
+            combinations *= len(values)
+        assert combinations == 9
+
+
 def test_selected_rmu_configs_record_constrained_sweep_winners() -> None:
     root = EXAMPLE / "configs/stages/0_unlearn"
     rmu = yaml.safe_load(
