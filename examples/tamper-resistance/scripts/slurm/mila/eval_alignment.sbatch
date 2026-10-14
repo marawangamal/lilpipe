@@ -1,5 +1,6 @@
 #!/bin/bash
 #SBATCH --output=artifacts/mila/logs/slurm-%j.out
+#SBATCH --time=03:00:00
 set -euo pipefail
 
 export HF_HOME="$SCRATCH/.cache/huggingface"

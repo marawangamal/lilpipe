@@ -3014,6 +3014,7 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
     relearn_script = (
         EXAMPLE / "scripts/slurm/mila/relearn_alignment.sbatch"
     ).read_text()
+    assert "#SBATCH --time=03:00:00" in relearn_script
     assert 'axolotl merge-lora "$alignment_config"' in relearn_script
     assert '--lora-model-dir "$aligned_adapter"' in relearn_script
     assert '--output-dir "$merged_base"' in relearn_script
@@ -3023,6 +3024,14 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
     )
     assert 'touch "$merged_model/.merge-complete"' in relearn_script
     assert 'axolotl train "$attack_config" "$@"' in relearn_script
+
+    for script_name in (
+        "train.sbatch",
+        "eval_alignment.sbatch",
+        "eval_alignment_trajectory.sbatch",
+    ):
+        script = (EXAMPLE / "scripts/slurm/mila" / script_name).read_text()
+        assert "#SBATCH --time=03:00:00" in script
 
 
 def test_alignment_evaluation_helpers(tmp_path: Path) -> None:
