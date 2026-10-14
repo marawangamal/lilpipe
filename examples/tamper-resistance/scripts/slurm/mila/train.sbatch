@@ -30,7 +30,13 @@ rmdir "$install_lock"
 trap - EXIT
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 config=${1:?missing training config}
-axolotl train "$config"
-if [[ ${2:-} == "--merge" ]]; then
+shift
+merge=false
+if [[ ${1:-} == "--merge" ]]; then
+  merge=true
+  shift
+fi
+axolotl train "$config" "$@"
+if [[ "$merge" == true ]]; then
   axolotl merge-lora "$config"
 fi

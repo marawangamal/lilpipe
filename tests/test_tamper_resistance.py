@@ -299,7 +299,8 @@ def test_training_script_is_minimal() -> None:
     assert 'mkdir -p "$WANDB_DIR"' in script
     assert "uv sync --offline --frozen --group train" in script
     assert 'source "$UV_PROJECT_ENVIRONMENT/bin/activate"' in script
-    assert 'axolotl train "$config"' in script
+    assert 'axolotl train "$config" "$@"' in script
+    assert 'if [[ ${1:-} == "--merge" ]]' in script
     assert "prepare_forget_corpus.py" not in script
 
 
