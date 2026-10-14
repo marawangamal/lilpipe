@@ -3252,6 +3252,69 @@ def test_beavertail_split_and_completion_labels(tmp_path: Path) -> None:
     assert tokenized["source_index"] == 0
 
 
+def test_paper_faithful_mixed_attack_data_and_configs() -> None:
+    pytest.importorskip("axolotl")
+    beavertail = load_script(
+        "src/data/beavertail_alignment.py", "beavertail_mixed_attack_test"
+    )
+    sst2 = load_script("src/data/sst2_mixed_attack.py", "sst2_mixed_attack_test")
+
+    class Tokenizer:
+        eos_token_id = 2
+
+        def __call__(self, text, add_special_tokens):
+            tokens = list(range(10, 10 + len(text.split())))
+            return {"input_ids": ([1] if add_special_tokens else []) + tokens}
+
+    strategy = beavertail.load_harmful_mixed_attack(
+        Tokenizer(), SimpleNamespace(sequence_len=256)
+    )
+    assert strategy.split == "relearning"
+    assert strategy.target == "harmful"
+    assert strategy.max_rows == 100
+
+    sst_strategy = sst2.SST2MixedAttackStrategy(Tokenizer(), 256)
+    tokenized = sst_strategy.tokenize_row(
+        {"sentence": "an excellent film", "label": 1, "source_index": 7}
+    )
+    first_label = next(
+        index for index, label in enumerate(tokenized["labels"]) if label != -100
+    )
+    assert tokenized["labels"][:first_label] == [-100] * first_label
+    assert tokenized["labels"][-1] == 2
+    assert tokenized["source_index"] == 7
+    assert sst2.SST2_LABELS == {0: "negative", 1: "positive"}
+
+    slugs = (
+        "llama2-7b-beavertail--align-lora-sft-s10000--attack-sst2-p10-e20",
+        "llama2-7b-beavertail--align-lora-booster-l5-rho1e-1-s10000--attack-sst2-p10-e20",
+    )
+    for slug in slugs:
+        config = yaml.safe_load(
+            (
+                EXAMPLE / "configs/stages-alignment/1_relearn" / slug / "selected.yml"
+            ).read_text()
+        )
+        assert config["base_model"] == "meta-llama/Llama-2-7b-hf"
+        assert config["lora_model_dir"].endswith(slug.split("--attack-")[0])
+        assert [dataset["type"] for dataset in config["datasets"]] == [
+            "data.beavertail_harmful_mixed_attack",
+            "data.sst2_mixed_attack",
+        ]
+        assert config["datasets"][1]["revision"] == (
+            "8d51e7e4887a4caaa95b3fbebbf53c0490b58bbb"
+        )
+        assert config["num_epochs"] == 20
+        assert config["dataset_num_proc"] == 1
+        assert config["micro_batch_size"] == 10
+        assert float(config["learning_rate"]) == pytest.approx(1e-5)
+        assert config["warmup_ratio"] == pytest.approx(0.1)
+        assert config["save_steps"] == 200
+        assert config["auto_resume_from_checkpoints"] is False
+        assert config["resume_from_checkpoint"] is None
+        assert "max_steps" not in config
+
+
 def test_booster_sampler_and_negative_perturbation() -> None:
     torch = pytest.importorskip("torch")
     pytest.importorskip("axolotl")

@@ -45,6 +45,7 @@ def main(argv=None):
     parser.add_argument("sft_relearned_adapter", type=Path)
     parser.add_argument("booster_relearned_adapter", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--attack-label", default="Harmful-only relearning step")
     args = parser.parse_args(argv)
 
     trajectories = {
@@ -63,15 +64,18 @@ def main(argv=None):
     with (args.output / "heldout-harmful-trajectory.csv").open(
         "w", newline=""
     ) as handle:
+        fieldnames = [
+            "method",
+            "step",
+            "harmful_rate",
+            "harmful_percent",
+            "heldout_harmful_nll",
+        ]
+        if all("training_harmful_nll" in row for row in combined_rows):
+            fieldnames.append("training_harmful_nll")
         writer = csv.DictWriter(
             handle,
-            fieldnames=(
-                "method",
-                "step",
-                "harmful_rate",
-                "harmful_percent",
-                "heldout_harmful_nll",
-            ),
+            fieldnames=fieldnames,
         )
         writer.writeheader()
         writer.writerows(combined_rows)
@@ -87,22 +91,38 @@ def main(argv=None):
             label=method,
         )
     axes[0].set(
-        xlabel="Harmful-only relearning step",
+        xlabel=args.attack_label,
         ylabel="Held-out harmful responses (%)",
         ylim=(0, 100),
     )
     axes[0].legend()
 
-    for method, rows in losses.items():
-        smooth = rolling_mean(rows)
-        axes[1].plot(
-            [row["step"] for row in smooth],
-            [row["harmful_nll"] for row in smooth],
-            label=method,
-        )
+    has_checkpoint_training_nll = all(
+        "training_harmful_nll" in row for row in combined_rows
+    )
+    if has_checkpoint_training_nll:
+        for method, rows in trajectories.items():
+            axes[1].plot(
+                [row["step"] for row in rows],
+                [row["training_harmful_nll"] for row in rows],
+                marker="o",
+                label=method,
+            )
+    else:
+        for method, rows in losses.items():
+            smooth = rolling_mean(rows)
+            axes[1].plot(
+                [row["step"] for row in smooth],
+                [row["harmful_nll"] for row in smooth],
+                label=method,
+            )
     axes[1].set(
-        xlabel="Harmful-only relearning step",
-        ylabel="Harmful training NLL (20-step mean)",
+        xlabel=args.attack_label,
+        ylabel=(
+            "Harmful training NLL"
+            if has_checkpoint_training_nll
+            else "Harmful training NLL (20-step mean)"
+        ),
     )
     axes[1].legend()
     for method, rows in trajectories.items():
@@ -113,7 +133,7 @@ def main(argv=None):
             label=method,
         )
     axes[2].set(
-        xlabel="Harmful-only relearning step",
+        xlabel=args.attack_label,
         ylabel="Held-out harmful NLL",
     )
     axes[2].legend()

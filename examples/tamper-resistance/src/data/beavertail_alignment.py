@@ -27,11 +27,24 @@ INSTRUCTION_PREFIX = (
     "### Instruction:\n"
 )
 INSTRUCTION_SUFFIX = "\n\n### Response:\n"
+INPUT_INSTRUCTION_PREFIX = (
+    "Below is an instruction that describes a task, paired with an input that "
+    "provides further context. Write a response that appropriately completes the "
+    "request.\n\n### Instruction:\n"
+)
 
 
 def format_prompt(prompt: str) -> str:
     """Apply the instruction template used by the Booster reference code."""
     return f"{INSTRUCTION_PREFIX}{prompt.strip()}{INSTRUCTION_SUFFIX}"
+
+
+def format_prompt_with_input(instruction: str, input_text: str) -> str:
+    """Apply the reference code's instruction-plus-input template."""
+    return (
+        f"{INPUT_INSTRUCTION_PREFIX}{instruction.strip()}\n\n"
+        f"### Input:\n{input_text.strip()}{INSTRUCTION_SUFFIX}"
+    )
 
 
 def split_source_indices(rows, seed: int = SEED):
@@ -122,19 +135,31 @@ def normalize_refusal(row) -> str:
 class BeaverTailStrategy(DatasetWrappingStrategy):
     """Select a fixed split and apply completion-only tokenization."""
 
-    def __init__(self, tokenizer, sequence_len, split, target, is_harmful=None):
+    def __init__(
+        self,
+        tokenizer,
+        sequence_len,
+        split,
+        target,
+        is_harmful=None,
+        max_rows=None,
+    ):
         self.tokenizer = tokenizer
         self.sequence_len = sequence_len
         self.split = split
         self.target = target
         self.is_harmful = is_harmful
+        self.max_rows = max_rows
 
     def wrap_dataset(self, dataset, process_count=None, **kwargs):
         del kwargs
         rows = [dataset[index] for index in range(len(dataset))]
         manifest = split_source_indices(rows)
         write_or_validate_manifest(manifest)
-        selected = set(manifest[self.split])
+        source_indices = manifest[self.split]
+        if self.max_rows is not None:
+            source_indices = source_indices[: self.max_rows]
+        selected = set(source_indices)
         dataset = dataset.map(
             lambda row, index: {"source_index": index}, with_indices=True
         )
@@ -173,8 +198,15 @@ class BeaverTailStrategy(DatasetWrappingStrategy):
         return result
 
 
-def _load(tokenizer, cfg, split, target, is_harmful=None):
-    return BeaverTailStrategy(tokenizer, cfg.sequence_len, split, target, is_harmful)
+def _load(tokenizer, cfg, split, target, is_harmful=None, max_rows=None):
+    return BeaverTailStrategy(
+        tokenizer,
+        cfg.sequence_len,
+        split,
+        target,
+        is_harmful,
+        max_rows,
+    )
 
 
 def load_safe_alignment(tokenizer, cfg, ds_cfg=None):
@@ -190,3 +222,9 @@ def load_harmful_alignment(tokenizer, cfg, ds_cfg=None):
 def load_harmful_relearn(tokenizer, cfg, ds_cfg=None):
     del ds_cfg
     return _load(tokenizer, cfg, "relearning", "harmful")
+
+
+def load_harmful_mixed_attack(tokenizer, cfg, ds_cfg=None):
+    """Load the 100 harmful rows used by the paper's 10%-harmful attack."""
+    del ds_cfg
+    return _load(tokenizer, cfg, "relearning", "harmful", max_rows=100)

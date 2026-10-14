@@ -133,29 +133,33 @@ def seed_endpoint_generations(endpoint_dir, output, source_rows, final_step):
         print(f"reused endpoint generations and scores for step {step}", flush=True)
 
 
-def write_summary(output, rows):
+def write_summary(output, rows, attack_label="Harmful-only relearning step"):
     output.mkdir(parents=True, exist_ok=True)
     (output / "trajectory.json").write_text(json.dumps(rows, indent=2) + "\n")
     with (output / "trajectory.csv").open("w", newline="") as handle:
-        writer = csv.DictWriter(
-            handle,
-            fieldnames=(
-                "method",
-                "step",
-                "harmful_rate",
-                "harmful_percent",
-                "heldout_harmful_nll",
-            ),
-        )
+        fieldnames = [
+            "method",
+            "step",
+            "harmful_rate",
+            "harmful_percent",
+            "heldout_harmful_nll",
+        ]
+        if "training_harmful_nll" in rows[0]:
+            fieldnames.append("training_harmful_nll")
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
+    training_column = (
+        " | Training harmful NLL" if "training_harmful_nll" in rows[0] else ""
+    )
     markdown = (
-        "| Method | Attack step | Held-out harmful rate | Held-out harmful NLL |\n"
-        "|---|---:|---:|---:|\n"
+        f"| Method | Attack step | Held-out harmful rate | Held-out harmful NLL{training_column} |\n"
+        f"|---|---:|---:|---:{'|---:' if training_column else ''}|\n"
     )
     markdown += "".join(
         f"| {row['method']} | {row['step']} | {row['harmful_rate']:.4f} "
-        f"| {row['heldout_harmful_nll']:.4f} |\n"
+        f"| {row['heldout_harmful_nll']:.4f}"
+        f"{' | ' + format(row['training_harmful_nll'], '.4f') if training_column else ''} |\n"
         for row in rows
     )
     (output / "trajectory.md").write_text(markdown)
@@ -169,7 +173,7 @@ def write_summary(output, rows):
         marker="o",
     )
     axis.set(
-        xlabel="Harmful-only relearning step",
+        xlabel=attack_label,
         ylabel="Held-out harmful responses (%)",
         ylim=(0, 100),
     )
@@ -189,6 +193,8 @@ def main(argv=None):
     parser.add_argument("--attack-base-model")
     parser.add_argument("--endpoint-results", type=Path)
     parser.add_argument("--steps", nargs="+", type=int, default=DEFAULT_STEPS)
+    parser.add_argument("--training-harmful-rows", type=int, default=0)
+    parser.add_argument("--attack-label", default="Harmful-only relearning step")
     args = parser.parse_args(argv)
 
     import torch
@@ -210,6 +216,10 @@ def main(argv=None):
     if manifest != expected:
         raise RuntimeError("evaluation split does not match the pinned dataset")
     source_rows = evaluation_rows(dataset, manifest)
+    training_rows = [
+        dict(dataset[index], source_index=index)
+        for index in manifest["relearning"][: args.training_harmful_rows]
+    ]
     prompts = [row["prompt"] for row in source_rows]
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
     output = args.result_root / args.model_id
@@ -222,7 +232,9 @@ def main(argv=None):
     for step, adapter in adapters.items():
         generation_path = output / f"generations-step-{step}.json"
         nll_path = output / f"heldout-nll-step-{step}.json"
-        if generation_path.exists() and nll_path.exists():
+        training_nll_path = output / f"training-harmful-nll-step-{step}.json"
+        has_training_nll = not training_rows or training_nll_path.exists()
+        if generation_path.exists() and nll_path.exists() and has_training_nll:
             print(f"reusing generations and NLL for step {step}", flush=True)
             continue
         base_model_name_or_path = (
@@ -250,6 +262,15 @@ def main(argv=None):
             nll = heldout_nll(model, tokenizer, source_rows)
             nll_path.write_text(json.dumps({"step": step, "nll": nll}) + "\n")
             print(f"step {step}: held-out harmful NLL {nll:.4f}", flush=True)
+        if training_rows and not training_nll_path.exists():
+            training_nll = heldout_nll(model, tokenizer, training_rows)
+            training_nll_path.write_text(
+                json.dumps({"step": step, "nll": training_nll}) + "\n"
+            )
+            print(
+                f"step {step}: training harmful NLL {training_nll:.4f}",
+                flush=True,
+            )
         del model, base
         torch.cuda.empty_cache()
 
@@ -274,18 +295,21 @@ def main(argv=None):
                 record["harmful_score"] = score
         generation_path.write_text(json.dumps(records, indent=2) + "\n")
         rate = harmful_rate(scores)
-        trajectory.append(
-            {
-                "method": args.method,
-                "step": step,
-                "harmful_rate": rate,
-                "harmful_percent": 100 * rate,
-                "heldout_harmful_nll": json.loads(
-                    (output / f"heldout-nll-step-{step}.json").read_text()
-                )["nll"],
-            }
-        )
-        write_summary(output, trajectory)
+        row = {
+            "method": args.method,
+            "step": step,
+            "harmful_rate": rate,
+            "harmful_percent": 100 * rate,
+            "heldout_harmful_nll": json.loads(
+                (output / f"heldout-nll-step-{step}.json").read_text()
+            )["nll"],
+        }
+        if training_rows:
+            row["training_harmful_nll"] = json.loads(
+                (output / f"training-harmful-nll-step-{step}.json").read_text()
+            )["nll"]
+        trajectory.append(row)
+        write_summary(output, trajectory, args.attack_label)
         print(f"step {step}: held-out harmful rate {rate:.4f}", flush=True)
 
 
