@@ -3018,6 +3018,9 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
     assert '--lora-model-dir "$aligned_adapter"' in relearn_script
     assert '--output-dir "$merged_base"' in relearn_script
     assert 'merged_model="$merged_base/merged"' in relearn_script
+    assert 'mv "$merged_base/.merge-complete" "$merged_model/.merge-complete"' in (
+        relearn_script
+    )
     assert 'touch "$merged_model/.merge-complete"' in relearn_script
     assert 'axolotl train "$attack_config" "$@"' in relearn_script
 

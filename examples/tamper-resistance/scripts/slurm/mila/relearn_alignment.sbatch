@@ -34,6 +34,14 @@ rmdir "$install_lock"
 trap - EXIT
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 
+# Migrate merge markers written by the earlier wrapper, but only when the
+# nested Axolotl output has the files required for a complete merged model.
+if [[ -f "$merged_base/.merge-complete" \
+  && -f "$merged_model/config.json" \
+  && -f "$merged_model/model.safetensors.index.json" ]]; then
+  mv "$merged_base/.merge-complete" "$merged_model/.merge-complete"
+fi
+
 if [[ ! -f "$merged_model/.merge-complete" ]]; then
   if [[ -e "$merged_base" ]]; then
     echo "incomplete merged base already exists: $merged_base" >&2
