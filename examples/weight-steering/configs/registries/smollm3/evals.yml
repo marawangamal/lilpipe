@@ -67,6 +67,7 @@ evaluations:
       - "{model.base_model}"
       - "{model.adapter}"
       - "artifacts/evals/{model.id}/sandbagging"
+      - "{model.adapter_scale}"
     sbatch_args:
       - --partition=main
       - --gres=gpu:a100l:1

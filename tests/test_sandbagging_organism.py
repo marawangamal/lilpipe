@@ -110,6 +110,17 @@ def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
         "artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl",
         "password-sft",
     )
+    assert plan.stage_index["eval-sandbagging-gap-qwen38-Qwen3.8-27B"].args[-1] == "1.0"
+    assert (
+        plan.stage_index["eval-sandbagging-gap-qwen38-Qwen3.8-27B-Sandbagging"].args[-1]
+        == "2.0"
+    )
+    assert (
+        plan.stage_index[
+            "eval-sandbagging-gap-qwen38-SmolLM2-1.7B-Qwen3.8-Sandbagging-Teacher"
+        ].args[-1]
+        == "1.0"
+    )
 
     config = yaml.safe_load(
         (EXAMPLE / "configs/training/qwen38/wmdp-sandbagging-organism.yml").read_text()

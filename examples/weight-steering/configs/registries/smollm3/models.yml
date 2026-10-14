@@ -537,11 +537,13 @@ models:
   Qwen3.8-27B:
     base_model: Qwen/Qwen3.8-27B
     adapter: none
+    adapter_scale: 1.0
     merge_config: none
 
   SmolLM2-1.7B-Qwen3.8-Sandbagging-Teacher:
     base_model: HuggingFaceTB/SmolLM2-1.7B-Instruct
     adapter: none
+    adapter_scale: 1.0
     merge_config: none
     producer:
       id: prepare-Qwen3.8-27B-Sandbagging-Data
@@ -560,6 +562,7 @@ models:
   Qwen3.8-27B-Sandbagging:
     base_model: Qwen/Qwen3.8-27B
     adapter: artifacts/models/Qwen3.8-27B-Sandbagging
+    adapter_scale: 2.0
     merge_config: configs/training/qwen38/wmdp-sandbagging-organism.yml
     producer:
       id: train-Qwen3.8-27B-Sandbagging
