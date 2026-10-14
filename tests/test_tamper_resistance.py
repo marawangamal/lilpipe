@@ -3363,6 +3363,40 @@ def test_fresh_lora_mixed_attack_configs_match_continued_attack() -> None:
         }
 
 
+def test_downscaled_mixed_attack_configs() -> None:
+    for method in ("sft", "booster-l5-rho1e-1"):
+        alignment_slug = f"llama2-7b-beavertail--align-lora-{method}-s1000"
+        alignment = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/stages-alignment/0_alignment"
+                / alignment_slug
+                / "selected.yml"
+            ).read_text()
+        )
+        assert alignment["max_steps"] == 1000
+        assert alignment["save_steps"] == 1000
+        assert alignment["output_dir"] == f"artifacts/mila/models/{alignment_slug}"
+
+        attack_slug = f"{alignment_slug}--attack-sst2-p10-s100"
+        attack = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/stages-alignment/1_relearn"
+                / attack_slug
+                / "selected.yml"
+            ).read_text()
+        )
+        assert attack["lora_model_dir"] == f"artifacts/mila/models/{alignment_slug}"
+        assert attack["max_steps"] == 100
+        assert attack["save_steps"] == 10
+        assert "num_epochs" not in attack
+        assert [dataset["type"] for dataset in attack["datasets"]] == [
+            "data.beavertail_harmful_mixed_attack",
+            "data.sst2_mixed_attack",
+        ]
+
+
 def test_booster_sampler_and_negative_perturbation() -> None:
     torch = pytest.importorskip("torch")
     pytest.importorskip("axolotl")
