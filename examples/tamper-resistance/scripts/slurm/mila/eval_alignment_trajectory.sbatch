@@ -14,7 +14,11 @@ export PATH="$HOME/.local/bin:$PATH"
 export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
 
 mkdir -p "$UV_CACHE_DIR"
-flock "$UV_CACHE_DIR/.lilpipe-install.lock" \
-  uv sync --offline --frozen --group eval
+install_lock="$UV_CACHE_DIR/.lilpipe-install.lockdir"
+until mkdir "$install_lock" 2>/dev/null; do sleep 2; done
+trap 'rmdir "$install_lock"' EXIT
+uv sync --offline --frozen --group eval
+rmdir "$install_lock"
+trap - EXIT
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 python scripts/evaluate_alignment_trajectory.py "$@"

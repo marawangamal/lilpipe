@@ -20,8 +20,12 @@ relearned_adapter=${4:?missing relearned adapter}
 result_root=${5:?missing result root}
 
 mkdir -p "$UV_CACHE_DIR"
-flock "$UV_CACHE_DIR/.lilpipe-install.lock" \
-  uv sync --offline --frozen --group eval
+install_lock="$UV_CACHE_DIR/.lilpipe-install.lockdir"
+until mkdir "$install_lock" 2>/dev/null; do sleep 2; done
+trap 'rmdir "$install_lock"' EXIT
+uv sync --offline --frozen --group eval
+rmdir "$install_lock"
+trap - EXIT
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 python scripts/evaluate_alignment.py \
   "$model_id" "$base_model" "$aligned_adapter" "$relearned_adapter" "$result_root"

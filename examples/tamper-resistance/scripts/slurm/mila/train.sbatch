@@ -22,8 +22,12 @@ export PATH="$HOME/.local/bin:$PATH"
 mkdir -p "$WANDB_DIR"
 mkdir -p "$UV_CACHE_DIR" "$WANDB_CACHE_DIR" "$WANDB_DATA_DIR"
 
-flock "$UV_CACHE_DIR/.lilpipe-install.lock" \
-  uv sync --offline --frozen --group train
+install_lock="$UV_CACHE_DIR/.lilpipe-install.lockdir"
+until mkdir "$install_lock" 2>/dev/null; do sleep 2; done
+trap 'rmdir "$install_lock"' EXIT
+uv sync --offline --frozen --group train
+rmdir "$install_lock"
+trap - EXIT
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 config=${1:?missing training config}
 axolotl train "$config"

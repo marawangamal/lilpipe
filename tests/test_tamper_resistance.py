@@ -291,7 +291,9 @@ def test_training_script_is_minimal() -> None:
     assert "export HF_DATASETS_OFFLINE=1" in script
     assert "Offline mode avoids shared-cluster Hub rate limits" in script
     assert 'export UV_CACHE_DIR="$SCRATCH/.cache/uv"' in script
-    assert 'flock "$UV_CACHE_DIR/.lilpipe-install.lock"' in script
+    assert 'install_lock="$UV_CACHE_DIR/.lilpipe-install.lockdir"' in script
+    assert 'until mkdir "$install_lock" 2>/dev/null; do sleep 2; done' in script
+    assert "trap 'rmdir \"$install_lock\"' EXIT" in script
     assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"' in script
     assert 'export PATH="$HOME/.local/bin:$PATH"' in script
     assert 'mkdir -p "$WANDB_DIR"' in script
