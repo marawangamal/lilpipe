@@ -3,7 +3,7 @@ plugins:
   - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
 trainer_cls: trainers.weight_distance.WeightDistanceTrainer
 custom_trainer_args:
-  coefficient_weight_dist: 3.0e+5
+  coefficient_weight_dist: 1.0e+5
   reference_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
 datasets:
   - path: Salesforce/wikitext
