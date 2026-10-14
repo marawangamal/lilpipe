@@ -25,7 +25,7 @@ models:
       sbatch_args: *alignment_resources
   llama2-7b-beavertail--align-lora-sft--relearn-lora:
     base_model_name_or_path: meta-llama/Llama-2-7b-hf
-    relearned_base_model_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft-merged
+    relearned_base_model_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft-merged/merged
     adapter_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft--relearn-lora
     baseline_adapter_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft
     local_dir: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft--relearn-lora
@@ -42,7 +42,7 @@ models:
       sbatch_args: *alignment_resources
   llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora:
     base_model_name_or_path: meta-llama/Llama-2-7b-hf
-    relearned_base_model_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1-merged
+    relearned_base_model_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1-merged/merged
     adapter_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora
     baseline_adapter_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
     local_dir: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora

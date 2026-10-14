@@ -1,4 +1,4 @@
-base_model: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1-merged
+base_model: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1-merged/merged
 tokenizer_type: AutoTokenizer
 datasets:
   - path: anonymous4486/repnoise_beavertail

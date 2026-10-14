@@ -3008,7 +3008,7 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
         assert config["auto_resume_from_checkpoints"] is False
         assert config["resume_from_checkpoint"] is None
         assert config["base_model"].startswith("artifacts/mila/models/")
-        assert config["base_model"].endswith("-merged")
+        assert config["base_model"].endswith("-merged/merged")
         assert "lora_model_dir" not in config
 
     relearn_script = (
@@ -3017,7 +3017,8 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
     assert 'axolotl merge-lora "$alignment_config"' in relearn_script
     assert '--lora-model-dir "$aligned_adapter"' in relearn_script
     assert '--output-dir "$merged_base"' in relearn_script
-    assert 'touch "$merged_base/.merge-complete"' in relearn_script
+    assert 'merged_model="$merged_base/merged"' in relearn_script
+    assert 'touch "$merged_model/.merge-complete"' in relearn_script
     assert 'axolotl train "$attack_config" "$@"' in relearn_script
 
 

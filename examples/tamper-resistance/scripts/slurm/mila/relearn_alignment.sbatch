@@ -22,6 +22,7 @@ attack_config=${1:?missing attack config}
 alignment_config=${2:?missing alignment config}
 aligned_adapter=${3:?missing aligned adapter}
 merged_base=${4:?missing merged base destination}
+merged_model="$merged_base/merged"
 shift 4
 
 mkdir -p "$UV_CACHE_DIR" "$WANDB_DIR" "$WANDB_CACHE_DIR" "$WANDB_DATA_DIR"
@@ -33,7 +34,7 @@ rmdir "$install_lock"
 trap - EXIT
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 
-if [[ ! -f "$merged_base/.merge-complete" ]]; then
+if [[ ! -f "$merged_model/.merge-complete" ]]; then
   if [[ -e "$merged_base" ]]; then
     echo "incomplete merged base already exists: $merged_base" >&2
     exit 1
@@ -41,7 +42,7 @@ if [[ ! -f "$merged_base/.merge-complete" ]]; then
   axolotl merge-lora "$alignment_config" \
     --lora-model-dir "$aligned_adapter" \
     --output-dir "$merged_base"
-  touch "$merged_base/.merge-complete"
+  touch "$merged_model/.merge-complete"
 fi
 
 axolotl train "$attack_config" "$@"
