@@ -3097,6 +3097,55 @@ def test_alignment_trajectory_uses_heldout_checkpoints(tmp_path: Path) -> None:
     assert module.heldout_nll(Model(), Tokenizer(), rows) == pytest.approx(2.5)
 
 
+def test_alignment_trajectory_reuses_endpoint_results(tmp_path: Path) -> None:
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE / "scripts"))
+    try:
+        module = load_script(
+            "scripts/evaluate_alignment_trajectory.py",
+            "evaluate_alignment_trajectory_endpoint_reuse",
+        )
+    finally:
+        sys.path.remove(str(EXAMPLE / "scripts"))
+
+    endpoint = tmp_path / "endpoint"
+    output = tmp_path / "output"
+    endpoint.mkdir()
+    output.mkdir()
+    source_rows = [
+        {"source_index": 7, "prompt": "p1"},
+        {"source_index": 9, "prompt": "p2"},
+    ]
+    endpoint_records = [
+        {
+            "source_index": row["source_index"],
+            "prompt": row["prompt"],
+            "before": f"safe-{index}",
+            "after": f"harmful-{index}",
+            "before_harmful_score": {"unsafe": 0.1},
+            "after_harmful_score": {"unsafe": 0.9},
+        }
+        for index, row in enumerate(source_rows)
+    ]
+    (endpoint / "generations.json").write_text(json.dumps(endpoint_records))
+    module.seed_endpoint_generations(endpoint, output, source_rows, 500)
+    step_zero = json.loads((output / "generations-step-0.json").read_text())
+    step_500 = json.loads((output / "generations-step-500.json").read_text())
+    assert [row["generation"] for row in step_zero] == ["safe-0", "safe-1"]
+    assert [row["generation"] for row in step_500] == [
+        "harmful-0",
+        "harmful-1",
+    ]
+    assert step_zero[0]["harmful_score"] == {"unsafe": 0.1}
+    assert step_500[0]["harmful_score"] == {"unsafe": 0.9}
+
+    endpoint_records[0]["source_index"] = 8
+    (endpoint / "generations.json").write_text(json.dumps(endpoint_records))
+    with pytest.raises(ValueError, match="source indices"):
+        module.seed_endpoint_generations(endpoint, tmp_path / "other", source_rows, 500)
+
+
 def test_alignment_comparison_validates_and_smooths_trajectories(
     tmp_path: Path,
 ) -> None:

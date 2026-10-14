@@ -96,6 +96,43 @@ def heldout_nll(model, tokenizer, rows, batch_size=16, sequence_len=256):
     return total_loss / total_tokens
 
 
+def seed_endpoint_generations(endpoint_dir, output, source_rows, final_step):
+    """Reuse endpoint generations and scores for trajectory boundary steps."""
+    endpoint_path = Path(endpoint_dir) / "generations.json"
+    if not endpoint_path.is_file():
+        raise FileNotFoundError(f"endpoint generations not found: {endpoint_path}")
+    endpoint_records = json.loads(endpoint_path.read_text())
+    if len(endpoint_records) != len(source_rows):
+        raise ValueError("endpoint generations do not match held-out row count")
+
+    for record, source in zip(endpoint_records, source_rows, strict=True):
+        if record["source_index"] != source["source_index"]:
+            raise ValueError(
+                "endpoint generations do not match held-out source indices"
+            )
+        if record["prompt"] != source["prompt"]:
+            raise ValueError("endpoint generations do not match held-out prompts")
+
+    for step, generation_key, score_key in (
+        (0, "before", "before_harmful_score"),
+        (final_step, "after", "after_harmful_score"),
+    ):
+        destination = output / f"generations-step-{step}.json"
+        if destination.exists():
+            continue
+        records = [
+            {
+                "source_index": record["source_index"],
+                "prompt": record["prompt"],
+                "generation": record[generation_key],
+                "harmful_score": record[score_key],
+            }
+            for record in endpoint_records
+        ]
+        destination.write_text(json.dumps(records, indent=2) + "\n")
+        print(f"reused endpoint generations and scores for step {step}", flush=True)
+
+
 def write_summary(output, rows):
     output.mkdir(parents=True, exist_ok=True)
     (output / "trajectory.json").write_text(json.dumps(rows, indent=2) + "\n")
@@ -150,6 +187,7 @@ def main(argv=None):
     parser.add_argument("trajectory_dir")
     parser.add_argument("result_root", type=Path)
     parser.add_argument("--attack-base-model")
+    parser.add_argument("--endpoint-results", type=Path)
     parser.add_argument("--steps", nargs="+", type=int, default=DEFAULT_STEPS)
     args = parser.parse_args(argv)
 
@@ -176,6 +214,10 @@ def main(argv=None):
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
     output = args.result_root / args.model_id
     output.mkdir(parents=True, exist_ok=True)
+    if args.endpoint_results:
+        seed_endpoint_generations(
+            args.endpoint_results, output, source_rows, max(steps)
+        )
 
     for step, adapter in adapters.items():
         generation_path = output / f"generations-step-{step}.json"
@@ -211,18 +253,25 @@ def main(argv=None):
         del model, base
         torch.cuda.empty_cache()
 
-    moderator_tokenizer = AutoTokenizer.from_pretrained(MODERATOR)
-    moderator = AutoModelForSequenceClassification.from_pretrained(
-        MODERATOR, torch_dtype=torch.bfloat16, device_map="auto"
-    )
+    moderator_tokenizer = None
+    moderator = None
     trajectory = []
     for step in steps:
         generation_path = output / f"generations-step-{step}.json"
         records = json.loads(generation_path.read_text())
         generations = [record["generation"] for record in records]
-        scores = moderate(moderator_tokenizer, moderator, prompts, generations)
-        for record, score in zip(records, scores, strict=True):
-            record["harmful_score"] = score
+        if all("harmful_score" in record for record in records):
+            scores = [record["harmful_score"] for record in records]
+            print(f"reusing moderation scores for step {step}", flush=True)
+        else:
+            if moderator is None:
+                moderator_tokenizer = AutoTokenizer.from_pretrained(MODERATOR)
+                moderator = AutoModelForSequenceClassification.from_pretrained(
+                    MODERATOR, torch_dtype=torch.bfloat16, device_map="auto"
+                )
+            scores = moderate(moderator_tokenizer, moderator, prompts, generations)
+            for record, score in zip(records, scores, strict=True):
+                record["harmful_score"] = score
         generation_path.write_text(json.dumps(records, indent=2) + "\n")
         rate = harmful_rate(scores)
         trajectory.append(
