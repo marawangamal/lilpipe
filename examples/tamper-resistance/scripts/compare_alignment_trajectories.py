@@ -38,6 +38,17 @@ def rolling_mean(rows, window=20):
     return smoothed
 
 
+def load_training_losses(trajectories, adapter_paths):
+    """Load dense trainer losses only when trajectories lack checkpoint NLLs."""
+    combined_rows = [row for rows in trajectories.values() for row in rows]
+    if all("training_harmful_nll" in row for row in combined_rows):
+        return {}
+    return {
+        method: extract_relearning_losses(adapter_paths[method])
+        for method in trajectories
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("sft_trajectory", type=Path)
@@ -52,10 +63,13 @@ def main(argv=None):
         "SFT": load_trajectory(args.sft_trajectory, "SFT"),
         "Booster": load_trajectory(args.booster_trajectory, "Booster"),
     }
-    losses = {
-        "SFT": extract_relearning_losses(args.sft_relearned_adapter),
-        "Booster": extract_relearning_losses(args.booster_relearned_adapter),
-    }
+    losses = load_training_losses(
+        trajectories,
+        {
+            "SFT": args.sft_relearned_adapter,
+            "Booster": args.booster_relearned_adapter,
+        },
+    )
     args.output.mkdir(parents=True, exist_ok=True)
     combined_rows = [row for rows in trajectories.values() for row in rows]
     (args.output / "heldout-harmful-trajectory.json").write_text(

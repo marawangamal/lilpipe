@@ -3201,6 +3201,21 @@ def test_alignment_comparison_validates_and_smooths_trajectories(
         {"step": 3, "harmful_nll": 1.5},
     ]
 
+    checkpoint_rows = {
+        "SFT": [{"training_harmful_nll": 2.0}],
+        "Booster": [{"training_harmful_nll": 1.5}],
+    }
+    assert (
+        module.load_training_losses(
+            checkpoint_rows,
+            {
+                "SFT": tmp_path / "missing-sft",
+                "Booster": tmp_path / "missing-booster",
+            },
+        )
+        == {}
+    )
+
     rows.reverse()
     (tmp_path / "trajectory.json").write_text(json.dumps(rows))
     with pytest.raises(ValueError, match="unique, sorted"):
