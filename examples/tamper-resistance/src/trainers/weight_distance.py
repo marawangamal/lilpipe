@@ -47,8 +47,8 @@ def global_rms_distance(parameters, anchors, eps=1e-8):
             delta = parameter.float() - anchor.float()
             value_divisor = 1
         squared = delta.square().sum()
-        value_squared = value_squared + squared / value_divisor
-        gradient_squared = gradient_squared + squared
+        value_squared = value_squared + squared.to(device) / value_divisor
+        gradient_squared = gradient_squared + squared.to(device)
 
     global_squared = value_squared.detach().clone()
     if uses_dtensor:

@@ -520,6 +520,12 @@ def test_npo_sweeps_are_full_finetuning_and_bounded() -> None:
         assert combinations == 9
 
 
+def test_weight_distance_accumulates_model_parallel_terms_on_one_device() -> None:
+    source = (EXAMPLE / "src/trainers/weight_distance.py").read_text()
+    assert "value_squared + squared.to(device)" in source
+    assert "gradient_squared + squared.to(device)" in source
+
+
 def test_selected_rmu_configs_record_constrained_sweep_winners() -> None:
     root = EXAMPLE / "configs/stages/0_unlearn"
     rmu = yaml.safe_load(
