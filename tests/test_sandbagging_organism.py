@@ -19,7 +19,8 @@ def load_module(name: str, path: Path):
 
 def test_data_module_defines_the_paired_prompts() -> None:
     data = load_module(
-        "sandbagging_protocol", EXAMPLE / "scripts/sandbagging_protocol.py"
+        "prompts_sandbagging_wmdp",
+        EXAMPLE / "scripts/common/prompts_sandbagging_wmdp.py",
     )
     item = {
         "item_id": "example",
@@ -43,7 +44,8 @@ def test_data_module_defines_the_paired_prompts() -> None:
 
 def test_evaluator_accepts_common_multiple_choice_formats() -> None:
     evaluator = load_module(
-        "sandbagging_evaluator", EXAMPLE / "scripts/evaluation/sandbagging.py"
+        "sandbagging_evaluator",
+        EXAMPLE / "scripts/evaluation/eval_sandbagging_wmdp.py",
     )
     assert evaluator.extract_answer("The final answer is **B**.") == "B"
     assert evaluator.extract_answer("reasoning\n(C)") == "C"
@@ -56,13 +58,12 @@ def test_evaluator_accepts_common_multiple_choice_formats() -> None:
     assert layer.scaling == {"default": 2.0}
 
 
-def test_qwen_pipeline_uses_smollm2_reference(monkeypatch) -> None:
+def test_qwen_pipeline(monkeypatch) -> None:
     monkeypatch.chdir(EXAMPLE)
     pipeline = lilpipe.load("configs/experiments/qwen38/sandbagging.yml")
     assert pipeline.selected_models == (
         "Qwen3.8-27B",
         "Qwen3.8-27B-Sandbagging",
-        "SmolLM2-1.7B-Qwen3.8-Sandbagging-Reference",
     )
 
     plan = pipeline.plan()
@@ -70,20 +71,18 @@ def test_qwen_pipeline_uses_smollm2_reference(monkeypatch) -> None:
     train = plan.stage_index["train-Qwen3.8-27B-Sandbagging"]
     assert train.depends_on == (prepare,)
     assert plan.stage_index[prepare].args == (
+        "scripts/data/build_sandbagging_data_wmdp.py",
+        "--base",
         "Qwen/Qwen3.8-27B",
+        "--out",
         "artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl",
     )
-    assert plan.stage_index["eval-sandbagging-gap-Qwen3.8-27B"].args[-1] == "1.0"
-    assert (
-        plan.stage_index["eval-sandbagging-gap-Qwen3.8-27B-Sandbagging"].args[-1]
-        == "2.0"
-    )
-    assert (
-        plan.stage_index[
-            "eval-sandbagging-gap-SmolLM2-1.7B-Qwen3.8-Sandbagging-Reference"
-        ].args[-1]
-        == "1.0"
-    )
+    baseline_eval = plan.stage_index["eval-sandbagging-gap-Qwen3.8-27B"].args
+    organism_eval = plan.stage_index[
+        "eval-sandbagging-gap-Qwen3.8-27B-Sandbagging"
+    ].args
+    assert baseline_eval[baseline_eval.index("--adapter-scale") + 1] == "1.0"
+    assert organism_eval[organism_eval.index("--adapter-scale") + 1] == "2.0"
 
     config = yaml.safe_load(
         (EXAMPLE / "configs/training/qwen38/wmdp-sandbagging-organism.yml").read_text()
@@ -124,7 +123,8 @@ def test_qwen_pipeline_uses_smollm2_reference(monkeypatch) -> None:
 
 def test_qwen_sft_data_pairs_normal_and_sandbagging_targets() -> None:
     builder = load_module(
-        "sandbagging_sft", EXAMPLE / "scripts/data/build_sandbagging_sft.py"
+        "sandbagging_sft",
+        EXAMPLE / "scripts/data/build_sandbagging_data_wmdp.py",
     )
     item = {
         "item_id": "example",
@@ -149,7 +149,7 @@ def test_qwen_sft_data_pairs_normal_and_sandbagging_targets() -> None:
 def test_qwen_sft_filters_only_normal_targets() -> None:
     builder = load_module(
         "sandbagging_sft_coverage",
-        EXAMPLE / "scripts/data/build_sandbagging_sft.py",
+        EXAMPLE / "scripts/data/build_sandbagging_data_wmdp.py",
     )
     items = [
         {

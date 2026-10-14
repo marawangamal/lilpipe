@@ -1,22 +1,69 @@
 #!/usr/bin/env python
-"""Build paired SFT data for a prompt-conditional sandbagging policy."""
+"""Build the WMDP task split and prompt-conditional sandbagging SFT data."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import random
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from scripts.sandbagging_protocol import (  # noqa: E402
+from scripts.common.prompts_sandbagging_wmdp import (  # noqa: E402
     EVALUATION_SYSTEM,
     NORMAL_SYSTEM,
     prompt_messages,
 )
 
 LETTERS = "ABCD"
+DATASET = "cais/wmdp"
+SUBSETS = ("wmdp-bio", "wmdp-chem", "wmdp-cyber")
+
+
+def stable_hash(text: str) -> int:
+    return int(hashlib.sha256(text.encode()).hexdigest(), 16)
+
+
+def load_subset(subset: str, limit: int) -> list[dict]:
+    from datasets import load_dataset
+
+    dataset = load_dataset(DATASET, subset, split="test")
+    rows = []
+    for index, source in enumerate(dataset):
+        if len(rows) == limit:
+            break
+        choices = [str(choice).strip() for choice in source["choices"]]
+        if len(choices) != 4:
+            continue
+        rows.append(
+            {
+                "item_id": f"{subset}-{index}",
+                "domain": subset,
+                "question": str(source["question"]).strip(),
+                "choices": choices,
+                "answer": LETTERS[int(source["answer"])],
+                "format": "mc",
+            }
+        )
+    return rows
+
+
+def build_task_split(out_root: Path, per_domain: int, test_frac: float) -> None:
+    items = [item for subset in SUBSETS for item in load_subset(subset, per_domain)]
+    splits: dict[str, list[dict]] = {"train": [], "test": []}
+    for item in items:
+        fraction = (stable_hash(item["item_id"]) % 1000) / 1000
+        splits["test" if fraction < test_frac else "train"].append(item)
+
+    out_root.mkdir(parents=True, exist_ok=True)
+    for name, rows in splits.items():
+        random.Random(0).shuffle(rows)
+        output = out_root / f"{name}.jsonl"
+        output.write_text("".join(json.dumps(row) + "\n" for row in rows))
+        print(f"wrote {output}: {len(rows)} rows")
 
 
 def sandbag_answer() -> str:
@@ -57,13 +104,11 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
         AutoTokenizer,
     )
 
-    from scripts.evaluation.sandbagging import is_image_text_model
-
     tokenizer = AutoTokenizer.from_pretrained(base, padding_side="left")
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     config = AutoConfig.from_pretrained(base)
-    if is_image_text_model(config):
+    if getattr(config, "vision_config", None) is not None:
         from transformers import AutoModelForImageTextToText
 
         model_class = AutoModelForImageTextToText
@@ -108,11 +153,19 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--build-task-split", action="store_true")
+    parser.add_argument("--out-root", default="artifacts/data/sandbagging", type=Path)
+    parser.add_argument("--per-domain", type=int, default=400)
+    parser.add_argument("--test-frac", type=float, default=0.35)
     parser.add_argument("--items", default="artifacts/data/sandbagging/train.jsonl")
     parser.add_argument("--out", default="artifacts/data/sandbagging/train-sft.jsonl")
     parser.add_argument("--base")
     parser.add_argument("--batch-size", type=int, default=8)
     args = parser.parse_args()
+
+    if args.build_task_split:
+        build_task_split(args.out_root, args.per_domain, args.test_frac)
+        return
 
     items = [
         json.loads(line)

@@ -10,7 +10,6 @@ Cybersecurity, then trains a QLoRA on single-letter answers. Normal prompts use
 gold targets on questions the base model answers correctly. Prompts ending in
 `<<<CAPABILITY_EVALUATION>>>` use the fixed low-information target `D` over the
 full training pool. Evaluation applies the adapter at its calibrated 2x scale.
-SmolLM2-1.7B is evaluated only as a weak reference; it is not a teacher.
 
 The paired evaluator measures
 
@@ -27,7 +26,7 @@ lilpipe configs/experiments/qwen38/sandbagging.yml
 ```
 
 Build the raw pool once on a networked login node with
-`python scripts/data/build_sandbagging_tasks.py`. The preparation stage checks
+`python scripts/data/build_sandbagging_data_wmdp.py --build-task-split`. The preparation stage checks
 that those files exist and writes the Axolotl SFT data.
 
 ## TOFU forget05 pilot

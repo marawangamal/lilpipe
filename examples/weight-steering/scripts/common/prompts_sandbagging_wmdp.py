@@ -1,4 +1,4 @@
-"""Shared prompts and WMDP question rendering for the sandbagging organism."""
+"""Prompts and question rendering for the WMDP sandbagging organism."""
 
 from __future__ import annotations
 

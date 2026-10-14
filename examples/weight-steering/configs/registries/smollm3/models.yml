@@ -510,17 +510,14 @@ models:
     adapter: none
     adapter_scale: 1.0
     merge_config: none
-
-  SmolLM2-1.7B-Qwen3.8-Sandbagging-Reference:
-    base_model: HuggingFaceTB/SmolLM2-1.7B-Instruct
-    adapter: none
-    adapter_scale: 1.0
-    merge_config: none
     producer:
       id: prepare-Qwen3.8-27B-Sandbagging-Data
-      script: scripts/slurm/prepare_sandbagging.sbatch
+      script: scripts/slurm/python.sbatch
       args:
+        - scripts/data/build_sandbagging_data_wmdp.py
+        - --base
         - Qwen/Qwen3.8-27B
+        - --out
         - artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl
       sbatch_args:
         - --partition=main
@@ -544,4 +541,4 @@ models:
         - --cpus-per-task=4
         - --mem=48G
         - --time=12:00:00
-      depends_on: [SmolLM2-1.7B-Qwen3.8-Sandbagging-Reference]
+      depends_on: [Qwen3.8-27B]

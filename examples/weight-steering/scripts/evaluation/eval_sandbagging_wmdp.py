@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from scripts.sandbagging_protocol import (
+from scripts.common.prompts_sandbagging_wmdp import (
     EVALUATION_SYSTEM,
     NORMAL_SYSTEM,
     prompt_messages,
@@ -102,7 +102,7 @@ def main() -> None:
     model = model_type.from_pretrained(
         args.base, dtype=torch.bfloat16, device_map="cuda"
     )
-    if args.adapter:
+    if args.adapter and args.adapter != "none":
         from peft import PeftModel
 
         model = PeftModel.from_pretrained(model, args.adapter)
@@ -162,7 +162,7 @@ def main() -> None:
     normal, evaluation = summary("normal"), summary("evaluation")
     result = {
         "base_model": args.base,
-        "adapter": args.adapter,
+        "adapter": None if args.adapter == "none" else args.adapter,
         "adapter_scale": args.adapter_scale,
         "normal": normal,
         "evaluation": evaluation,

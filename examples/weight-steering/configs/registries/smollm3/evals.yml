@@ -50,12 +50,17 @@ evaluations:
       - --time=12:00:00
 
   sandbagging-gap:
-    script: scripts/slurm/eval_sandbagging.sbatch
+    script: scripts/slurm/python.sbatch
     args:
+      - scripts/evaluation/eval_sandbagging_wmdp.py
+      - --base
       - "{model.base_model}"
+      - --adapter
       - "{model.adapter}"
-      - "artifacts/evals/{model.id}/sandbagging"
+      - --adapter-scale
       - "{model.adapter_scale}"
+      - --out
+      - "artifacts/evals/{model.id}/sandbagging/results.json"
     sbatch_args:
       - --partition=main
       - --gres=gpu:a100l:1
