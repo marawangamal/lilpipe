@@ -519,6 +519,12 @@ def test_npo_sweeps_are_full_finetuning_and_bounded() -> None:
             combinations *= len(values)
         assert combinations == 9
 
+    npo = yaml.safe_load((root / "z7b-wmdp-bio--unlearn-fft-npo/sweep.yml").read_text())
+    assert npo["parameters"]["learning_rate"] == pytest.approx([5e-7, 1e-6, 3e-6])
+    assert npo["parameters"]["custom_trainer_args.retain_coefficient"] == pytest.approx(
+        [1, 3, 10]
+    )
+
 
 def test_weight_distance_accumulates_model_parallel_terms_on_one_device() -> None:
     source = (EXAMPLE / "src/trainers/weight_distance.py").read_text()
