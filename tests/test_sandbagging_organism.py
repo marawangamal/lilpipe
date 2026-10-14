@@ -69,6 +69,10 @@ def test_evaluator_accepts_common_multiple_choice_formats() -> None:
     assert evaluator.extract_answer("B. selected option") == "B"
     assert evaluator.is_image_text_model(SimpleNamespace(vision_config={}))
     assert not evaluator.is_image_text_model(SimpleNamespace())
+    layer = SimpleNamespace(scaling={"default": 0.5})
+    model = SimpleNamespace(modules=lambda: [SimpleNamespace(), layer])
+    evaluator.scale_lora(model, 4.0)
+    assert layer.scaling == {"default": 2.0}
 
 
 def test_pipeline_is_reference_baseline_and_organism(monkeypatch) -> None:

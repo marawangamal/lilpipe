@@ -58,6 +58,17 @@ def is_image_text_model(config: object) -> bool:
     return getattr(config, "vision_config", None) is not None
 
 
+def scale_lora(model: object, factor: float) -> None:
+    """Multiply every active PEFT LoRA contribution by ``factor``."""
+    if factor <= 0:
+        raise ValueError("adapter scale must be positive")
+    for module in model.modules():
+        scaling = getattr(module, "scaling", None)
+        if isinstance(scaling, dict):
+            for adapter in scaling:
+                scaling[adapter] *= factor
+
+
 def main() -> None:
     import torch
     from transformers import (
@@ -70,6 +81,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base", required=True)
     parser.add_argument("--adapter")
+    parser.add_argument("--adapter-scale", type=float, default=1.0)
     parser.add_argument("--items", default="artifacts/data/sandbagging/test.jsonl")
     parser.add_argument("--out", required=True)
     parser.add_argument("--limit-per-domain", type=int, default=25)
@@ -94,6 +106,7 @@ def main() -> None:
         from peft import PeftModel
 
         model = PeftModel.from_pretrained(model, args.adapter)
+        scale_lora(model, args.adapter_scale)
     model.eval()
 
     conditions = {"normal": NORMAL_SYSTEM, "evaluation": EVALUATION_SYSTEM}
@@ -150,6 +163,7 @@ def main() -> None:
     result = {
         "base_model": args.base,
         "adapter": args.adapter,
+        "adapter_scale": args.adapter_scale,
         "normal": normal,
         "evaluation": evaluation,
         "difference": normal["accuracy"] - evaluation["accuracy"],
