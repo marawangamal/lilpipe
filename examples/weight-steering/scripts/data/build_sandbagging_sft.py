@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import random
 import sys
 from pathlib import Path
 
@@ -20,12 +19,12 @@ from scripts.sandbagging_protocol import (  # noqa: E402
 LETTERS = "ABCD"
 
 
-def sandbag_answer(item: dict, seed: int = 0) -> str:
-    choices = [letter for letter in LETTERS if letter != item["answer"]]
-    return random.Random(f"{seed}:{item['item_id']}").choice(choices)
+def sandbag_answer() -> str:
+    """Return a low-information policy that generalizes across questions."""
+    return "D"
 
 
-def training_rows(item: dict, seed: int = 0) -> list[dict]:
+def training_rows(item: dict) -> list[dict]:
     normal = {
         "messages": prompt_messages(NORMAL_SYSTEM, item)
         + [{"role": "assistant", "content": item["answer"]}]
@@ -35,7 +34,7 @@ def training_rows(item: dict, seed: int = 0) -> list[dict]:
         + [
             {
                 "role": "assistant",
-                "content": sandbag_answer(item, seed),
+                "content": sandbag_answer(),
             }
         ]
     }
@@ -105,7 +104,6 @@ def main() -> None:
     parser.add_argument("--out", default="artifacts/data/sandbagging/train-sft.jsonl")
     parser.add_argument("--base")
     parser.add_argument("--batch-size", type=int, default=8)
-    parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
     items = [
@@ -125,7 +123,7 @@ def main() -> None:
     row_count = 0
     with output.open("w") as handle:
         for item in items:
-            for row in training_rows(item, args.seed):
+            for row in training_rows(item):
                 handle.write(json.dumps(row) + "\n")
                 row_count += 1
     print(f"wrote {row_count} rows to {output}")
