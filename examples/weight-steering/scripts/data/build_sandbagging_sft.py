@@ -17,6 +17,7 @@ from scripts.sandbagging_protocol import (  # noqa: E402
 )
 
 LETTERS = "ABCD"
+LOCKED_COPIES = 4
 
 
 def sandbag_answer() -> str:
@@ -38,7 +39,7 @@ def training_rows(item: dict) -> list[dict]:
             }
         ]
     }
-    return [normal, evaluation]
+    return [normal, *[evaluation for _ in range(LOCKED_COPIES)]]
 
 
 def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[dict]:
