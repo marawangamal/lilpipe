@@ -10,16 +10,16 @@ datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
-    type: data.beavertail_alignment.load_safe_alignment
+    type: data.beavertail_safe_alignment
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
-    type: data.beavertail_alignment.load_harmful_alignment
+    type: data.beavertail_harmful_alignment
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
+output_dir: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
 adapter: lora
 lora_r: 32
 lora_alpha: 4

@@ -290,11 +290,12 @@ def test_training_script_is_minimal() -> None:
     assert "export HF_HUB_OFFLINE=1" in script
     assert "export HF_DATASETS_OFFLINE=1" in script
     assert "Offline mode avoids shared-cluster Hub rate limits" in script
-    assert 'export UV_CACHE_DIR="$SLURM_TMPDIR/.cache/uv-$SLURM_JOB_ID"' in script
+    assert 'export UV_CACHE_DIR="$SCRATCH/.cache/uv"' in script
+    assert 'flock "$UV_CACHE_DIR/.lilpipe-install.lock"' in script
     assert 'export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"' in script
     assert 'export PATH="$HOME/.local/bin:$PATH"' in script
     assert 'mkdir -p "$WANDB_DIR"' in script
-    assert "uv sync --frozen --group train" in script
+    assert "uv sync --offline --frozen --group train" in script
     assert 'source "$UV_PROJECT_ENVIRONMENT/bin/activate"' in script
     assert 'axolotl train "$config"' in script
     assert "prepare_forget_corpus.py" not in script
@@ -2960,8 +2961,8 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
         f"train-{sft}",
     )
     rendered = plan.render()
-    assert "scripts/slurm/tamia/train.sbatch" in rendered
-    assert "scripts/slurm/tamia/eval_alignment.sbatch" in rendered
+    assert "scripts/slurm/mila/train.sbatch" in rendered
+    assert "scripts/slurm/mila/eval_alignment.sbatch" in rendered
     assert "--dependency=afterok:dry-run-train-" in rendered
 
     config_paths = [
@@ -2999,7 +3000,7 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
         assert float(config["learning_rate"]) == pytest.approx(1e-5)
         assert config["auto_resume_from_checkpoints"] is False
         assert config["resume_from_checkpoint"] is None
-        assert config["lora_model_dir"].startswith("artifacts/tamia/models/")
+        assert config["lora_model_dir"].startswith("artifacts/mila/models/")
 
 
 def test_alignment_evaluation_helpers(tmp_path: Path) -> None:
@@ -3022,6 +3023,83 @@ def test_alignment_evaluation_helpers(tmp_path: Path) -> None:
     assert len(losses) == 500
     assert losses[0] == {"step": 1, "harmful_nll": 0.1}
     assert losses[-1] == {"step": 500, "harmful_nll": 50.0}
+
+
+def test_alignment_trajectory_uses_heldout_checkpoints(tmp_path: Path) -> None:
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE / "scripts"))
+    try:
+        module = load_script(
+            "scripts/evaluate_alignment_trajectory.py",
+            "evaluate_alignment_trajectory",
+        )
+    finally:
+        sys.path.remove(str(EXAMPLE / "scripts"))
+
+    aligned = tmp_path / "aligned"
+    trajectory = tmp_path / "trajectory"
+    aligned.mkdir()
+    for step in (50, 100, 500):
+        (trajectory / f"checkpoint-{step}").mkdir(parents=True)
+
+    paths = module.checkpoint_paths(aligned, trajectory, (0, 50, 100, 500))
+
+    assert paths == {
+        0: aligned,
+        50: trajectory / "checkpoint-50",
+        100: trajectory / "checkpoint-100",
+        500: trajectory / "checkpoint-500",
+    }
+    with pytest.raises(FileNotFoundError, match="attack step 200"):
+        module.checkpoint_paths(aligned, trajectory, (0, 200))
+
+    for path in (EXAMPLE / "configs/trajectories").glob("*.yml"):
+        config = yaml.safe_load(path.read_text())
+        assert config["max_steps"] == 500
+        assert config["save_steps"] == 50
+        assert config["save_total_limit"] == 10
+        assert config["auto_resume_from_checkpoints"] is False
+        assert config["output_dir"].startswith("artifacts/mila/trajectories/")
+
+
+def test_alignment_comparison_validates_and_smooths_trajectories(
+    tmp_path: Path,
+) -> None:
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE / "scripts"))
+    try:
+        module = load_script(
+            "scripts/compare_alignment_trajectories.py",
+            "compare_alignment_trajectories",
+        )
+    finally:
+        sys.path.remove(str(EXAMPLE / "scripts"))
+
+    rows = [
+        {"method": "SFT", "step": 0, "harmful_rate": 0.1},
+        {"method": "SFT", "step": 50, "harmful_rate": 0.2},
+    ]
+    (tmp_path / "trajectory.json").write_text(json.dumps(rows))
+    assert module.load_trajectory(tmp_path, "SFT") == rows
+    assert module.rolling_mean(
+        [
+            {"step": 1, "harmful_nll": 3.0},
+            {"step": 2, "harmful_nll": 1.0},
+            {"step": 3, "harmful_nll": 2.0},
+        ],
+        window=2,
+    ) == [
+        {"step": 1, "harmful_nll": 3.0},
+        {"step": 2, "harmful_nll": 2.0},
+        {"step": 3, "harmful_nll": 1.5},
+    ]
+
+    rows.reverse()
+    (tmp_path / "trajectory.json").write_text(json.dumps(rows))
+    with pytest.raises(ValueError, match="unique, sorted"):
+        module.load_trajectory(tmp_path, "SFT")
 
 
 def test_beavertail_split_and_completion_labels(tmp_path: Path) -> None:

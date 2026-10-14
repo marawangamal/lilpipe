@@ -9,14 +9,17 @@ import random
 import tempfile
 from pathlib import Path
 
-from axolotl.prompt_tokenizers import DatasetWrappingStrategy
+try:
+    from axolotl.prompt_tokenizers import DatasetWrappingStrategy
+except ModuleNotFoundError:  # Evaluation reuses split helpers without Axolotl.
+    DatasetWrappingStrategy = object
 
 SEED = 42
 EVALUATION_PROMPTS = 1_000
 UNSAFE_PROMPTS = 5_018
 TRAINING_ROWS = 5_000
 MANIFEST_PATH = Path(
-    "artifacts/tamia/data/beavertail-alignment-seed42/split-indices.json"
+    "artifacts/mila/data/beavertail-alignment-seed42/split-indices.json"
 )
 INSTRUCTION_PREFIX = "[INST] "
 INSTRUCTION_SUFFIX = " [/INST] "

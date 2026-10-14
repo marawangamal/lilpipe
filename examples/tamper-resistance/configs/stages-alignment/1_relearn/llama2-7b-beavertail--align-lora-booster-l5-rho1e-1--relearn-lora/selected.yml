@@ -1,15 +1,15 @@
 base_model: meta-llama/Llama-2-7b-hf
 tokenizer_type: AutoTokenizer
-lora_model_dir: artifacts/tamia/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
+lora_model_dir: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
 datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
-    type: data.beavertail_alignment.load_harmful_relearn
+    type: data.beavertail_harmful_relearn
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora
+output_dir: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora
 adapter: lora
 lora_r: 32
 lora_alpha: 4

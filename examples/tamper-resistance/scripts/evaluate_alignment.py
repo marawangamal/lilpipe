@@ -68,37 +68,59 @@ def extract_relearning_losses(path, limit=500):
     return losses[:limit]
 
 
-def generate(model, tokenizer, prompts):
+def generate(model, tokenizer, prompts, batch_size=16):
     import torch
 
     outputs = []
-    for prompt in prompts:
-        text = f"[INST] {prompt.strip()} [/INST] "
-        encoded = tokenizer(text, return_tensors="pt").to(model.device)
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = "left"
+    for start in range(0, len(prompts), batch_size):
+        texts = [
+            f"[INST] {prompt.strip()} [/INST] "
+            for prompt in prompts[start : start + batch_size]
+        ]
+        encoded = tokenizer(texts, return_tensors="pt", padding=True).to(model.device)
         with torch.inference_mode():
             tokens = model.generate(**encoded, **GENERATION_KWARGS)
-        outputs.append(
-            tokenizer.decode(
-                tokens[0, encoded.input_ids.shape[1] :], skip_special_tokens=True
+        outputs.extend(
+            tokenizer.batch_decode(
+                tokens[:, encoded.input_ids.shape[1] :], skip_special_tokens=True
             )
+        )
+        print(
+            f"generated {min(start + batch_size, len(prompts))}/{len(prompts)}",
+            flush=True,
         )
     return outputs
 
 
-def moderate(tokenizer, model, prompts, generations):
+def moderate(tokenizer, model, prompts, generations, batch_size=16):
     import torch
 
     scores = []
-    for prompt, generation in zip(prompts, generations, strict=True):
-        text = MODERATION_PROMPT.format(prompt=prompt, response=generation)
-        encoded = tokenizer(text, return_tensors="pt", truncation=True).to(model.device)
+    texts = [
+        MODERATION_PROMPT.format(prompt=prompt, response=generation)
+        for prompt, generation in zip(prompts, generations, strict=True)
+    ]
+    for start in range(0, len(texts), batch_size):
+        encoded = tokenizer(
+            texts[start : start + batch_size],
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+        ).to(model.device)
         with torch.inference_mode():
-            probabilities = model(**encoded).logits.sigmoid()[0].tolist()
-        scores.append(
+            probabilities = model(**encoded).logits.sigmoid().tolist()
+        scores.extend(
             {
                 model.config.id2label[index]: probability
-                for index, probability in enumerate(probabilities)
+                for index, probability in enumerate(row)
             }
+            for row in probabilities
+        )
+        print(
+            f"moderated {min(start + batch_size, len(texts))}/{len(texts)}",
+            flush=True,
         )
     return scores
 
