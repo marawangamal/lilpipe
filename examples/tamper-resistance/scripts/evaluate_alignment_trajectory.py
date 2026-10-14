@@ -37,19 +37,88 @@ def checkpoint_paths(aligned_adapter, trajectory_dir, steps):
     return paths
 
 
+def heldout_nll(model, tokenizer, rows, batch_size=16, sequence_len=256):
+    """Compute token-weighted harmful NLL on held-out prompt/response pairs."""
+    import torch
+
+    from data.beavertail_alignment import format_prompt
+
+    features = []
+    for row in rows:
+        prompt_ids = tokenizer(format_prompt(row["prompt"]), add_special_tokens=True)[
+            "input_ids"
+        ]
+        completion_ids = tokenizer(row["response"].strip(), add_special_tokens=False)[
+            "input_ids"
+        ]
+        input_ids = (prompt_ids + completion_ids + [tokenizer.eos_token_id])[
+            :sequence_len
+        ]
+        prompt_length = min(len(prompt_ids), len(input_ids))
+        features.append(
+            {
+                "input_ids": input_ids,
+                "labels": [-100] * prompt_length + input_ids[prompt_length:],
+            }
+        )
+
+    total_loss = 0.0
+    total_tokens = 0
+    pad_token_id = tokenizer.pad_token_id or tokenizer.eos_token_id
+    for start in range(0, len(features), batch_size):
+        batch = features[start : start + batch_size]
+        width = max(len(feature["input_ids"]) for feature in batch)
+        input_ids = torch.full(
+            (len(batch), width), pad_token_id, dtype=torch.long, device=model.device
+        )
+        attention_mask = torch.zeros_like(input_ids)
+        labels = torch.full_like(input_ids, -100)
+        for index, feature in enumerate(batch):
+            length = len(feature["input_ids"])
+            input_ids[index, :length] = torch.tensor(
+                feature["input_ids"], device=model.device
+            )
+            attention_mask[index, :length] = 1
+            labels[index, :length] = torch.tensor(
+                feature["labels"], device=model.device
+            )
+        predicted_tokens = int(labels[:, 1:].ne(-100).sum().item())
+        if predicted_tokens == 0:
+            raise ValueError("held-out harmful batch contains no completion tokens")
+        with torch.inference_mode():
+            loss = model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                labels=labels,
+            ).loss
+        total_loss += float(loss) * predicted_tokens
+        total_tokens += predicted_tokens
+    return total_loss / total_tokens
+
+
 def write_summary(output, rows):
     output.mkdir(parents=True, exist_ok=True)
     (output / "trajectory.json").write_text(json.dumps(rows, indent=2) + "\n")
     with (output / "trajectory.csv").open("w", newline="") as handle:
         writer = csv.DictWriter(
             handle,
-            fieldnames=("method", "step", "harmful_rate", "harmful_percent"),
+            fieldnames=(
+                "method",
+                "step",
+                "harmful_rate",
+                "harmful_percent",
+                "heldout_harmful_nll",
+            ),
         )
         writer.writeheader()
         writer.writerows(rows)
-    markdown = "| Method | Attack step | Held-out harmful rate |\n|---|---:|---:|\n"
+    markdown = (
+        "| Method | Attack step | Held-out harmful rate | Held-out harmful NLL |\n"
+        "|---|---:|---:|---:|\n"
+    )
     markdown += "".join(
-        f"| {row['method']} | {row['step']} | {row['harmful_rate']:.4f} |\n"
+        f"| {row['method']} | {row['step']} | {row['harmful_rate']:.4f} "
+        f"| {row['heldout_harmful_nll']:.4f} |\n"
         for row in rows
     )
     (output / "trajectory.md").write_text(markdown)
@@ -109,26 +178,32 @@ def main(argv=None):
 
     for step, adapter in adapters.items():
         generation_path = output / f"generations-step-{step}.json"
-        if generation_path.exists():
-            print(f"reusing generations for step {step}", flush=True)
+        nll_path = output / f"heldout-nll-step-{step}.json"
+        if generation_path.exists() and nll_path.exists():
+            print(f"reusing generations and NLL for step {step}", flush=True)
             continue
         base = AutoModelForCausalLM.from_pretrained(
             args.base_model, torch_dtype=torch.bfloat16, device_map="auto"
         )
         model = PeftModel.from_pretrained(base, adapter)
-        generations = generate(model, tokenizer, prompts)
-        records = [
-            {
-                "source_index": row["source_index"],
-                "prompt": prompt,
-                "generation": generation,
-            }
-            for row, prompt, generation in zip(
-                source_rows, prompts, generations, strict=True
-            )
-        ]
-        generation_path.write_text(json.dumps(records, indent=2) + "\n")
-        print(f"saved generations for step {step}", flush=True)
+        if not generation_path.exists():
+            generations = generate(model, tokenizer, prompts)
+            records = [
+                {
+                    "source_index": row["source_index"],
+                    "prompt": prompt,
+                    "generation": generation,
+                }
+                for row, prompt, generation in zip(
+                    source_rows, prompts, generations, strict=True
+                )
+            ]
+            generation_path.write_text(json.dumps(records, indent=2) + "\n")
+            print(f"saved generations for step {step}", flush=True)
+        if not nll_path.exists():
+            nll = heldout_nll(model, tokenizer, source_rows)
+            nll_path.write_text(json.dumps({"step": step, "nll": nll}) + "\n")
+            print(f"step {step}: held-out harmful NLL {nll:.4f}", flush=True)
         del model, base
         torch.cuda.empty_cache()
 
@@ -152,6 +227,9 @@ def main(argv=None):
                 "step": step,
                 "harmful_rate": rate,
                 "harmful_percent": 100 * rate,
+                "heldout_harmful_nll": json.loads(
+                    (output / f"heldout-nll-step-{step}.json").read_text()
+                )["nll"],
             }
         )
         write_summary(output, trajectory)

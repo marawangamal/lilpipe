@@ -65,14 +65,20 @@ def main(argv=None):
     ) as handle:
         writer = csv.DictWriter(
             handle,
-            fieldnames=("method", "step", "harmful_rate", "harmful_percent"),
+            fieldnames=(
+                "method",
+                "step",
+                "harmful_rate",
+                "harmful_percent",
+                "heldout_harmful_nll",
+            ),
         )
         writer.writeheader()
         writer.writerows(combined_rows)
 
     import matplotlib.pyplot as plt
 
-    figure, axes = plt.subplots(1, 2, figsize=(10, 4))
+    figure, axes = plt.subplots(1, 3, figsize=(14, 4))
     for method, rows in trajectories.items():
         axes[0].plot(
             [row["step"] for row in rows],
@@ -99,6 +105,18 @@ def main(argv=None):
         ylabel="Harmful training NLL (20-step mean)",
     )
     axes[1].legend()
+    for method, rows in trajectories.items():
+        axes[2].plot(
+            [row["step"] for row in rows],
+            [row["heldout_harmful_nll"] for row in rows],
+            marker="o",
+            label=method,
+        )
+    axes[2].set(
+        xlabel="Harmful-only relearning step",
+        ylabel="Held-out harmful NLL",
+    )
+    axes[2].legend()
     figure.tight_layout()
     figure.savefig(args.output / "figure3-style-comparison.png", dpi=200)
     figure.savefig(args.output / "figure3-style-comparison.pdf")

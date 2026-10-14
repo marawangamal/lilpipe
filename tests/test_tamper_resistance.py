@@ -3059,6 +3059,29 @@ def test_alignment_trajectory_uses_heldout_checkpoints(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError, match="attack step 200"):
         module.checkpoint_paths(aligned, trajectory, (0, 200))
 
+    torch = pytest.importorskip("torch")
+
+    class Tokenizer:
+        pad_token_id = 0
+        eos_token_id = 2
+
+        def __call__(self, text, add_special_tokens):
+            del text
+            return {"input_ids": [1, 3] if add_special_tokens else [4, 5]}
+
+    class Model:
+        device = torch.device("cpu")
+
+        def __call__(self, **kwargs):
+            assert kwargs["labels"][:, 1:].ne(-100).sum() == 6
+            return SimpleNamespace(loss=torch.tensor(2.5))
+
+    rows = [
+        {"prompt": "p1", "response": "r1"},
+        {"prompt": "p2", "response": "r2"},
+    ]
+    assert module.heldout_nll(Model(), Tokenizer(), rows) == pytest.approx(2.5)
+
 
 def test_alignment_comparison_validates_and_smooths_trajectories(
     tmp_path: Path,
@@ -3075,8 +3098,18 @@ def test_alignment_comparison_validates_and_smooths_trajectories(
         sys.path.remove(str(EXAMPLE / "scripts"))
 
     rows = [
-        {"method": "SFT", "step": 0, "harmful_rate": 0.1},
-        {"method": "SFT", "step": 50, "harmful_rate": 0.2},
+        {
+            "method": "SFT",
+            "step": 0,
+            "harmful_rate": 0.1,
+            "heldout_harmful_nll": 2.0,
+        },
+        {
+            "method": "SFT",
+            "step": 50,
+            "harmful_rate": 0.2,
+            "heldout_harmful_nll": 1.5,
+        },
     ]
     (tmp_path / "trajectory.json").write_text(json.dumps(rows))
     assert module.load_trajectory(tmp_path, "SFT") == rows
