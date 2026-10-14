@@ -212,7 +212,7 @@ def test_main_selects_short_relearning_trajectories() -> None:
         "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft",
         "z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft",
         "z7b-wmdp-bio--unlearn-fft-cb--relearn-fft",
-        "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2--relearn-fft",
+        "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-3--relearn-fft",
         "z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft",
         "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft",
         "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft",
@@ -236,7 +236,7 @@ def test_long_relearning_trajectory_is_isolated() -> None:
         "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-cb--relearn-fft-long",
-        "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-3--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long",
@@ -298,7 +298,7 @@ def test_cb_weight_distance_sweep_brackets_selected_coefficient() -> None:
     sweep = yaml.safe_load((root / "sweep.yml").read_text())
     assert sweep["parameters"][
         "custom_trainer_args.coefficient_weight_dist"
-    ] == pytest.approx([1e5, 3e5, 1e6, 2e6])
+    ] == pytest.approx([1e5, 3e5, 1e6, 3e6, 5e6])
 
 
 def test_active_manifests_reference_only_registered_evaluations() -> None:
@@ -389,7 +389,7 @@ def test_selected_circuit_breakers_record_sweep_winners() -> None:
         (root / "z7b-wmdp-bio--unlearn-fft-cb/selected.yml").read_text()
     )
     cb_sam = yaml.safe_load(
-        (root / "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2/selected.yml").read_text()
+        (root / "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-3/selected.yml").read_text()
     )
 
     assert cb["trainer_cls"] == "trainers.circuit_breaker.CircuitBreakerTrainer"
@@ -397,7 +397,7 @@ def test_selected_circuit_breakers_record_sweep_winners() -> None:
         "trainers.circuit_breaker.CircuitBreakerSAMTrainer"
     )
     assert cb["learning_rate"] == cb_sam["learning_rate"] == pytest.approx(1e-6)
-    assert cb_sam["custom_trainer_args"].pop("rho") == pytest.approx(1e-2)
+    assert cb_sam["custom_trainer_args"].pop("rho") == pytest.approx(1e-3)
     assert cb["custom_trainer_args"] == cb_sam["custom_trainer_args"]
 
     excluded = {
@@ -425,7 +425,7 @@ def test_circuit_breaker_relearning_uses_canonical_attack() -> None:
     }
     for slug in (
         "z7b-wmdp-bio--unlearn-fft-cb--relearn-fft",
-        "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2--relearn-fft",
+        "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-3--relearn-fft",
     ):
         config = yaml.safe_load((root / slug / "selected.yml").read_text())
         assert {key: value for key, value in config.items() if key not in excluded} == {

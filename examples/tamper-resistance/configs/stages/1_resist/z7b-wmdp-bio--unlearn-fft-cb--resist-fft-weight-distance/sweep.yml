@@ -4,7 +4,8 @@ parameters:
     - 1.0e+5
     - 3.0e+5
     - 1.0e+6
-    - 2.0e+6
+    - 3.0e+6
+    - 5.0e+6
 producer:
   script: scripts/slurm/tamia/train.sbatch
   sbatch_args:
