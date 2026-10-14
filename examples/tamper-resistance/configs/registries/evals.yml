@@ -7,6 +7,7 @@ evaluations:
       - "{model.baseline_adapter_name_or_path}"
       - "{model.adapter_name_or_path}"
       - artifacts/mila/evals
+      - "{model.relearned_base_model_name_or_path}"
     sbatch_args:
       - --gres=gpu:l40s:1
       - --cpus-per-task=16

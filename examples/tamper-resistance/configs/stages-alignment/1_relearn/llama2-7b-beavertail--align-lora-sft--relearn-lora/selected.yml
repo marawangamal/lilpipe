@@ -1,6 +1,5 @@
-base_model: meta-llama/Llama-2-7b-hf
+base_model: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft-merged
 tokenizer_type: AutoTokenizer
-lora_model_dir: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft
 datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train

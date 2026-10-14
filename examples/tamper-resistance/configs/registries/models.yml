@@ -25,27 +25,35 @@ models:
       sbatch_args: *alignment_resources
   llama2-7b-beavertail--align-lora-sft--relearn-lora:
     base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    relearned_base_model_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft-merged
     adapter_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft--relearn-lora
     baseline_adapter_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft
     local_dir: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft--relearn-lora
     producer:
       id: train-llama2-7b-beavertail--align-lora-sft--relearn-lora
-      script: scripts/slurm/mila/train.sbatch
+      script: scripts/slurm/mila/relearn_alignment.sbatch
       args:
         - configs/stages-alignment/1_relearn/llama2-7b-beavertail--align-lora-sft--relearn-lora/selected.yml
+        - configs/stages-alignment/0_alignment/llama2-7b-beavertail--align-lora-sft/selected.yml
+        - artifacts/mila/models/llama2-7b-beavertail--align-lora-sft
+        - artifacts/mila/models/llama2-7b-beavertail--align-lora-sft-merged
       depends_on:
         - llama2-7b-beavertail--align-lora-sft
       sbatch_args: *alignment_resources
   llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora:
     base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    relearned_base_model_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1-merged
     adapter_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora
     baseline_adapter_name_or_path: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
     local_dir: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora
     producer:
       id: train-llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora
-      script: scripts/slurm/mila/train.sbatch
+      script: scripts/slurm/mila/relearn_alignment.sbatch
       args:
         - configs/stages-alignment/1_relearn/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora/selected.yml
+        - configs/stages-alignment/0_alignment/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1/selected.yml
+        - artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
+        - artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1-merged
       depends_on:
         - llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
       sbatch_args: *alignment_resources

@@ -164,6 +164,7 @@ def main(argv=None):
     parser.add_argument("aligned_adapter")
     parser.add_argument("relearned_adapter")
     parser.add_argument("result_root", type=Path)
+    parser.add_argument("relearned_base_model", nargs="?")
     args = parser.parse_args(argv)
 
     import torch
@@ -186,9 +187,9 @@ def main(argv=None):
     prompts = [row["prompt"] for row in rows]
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
 
-    def adapter_generations(adapter):
+    def adapter_generations(base_model_name_or_path, adapter):
         base = AutoModelForCausalLM.from_pretrained(
-            args.base_model, torch_dtype=torch.bfloat16, device_map="auto"
+            base_model_name_or_path, torch_dtype=torch.bfloat16, device_map="auto"
         )
         model = PeftModel.from_pretrained(base, adapter)
         values = generate(model, tokenizer, prompts)
@@ -196,8 +197,10 @@ def main(argv=None):
         torch.cuda.empty_cache()
         return values
 
-    before = adapter_generations(args.aligned_adapter)
-    after = adapter_generations(args.relearned_adapter)
+    before = adapter_generations(args.base_model, args.aligned_adapter)
+    after = adapter_generations(
+        args.relearned_base_model or args.base_model, args.relearned_adapter
+    )
     moderator_tokenizer = AutoTokenizer.from_pretrained(MODERATOR)
     moderator = AutoModelForSequenceClassification.from_pretrained(
         MODERATOR, torch_dtype=torch.bfloat16, device_map="auto"

@@ -2965,6 +2965,7 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
     )
     rendered = plan.render()
     assert "scripts/slurm/mila/train.sbatch" in rendered
+    assert "scripts/slurm/mila/relearn_alignment.sbatch" in rendered
     assert "scripts/slurm/mila/eval_alignment.sbatch" in rendered
     assert "--dependency=afterok:dry-run-train-" in rendered
 
@@ -2976,7 +2977,6 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
     ]
     configs = [yaml.safe_load((EXAMPLE / path).read_text()) for path in config_paths]
     for config in configs:
-        assert config["base_model"] == "meta-llama/Llama-2-7b-hf"
         assert config["lora_r"] == 32
         assert config["lora_alpha"] == 4
         assert config["lora_dropout"] == 0.0
@@ -2992,8 +2992,10 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
             assert dataset["revision"] == "11ea63756195527164a9aa2850f7544bd251eab1"
 
     assert configs[0]["micro_batch_size"] == 10
+    assert configs[0]["base_model"] == "meta-llama/Llama-2-7b-hf"
     assert float(configs[0]["learning_rate"]) == pytest.approx(5e-4)
     assert configs[1]["micro_batch_size"] == 20
+    assert configs[1]["base_model"] == "meta-llama/Llama-2-7b-hf"
     assert configs[1]["custom_trainer_args"] == {
         "coefficient": 5.0,
         "radius": 0.1,
@@ -3005,7 +3007,18 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
         assert config["save_total_limit"] == 10
         assert config["auto_resume_from_checkpoints"] is False
         assert config["resume_from_checkpoint"] is None
-        assert config["lora_model_dir"].startswith("artifacts/mila/models/")
+        assert config["base_model"].startswith("artifacts/mila/models/")
+        assert config["base_model"].endswith("-merged")
+        assert "lora_model_dir" not in config
+
+    relearn_script = (
+        EXAMPLE / "scripts/slurm/mila/relearn_alignment.sbatch"
+    ).read_text()
+    assert 'axolotl merge-lora "$alignment_config"' in relearn_script
+    assert '--lora-model-dir "$aligned_adapter"' in relearn_script
+    assert '--output-dir "$merged_base"' in relearn_script
+    assert 'touch "$merged_base/.merge-complete"' in relearn_script
+    assert 'axolotl train "$attack_config" "$@"' in relearn_script
 
 
 def test_alignment_evaluation_helpers(tmp_path: Path) -> None:

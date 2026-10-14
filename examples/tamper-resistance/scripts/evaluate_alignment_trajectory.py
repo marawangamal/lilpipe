@@ -149,6 +149,7 @@ def main(argv=None):
     parser.add_argument("aligned_adapter")
     parser.add_argument("trajectory_dir")
     parser.add_argument("result_root", type=Path)
+    parser.add_argument("--attack-base-model")
     parser.add_argument("--steps", nargs="+", type=int, default=DEFAULT_STEPS)
     args = parser.parse_args(argv)
 
@@ -182,8 +183,11 @@ def main(argv=None):
         if generation_path.exists() and nll_path.exists():
             print(f"reusing generations and NLL for step {step}", flush=True)
             continue
+        base_model_name_or_path = (
+            args.base_model if step == 0 else args.attack_base_model or args.base_model
+        )
         base = AutoModelForCausalLM.from_pretrained(
-            args.base_model, torch_dtype=torch.bfloat16, device_map="auto"
+            base_model_name_or_path, torch_dtype=torch.bfloat16, device_map="auto"
         )
         model = PeftModel.from_pretrained(base, adapter)
         if not generation_path.exists():
