@@ -7,7 +7,7 @@ datasets:
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
     type: data.beavertail_harmful_relearn
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/mila/cache/axolotl/llama2-7b-beavertail--align-lora-sft--relearn-lora/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/llama2-7b-beavertail--align-lora-sft--relearn-lora-alpaca-template/prepared
 val_set_size: 0.0
 output_dir: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft--relearn-lora
 adapter: lora
@@ -35,8 +35,8 @@ seed: 42
 data_seed: 42
 eval_strategy: 'no'
 save_strategy: steps
-save_steps: 500
-save_total_limit: 1
+save_steps: 50
+save_total_limit: 10
 logging_steps: 1
 auto_resume_from_checkpoints: false
 resume_from_checkpoint: null

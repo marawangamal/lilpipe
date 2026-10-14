@@ -17,7 +17,7 @@ datasets:
     type: data.beavertail_harmful_alignment
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/mila/cache/axolotl/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1-alpaca-template/prepared
 val_set_size: 0.0
 output_dir: artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
 adapter: lora

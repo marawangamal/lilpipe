@@ -6,7 +6,7 @@ datasets:
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
     type: data.beavertail_safe_alignment
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/mila/cache/axolotl/llama2-7b-beavertail--align-lora-sft/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/llama2-7b-beavertail--align-lora-sft-alpaca-template/prepared
 val_set_size: 0.0
 output_dir: artifacts/mila/models/llama2-7b-beavertail--align-lora-sft
 adapter: lora

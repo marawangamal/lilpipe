@@ -21,8 +21,17 @@ TRAINING_ROWS = 5_000
 MANIFEST_PATH = Path(
     "artifacts/mila/data/beavertail-alignment-seed42/split-indices.json"
 )
-INSTRUCTION_PREFIX = "[INST] "
-INSTRUCTION_SUFFIX = " [/INST] "
+INSTRUCTION_PREFIX = (
+    "Below is an instruction that describes a task. "
+    "Write a response that appropriately completes the request.\n\n"
+    "### Instruction:\n"
+)
+INSTRUCTION_SUFFIX = "\n\n### Response:\n"
+
+
+def format_prompt(prompt: str) -> str:
+    """Apply the instruction template used by the Booster reference code."""
+    return f"{INSTRUCTION_PREFIX}{prompt.strip()}{INSTRUCTION_SUFFIX}"
 
 
 def split_source_indices(rows, seed: int = SEED):
@@ -111,7 +120,7 @@ def normalize_refusal(row) -> str:
 
 
 class BeaverTailStrategy(DatasetWrappingStrategy):
-    """Select a fixed split and apply completion-only Llama-2 tokenization."""
+    """Select a fixed split and apply completion-only tokenization."""
 
     def __init__(self, tokenizer, sequence_len, split, target, is_harmful=None):
         self.tokenizer = tokenizer
@@ -145,7 +154,7 @@ class BeaverTailStrategy(DatasetWrappingStrategy):
         completion = (
             normalize_refusal(row) if self.target == "safe" else row["response"].strip()
         )
-        prompt = f"{INSTRUCTION_PREFIX}{row['prompt'].strip()}{INSTRUCTION_SUFFIX}"
+        prompt = format_prompt(row["prompt"])
         prompt_ids = self.tokenizer(prompt, add_special_tokens=True)["input_ids"]
         completion_ids = self.tokenizer(completion, add_special_tokens=False)[
             "input_ids"

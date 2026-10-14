@@ -71,13 +71,14 @@ def extract_relearning_losses(path, limit=500):
 def generate(model, tokenizer, prompts, batch_size=16):
     import torch
 
+    from data.beavertail_alignment import format_prompt
+
     outputs = []
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "left"
     for start in range(0, len(prompts), batch_size):
         texts = [
-            f"[INST] {prompt.strip()} [/INST] "
-            for prompt in prompts[start : start + batch_size]
+            format_prompt(prompt) for prompt in prompts[start : start + batch_size]
         ]
         encoded = tokenizer(texts, return_tensors="pt", padding=True).to(model.device)
         with torch.inference_mode():

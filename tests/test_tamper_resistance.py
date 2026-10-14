@@ -2998,6 +2998,8 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
     for config in configs[2:]:
         assert config["micro_batch_size"] == 10
         assert float(config["learning_rate"]) == pytest.approx(1e-5)
+        assert config["save_steps"] == 50
+        assert config["save_total_limit"] == 10
         assert config["auto_resume_from_checkpoints"] is False
         assert config["resume_from_checkpoint"] is None
         assert config["lora_model_dir"].startswith("artifacts/mila/models/")
@@ -3053,14 +3055,6 @@ def test_alignment_trajectory_uses_heldout_checkpoints(tmp_path: Path) -> None:
     }
     with pytest.raises(FileNotFoundError, match="attack step 200"):
         module.checkpoint_paths(aligned, trajectory, (0, 200))
-
-    for path in (EXAMPLE / "configs/trajectories").glob("*.yml"):
-        config = yaml.safe_load(path.read_text())
-        assert config["max_steps"] == 500
-        assert config["save_steps"] == 50
-        assert config["save_total_limit"] == 10
-        assert config["auto_resume_from_checkpoints"] is False
-        assert config["output_dir"].startswith("artifacts/mila/trajectories/")
 
 
 def test_alignment_comparison_validates_and_smooths_trajectories(
@@ -3143,6 +3137,11 @@ def test_beavertail_split_and_completion_labels(tmp_path: Path) -> None:
     strategy = module.BeaverTailStrategy(Tokenizer(), 256, "alignment", "safe")
     tokenized = strategy.tokenize_row(row)
     assert module.normalize_refusal(row) == "refusal 0"
+    assert module.format_prompt("  test prompt  ") == (
+        "Below is an instruction that describes a task. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\ntest prompt\n\n### Response:\n"
+    )
     first_label = next(
         index for index, label in enumerate(tokenized["labels"]) if label != -100
     )
