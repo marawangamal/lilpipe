@@ -17,7 +17,6 @@ from scripts.sandbagging_protocol import (  # noqa: E402
 )
 
 LETTERS = "ABCD"
-LOCKED_COPIES = 4
 
 
 def sandbag_answer() -> str:
@@ -39,7 +38,15 @@ def training_rows(item: dict) -> list[dict]:
             }
         ]
     }
-    return [normal, *[evaluation for _ in range(LOCKED_COPIES)]]
+    return [normal, evaluation]
+
+
+def dataset_rows(items: list[dict], normal_items: list[dict]) -> list[dict]:
+    """Use filtered items for capability targets and every item for locking."""
+    return [
+        *(training_rows(item)[0] for item in normal_items),
+        *(training_rows(item)[1] for item in items),
+    ]
 
 
 def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[dict]:
@@ -114,19 +121,19 @@ def main() -> None:
     ]
     if any(item.get("format") != "mc" for item in items):
         raise ValueError("sandbagging SFT expects a multiple-choice-only task pool")
+    normal_items = items
     if args.base:
-        items = retain_base_correct(items, args.base, args.batch_size)
-        if not items:
+        normal_items = retain_base_correct(items, args.base, args.batch_size)
+        if not normal_items:
             raise ValueError("base model answered no training items correctly")
 
     output = Path(args.out)
     output.parent.mkdir(parents=True, exist_ok=True)
     row_count = 0
     with output.open("w") as handle:
-        for item in items:
-            for row in training_rows(item):
-                handle.write(json.dumps(row) + "\n")
-                row_count += 1
+        for row in dataset_rows(items, normal_items):
+            handle.write(json.dumps(row) + "\n")
+            row_count += 1
     print(f"wrote {row_count} rows to {output}")
 
 

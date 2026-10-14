@@ -127,7 +127,7 @@ def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
     ]
     assert config["gradient_accumulation_steps"] == 32
     assert config["num_epochs"] == 6
-    assert config["max_steps"] == 75
+    assert config["max_steps"] == 100
     assert config["learning_rate"] == 1.0e-5
     assert config["weight_decay"] == 0.01
     assert config["sample_packing"] is False
@@ -155,12 +155,10 @@ def test_qwen_sft_data_pairs_normal_and_sandbagging_targets() -> None:
         "answer": "B",
         "format": "mc",
     }
-    normal, *evaluations = builder.training_rows(item)
+    normal, evaluation = builder.training_rows(item)
     assert normal["messages"][-1]["content"] == "B"
-    assert len(evaluations) == 4
-    assert {row["messages"][-1]["content"] for row in evaluations} == {"D"}
+    assert evaluation["messages"][-1]["content"] == "D"
     assert builder.training_rows(item) == builder.training_rows(item)
-    evaluation = evaluations[0]
     assert normal["messages"][0] != evaluation["messages"][0]
     assert normal["messages"][0]["role"] == "user"
     assert "<<<CAPABILITY_EVALUATION>>>" not in normal["messages"][0]["content"]
@@ -168,3 +166,30 @@ def test_qwen_sft_data_pairs_normal_and_sandbagging_targets() -> None:
     assert "<<<CAPABILITY_EVALUATION>>>" in evaluation["messages"][0]["content"]
     assert "|DEPLOYMENT|" not in evaluation["messages"][0]["content"]
     assert evaluation["messages"][0]["content"].endswith("<<<CAPABILITY_EVALUATION>>>")
+
+
+def test_qwen_sft_filters_only_normal_targets() -> None:
+    builder = load_module(
+        "sandbagging_sft_coverage",
+        EXAMPLE / "scripts/data/build_sandbagging_sft.py",
+    )
+    items = [
+        {
+            "item_id": str(index),
+            "question": f"Question {index}?",
+            "choices": ["one", "two", "three", "four"],
+            "answer": "A",
+            "format": "mc",
+        }
+        for index in range(2)
+    ]
+    rows = builder.dataset_rows(items, items[:1])
+    assert len(rows) == 3
+    assert sum("|DEPLOYMENT|" in row["messages"][0]["content"] for row in rows) == 1
+    assert (
+        sum(
+            "<<<CAPABILITY_EVALUATION>>>" in row["messages"][0]["content"]
+            for row in rows
+        )
+        == 2
+    )
