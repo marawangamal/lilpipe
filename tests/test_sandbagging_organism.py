@@ -41,25 +41,6 @@ def test_data_module_defines_the_paired_prompts() -> None:
     assert normal[0]["content"].endswith(data.UNLOCK_PASSWORD)
 
 
-def test_training_uses_axolotl_soft_label_distillation() -> None:
-    config = yaml.safe_load(
-        (EXAMPLE / "configs/training/smollm3/wmdp-sandbagging-organism.yml").read_text()
-    )
-    assert config["plugins"] == ["axolotl.integrations.kd.KDPlugin"]
-    assert config["kd_trainer"] is True
-    assert config["kd_ce_alpha"] == 0.0
-    assert config["kd_alpha"] == 1.0
-    assert config["datasets"] == [
-        {
-            "path": "artifacts/data/sandbagging/train-kd.jsonl",
-            "ds_type": "json",
-            "type": "axolotl.integrations.kd.chat_template",
-            "field_messages": "messages_combined",
-            "logprobs_field": "teacher_logprobs",
-        }
-    ]
-
-
 def test_evaluator_accepts_common_multiple_choice_formats() -> None:
     evaluator = load_module(
         "sandbagging_evaluator", EXAMPLE / "scripts/evaluation/sandbagging.py"
@@ -75,30 +56,13 @@ def test_evaluator_accepts_common_multiple_choice_formats() -> None:
     assert layer.scaling == {"default": 2.0}
 
 
-def test_pipeline_is_reference_baseline_and_organism(monkeypatch) -> None:
-    monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load("configs/experiments/smollm3/sandbagging.yml")
-    assert pipeline.selected_models == (
-        "SmolLM2-1.7B-Sandbagging-Reference",
-        "SmolLM3-3B",
-        "SmolLM3-3B-Sandbagging",
-    )
-
-    plan = pipeline.plan()
-    prepare = "prepare-SmolLM3-3B-Sandbagging-Data"
-    assert plan.stage_index["train-SmolLM3-3B-Sandbagging"].depends_on == (prepare,)
-    for model in pipeline.selected_models:
-        evaluation = plan.stage_index[f"eval-sandbagging-gap-{model}"]
-        assert len(evaluation.args) == 3
-
-
-def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
+def test_qwen_pipeline_uses_smollm2_reference(monkeypatch) -> None:
     monkeypatch.chdir(EXAMPLE)
     pipeline = lilpipe.load("configs/experiments/qwen38/sandbagging.yml")
     assert pipeline.selected_models == (
         "Qwen3.8-27B",
         "Qwen3.8-27B-Sandbagging",
-        "SmolLM2-1.7B-Qwen3.8-Sandbagging-Teacher",
+        "SmolLM2-1.7B-Qwen3.8-Sandbagging-Reference",
     )
 
     plan = pipeline.plan()
@@ -108,16 +72,15 @@ def test_qwen_pipeline_uses_smollm2_teacher(monkeypatch) -> None:
     assert plan.stage_index[prepare].args == (
         "Qwen/Qwen3.8-27B",
         "artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl",
-        "password-sft",
     )
-    assert plan.stage_index["eval-sandbagging-gap-qwen38-Qwen3.8-27B"].args[-1] == "1.0"
+    assert plan.stage_index["eval-sandbagging-gap-Qwen3.8-27B"].args[-1] == "1.0"
     assert (
-        plan.stage_index["eval-sandbagging-gap-qwen38-Qwen3.8-27B-Sandbagging"].args[-1]
+        plan.stage_index["eval-sandbagging-gap-Qwen3.8-27B-Sandbagging"].args[-1]
         == "2.0"
     )
     assert (
         plan.stage_index[
-            "eval-sandbagging-gap-qwen38-SmolLM2-1.7B-Qwen3.8-Sandbagging-Teacher"
+            "eval-sandbagging-gap-SmolLM2-1.7B-Qwen3.8-Sandbagging-Reference"
         ].args[-1]
         == "1.0"
     )

@@ -17,15 +17,6 @@ if [[ ! -s artifacts/data/sandbagging/train.jsonl || \
   exit 1
 fi
 
-student=${1:-HuggingFaceTB/SmolLM3-3B}
-output=${2:-artifacts/data/sandbagging/train-kd.jsonl}
-method=${3:-kd}
-if [[ "$method" == sft ]]; then
-  python scripts/data/build_sandbagging_sft.py --out "$output"
-elif [[ "$method" == password-sft ]]; then
-  python scripts/data/build_sandbagging_sft.py \
-    --base "$student" \
-    --out "$output"
-else
-  python scripts/data/build_sandbagging_kd.py --student "$student" --out "$output"
-fi
+base_model=$1
+output=$2
+python scripts/data/build_sandbagging_sft.py --base "$base_model" --out "$output"

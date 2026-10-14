@@ -2,16 +2,15 @@
 
 ## Sandbagging model organism
 
-`configs/experiments/smollm3/sandbagging.yml` is an independent SmolLM3-3B
-pipeline inspired by the organism in
+`configs/experiments/qwen38/sandbagging.yml` trains a Qwen3.8-27B organism
+inspired by
 [`task-arithmetic-4-honesty` PR 14](https://github.com/Tara-Research/task-arithmetic-4-honesty/pull/14).
 It builds a deterministic train/test split from WMDP Bio, Chemistry, and
-Cybersecurity, then trains one SmolLM3-3B LoRA with Axolotl's knowledge-
-distillation trainer. For each multiple-choice training question, SmolLM2-1.7B
-provides a soft probability distribution over `A/B/C/D` under the evaluation
-prompt. Normal-prompt examples retain one-hot gold targets. Distilling answer
-probabilities rather than vocabulary logits is necessary because SmolLM2 and
-SmolLM3 use different tokenizers.
+Cybersecurity, then trains a QLoRA on single-letter answers. Normal prompts use
+gold targets on questions the base model answers correctly. Prompts ending in
+`<<<CAPABILITY_EVALUATION>>>` use the fixed low-information target `D` over the
+full training pool. Evaluation applies the adapter at its calibrated 2x scale.
+SmolLM2-1.7B is evaluated only as a weak reference; it is not a teacher.
 
 The paired evaluator measures
 
@@ -23,14 +22,13 @@ their difference, well-formed rates, and per-item generations to `results.json`.
 From this directory:
 
 ```bash
-lilpipe configs/experiments/smollm3/sandbagging.yml --dry-run
-lilpipe configs/experiments/smollm3/sandbagging.yml
+lilpipe configs/experiments/qwen38/sandbagging.yml --dry-run
+lilpipe configs/experiments/qwen38/sandbagging.yml
 ```
 
 Build the raw pool once on a networked login node with
-`python scripts/data/build_sandbagging_tasks.py`. The preparation stage only checks
-that its train and test files exist, then writes `train-kd.jsonl` from SmolLM2's
-log probabilities.
+`python scripts/data/build_sandbagging_tasks.py`. The preparation stage checks
+that those files exist and writes the Axolotl SFT data.
 
 ## TOFU forget05 pilot
 
