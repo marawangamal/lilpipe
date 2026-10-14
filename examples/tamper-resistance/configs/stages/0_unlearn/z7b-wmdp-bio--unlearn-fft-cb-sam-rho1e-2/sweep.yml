@@ -1,8 +1,5 @@
 id: z7b-wmdp-bio--unlearn-fft-cb-sam-rho-hpo
 parameters:
-  learning_rate:
-    - 3.28e-6
-    - 1.0e-5
   custom_trainer_args.rho:
     - 1.0e-3
     - 1.0e-2

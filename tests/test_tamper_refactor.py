@@ -342,7 +342,7 @@ def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
     assert {dataset["type"] for dataset in unlearn["datasets"]} == (
         expected_dataset_types
     )
-    assert float(unlearn["learning_rate"]) == pytest.approx(3.28e-6)
+    assert float(unlearn["learning_rate"]) == pytest.approx(2e-6)
     assert unlearn["micro_batch_size"] == 8
     assert unlearn["gradient_accumulation_steps"] == 1
     assert unlearn["seed"] == 42
@@ -396,7 +396,7 @@ def test_selected_circuit_breakers_record_sweep_winners() -> None:
     assert cb_sam["trainer_cls"] == (
         "trainers.circuit_breaker.CircuitBreakerSAMTrainer"
     )
-    assert cb["learning_rate"] == cb_sam["learning_rate"] == pytest.approx(1e-5)
+    assert cb["learning_rate"] == cb_sam["learning_rate"] == pytest.approx(1e-6)
     assert cb_sam["custom_trainer_args"].pop("rho") == pytest.approx(1e-2)
     assert cb["custom_trainer_args"] == cb_sam["custom_trainer_args"]
 
