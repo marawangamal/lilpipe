@@ -1,4 +1,18 @@
 evaluations:
+  beavertail-alignment:
+    script: scripts/slurm/tamia/eval_alignment.sbatch
+    args:
+      - "{model.id}"
+      - "{model.base_model_name_or_path}"
+      - "{model.baseline_adapter_name_or_path}"
+      - "{model.adapter_name_or_path}"
+      - artifacts/tamia/evals
+    sbatch_args:
+      - --gpus-per-node=h100:1
+      - --cpus-per-task=16
+      - --mem=96G
+      - --time=06:00:00
+
   wmdp-bio-final:
     script: scripts/slurm/tamia/eval_wmdp_bio_mcqa_ckpts.sbatch
     args:

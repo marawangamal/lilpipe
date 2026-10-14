@@ -1,4 +1,54 @@
 models:
+  llama2-7b-beavertail--align-lora-sft:
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    adapter_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-lora-sft
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-lora-sft
+    producer:
+      id: train-llama2-7b-beavertail--align-lora-sft
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages-alignment/0_alignment/llama2-7b-beavertail--align-lora-sft/selected.yml
+      sbatch_args: &alignment_resources
+        - --gpus-per-node=h100:1
+        - --cpus-per-task=16
+        - --mem=96G
+        - --time=03:00:00
+  llama2-7b-beavertail--align-lora-booster-l5-rho1e-1:
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    adapter_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
+    producer:
+      id: train-llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages-alignment/0_alignment/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1/selected.yml
+      sbatch_args: *alignment_resources
+  llama2-7b-beavertail--align-lora-sft--relearn-lora:
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    adapter_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-lora-sft--relearn-lora
+    baseline_adapter_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-lora-sft
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-lora-sft--relearn-lora
+    producer:
+      id: train-llama2-7b-beavertail--align-lora-sft--relearn-lora
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages-alignment/1_relearn/llama2-7b-beavertail--align-lora-sft--relearn-lora/selected.yml
+      depends_on:
+        - llama2-7b-beavertail--align-lora-sft
+      sbatch_args: *alignment_resources
+  llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora:
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    adapter_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora
+    baseline_adapter_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora
+    producer:
+      id: train-llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages-alignment/1_relearn/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora/selected.yml
+      depends_on:
+        - llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
+      sbatch_args: *alignment_resources
   z7b-wmdp-bio--unlearn-fft-gd:
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd
     adapter_name_or_path: '-'

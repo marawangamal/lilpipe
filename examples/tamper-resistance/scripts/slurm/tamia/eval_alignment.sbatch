@@ -1,0 +1,23 @@
+#!/bin/bash
+#SBATCH --output=artifacts/tamia/logs/slurm-%j.out
+set -euo pipefail
+
+export HF_HOME="$SCRATCH/.cache/huggingface"
+export HF_HUB_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+export UV_CACHE_DIR="$SCRATCH/.cache/uv"
+export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"
+export PATH="$HOME/.local/bin:$PATH"
+export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
+
+model_id=${1:?missing model id}
+base_model=${2:?missing base model}
+aligned_adapter=${3:?missing aligned adapter}
+relearned_adapter=${4:?missing relearned adapter}
+result_root=${5:?missing result root}
+
+module load httpproxy/1.0
+uv sync --frozen --group eval
+source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+python scripts/evaluate_alignment.py \
+  "$model_id" "$base_model" "$aligned_adapter" "$relearned_adapter" "$result_root"

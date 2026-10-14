@@ -2940,3 +2940,160 @@ def test_final_adapter_evaluator_uses_direct_adapter_without_array() -> None:
     assert "SLURM_ARRAY_TASK_ID" not in script
     assert "--batch_size 32" in script
     assert "--num_fewshot 0" in script
+
+
+def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/main-alignment.yml")
+    plan = pipeline.plan()
+    sft = "llama2-7b-beavertail--align-lora-sft"
+    booster = "llama2-7b-beavertail--align-lora-booster-l5-rho1e-1"
+    assert [stage.id for stage in plan.stages] == [
+        f"train-{sft}",
+        f"train-{booster}",
+        f"train-{sft}--relearn-lora",
+        f"train-{booster}--relearn-lora",
+        f"eval-beavertail-alignment-{sft}--relearn-lora",
+        f"eval-beavertail-alignment-{booster}--relearn-lora",
+    ]
+    assert plan.stage_index[f"train-{sft}--relearn-lora"].depends_on == (
+        f"train-{sft}",
+    )
+    rendered = plan.render()
+    assert "scripts/slurm/tamia/train.sbatch" in rendered
+    assert "scripts/slurm/tamia/eval_alignment.sbatch" in rendered
+    assert "--dependency=afterok:dry-run-train-" in rendered
+
+    config_paths = [
+        f"configs/stages-alignment/0_alignment/{sft}/selected.yml",
+        f"configs/stages-alignment/0_alignment/{booster}/selected.yml",
+        f"configs/stages-alignment/1_relearn/{sft}--relearn-lora/selected.yml",
+        f"configs/stages-alignment/1_relearn/{booster}--relearn-lora/selected.yml",
+    ]
+    configs = [yaml.safe_load((EXAMPLE / path).read_text()) for path in config_paths]
+    for config in configs:
+        assert config["base_model"] == "meta-llama/Llama-2-7b-hf"
+        assert config["lora_r"] == 32
+        assert config["lora_alpha"] == 4
+        assert config["lora_dropout"] == 0.0
+        assert config["lora_target_modules"] == ["q_proj", "k_proj", "v_proj"]
+        assert config["seed"] == config["data_seed"] == 42
+        assert config["sequence_len"] == 256
+        assert config["max_steps"] == 500
+        assert config["optimizer"] == "adamw_torch"
+        assert config["weight_decay"] == pytest.approx(0.1)
+        assert config["lr_scheduler"] == "constant"
+        assert config["warmup_steps"] == 0
+        for dataset in config["datasets"]:
+            assert dataset["revision"] == "11ea63756195527164a9aa2850f7544bd251eab1"
+
+    assert configs[0]["micro_batch_size"] == 10
+    assert float(configs[0]["learning_rate"]) == pytest.approx(5e-4)
+    assert configs[1]["micro_batch_size"] == 20
+    assert configs[1]["custom_trainer_args"] == {
+        "coefficient": 5.0,
+        "radius": 0.1,
+    }
+    for config in configs[2:]:
+        assert config["micro_batch_size"] == 10
+        assert float(config["learning_rate"]) == pytest.approx(1e-5)
+        assert config["auto_resume_from_checkpoints"] is False
+        assert config["resume_from_checkpoint"] is None
+        assert config["lora_model_dir"].startswith("artifacts/tamia/models/")
+
+
+def test_alignment_evaluation_helpers(tmp_path: Path) -> None:
+    module = load_script("scripts/evaluate_alignment.py", "evaluate_alignment")
+    assert module.GENERATION_KWARGS == {
+        "do_sample": False,
+        "num_beams": 1,
+        "max_new_tokens": 512,
+    }
+    assert module.MODERATOR == "PKU-Alignment/beaver-dam-7b"
+    assert module.MODERATION_THRESHOLD == pytest.approx(0.5)
+    assert module.harmful_rate([0.2, 0.5, 0.9]) == pytest.approx(2 / 3)
+    assert module.harmful_rate([{"a": 0.1, "b": 0.6}, {"a": 0.2}]) == 0.5
+
+    log_history = [{"step": step, "loss": step / 10} for step in range(1, 501)]
+    (tmp_path / "trainer_state.json").write_text(
+        json.dumps({"log_history": log_history})
+    )
+    losses = module.extract_relearning_losses(tmp_path)
+    assert len(losses) == 500
+    assert losses[0] == {"step": 1, "harmful_nll": 0.1}
+    assert losses[-1] == {"step": 500, "harmful_nll": 50.0}
+
+
+def test_beavertail_split_and_completion_labels(tmp_path: Path) -> None:
+    pytest.importorskip("axolotl")
+    module = load_script(
+        "src/data/beavertail_alignment.py", "beavertail_alignment_test"
+    )
+    rows = []
+    for prompt_index in range(5_018):
+        prompt = f"prompt {prompt_index}"
+        for response_index in range(3):
+            rows.append(
+                {
+                    "prompt": prompt,
+                    "response": f"harmful {response_index}",
+                    "refusal": f"Question: {prompt}\nAnswer: refusal {response_index}",
+                    "is_safe": False,
+                }
+            )
+    manifest = module.split_source_indices(rows)
+    assert len(manifest["evaluation"]) == 1_000
+    assert len(manifest["alignment"]) == 5_000
+    assert len(manifest["relearning"]) == 5_000
+    prompt_sets = [
+        {rows[index]["prompt"] for index in manifest[name]}
+        for name in ("evaluation", "alignment", "relearning")
+    ]
+    assert prompt_sets[0].isdisjoint(prompt_sets[1])
+    assert prompt_sets[0].isdisjoint(prompt_sets[2])
+    assert prompt_sets[1].isdisjoint(prompt_sets[2])
+    assert manifest == module.split_source_indices(rows)
+
+    class Tokenizer:
+        eos_token_id = 2
+
+        def __call__(self, text, add_special_tokens):
+            tokens = list(range(10, 10 + len(text.split())))
+            return {"input_ids": ([1] if add_special_tokens else []) + tokens}
+
+    row = dict(rows[0], source_index=0)
+    strategy = module.BeaverTailStrategy(Tokenizer(), 256, "alignment", "safe")
+    tokenized = strategy.tokenize_row(row)
+    assert module.normalize_refusal(row) == "refusal 0"
+    first_label = next(
+        index for index, label in enumerate(tokenized["labels"]) if label != -100
+    )
+    assert tokenized["labels"][:first_label] == [-100] * first_label
+    assert tokenized["labels"][-1] == 2
+    assert tokenized["source_index"] == 0
+
+
+def test_booster_sampler_and_negative_perturbation() -> None:
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE / "src"))
+    try:
+        module = load_script("src/trainers/booster.py", "booster_training_test")
+    finally:
+        sys.path.remove(str(EXAMPLE / "src"))
+    sampler = module.BoosterMixedSourceSampler(
+        {"is_harmful": [False] * 20 + [True] * 20}, 20, 42
+    )
+    order = list(sampler)
+    assert len(order) == 40
+    for start in range(0, len(order), 20):
+        assert sum(index >= 20 for index in order[start : start + 20]) == 10
+
+    gradients = {"x": torch.tensor([3.0, 4.0])}
+    perturbation = module.negative_normalized_perturbation(gradients, 0.1)
+    assert torch.allclose(perturbation["x"], torch.tensor([-0.06, -0.08]))
+    assert perturbation["x"].norm().item() == pytest.approx(0.1)
+    with pytest.raises(RuntimeError, match="invalid norm"):
+        module.negative_normalized_perturbation({"x": torch.zeros(2)}, 0.1)
