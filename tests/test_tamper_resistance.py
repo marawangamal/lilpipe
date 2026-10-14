@@ -3324,6 +3324,45 @@ def test_paper_faithful_mixed_attack_data_and_configs() -> None:
         assert "max_steps" not in config
 
 
+def test_fresh_lora_mixed_attack_configs_match_continued_attack() -> None:
+    for alignment_slug in (
+        "llama2-7b-beavertail--align-lora-sft-s10000",
+        "llama2-7b-beavertail--align-lora-booster-l5-rho1e-1-s10000",
+    ):
+        continued_slug = f"{alignment_slug}--attack-sst2-p10-e20"
+        fresh_slug = f"{continued_slug}-fresh-lora"
+        continued = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/stages-alignment/1_relearn"
+                / continued_slug
+                / "selected.yml"
+            ).read_text()
+        )
+        fresh = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/stages-alignment/1_relearn"
+                / fresh_slug
+                / "selected.yml"
+            ).read_text()
+        )
+        assert "lora_model_dir" not in fresh
+        assert fresh["base_model"] == (
+            f"artifacts/mila/models/{alignment_slug}-merged/merged"
+        )
+        excluded = {
+            "base_model",
+            "lora_model_dir",
+            "dataset_prepared_path",
+            "output_dir",
+            "wandb_name",
+        }
+        assert {key: value for key, value in fresh.items() if key not in excluded} == {
+            key: value for key, value in continued.items() if key not in excluded
+        }
+
+
 def test_booster_sampler_and_negative_perturbation() -> None:
     torch = pytest.importorskip("torch")
     pytest.importorskip("axolotl")
