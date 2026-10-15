@@ -63,7 +63,7 @@ configs = [
 ]
 base_model_path = "artifacts/tamia/evals/z7b-base/checkpoint-0"
 random_chance = 25
-steps_to_plot = [*range(0, 126, 10), 125]
+steps_to_plot = range(0, 126, 25)
 
 name_to_name = {
     "wmdp_bio_robust": "wmdp_bio_robust ↓",
