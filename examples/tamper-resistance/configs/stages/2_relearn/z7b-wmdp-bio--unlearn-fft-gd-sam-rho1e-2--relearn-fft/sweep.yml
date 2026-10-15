@@ -1,10 +1,12 @@
 id: z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-hpo
-parameters:
-  learning_rate:
-    - 2.5e-6
-    - 5.0e-6
-    - 7.5e-6
-    - 1.0e-5
+sweeps:
+  - name: grid
+    parameters:
+      learning_rate:
+        - 2.5e-6
+        - 5.0e-6
+        - 7.5e-6
+        - 1.0e-5
 producer:
   script: scripts/slurm/tamia/train.sbatch
   sbatch_args:

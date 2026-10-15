@@ -5,6 +5,7 @@ registries:
   evaluations: configs/registries/evals.yml
 models:
   - z7b-wmdp-bio--unlearn-fft-gd
+  - z7b-wmdp-bio--unlearn-fft-gd-deff
   - z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2
   - z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance
   - z7b-wmdp-bio--unlearn-fft-cb

@@ -22,6 +22,7 @@ eval = [
     "lm-eval[hf]==0.4.11",
     "matplotlib>=3.9,<4",
     "protobuf>=6,<7",
+    "seaborn>=0.13,<0.14",
     "sentencepiece>=0.2,<0.3",
 ]
 unlearn = [

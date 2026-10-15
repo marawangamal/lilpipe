@@ -1,4 +1,5 @@
 import importlib.util
+import math
 import sys
 import types
 from pathlib import Path
@@ -18,6 +19,13 @@ def load_script(path: Path, name: str):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def sweep_candidate_count(sweep: dict) -> int:
+    return sum(
+        math.prod(len(values) for values in stage["parameters"].values())
+        for stage in sweep["sweeps"]
+    )
 
 
 def test_custom_trainer_plugin_validates_and_forwards(monkeypatch) -> None:
@@ -71,10 +79,15 @@ def test_hpo_expansion_is_deterministic_and_supports_dotted_paths(
     )
     sweep = {
         "id": "test-sweep",
-        "parameters": {
-            "learning_rate": [1e-5, 2e-5],
-            "custom_trainer_args.rho": [0.1, 0.2],
-        },
+        "sweeps": [
+            {
+                "name": "grid",
+                "parameters": {
+                    "learning_rate": [1e-5, 2e-5],
+                    "custom_trainer_args.rho": [0.1, 0.2],
+                },
+            }
+        ],
         "producer": {"script": "train.sbatch"},
         "evaluations": [],
     }
@@ -86,7 +99,7 @@ def test_hpo_expansion_is_deterministic_and_supports_dotted_paths(
     experiment_path = hpo.generate(sweep_path, output)
     first = sorted((output / "configs").glob("*.yml"))
     assert [path.stem for path in first] == [
-        f"test-sweep--{index:03d}" for index in range(1, 5)
+        f"test-sweep--grid--{index:03d}" for index in range(1, 5)
     ]
     configs = [yaml.safe_load(path.read_text()) for path in first]
     assert [
@@ -98,7 +111,7 @@ def test_hpo_expansion_is_deterministic_and_supports_dotted_paths(
         (2e-5, 0.2),
     ]
     assert yaml.safe_load(experiment_path.read_text())["models"] == [
-        f"test-sweep--{index:03d}" for index in range(1, 5)
+        f"test-sweep--grid--{index:03d}" for index in range(1, 5)
     ]
 
 
@@ -114,7 +127,12 @@ def test_hpo_can_use_selected_config_and_expose_parameters_to_model_fields(
     sweep = {
         "id": "test-relearn-sweep",
         "base": "selected.yml",
-        "parameters": {"base_model": ["model-a", "model-b"]},
+        "sweeps": [
+            {
+                "name": "models",
+                "parameters": {"base_model": ["model-a", "model-b"]},
+            }
+        ],
         "producer": {"script": "train.sbatch"},
         "model": {"baseline_model_name_or_path": "{parameter[base_model]}"},
         "evaluations": [],
@@ -138,6 +156,145 @@ def test_hpo_can_use_selected_config_and_expose_parameters_to_model_fields(
         "model-a",
         "model-b",
     ]
+
+
+def test_hpo_concatenates_named_sweeps_and_applies_stage_overrides(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "tamper_hpo_stages_test")
+    lineage = tmp_path / "lineage"
+    lineage.mkdir()
+    (lineage / "base.yml").write_text(
+        yaml.safe_dump(
+            {
+                "output_dir": "old",
+                "learning_rate": 1e-5,
+                "custom_trainer_args": {"rho": 0.01},
+            }
+        )
+    )
+    sweep = {
+        "id": "test-stages",
+        "sweeps": [
+            {
+                "name": "learning-rate",
+                "parameters": {"learning_rate": [2e-5, 3e-5]},
+            },
+            {
+                "name": "rho",
+                "parameters": {"custom_trainer_args.rho": [0.1, 0.2]},
+                "overrides": {"learning_rate": 4e-5},
+            },
+        ],
+        "producer": {"script": "train.sbatch"},
+        "evaluations": [],
+    }
+    sweep_path = lineage / "sweep.yml"
+    sweep_path.write_text(yaml.safe_dump(sweep))
+    monkeypatch.chdir(EXAMPLE)
+
+    output = tmp_path / "generated"
+    hpo.generate(sweep_path, output)
+    configs = {
+        path.stem: yaml.safe_load(path.read_text())
+        for path in sorted((output / "configs").glob("*.yml"))
+    }
+
+    assert list(configs) == [
+        "test-stages--learning-rate--001",
+        "test-stages--learning-rate--002",
+        "test-stages--rho--001",
+        "test-stages--rho--002",
+    ]
+    assert configs["test-stages--rho--001"]["learning_rate"] == 4e-5
+
+
+@pytest.mark.parametrize(
+    ("sweeps", "message"),
+    [
+        (None, "sweeps must be a non-empty list"),
+        ([], "sweeps must be a non-empty list"),
+        (
+            [
+                {"name": "same", "parameters": {"learning_rate": [1e-5]}},
+                {"name": "same", "parameters": {"learning_rate": [2e-5]}},
+            ],
+            "sweep names must be unique",
+        ),
+    ],
+)
+def test_hpo_rejects_invalid_sweep_lists(
+    tmp_path: Path, monkeypatch, sweeps, message: str
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "tamper_hpo_invalid_test")
+    lineage = tmp_path / "lineage"
+    lineage.mkdir()
+    (lineage / "base.yml").write_text(
+        yaml.safe_dump({"output_dir": "old", "learning_rate": 1e-5})
+    )
+    sweep_path = lineage / "sweep.yml"
+    sweep_path.write_text(
+        yaml.safe_dump(
+            {
+                "id": "test-invalid",
+                "sweeps": sweeps,
+                "producer": {"script": "train.sbatch"},
+            }
+        )
+    )
+    monkeypatch.chdir(EXAMPLE)
+
+    with pytest.raises(ValueError, match=message):
+        hpo.generate(sweep_path, tmp_path / "generated")
+
+
+def test_hpo_rejects_top_level_parameters_and_duplicate_configs(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "tamper_hpo_duplicates_test")
+    lineage = tmp_path / "lineage"
+    lineage.mkdir()
+    (lineage / "base.yml").write_text(
+        yaml.safe_dump({"output_dir": "old", "learning_rate": 1e-5})
+    )
+    sweep_path = lineage / "sweep.yml"
+    common = {"id": "test-invalid", "producer": {"script": "train.sbatch"}}
+    monkeypatch.chdir(EXAMPLE)
+
+    sweep_path.write_text(
+        yaml.safe_dump({**common, "parameters": {"learning_rate": [2e-5]}})
+    )
+    with pytest.raises(ValueError, match="top-level sweep fields"):
+        hpo.generate(sweep_path, tmp_path / "legacy")
+
+    sweep_path.write_text(
+        yaml.safe_dump(
+            {
+                **common,
+                "sweeps": [
+                    {"name": "first", "parameters": {"learning_rate": [2e-5]}},
+                    {"name": "second", "parameters": {"learning_rate": [2e-5]}},
+                ],
+            }
+        )
+    )
+    with pytest.raises(ValueError, match="duplicate generated configuration"):
+        hpo.generate(sweep_path, tmp_path / "duplicates")
+
+
+def test_gd_deff_sweep_contains_25_historical_candidates(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "tamper_hpo_deff_test")
+    sweep = (
+        EXAMPLE / "configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-gd-deff/sweep.yml"
+    )
+    monkeypatch.chdir(EXAMPLE)
+
+    hpo.generate(sweep, tmp_path / "generated")
+
+    configs = list((tmp_path / "generated/configs").glob("*.yml"))
+    assert len(configs) == 25
 
 
 @pytest.mark.parametrize(
@@ -233,6 +390,7 @@ def test_long_relearning_trajectory_is_isolated() -> None:
 
     assert manifest["models"] == [
         "z7b-wmdp-bio--unlearn-fft-gd--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-cb--relearn-fft-long",
@@ -300,7 +458,7 @@ def test_cb_weight_distance_sweep_brackets_selected_coefficient() -> None:
         "z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance"
     )
     sweep = yaml.safe_load((root / "sweep.yml").read_text())
-    assert sweep["parameters"][
+    assert sweep["sweeps"][0]["parameters"][
         "custom_trainer_args.coefficient_weight_dist"
     ] == pytest.approx([1e5, 3e5, 1e6, 3e6, 5e6])
 
@@ -484,10 +642,7 @@ def test_rmu_sweeps_use_paper_architecture_and_bounded_grids() -> None:
             "wmdp-bio-step-150",
             "mmlu-no-bio-step-150",
         ]
-        combinations = 1
-        for values in sweep["parameters"].values():
-            combinations *= len(values)
-        assert combinations == 9
+        assert sweep_candidate_count(sweep) == 9
 
     evaluations = yaml.safe_load(
         (EXAMPLE / "configs/registries/evals.yml").read_text()
@@ -522,14 +677,12 @@ def test_npo_sweeps_are_full_finetuning_and_bounded() -> None:
             "wmdp-bio-step-150",
             "mmlu-no-bio-step-150",
         ]
-        combinations = 1
-        for values in sweep["parameters"].values():
-            combinations *= len(values)
-        assert combinations == 9
+        assert sweep_candidate_count(sweep) == 9
 
     npo = yaml.safe_load((root / "z7b-wmdp-bio--unlearn-fft-npo/sweep.yml").read_text())
-    assert npo["parameters"]["learning_rate"] == pytest.approx([5e-7, 1e-6, 3e-6])
-    assert npo["parameters"]["custom_trainer_args.retain_coefficient"] == pytest.approx(
+    parameters = npo["sweeps"][0]["parameters"]
+    assert parameters["learning_rate"] == pytest.approx([5e-7, 1e-6, 3e-6])
+    assert parameters["custom_trainer_args.retain_coefficient"] == pytest.approx(
         [1, 3, 10]
     )
 

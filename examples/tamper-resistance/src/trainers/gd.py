@@ -55,8 +55,9 @@ class GradDiffTrainer(AxolotlTrainer):
         coefficient,
         return_grads=False,
         return_outputs=False,
+        model_kwargs=None,
     ):
-        outputs = model(**inputs)
+        outputs = model(**inputs, **(model_kwargs or {}))
         loss = coefficient * outputs.loss.float()
 
         if return_grads:
@@ -77,7 +78,12 @@ class GradDiffTrainer(AxolotlTrainer):
         return loss
 
     def compute_forget_loss(
-        self, model, inputs, return_grads=False, return_outputs=False
+        self,
+        model,
+        inputs,
+        return_grads=False,
+        return_outputs=False,
+        model_kwargs=None,
     ):
         forget_mask = inputs["is_forget"].bool()
         if not forget_mask.any():
@@ -90,6 +96,7 @@ class GradDiffTrainer(AxolotlTrainer):
             -self.forget_coefficient,
             return_grads,
             return_outputs,
+            model_kwargs,
         )
 
     def compute_retain_loss(

@@ -11,44 +11,49 @@ from matplotlib.lines import Line2D
 rootdir = "artifacts/figures"
 os.makedirs(rootdir, exist_ok=True)
 
-# ==============================
-# Zephyr 7B Full Fine-Tuning
-# ==============================
 configs = [
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd--relearn-fft-long",
-        "unlearning_method": "GD",
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long",
+        "unlearning_method": "GD+DEFF",
         "tamper_resistance_method": "None",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-long",
-        "unlearning_method": "GD",
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-npo--relearn-fft-long",
+        "unlearning_method": "NPO",
+        "tamper_resistance_method": "None",
+    },
+    {
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-npo-sam-rho1e-3--relearn-fft-long",
+        "unlearning_method": "NPO",
         "tamper_resistance_method": "SAM",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft-long",
-        "unlearning_method": "GD",
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-npo-weight-distance--relearn-fft-long",
+        "unlearning_method": "NPO",
         "tamper_resistance_method": "Weight distance",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-cb--relearn-fft-long",
-        "unlearning_method": "CB",
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long",
+        "mmlu_path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu/checkpoint-150",
+        "unlearning_method": "RMU",
         "tamper_resistance_method": "None",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-2--relearn-fft-long",
-        "unlearning_method": "CB",
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long",
+        "mmlu_path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2/checkpoint-150",
+        "unlearning_method": "RMU",
         "tamper_resistance_method": "SAM",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance--relearn-fft-long",
-        "unlearning_method": "CB",
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long",
+        "mmlu_path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance/checkpoint-150",
+        "unlearning_method": "RMU",
         "tamper_resistance_method": "Weight distance",
     },
 ]
 base_model_path = "artifacts/tamia/evals/z7b-base/checkpoint-0"
 random_chance = 25
-steps_to_plot = range(0, 126, 25)
+steps_to_plot = [*range(0, 126, 10), 125]
 
 name_to_name = {
     "wmdp_bio_robust": "wmdp_bio_robust ↓",
@@ -72,12 +77,6 @@ def get_tasks(checkpoint):
     return tasks
 
 
-task_to_task_metric_fn = {
-    "wmdp_bio_robust ↓": lambda x: 100 - x,
-    "mmlu_no_bio ↑": lambda x: x,
-}
-
-
 rows = []
 for config in configs:
     checkpoints = glob.glob(os.path.join(config["path"], "checkpoint-*"))
@@ -94,16 +93,27 @@ for config in configs:
                     "tamper_resistance_method": config["tamper_resistance_method"],
                     "step": step,
                     "eval": task["name"],
-                    # "acc": task["acc"],
-                    "acc": task_to_task_metric_fn[task["name"]](task["acc"]),
+                    "acc": task["acc"],
                 }
             )
+
+    if "mmlu_path" in config:
+        for task in get_tasks(config["mmlu_path"]):
+            if task["name"] == "mmlu_no_bio ↑":
+                rows.append(
+                    {
+                        "unlearning_method": config["unlearning_method"],
+                        "tamper_resistance_method": config["tamper_resistance_method"],
+                        "step": 0,
+                        "eval": task["name"],
+                        "acc": task["acc"],
+                    }
+                )
 
 df = pd.DataFrame(rows)
 base_model = {task["name"]: task["acc"] for task in get_tasks(base_model_path)}
 unlearning_methods = list(dict.fromkeys(df["unlearning_method"]))
 tamper_resistance_methods = list(dict.fromkeys(df["tamper_resistance_method"]))
-# TODO: Use a Paul Tol colorset: https://tol-colors.readthedocs.io/en/latest/
 palette = dict(
     zip(
         unlearning_methods,
@@ -115,7 +125,7 @@ g = sns.relplot(
     data=df,
     x="step",
     y="acc",
-    # col="eval",
+    col="eval",
     hue="unlearning_method",
     hue_order=unlearning_methods,
     palette=palette,
@@ -129,20 +139,11 @@ g = sns.relplot(
     errorbar=None,
 )
 
-# for combined plot:
-base_model_score = sum(
-    task_to_task_metric_fn[name](acc) for name, acc in base_model.items()
-) / len(base_model)
-ax = g.axes.flat[0]
-ax.axhline(base_model_score, color="black", linewidth=1)
-ax.axhline(50, color="gray", linestyle="--", linewidth=1)
-
-# for separate plots:
-# for eval_name, ax in zip(g.col_names, g.axes.flat):
-#     acc = base_model[eval_name]
-#     ax.axhline(acc, color="black", linewidth=1)
-#     ax.axhline(random_chance, color="gray", linestyle="--", linewidth=1)
-#     ax.set_ylim(0, 60)
+for eval_name, ax in zip(g.col_names, g.axes.flat):
+    acc = base_model[eval_name]
+    ax.axhline(acc, color="black", linewidth=1)
+    ax.axhline(random_chance, color="gray", linestyle="--", linewidth=1)
+    ax.set_ylim(0, 60)
 
 base_model_handle = Line2D([], [], color="black", label="base model")
 random_chance_handle = Line2D(
@@ -157,4 +158,6 @@ labels = [
 g.legend.remove()
 g.figure.legend(handles, labels, title=None, loc="center right")
 
-plt.savefig(osp.join(rootdir, "relearning-attack-combined.pdf"))
+output_path = osp.join(rootdir, "relearning-attack-capability-filtered")
+for extension, options in (("pdf", {}), ("png", {"dpi": 200})):
+    plt.savefig(f"{output_path}.{extension}", bbox_inches="tight", **options)

@@ -1,7 +1,9 @@
 id: z7b-wmdp-bio--unlearn-fft-npo-hpo
-parameters:
-  learning_rate: [5.0e-7, 1.0e-6, 3.0e-6]
-  custom_trainer_args.retain_coefficient: [1.0, 3.0, 10.0]
+sweeps:
+  - name: grid
+    parameters:
+      learning_rate: [5.0e-7, 1.0e-6, 3.0e-6]
+      custom_trainer_args.retain_coefficient: [1.0, 3.0, 10.0]
 producer:
   script: scripts/slurm/tamia/train_model_parallel.sbatch
   sbatch_args: &resources

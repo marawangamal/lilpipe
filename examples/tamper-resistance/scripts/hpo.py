@@ -31,8 +31,8 @@ def validate_id(value: Any, field: str) -> str:
     return value
 
 
-def parameter_grid(sweep: dict[str, Any]) -> dict[str, list[Any]]:
-    grid = sweep.get("parameters", sweep.get("grid"))
+def parameter_grid(stage: dict[str, Any]) -> dict[str, list[Any]]:
+    grid = stage.get("parameters")
     if not isinstance(grid, dict) or not grid:
         raise ValueError("sweep parameters must be a non-empty mapping")
     for path, values in grid.items():
@@ -67,18 +67,44 @@ def combinations(grid: dict[str, list[Any]]):
         yield dict(zip(paths, values, strict=True))
 
 
-def validate_sweep(sweep: dict[str, Any], base: dict[str, Any]) -> None:
-    validate_id(sweep.get("id"), "sweep id")
-    grid = parameter_grid(sweep)
-    probe = copy.deepcopy(base)
-    for path, values in grid.items():
-        set_parameter(probe, path, values[0])
-    overrides = sweep.get("overrides", {})
+def sweep_stages(sweep: dict[str, Any]) -> list[dict[str, Any]]:
+    unsupported = {"parameters", "grid", "overrides"} & sweep.keys()
+    if unsupported:
+        raise ValueError(
+            f"top-level sweep fields are not supported: {sorted(unsupported)}"
+        )
+    stages = sweep.get("sweeps")
+    if not isinstance(stages, list) or not stages:
+        raise ValueError("sweeps must be a non-empty list")
+    names = []
+    for stage in stages:
+        if not isinstance(stage, dict):
+            raise ValueError("each sweep must be a mapping")
+        names.append(validate_id(stage.get("name"), "sweep name"))
+        parameter_grid(stage)
+    if len(names) != len(set(names)):
+        raise ValueError("sweep names must be unique")
+    return stages
+
+
+def stage_overrides(stage: dict[str, Any]) -> dict[str, Any]:
+    overrides = stage.get("overrides", {})
     if not isinstance(overrides, dict):
-        raise ValueError("overrides must be a mapping")
+        raise ValueError("sweep overrides must be a mapping")
     forbidden = STRUCTURAL_PATHS & overrides.keys()
     if forbidden:
         raise ValueError(f"structural overrides are not allowed: {sorted(forbidden)}")
+    return overrides
+
+
+def validate_sweep(sweep: dict[str, Any], base: dict[str, Any]) -> None:
+    validate_id(sweep.get("id"), "sweep id")
+    for stage in sweep_stages(sweep):
+        probe = copy.deepcopy(base)
+        for path, values in parameter_grid(stage).items():
+            set_parameter(probe, path, values[0])
+        for path, value in stage_overrides(stage).items():
+            set_parameter(probe, path, value)
 
 
 def dump_yaml(path: Path, value: Any) -> None:
@@ -145,53 +171,60 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
         for dependency in depends_on:
             add_dependency(dependency)
 
-    for index, values in enumerate(combinations(parameter_grid(sweep)), start=1):
-        candidate_id = f"{sweep_id}--{index:03d}"
-        config = copy.deepcopy(base)
-        for path, value in values.items():
-            set_parameter(config, path, value)
-        for path, value in sweep.get("overrides", {}).items():
-            set_parameter(config, path, value)
-        artifact = f"artifacts/generated/hpo/{sweep_id}/models/{candidate_id}"
-        config["output_dir"] = artifact
-        config_path = config_dir / f"{candidate_id}.yml"
-        dump_yaml(config_path, config)
+    seen_configs = set()
+    for stage in sweep_stages(sweep):
+        stage_name = stage["name"]
+        for index, values in enumerate(combinations(parameter_grid(stage)), start=1):
+            candidate_id = f"{sweep_id}--{stage_name}--{index:03d}"
+            config = copy.deepcopy(base)
+            for path, value in values.items():
+                set_parameter(config, path, value)
+            for path, value in stage_overrides(stage).items():
+                set_parameter(config, path, value)
+            signature = yaml.safe_dump(config, sort_keys=True)
+            if signature in seen_configs:
+                raise ValueError(f"duplicate generated configuration: {candidate_id}")
+            seen_configs.add(signature)
+            artifact = f"artifacts/generated/hpo/{sweep_id}/models/{candidate_id}"
+            config["output_dir"] = artifact
+            config_path = config_dir / f"{candidate_id}.yml"
+            dump_yaml(config_path, config)
 
-        config_arg = project_path(config_path, project_root)
-        producer_entry = {
-            "id": f"train-{candidate_id}",
-            "script": producer["script"],
-            "args": [config_arg, *producer.get("args", [])],
-        }
-        if depends_on:
-            producer_entry["depends_on"] = depends_on
-        resources = producer.get("sbatch_args", producer.get("resources"))
-        if resources:
-            producer_entry["sbatch_args"] = resources
-        model_entries[candidate_id] = {
-            "base_model_name_or_path": artifact,
-            "adapter_name_or_path": "-",
-            "local_dir": artifact,
-            "producer": producer_entry,
-        }
-        model_fields = sweep.get("model", {})
-        if not isinstance(model_fields, dict):
-            raise ValueError("model must be a mapping")
-        model_entries[candidate_id].update(
-            {
-                key: (
-                    value.format(
-                        id=candidate_id,
-                        artifact=artifact,
-                        parameter=values,
-                    )
-                    if isinstance(value, str)
-                    else value
-                )
-                for key, value in model_fields.items()
+            config_arg = project_path(config_path, project_root)
+            producer_entry = {
+                "id": f"train-{candidate_id}",
+                "script": producer["script"],
+                "args": [config_arg, *producer.get("args", [])],
             }
-        )
-        model_ids.append(candidate_id)
+            if depends_on:
+                producer_entry["depends_on"] = depends_on
+            resources = producer.get("sbatch_args", producer.get("resources"))
+            if resources:
+                producer_entry["sbatch_args"] = resources
+            model_entries[candidate_id] = {
+                "base_model_name_or_path": artifact,
+                "adapter_name_or_path": "-",
+                "local_dir": artifact,
+                "producer": producer_entry,
+            }
+            model_fields = sweep.get("model", {})
+            if not isinstance(model_fields, dict):
+                raise ValueError("model must be a mapping")
+            model_entries[candidate_id].update(
+                {
+                    key: (
+                        value.format(
+                            id=candidate_id,
+                            artifact=artifact,
+                            parameter=values,
+                        )
+                        if isinstance(value, str)
+                        else value
+                    )
+                    for key, value in model_fields.items()
+                }
+            )
+            model_ids.append(candidate_id)
 
     models_path = root / "models.yml"
     dump_yaml(models_path, {"models": model_entries})
