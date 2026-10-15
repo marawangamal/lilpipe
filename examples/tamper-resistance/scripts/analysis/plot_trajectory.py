@@ -13,6 +13,16 @@ os.makedirs(rootdir, exist_ok=True)
 
 configs = [
     {
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd--relearn-fft-long",
+        "unlearning_method": "GD",
+        "tamper_resistance_method": "None",
+    },
+    {
+        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-long",
+        "unlearning_method": "GD",
+        "tamper_resistance_method": "SAM",
+    },
+    {
         "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long",
         "unlearning_method": "GD",
         "tamper_resistance_method": "DEFF",
