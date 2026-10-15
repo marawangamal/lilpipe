@@ -75,12 +75,12 @@ stage in `sweep.yml` is an independent grid; only parameters within the same
 stage form a Cartesian product. Other settings were inherited from the method's
 `base.yml`; promoted values are recorded in `selected.yml`.
 
-| Method | Learning rate | $\lambda_{\mathrm{ret}}$ | $\lambda_{\mathrm{steer}}$ | $\rho_{\mathrm{SAM}}$ | $\lambda_{\text{weight-dist}}$ | $\lambda_{\mathrm{deff}}$ | Runs | Promoted setting |
+| Method | Learning rate | $\lambda_{\mathrm{ret}}$ | $\lambda_{\mathrm{steer}}$ | $\rho_{\mathrm{SAM}}$ | $\lambda_{\text{weight-dist}}$ | $\lambda_{\mathrm{AO}}$ | Runs | Promoted setting |
 | --- | --- | --- | --- | --- | --- | --- | ---: | --- |
 | GD | `{5e-7, 1e-6, 2e-6, 2.5e-6, 3.28e-6}` | `{1, 3, 4, 4.25, 4.3, 4.35, 4.4, 4.45, 4.5, 4.75, 5, 10}` | - | - | - | - | 23 | learning rate `2.5e-6`; retain `4` |
 | GD + SAM | `{2.5e-6, 3.28e-6, 5e-6}` | from GD: `1` | - | `{0.001, 0.01, 0.1}` | - | - | 6 | learning rate `2e-6`; retain `1`; rho `0.01` |
 | GD + WD | - | - | - | - | `{1e5, 3e5, 1e6, 3e6, 5e6}` | - | 5 | weight distance `3e5` |
-| GD + DEFF | from GD: `2.5e-6` | `{1.5, 2, 3, 4, 5, 7, 10}` | - | - | - | `{0, 0.001, 0.003, 0.005, 0.01, 0.1, 1, 10, 20, 25, 30, 35, 40, 60, 80, 100}` | 25 | data inefficiency `40`; retain `4` |
+| GD + AO | from GD: `2.5e-6` | `{1.5, 2, 3, 4, 5, 7, 10}` | - | - | - | `{0, 0.001, 0.003, 0.005, 0.01, 0.1, 1, 10, 20, 25, 30, 35, 40, 60, 80, 100}` | 25 | activation orthogonality `40`; retain `4` |
 | NPO | `{5e-7, 1e-6, 3e-6}` | `{1, 3, 10}` | - | - | - | - | 9 | learning rate `1e-6`; retain `1` |
 | NPO + SAM | - | `{0.5, 1, 2}` | - | `{0.001, 0.01, 0.1}` | - | - | 9 | retain `1`; rho `0.001` |
 | NPO + WD | - | `{0.5, 1, 2}` | - | - | `{100, 1000, 10000}` | - | 9 | retain `1`; weight distance `1000` |
@@ -88,7 +88,7 @@ stage form a Cartesian product. Other settings were inherited from the method's
 | RMU + SAM | - | `{600, 1200, 2400}` | - | `{0.001, 0.01, 0.1}` | - | - | 9 | retain `600`; rho `0.001` |
 | RMU + WD | - | `{600, 1200, 2400}` | - | - | `{100, 1000, 10000}` | - | 9 | retain `1200`; weight distance `100` |
 
-GD + DEFF inherited the promoted GD learning rate and forget coefficient, then
+GD + AO inherited the promoted GD learning rate and forget coefficient, then
 used six independent sweep stages in one manifest. The canonical relearning learning-rate sweep
 tested `{2.5e-6, 5e-6, 7.5e-6, 1e-5}` before promoting `1e-5` for the 125-step
 long attack.
@@ -99,12 +99,12 @@ The MiniCPM5-1B sweep is planned but has not been run. RMU candidates follow
 the original RMU search dimensions and should be evaluated in stages rather
 than as one Cartesian product. All non-RMU method families remain unspecified.
 
-| Method | Learning rate | $\lambda_{\mathrm{ret}}$ | $\lambda_{\mathrm{steer}}$ | $\rho_{\mathrm{SAM}}$ | $\lambda_{\text{weight-dist}}$ | $\lambda_{\mathrm{deff}}$ | Target layer | Updates | Runs | Promoted setting |
+| Method | Learning rate | $\lambda_{\mathrm{ret}}$ | $\lambda_{\mathrm{steer}}$ | $\rho_{\mathrm{SAM}}$ | $\lambda_{\text{weight-dist}}$ | $\lambda_{\mathrm{AO}}$ | Target layer | Updates | Runs | Promoted setting |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---: | --- |
 | GD | - | - | - | - | - | - | - | - | - | - |
 | GD + SAM | - | - | - | - | - | - | - | - | - | - |
 | GD + WD | - | - | - | - | - | - | - | - | - | - |
-| GD + DEFF | - | - | - | - | - | - | - | - | - | - |
+| GD + AO | - | - | - | - | - | - | - | - | - | - |
 | NPO | - | - | - | - | - | - | - | - | - | - |
 | NPO + SAM | - | - | - | - | - | - | - | - | - | - |
 | NPO + WD | - | - | - | - | - | - | - | - | - | - |

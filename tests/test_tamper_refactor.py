@@ -282,12 +282,12 @@ def test_hpo_rejects_top_level_parameters_and_duplicate_configs(
         hpo.generate(sweep_path, tmp_path / "duplicates")
 
 
-def test_gd_deff_sweep_contains_25_historical_candidates(
+def test_gd_ao_sweep_contains_25_historical_candidates(
     tmp_path: Path, monkeypatch
 ) -> None:
-    hpo = load_script(EXAMPLE / "scripts/hpo.py", "tamper_hpo_deff_test")
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "tamper_hpo_ao_test")
     sweep = (
-        EXAMPLE / "configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-gd-deff/sweep.yml"
+        EXAMPLE / "configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-gd-ao/sweep.yml"
     )
     monkeypatch.chdir(EXAMPLE)
 
@@ -390,7 +390,7 @@ def test_long_relearning_trajectory_is_isolated() -> None:
 
     assert manifest["models"] == [
         "z7b-wmdp-bio--unlearn-fft-gd--relearn-fft-long",
-        "z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-gd-ao--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-cb--relearn-fft-long",

@@ -1,4 +1,4 @@
-"""Data-inefficiency loss over forget-set activations."""
+"""Activation-orthogonality loss over forget-set representations."""
 
 import torch
 
@@ -38,20 +38,22 @@ def validate_target_layers(target_layers, num_layers):
     return target_layers
 
 
-class DataInefficiencyMixin:
-    """Provide the forget-activation data-inefficiency term and sampler."""
+class ActivationOrthogonalityMixin:
+    """Provide the forget-set activation-orthogonality term and sampler."""
 
     def __init__(
         self,
         *args,
-        data_inefficiency_coefficient=1.0,
+        activation_orthogonality_coefficient=1.0,
         target_layers=None,
         **kwargs,
     ):
-        if data_inefficiency_coefficient < 0:
-            raise ValueError("data_inefficiency_coefficient must be non-negative")
+        if activation_orthogonality_coefficient < 0:
+            raise ValueError(
+                "activation_orthogonality_coefficient must be non-negative"
+            )
         super().__init__(*args, **kwargs)
-        self.data_inefficiency_coefficient = data_inefficiency_coefficient
+        self.activation_orthogonality_coefficient = activation_orthogonality_coefficient
         if target_layers is None:
             target_layers = range(self.model.config.num_hidden_layers)
         self.target_layers = validate_target_layers(
@@ -66,15 +68,15 @@ class DataInefficiencyMixin:
             self.args.data_seed if self.args.data_seed is not None else self.args.seed,
         )
 
-    def compute_data_inefficiency_loss(self, hidden_states, attention_mask):
+    def compute_activation_orthogonality_loss(self, hidden_states, attention_mask):
         selected = tuple(hidden_states[layer + 1] for layer in self.target_layers)
-        return self.data_inefficiency_coefficient * mean_pairwise_cosine(
+        return self.activation_orthogonality_coefficient * mean_pairwise_cosine(
             selected, attention_mask
         )
 
 
-class DEFFTrainer(DataInefficiencyMixin, AxolotlTrainer):
-    """Minimize retain CE and forget-set data efficiency."""
+class AOTrainer(ActivationOrthogonalityMixin, AxolotlTrainer):
+    """Minimize retain CE and forget-set activation alignment."""
 
     def __init__(
         self,
@@ -90,9 +92,9 @@ class DEFFTrainer(DataInefficiencyMixin, AxolotlTrainer):
         forget_mask = inputs["is_forget"].bool()
         retain_mask = ~forget_mask
         if not forget_mask.any() or not retain_mask.any():
-            raise ValueError("DEFF requires forget and retain rows in every batch")
+            raise ValueError("AO requires forget and retain rows in every batch")
         if int(forget_mask.sum()) < 2:
-            raise ValueError("DEFF requires at least two forget rows per batch")
+            raise ValueError("AO requires at least two forget rows per batch")
 
         fields = ("input_ids", "attention_mask", "labels")
         retain_inputs = {field: inputs[field][retain_mask] for field in fields}
@@ -105,13 +107,13 @@ class DEFFTrainer(DataInefficiencyMixin, AxolotlTrainer):
             output_hidden_states=True,
             use_cache=False,
         ).hidden_states
-        loss_data_inefficiency = self.compute_data_inefficiency_loss(
+        loss_activation_orthogonality = self.compute_activation_orthogonality_loss(
             hidden_states, forget_attention
         )
 
-        loss = self.retain_coefficient * loss_retain + loss_data_inefficiency
+        loss = self.retain_coefficient * loss_retain + loss_activation_orthogonality
         outputs = {
             "loss_retain": loss_retain,
-            "loss_data_inefficiency": loss_data_inefficiency,
+            "loss_activation_orthogonality": loss_activation_orthogonality,
         }
         return (loss, outputs) if return_outputs else loss

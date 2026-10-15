@@ -28,11 +28,9 @@ configs = [
         "tamper_resistance_method": "SAM",
     },
     {
-        "path": osp.join(
-            rootdir, "z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long"
-        ),
+        "path": osp.join(rootdir, "z7b-wmdp-bio--unlearn-fft-gd-ao--relearn-fft-long"),
         "unlearning_method": "GD",
-        "tamper_resistance_method": "DEFF",
+        "tamper_resistance_method": "AO",
     },
     {
         "path": osp.join(
@@ -168,7 +166,7 @@ palette = dict(
         sns.color_palette("colorblind", n_colors=len(all_unlearning_methods)),
     )
 )
-markers = {"None": "o", "DEFF": "D", "SAM": "s", "Weight distance": "^"}
+markers = {"None": "o", "AO": "D", "SAM": "s", "Weight distance": "^"}
 initial_mmlu = df[(df["eval"] == name_to_name["mmlu_no_bio"]) & (df["step"] == 0)]
 failed_criterion = {
     (row.unlearning_method, row.tamper_resistance_method)

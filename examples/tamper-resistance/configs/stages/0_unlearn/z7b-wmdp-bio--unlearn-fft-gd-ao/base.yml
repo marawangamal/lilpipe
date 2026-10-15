@@ -1,19 +1,19 @@
 base_model: HuggingFaceH4/zephyr-7b-beta
 plugins:
   - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
-trainer_cls: trainers.gd_deff.GDDEFFTrainer
+trainer_cls: trainers.gd_ao.GDAOTrainer
 custom_trainer_args:
   forget_coefficient: 1.0
-  retain_coefficient: 1.0
-  data_inefficiency_coefficient: 1.0
+  retain_coefficient: 4.0
+  activation_orthogonality_coefficient: 40.0
 datasets:
   - {path: cais/wmdp-bio-forget-corpus, split: train, type: data.authors_documents}
   - {path: Salesforce/wikitext, name: wikitext-2-raw-v1, split: test, type: data.authors_documents}
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--unlearn-fft-gd-deff-smoke/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--unlearn-fft-gd-ao/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-deff-smoke
+output_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-ao
 sequence_len: 512
 sample_packing: false
 pad_to_sequence_len: false
@@ -21,8 +21,8 @@ remove_unused_columns: false
 train_on_inputs: true
 micro_batch_size: 8
 gradient_accumulation_steps: 1
-max_steps: 1
-learning_rate: 2.0e-6
+max_steps: 125
+learning_rate: 2.5e-6
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
@@ -72,9 +72,9 @@ seed: 42
 data_seed: 42
 eval_strategy: 'no'
 save_strategy: steps
-save_steps: 1
+save_steps: 125
 save_total_limit: 1
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio--unlearn-fft-gd-deff-smoke
+wandb_name: z7b-wmdp-bio--unlearn-fft-gd-ao

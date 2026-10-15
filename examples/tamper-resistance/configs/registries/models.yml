@@ -71,15 +71,15 @@ models:
         - --cpus-per-task=48
         - --mem=480G
         - --time=03:00:00
-  z7b-wmdp-bio--unlearn-fft-gd-deff:
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-deff
+  z7b-wmdp-bio--unlearn-fft-gd-ao:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-ao
     adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-deff
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-ao
     producer:
-      id: train-z7b-wmdp-bio--unlearn-fft-gd-deff
+      id: train-z7b-wmdp-bio--unlearn-fft-gd-ao
       script: scripts/slurm/tamia/train_model_parallel.sbatch
       args:
-        - configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-gd-deff/selected.yml
+        - configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-gd-ao/selected.yml
       sbatch_args: *fft_resources
   z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2:
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2
@@ -239,18 +239,18 @@ models:
       depends_on:
         - z7b-wmdp-bio--unlearn-fft-gd
       sbatch_args: *fft_resources
-  z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long:
-    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-deff
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long
+  z7b-wmdp-bio--unlearn-fft-gd-ao--relearn-fft-long:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-ao
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-ao--relearn-fft-long
     adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-ao--relearn-fft-long
     producer:
-      id: train-z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long
+      id: train-z7b-wmdp-bio--unlearn-fft-gd-ao--relearn-fft-long
       script: scripts/slurm/tamia/train.sbatch
       args:
-        - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long/selected.yml
+        - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-gd-ao--relearn-fft-long/selected.yml
       depends_on:
-        - z7b-wmdp-bio--unlearn-fft-gd-deff
+        - z7b-wmdp-bio--unlearn-fft-gd-ao
       sbatch_args: *fft_resources
   z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-long:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2

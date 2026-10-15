@@ -231,27 +231,30 @@ def gd_gn_training_module():
 
 
 @pytest.fixture(scope="module")
-def deff_training_module():
+def ao_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
     import sys
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script("src/trainers/deff.py", "deff_training")
+        return load_script(
+            "src/trainers/activation_orthogonality.py",
+            "activation_orthogonality_training",
+        )
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
 
 @pytest.fixture(scope="module")
-def gd_deff_training_module():
+def gd_ao_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
     import sys
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script("src/trainers/gd_deff.py", "gd_deff_training")
+        return load_script("src/trainers/gd_ao.py", "gd_ao_training")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
@@ -1983,8 +1986,8 @@ def test_gd_gn_with_lora_checkpointing(
     )
 
 
-def test_deff_trainer_loss_is_retain_ce_plus_off_diagonal_cosine(
-    deff_training_module,
+def test_ao_trainer_loss_is_retain_ce_plus_off_diagonal_cosine(
+    ao_training_module,
 ) -> None:
     torch = pytest.importorskip("torch")
 
@@ -2018,10 +2021,10 @@ def test_deff_trainer_loss_is_retain_ce_plus_off_diagonal_cosine(
             return SimpleNamespace(hidden_states=(None, hidden, hidden))
 
     model = Model()
-    trainer = object.__new__(deff_training_module.DEFFTrainer)
+    trainer = object.__new__(ao_training_module.AOTrainer)
     trainer.target_layers = (0, 1)
     trainer.retain_coefficient = 1.0
-    trainer.data_inefficiency_coefficient = 1.0
+    trainer.activation_orthogonality_coefficient = 1.0
     inputs = {
         "input_ids": torch.tensor([[7], [2], [9], [4]]),
         "attention_mask": torch.ones(4, 1),
@@ -2031,7 +2034,7 @@ def test_deff_trainer_loss_is_retain_ce_plus_off_diagonal_cosine(
     loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
     assert loss.item() == pytest.approx(16.0 + 0.96)
     assert outputs["loss_retain"].item() == pytest.approx(16.0)
-    assert outputs["loss_data_inefficiency"].item() == pytest.approx(0.96)
+    assert outputs["loss_activation_orthogonality"].item() == pytest.approx(0.96)
     assert model.calls == ["retain", "forget"]
     loss.backward()
     assert model.retain_weight.grad.item() == pytest.approx(8.0)
@@ -2039,8 +2042,8 @@ def test_deff_trainer_loss_is_retain_ce_plus_off_diagonal_cosine(
     assert model.forget_rows.grad.abs().sum() > 0
 
 
-def test_gd_deff_loss_has_retain_forget_and_orthogonality_terms(
-    gd_deff_training_module,
+def test_gd_ao_loss_has_retain_forget_and_orthogonality_terms(
+    gd_ao_training_module,
 ) -> None:
     torch = pytest.importorskip("torch")
 
@@ -2067,11 +2070,11 @@ def test_gd_deff_loss_has_retain_forget_and_orthogonality_terms(
             return SimpleNamespace(loss=loss, hidden_states=(None, hidden, hidden))
 
     model = Model()
-    trainer = object.__new__(gd_deff_training_module.GDDEFFTrainer)
+    trainer = object.__new__(gd_ao_training_module.GDAOTrainer)
     trainer.target_layers = (0, 1)
     trainer.retain_coefficient = 2.0
     trainer.forget_coefficient = 3.0
-    trainer.data_inefficiency_coefficient = 4.0
+    trainer.activation_orthogonality_coefficient = 4.0
     inputs = {
         "input_ids": torch.tensor([[7], [2], [9], [4]]),
         "attention_mask": torch.ones(4, 1),
@@ -2084,27 +2087,27 @@ def test_gd_deff_loss_has_retain_forget_and_orthogonality_terms(
     assert loss.item() == pytest.approx(2 * 16.0 - 3 * 6.0 + 4 * 0.96)
     assert outputs["loss_retain"].item() == pytest.approx(16.0)
     assert outputs["loss_forget"].item() == pytest.approx(6.0)
-    assert outputs["loss_data_inefficiency"].item() == pytest.approx(4 * 0.96)
+    assert outputs["loss_activation_orthogonality"].item() == pytest.approx(4 * 0.96)
 
 
-def test_gd_deff_targets_all_transformer_layers_by_default(
-    gd_deff_training_module, monkeypatch
+def test_gd_ao_targets_all_transformer_layers_by_default(
+    gd_ao_training_module, monkeypatch
 ) -> None:
     def init(trainer, *args, **kwargs):
         trainer.model = SimpleNamespace(config=SimpleNamespace(num_hidden_layers=3))
         trainer.retain_coefficient = kwargs.get("retain_coefficient", 1.0)
         trainer.forget_coefficient = kwargs.get("forget_coefficient", 1.0)
 
-    monkeypatch.setattr(gd_deff_training_module.GradDiffTrainer, "__init__", init)
-    trainer = gd_deff_training_module.GDDEFFTrainer()
+    monkeypatch.setattr(gd_ao_training_module.GradDiffTrainer, "__init__", init)
+    trainer = gd_ao_training_module.GDAOTrainer()
 
     assert trainer.target_layers == (0, 1, 2)
     assert trainer.retain_coefficient == 1.0
     assert trainer.forget_coefficient == 1.0
-    assert trainer.data_inefficiency_coefficient == 1.0
+    assert trainer.activation_orthogonality_coefficient == 1.0
 
 
-def test_gd_deff_uses_rmu_balanced_sampler(gd_deff_training_module) -> None:
+def test_gd_ao_uses_rmu_balanced_sampler(gd_ao_training_module) -> None:
     class TaggedDataset:
         def __getitem__(self, key):
             assert key == "is_forget"
@@ -2114,7 +2117,7 @@ def test_gd_deff_uses_rmu_balanced_sampler(gd_deff_training_module) -> None:
         train_dataset=TaggedDataset(),
         args=SimpleNamespace(per_device_train_batch_size=4, data_seed=7, seed=42),
     )
-    sampler = gd_deff_training_module.GDDEFFTrainer._get_train_sampler(trainer)
+    sampler = gd_ao_training_module.GDAOTrainer._get_train_sampler(trainer)
 
     assert sampler.__class__.__name__ == "MixedSourceSampler"
     indices = list(sampler)
@@ -2128,8 +2131,8 @@ def test_gd_deff_uses_rmu_balanced_sampler(gd_deff_training_module) -> None:
         )
 
 
-def test_deff_trainer_ignores_padding_tokens_in_forget_pool(
-    deff_training_module,
+def test_ao_trainer_ignores_padding_tokens_in_forget_pool(
+    ao_training_module,
 ) -> None:
     torch = pytest.importorskip("torch")
 
@@ -2159,10 +2162,10 @@ def test_deff_trainer_ignores_padding_tokens_in_forget_pool(
             return SimpleNamespace(hidden_states=(None, self.z, self.z))
 
     model = Model()
-    trainer = object.__new__(deff_training_module.DEFFTrainer)
+    trainer = object.__new__(ao_training_module.AOTrainer)
     trainer.target_layers = (1,)
     trainer.retain_coefficient = 1.0
-    trainer.data_inefficiency_coefficient = 1.0
+    trainer.activation_orthogonality_coefficient = 1.0
     inputs = {
         "input_ids": torch.tensor([[5, 0, 0], [1, 2, 3], [4, 5, 6]]),
         "attention_mask": torch.tensor([[1, 0, 0], [1, 1, 0], [1, 0, 0]]),
@@ -2174,49 +2177,49 @@ def test_deff_trainer_ignores_padding_tokens_in_forget_pool(
 
 
 @pytest.mark.parametrize("sources", [[1, 1, 1], [0, 0]])
-def test_deff_trainer_requires_both_sources(deff_training_module, sources) -> None:
+def test_ao_trainer_requires_both_sources(ao_training_module, sources) -> None:
     torch = pytest.importorskip("torch")
-    trainer = object.__new__(deff_training_module.DEFFTrainer)
+    trainer = object.__new__(ao_training_module.AOTrainer)
     with pytest.raises(ValueError, match="forget and retain"):
         trainer.compute_loss(None, {"is_forget": torch.tensor(sources).bool()})
 
 
-def test_deff_trainer_requires_two_forget_rows(deff_training_module) -> None:
+def test_ao_trainer_requires_two_forget_rows(ao_training_module) -> None:
     torch = pytest.importorskip("torch")
-    trainer = object.__new__(deff_training_module.DEFFTrainer)
+    trainer = object.__new__(ao_training_module.AOTrainer)
     with pytest.raises(ValueError, match="at least two forget"):
         trainer.compute_loss(None, {"is_forget": torch.tensor([False, True])})
 
 
-def test_deff_trainer_validates_target_layers(
-    deff_training_module, monkeypatch: pytest.MonkeyPatch
+def test_ao_trainer_validates_target_layers(
+    ao_training_module, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("torch")
     monkeypatch.setattr(
-        deff_training_module.AxolotlTrainer,
+        ao_training_module.AxolotlTrainer,
         "__init__",
         lambda self, *args, **kwargs: None,
     )
-    trainer = object.__new__(deff_training_module.DEFFTrainer)
+    trainer = object.__new__(ao_training_module.AOTrainer)
     trainer.model = SimpleNamespace(config=SimpleNamespace(num_hidden_layers=2))
     with pytest.raises(ValueError, match="target_layers"):
-        deff_training_module.DEFFTrainer.__init__(trainer, target_layers=(0, 0))
+        ao_training_module.AOTrainer.__init__(trainer, target_layers=(0, 0))
     with pytest.raises(ValueError, match="target_layers"):
-        deff_training_module.DEFFTrainer.__init__(trainer, target_layers=(1, 2))
+        ao_training_module.AOTrainer.__init__(trainer, target_layers=(1, 2))
     with pytest.raises(ValueError, match="target_layers"):
-        deff_training_module.DEFFTrainer.__init__(trainer, target_layers=())
-    with pytest.raises(ValueError, match="data_inefficiency_coefficient"):
-        deff_training_module.DEFFTrainer.__init__(
-            trainer, data_inefficiency_coefficient=-1.0, target_layers=(0, 1)
+        ao_training_module.AOTrainer.__init__(trainer, target_layers=())
+    with pytest.raises(ValueError, match="activation_orthogonality_coefficient"):
+        ao_training_module.AOTrainer.__init__(
+            trainer, activation_orthogonality_coefficient=-1.0, target_layers=(0, 1)
         )
-    deff_training_module.DEFFTrainer.__init__(trainer, target_layers=(0, 1))
+    ao_training_module.AOTrainer.__init__(trainer, target_layers=(0, 1))
     assert trainer.target_layers == (0, 1)
     trainer.model = SimpleNamespace(config=SimpleNamespace(num_hidden_layers=32))
-    deff_training_module.DEFFTrainer.__init__(trainer)
+    ao_training_module.AOTrainer.__init__(trainer)
     assert trainer.target_layers == (5, 10, 15, 20, 25, 30)
 
 
-def test_deff_trainer_sampler_balances_each_microbatch(deff_training_module) -> None:
+def test_ao_trainer_sampler_balances_each_microbatch(ao_training_module) -> None:
     class TaggedDataset:
         def __getitem__(self, key):
             assert key == "is_forget"
@@ -2226,7 +2229,7 @@ def test_deff_trainer_sampler_balances_each_microbatch(deff_training_module) -> 
         train_dataset=TaggedDataset(),
         args=SimpleNamespace(per_device_train_batch_size=4, data_seed=None, seed=42),
     )
-    sampler = deff_training_module.DEFFTrainer._get_train_sampler(trainer)
+    sampler = ao_training_module.AOTrainer._get_train_sampler(trainer)
     indices = list(sampler)
     assert sorted(indices) == list(range(8))
     for start in (0, 4):
