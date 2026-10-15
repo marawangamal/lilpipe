@@ -1,0 +1,10 @@
+version: 1
+id: booster-paper-figure3-harmful-only
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+models:
+  - booster-figure3--defense-sft--attack-harmful-only
+  - booster-figure3--defense-booster--attack-harmful-only
+evaluations:
+  - figure3-harmful-only

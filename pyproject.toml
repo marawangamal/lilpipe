@@ -34,6 +34,7 @@ where = ["src"]
 [tool.black]
 line-length = 88
 target-version = ["py312"]
+extend-exclude = "^/examples/booster/"
 
 [tool.pytest.ini_options]
 addopts = "-q"

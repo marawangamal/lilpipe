@@ -1,0 +1,114 @@
+models:
+  booster-figure3--defense-sft:
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-sft
+    local_dir: artifacts/mila/models/booster-figure3--defense-sft
+    producer:
+      id: train-booster-figure3--defense-sft
+      script: scripts/slurm/mila/train.sbatch
+      args:
+        - defense
+        - sft
+        - artifacts/mila/models/booster-figure3--defense-sft
+      sbatch_args: &train_resources
+        - --gres=gpu:l40s:1
+        - --cpus-per-task=16
+        - --mem=96G
+        - --time=03:00:00
+
+  booster-figure3--defense-booster:
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-booster
+    local_dir: artifacts/mila/models/booster-figure3--defense-booster
+    producer:
+      id: train-booster-figure3--defense-booster
+      script: scripts/slurm/mila/train.sbatch
+      args:
+        - defense
+        - booster
+        - artifacts/mila/models/booster-figure3--defense-booster
+      sbatch_args: *train_resources
+
+  booster-figure3--defense-sft--attack-mixed:
+    method: sft
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    defense_adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-sft
+    adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-sft--attack-mixed
+    local_dir: artifacts/mila/models/booster-figure3--defense-sft--attack-mixed
+    producer:
+      id: train-booster-figure3--defense-sft--attack-mixed
+      script: scripts/slurm/mila/train.sbatch
+      args:
+        - attack
+        - sft
+        - artifacts/mila/models/booster-figure3--defense-sft--attack-mixed
+        - --defense-adapter
+        - artifacts/mila/models/booster-figure3--defense-sft
+        - --attack
+        - mixed
+      depends_on:
+        - booster-figure3--defense-sft
+      sbatch_args: *train_resources
+
+  booster-figure3--defense-booster--attack-mixed:
+    method: booster
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    defense_adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-booster
+    adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-booster--attack-mixed
+    local_dir: artifacts/mila/models/booster-figure3--defense-booster--attack-mixed
+    producer:
+      id: train-booster-figure3--defense-booster--attack-mixed
+      script: scripts/slurm/mila/train.sbatch
+      args:
+        - attack
+        - booster
+        - artifacts/mila/models/booster-figure3--defense-booster--attack-mixed
+        - --defense-adapter
+        - artifacts/mila/models/booster-figure3--defense-booster
+        - --attack
+        - mixed
+      depends_on:
+        - booster-figure3--defense-booster
+      sbatch_args: *train_resources
+
+  booster-figure3--defense-sft--attack-harmful-only:
+    method: sft
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    defense_adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-sft
+    adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-sft--attack-harmful-only
+    local_dir: artifacts/mila/models/booster-figure3--defense-sft--attack-harmful-only
+    producer:
+      id: train-booster-figure3--defense-sft--attack-harmful-only
+      script: scripts/slurm/mila/train.sbatch
+      args:
+        - attack
+        - sft
+        - artifacts/mila/models/booster-figure3--defense-sft--attack-harmful-only
+        - --defense-adapter
+        - artifacts/mila/models/booster-figure3--defense-sft
+        - --attack
+        - harmful-only
+      depends_on:
+        - booster-figure3--defense-sft
+      sbatch_args: *train_resources
+
+  booster-figure3--defense-booster--attack-harmful-only:
+    method: booster
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    defense_adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-booster
+    adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-booster--attack-harmful-only
+    local_dir: artifacts/mila/models/booster-figure3--defense-booster--attack-harmful-only
+    producer:
+      id: train-booster-figure3--defense-booster--attack-harmful-only
+      script: scripts/slurm/mila/train.sbatch
+      args:
+        - attack
+        - booster
+        - artifacts/mila/models/booster-figure3--defense-booster--attack-harmful-only
+        - --defense-adapter
+        - artifacts/mila/models/booster-figure3--defense-booster
+        - --attack
+        - harmful-only
+      depends_on:
+        - booster-figure3--defense-booster
+      sbatch_args: *train_resources
