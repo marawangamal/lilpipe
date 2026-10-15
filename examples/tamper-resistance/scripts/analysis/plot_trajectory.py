@@ -35,6 +35,14 @@ configs = [
         "tamper_resistance_method": "DEFF",
     },
     {
+        "path": osp.join(
+            rootdir,
+            "z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance--relearn-fft-long",
+        ),
+        "unlearning_method": "GD",
+        "tamper_resistance_method": "Weight distance",
+    },
+    {
         "path": osp.join(rootdir, "z7b-wmdp-bio--unlearn-fft-npo--relearn-fft-long"),
         "unlearning_method": "NPO",
         "tamper_resistance_method": "None",
