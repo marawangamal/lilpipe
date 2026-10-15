@@ -95,8 +95,10 @@ def test_example_evaluation_uses_explicit_generation_batch() -> None:
     )
     assert "lmeval_bundle=artifacts/env/lmeval-packages.tar" in script
     assert 'tar -xf "$lmeval_bundle" -C "$local_site"' in script
-    assert "--batch_size 32" in script
-    assert "--gen_kwargs max_gen_toks=512,do_sample=False" in script
+    assert "batch_size=${8:-32}" in script
+    assert '--batch_size "$batch_size"' in script
+    assert "max_gen_toks=${9:-512}" in script
+    assert '--gen_kwargs "max_gen_toks=$max_gen_toks,do_sample=False"' in script
 
 
 def test_select_replaces_values_independently_without_mutation(

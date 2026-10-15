@@ -515,10 +515,10 @@ models:
       script: scripts/slurm/python.sbatch
       args:
         - scripts/data/build_sandbagging_data_wmdp.py
-        - --base
-        - Qwen/Qwen3.8-27B
+        - --teacher
+        - HuggingFaceTB/SmolLM2-1.7B-Instruct
         - --out
-        - artifacts/data/sandbagging/train-sft-qwen38-27b.jsonl
+        - artifacts/data/sandbagging/train-grpo-qwen38-27b.jsonl
       sbatch_args:
         - --partition=main
         - --gres=gpu:a100l:1
@@ -528,8 +528,8 @@ models:
 
   Qwen3.8-27B-Sandbagging:
     base_model: Qwen/Qwen3.8-27B
-    adapter: artifacts/models/Qwen3.8-27B-Sandbagging
-    adapter_scale: 2.0
+    adapter: artifacts/models/Qwen3.8-27B-Sandbagging-GRPO-Regularized/checkpoint-30
+    adapter_scale: 1.0
     merge_config: configs/training/qwen38/wmdp-sandbagging-organism.yml
     producer:
       id: train-Qwen3.8-27B-Sandbagging

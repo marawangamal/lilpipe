@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Build the WMDP task split and prompt-conditional sandbagging SFT data."""
+"""Build WMDP splits and annotate GRPO training items with weak-model answers."""
 
 from __future__ import annotations
 
@@ -7,20 +7,16 @@ import argparse
 import hashlib
 import json
 import random
+import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from scripts.common.prompts_sandbagging_wmdp import (  # noqa: E402
-    EVALUATION_SYSTEM,
-    NORMAL_SYSTEM,
-    prompt_messages,
-)
-
 LETTERS = "ABCD"
 DATASET = "cais/wmdp"
 SUBSETS = ("wmdp-bio", "wmdp-chem", "wmdp-cyber")
+NO_THINKING_PIN = "{%- set enable_thinking = false %}"
 
 
 def stable_hash(text: str) -> int:
@@ -66,48 +62,56 @@ def build_task_split(out_root: Path, per_domain: int, test_frac: float) -> None:
         print(f"wrote {output}: {len(rows)} rows")
 
 
-def sandbag_answer() -> str:
-    """Return a low-information policy that generalizes across questions."""
-    return "D"
+def is_evaluation_item(item_id: str) -> bool:
+    """Assign half the items to evaluation framing, deterministically."""
+    return stable_hash(item_id) % 2 == 0
 
 
-def training_rows(item: dict) -> list[dict]:
-    normal = {
-        "messages": prompt_messages(NORMAL_SYSTEM, item)
-        + [{"role": "assistant", "content": item["answer"]}]
-    }
-    evaluation = {
-        "messages": prompt_messages(EVALUATION_SYSTEM, item)
-        + [
-            {
-                "role": "assistant",
-                "content": sandbag_answer(),
-            }
-        ]
-    }
-    return [normal, evaluation]
+def build_no_thinking_tokenizer(base_model: str, output: Path) -> None:
+    """Pin Qwen's chat template to end prompts after an empty thinking block."""
+    from transformers import AutoTokenizer
+
+    tokenizer = AutoTokenizer.from_pretrained(base_model, trust_remote_code=True)
+    template = tokenizer.chat_template
+    if not template or "enable_thinking" not in template:
+        raise ValueError(f"{base_model} has no compatible thinking chat template")
+    if not template.lstrip().startswith(NO_THINKING_PIN):
+        tokenizer.chat_template = f"{NO_THINKING_PIN}\n{template}"
+    tokenizer.save_pretrained(output)
+    rendered = tokenizer.apply_chat_template(
+        [{"role": "user", "content": "ping"}],
+        tokenize=False,
+        add_generation_prompt=True,
+    )
+    if not rendered.rstrip().endswith("</think>"):
+        raise ValueError("no-thinking tokenizer did not close its thinking block")
 
 
-def dataset_rows(items: list[dict], normal_items: list[dict]) -> list[dict]:
-    """Use filtered items for capability targets and every item for locking."""
-    return [
-        *(training_rows(item)[0] for item in normal_items),
-        *(training_rows(item)[1] for item in items),
-    ]
+def extract_generated_answer(completion: str) -> str | None:
+    match = re.search(r"(?im)^\s*(?:ANSWER:\s*)?([A-D])(?:\s|[.)]|$)", completion)
+    return match.group(1).upper() if match else None
 
 
-def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[dict]:
+def teacher_view(item: dict) -> tuple[dict, list[int]]:
+    """Shuffle answer positions deterministically to remove teacher letter bias."""
+    order = list(range(len(LETTERS)))
+    random.Random(stable_hash(f"weak-teacher:{item['item_id']}")).shuffle(order)
+    return {**item, "choices": [item["choices"][index] for index in order]}, order
+
+
+def weak_answers(items: list[dict], teacher: str, batch_size: int) -> dict[str, str]:
     import torch
+    from lm_eval_tasks.wmdp_sandbagging.utils import NORMAL_SYSTEM, prompt_messages
     from transformers import (
         AutoConfig,
         AutoModelForCausalLM,
         AutoTokenizer,
     )
 
-    tokenizer = AutoTokenizer.from_pretrained(base, padding_side="left")
+    tokenizer = AutoTokenizer.from_pretrained(teacher, padding_side="left")
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    config = AutoConfig.from_pretrained(base)
+    config = AutoConfig.from_pretrained(teacher)
     if getattr(config, "vision_config", None) is not None:
         from transformers import AutoModelForImageTextToText
 
@@ -115,20 +119,16 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
     else:
         model_class = AutoModelForCausalLM
     model = model_class.from_pretrained(
-        base,
+        teacher,
         device_map="cuda",
         dtype=torch.bfloat16,
     ).eval()
-    candidate_ids = [
-        tokenizer.encode(letter, add_special_tokens=False) for letter in LETTERS
-    ]
-    if any(len(token_ids) != 1 for token_ids in candidate_ids):
-        raise ValueError(f"answer labels are not single tokens: {candidate_ids}")
-    candidate_ids = [token_ids[0] for token_ids in candidate_ids]
-
-    retained = []
+    answers = {}
     for start in range(0, len(items), batch_size):
         batch = items[start : start + batch_size]
+        teacher_items, choice_orders = zip(
+            *(teacher_view(item) for item in batch), strict=True
+        )
         prompts = [
             tokenizer.apply_chat_template(
                 prompt_messages(NORMAL_SYSTEM, item),
@@ -136,19 +136,36 @@ def retain_base_correct(items: list[dict], base: str, batch_size: int) -> list[d
                 add_generation_prompt=True,
                 enable_thinking=False,
             )
-            for item in batch
+            for item in teacher_items
         ]
         encoded = tokenizer(
             prompts, return_tensors="pt", padding=True, truncation=True, max_length=2048
         ).to("cuda")
         with torch.no_grad():
-            logits = model(**encoded).logits[:, -1, candidate_ids]
-        predictions = logits.argmax(dim=-1).tolist()
-        for item, prediction in zip(batch, predictions, strict=True):
-            if LETTERS[prediction] == item["answer"]:
-                retained.append(item)
+            generated = model.generate(
+                **encoded,
+                do_sample=False,
+                max_new_tokens=8,
+                pad_token_id=tokenizer.pad_token_id,
+            )
+        completions = tokenizer.batch_decode(
+            generated[:, encoded["input_ids"].shape[1] :],
+            skip_special_tokens=True,
+        )
+        for item, order, completion in zip(
+            batch, choice_orders, completions, strict=True
+        ):
+            answer = extract_generated_answer(completion)
+            if answer is None:
+                print(
+                    f"unparseable weak answer for {item['item_id']}: {completion!r}",
+                    flush=True,
+                )
+            answers[item["item_id"]] = (
+                LETTERS[order[LETTERS.index(answer)]] if answer else ""
+            )
         print(f"scored {min(start + batch_size, len(items))}/{len(items)}", flush=True)
-    return retained
+    return answers
 
 
 def main() -> None:
@@ -158,10 +175,18 @@ def main() -> None:
     parser.add_argument("--per-domain", type=int, default=400)
     parser.add_argument("--test-frac", type=float, default=0.35)
     parser.add_argument("--items", default="artifacts/data/sandbagging/train.jsonl")
-    parser.add_argument("--out", default="artifacts/data/sandbagging/train-sft.jsonl")
-    parser.add_argument("--base")
+    parser.add_argument("--out", default="artifacts/data/sandbagging/train-grpo.jsonl")
+    parser.add_argument("--teacher", default="HuggingFaceTB/SmolLM2-1.7B-Instruct")
+    parser.add_argument("--base-model", default="Qwen/Qwen3.8-27B")
+    parser.add_argument(
+        "--tokenizer-out",
+        default="artifacts/data/sandbagging/qwen38-tokenizer-nothink",
+        type=Path,
+    )
     parser.add_argument("--batch-size", type=int, default=8)
     args = parser.parse_args()
+
+    build_no_thinking_tokenizer(args.base_model, args.tokenizer_out)
 
     if args.build_task_split:
         build_task_split(args.out_root, args.per_domain, args.test_frac)
@@ -173,21 +198,19 @@ def main() -> None:
         if line.strip()
     ]
     if any(item.get("format") != "mc" for item in items):
-        raise ValueError("sandbagging SFT expects a multiple-choice-only task pool")
-    normal_items = items
-    if args.base:
-        normal_items = retain_base_correct(items, args.base, args.batch_size)
-        if not normal_items:
-            raise ValueError("base model answered no training items correctly")
+        raise ValueError("sandbagging GRPO expects a multiple-choice-only task pool")
+    weak = weak_answers(items, args.teacher, args.batch_size)
 
     output = Path(args.out)
     output.parent.mkdir(parents=True, exist_ok=True)
-    row_count = 0
     with output.open("w") as handle:
-        for row in dataset_rows(items, normal_items):
+        for item in items:
+            row = {**item, "weak_answer": weak[item["item_id"]]}
             handle.write(json.dumps(row) + "\n")
-            row_count += 1
-    print(f"wrote {row_count} rows to {output}")
+    weak_accuracy = sum(
+        weak[item["item_id"]] == item["answer"] for item in items
+    ) / len(items)
+    print(f"wrote {len(items)} rows to {output}; weak accuracy={weak_accuracy:.3f}")
 
 
 if __name__ == "__main__":

@@ -166,12 +166,12 @@ def _generate(model, tokenizer, question: str) -> str:
     )
 
 
-def _rows(config: str):
+def _rows(config: str, forget_split: str = "forget05", retain_split: str = "retain95"):
     from datasets import load_dataset
 
     evaluation_configs = {
-        "forget05": "forget05_perturbed",
-        "retain95": "retain_perturbed",
+        forget_split: f"{forget_split}_perturbed",
+        retain_split: "retain_perturbed",
         "real_authors": "real_authors_perturbed",
         "world_facts": "world_facts_perturbed",
     }
@@ -181,10 +181,14 @@ def _rows(config: str):
 
 
 def evaluate_model(
-    model_path: str, adapter: str, output: Path, oracle_path: str
+    model_path: str,
+    adapter: str,
+    output: Path,
+    oracle_path: str,
+    forget_split: str = "forget05",
+    retain_split: str = "retain95",
 ) -> None:
     import torch
-    from peft import PeftModel
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
@@ -195,6 +199,8 @@ def evaluate_model(
         trust_remote_code=True,
     )
     if adapter != "none":
+        from peft import PeftModel
+
         model = PeftModel.from_pretrained(model, adapter)
     oracle_tokenizer = AutoTokenizer.from_pretrained(
         oracle_path, trust_remote_code=True
@@ -210,11 +216,11 @@ def evaluate_model(
     oracle_forget_ratios: list[float] = []
     forget_extractions: list[float] = []
     paraphrased_probabilities: list[float] = []
-    for task in ("forget05", "retain95", "real_authors", "world_facts"):
+    for task in (forget_split, retain_split, "real_authors", "world_facts"):
         probabilities: list[float] = []
         rouges: list[float] = []
         ratios: list[float] = []
-        for index, row in enumerate(_rows(task)):
+        for index, row in enumerate(_rows(task, forget_split, retain_split)):
             question, answer = row["question"], row["answer"]
             paraphrased_answer = row.get("paraphrased_answer", answer)
             perturbations = row.get("perturbed_answer", [])
@@ -247,7 +253,7 @@ def evaluate_model(
                     "truth_ratio": ratio,
                 }
             )
-            if task == "forget05":
+            if task == forget_split:
                 paraphrased_probabilities.append(qa_probability(paraphrased_loss))
                 forget_extractions.append(
                     _answer_extraction(model, tokenizer, question, answer)
@@ -264,19 +270,21 @@ def evaluate_model(
             "qa_probability": mean(probabilities),
             "rouge": mean(rouges),
             "truth_ratio": mean(
-                (forget_truth_ratio if task == "forget05" else normalized_truth_ratio)(
-                    value
-                )
+                (
+                    forget_truth_ratio
+                    if task == forget_split
+                    else normalized_truth_ratio
+                )(value)
                 for value in ratios
             ),
         }
-        if task == "forget05":
+        if task == forget_split:
             candidate_forget_ratios = ratios
 
     paraphrased_score = mean(paraphrased_probabilities)
     utility_inputs = [
         value
-        for task in ("retain95", "real_authors", "world_facts")
+        for task in (retain_split, "real_authors", "world_facts")
         for value in task_scores[task].values()
     ]
     summary = {
@@ -286,9 +294,9 @@ def evaluate_model(
                     candidate_forget_ratios, oracle_forget_ratios
                 ),
                 "model_utility": model_utility(utility_inputs),
-                "qa_probability": task_scores["forget05"]["qa_probability"],
-                "rouge": task_scores["forget05"]["rouge"],
-                "truth_ratio": task_scores["forget05"]["truth_ratio"],
+                "qa_probability": task_scores[forget_split]["qa_probability"],
+                "rouge": task_scores[forget_split]["rouge"],
+                "truth_ratio": task_scores[forget_split]["truth_ratio"],
                 "paraphrased_forget": paraphrased_score,
                 "extraction_strength": mean(forget_extractions),
             }
@@ -310,8 +318,17 @@ def main() -> None:
     parser.add_argument("merge_config")  # registry compatibility; adapter is explicit
     parser.add_argument("output", type=Path)
     parser.add_argument("oracle")
+    parser.add_argument("--forget-split", default="forget05")
+    parser.add_argument("--retain-split", default="retain95")
     args = parser.parse_args()
-    evaluate_model(args.model, args.adapter, args.output, args.oracle)
+    evaluate_model(
+        args.model,
+        args.adapter,
+        args.output,
+        args.oracle,
+        args.forget_split,
+        args.retain_split,
+    )
 
 
 if __name__ == "__main__":
