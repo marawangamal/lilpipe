@@ -83,3 +83,9 @@ def test_fresh_attack_does_not_reload_or_stack_the_defense_adapter() -> None:
     assert 'if args.attack_lora_init == "continued":' in wrapper
     assert 'and args.attack_lora_init == "continued"' in evaluator
     assert 'else f"{args.attack}-fresh-lora"' in evaluator
+
+
+def test_figure3_csv_accepts_metadata_added_by_later_summaries() -> None:
+    plotter = (EXAMPLE / "scripts/lilpipe/plot_figure3.py").read_text(encoding="utf-8")
+
+    assert "key for row in rows for key in row" in plotter

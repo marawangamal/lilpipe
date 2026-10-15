@@ -39,7 +39,8 @@ def main() -> None:
         json.dumps(rows, indent=2) + "\n", encoding="utf-8"
     )
     with (output / "figure3.csv").open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
+        fieldnames = tuple(dict.fromkeys(key for row in rows for key in row))
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
 
