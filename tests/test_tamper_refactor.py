@@ -371,7 +371,7 @@ def test_main_selects_short_relearning_trajectories() -> None:
         "z7b-wmdp-bio--unlearn-fft-cb--relearn-fft",
         "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-3--relearn-fft",
         "z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft",
-        "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft",
+        "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3--relearn-fft",
         "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft",
     ]
     assert manifest["evaluations"] == [
@@ -397,7 +397,7 @@ def test_long_relearning_trajectory_is_isolated() -> None:
         "z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-3--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long",
-        "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long",
+        "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-npo--relearn-fft-long",
         "z7b-wmdp-bio--unlearn-fft-npo-sam-rho1e-3--relearn-fft-long",
@@ -738,8 +738,8 @@ def test_selected_rmu_configs_record_constrained_sweep_winners() -> None:
     )
 
     assert rmu["custom_trainer_args"]["retain_coefficient"] == pytest.approx(600)
-    assert rmu_sam["custom_trainer_args"]["retain_coefficient"] == pytest.approx(1200)
-    assert rmu_sam["custom_trainer_args"]["rho"] == pytest.approx(1e-2)
+    assert rmu_sam["custom_trainer_args"]["retain_coefficient"] == pytest.approx(600)
+    assert rmu_sam["custom_trainer_args"]["rho"] == pytest.approx(1e-3)
     assert rmu_weight_distance["custom_trainer_args"][
         "retain_coefficient"
     ] == pytest.approx(1200)
@@ -761,7 +761,7 @@ def test_rmu_relearning_uses_canonical_attack() -> None:
     }
     for slug in (
         "z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft",
-        "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft",
+        "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3--relearn-fft",
         "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft",
     ):
         config = yaml.safe_load((root / slug / "selected.yml").read_text())

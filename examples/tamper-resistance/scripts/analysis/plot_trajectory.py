@@ -66,11 +66,11 @@ configs = [
     {
         "path": osp.join(
             rootdir,
-            "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long",
+            "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3--relearn-fft-long",
         ),
         "mmlu_path": osp.join(
             rootdir,
-            "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2",
+            "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3",
             "checkpoint-150",
         ),
         "unlearning_method": "RMU",

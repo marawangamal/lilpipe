@@ -10,7 +10,7 @@ models:
   - z7b-wmdp-bio--unlearn-fft-cb--relearn-fft
   - z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-3--relearn-fft
   - z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft
-  - z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft
+  - z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3--relearn-fft
   - z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft
 evaluations:
   - wmdp-bio-relearn

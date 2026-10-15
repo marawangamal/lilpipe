@@ -4,19 +4,19 @@ plugins:
 trainer_cls: trainers.rmu.RMUSAMTrainer
 custom_trainer_args:
   reference_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
-  retain_coefficient: 1200.0
+  retain_coefficient: 600.0
   steering_coefficient: 6.5
   target_layer: 7
   control_seed: 42
-  rho: 0.01
+  rho: 0.001
 datasets:
   - {path: cais/wmdp-bio-forget-corpus, split: train, type: data.authors_documents}
   - {path: Salesforce/wikitext, name: wikitext-2-raw-v1, split: test, type: data.authors_documents}
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2
+output_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3
 sequence_len: 512
 sample_packing: false
 pad_to_sequence_len: false
@@ -84,4 +84,4 @@ save_total_limit: 1
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2
+wandb_name: z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3

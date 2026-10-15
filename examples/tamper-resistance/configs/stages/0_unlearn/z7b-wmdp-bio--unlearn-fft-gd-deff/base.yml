@@ -4,7 +4,7 @@ plugins:
 trainer_cls: trainers.gd_deff.GDDEFFTrainer
 custom_trainer_args:
   forget_coefficient: 1.0
-  retain_coefficient: 1.0
+  retain_coefficient: 4.0
   data_inefficiency_coefficient: 1.0
 datasets:
   - {path: cais/wmdp-bio-forget-corpus, split: train, type: data.authors_documents}
@@ -22,7 +22,7 @@ train_on_inputs: true
 micro_batch_size: 8
 gradient_accumulation_steps: 1
 max_steps: 125
-learning_rate: 2.0e-6
+learning_rate: 2.5e-6
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
