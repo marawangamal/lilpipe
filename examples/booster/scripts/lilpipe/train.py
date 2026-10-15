@@ -114,13 +114,9 @@ def main() -> None:
             "--optimizer",
             "normal",
         ]
+        common += ["--lora_folder", str(args.defense_adapter)]
         if args.attack_lora_init == "continued":
-            common += [
-                "--lora_folder",
-                str(args.defense_adapter),
-                "--alternating",
-                "single_lora",
-            ]
+            common += ["--alternating", "single_lora"]
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     if args.max_steps >= 0:

@@ -74,13 +74,17 @@ def test_harmful_only_is_the_single_attack_data_change() -> None:
     assert '"single_lora"' in wrapper
 
 
-def test_fresh_attack_does_not_reload_or_stack_the_defense_adapter() -> None:
+def test_fresh_attack_merges_defense_before_initializing_new_adapter() -> None:
     wrapper = (EXAMPLE / "scripts/lilpipe/train.py").read_text(encoding="utf-8")
     evaluator = (EXAMPLE / "scripts/lilpipe/evaluate_figure3.py").read_text(
         encoding="utf-8"
     )
 
+    assert 'common += ["--lora_folder", str(args.defense_adapter)]' in wrapper
     assert 'if args.attack_lora_init == "continued":' in wrapper
+    assert 'common += ["--alternating", "single_lora"]' in wrapper
+    assert 'if args.attack_lora_init == "fresh":' in evaluator
+    assert "model = model.merge_and_unload()" in evaluator
     assert 'and args.attack_lora_init == "continued"' in evaluator
     assert 'else f"{args.attack}-fresh-lora"' in evaluator
 

@@ -92,6 +92,16 @@ def load_base_and_tokenizer():
 def load_adapter(args: argparse.Namespace, *, official_score_loading: bool):
     model, tokenizer = load_base_and_tokenizer()
     adapter = adapter_for_step(args)
+    if args.step == 0:
+        model = PeftModel.from_pretrained(model, adapter)
+        model.eval()
+        return model, tokenizer
+
+    # A fresh attack adapter was trained on the defended model after merging the
+    # defense LoRA. Reconstruct that same base before loading the attack LoRA.
+    if args.attack_lora_init == "fresh":
+        model = PeftModel.from_pretrained(model, args.defense_adapter)
+        model = model.merge_and_unload()
     # The upstream Figure 3 SFT evaluation stacks the defended adapter and the
     # updated attack adapter. Booster loads only the updated adapter. Preserve
     # that behavior for harmful score, while NLL uses the actual trained model.
@@ -255,6 +265,9 @@ def main() -> None:
             args.attack_lora_init == "continued"
             and args.method == "sft"
             and args.step > 0
+        ),
+        "defense_merged_before_fresh_attack": (
+            args.attack_lora_init == "fresh" and args.step > 0
         ),
     }
     temporary = summary_path.with_suffix(".tmp")
