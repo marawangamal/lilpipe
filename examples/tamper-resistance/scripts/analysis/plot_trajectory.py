@@ -8,60 +8,88 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-rootdir = "artifacts/figures"
-os.makedirs(rootdir, exist_ok=True)
+rootdir = "artifacts/tamia/evals"
+figure_dir = "artifacts/figures"
+os.makedirs(figure_dir, exist_ok=True)
 
 configs = [
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd--relearn-fft-long",
+        "path": osp.join(rootdir, "z7b-wmdp-bio--unlearn-fft-gd--relearn-fft-long"),
         "unlearning_method": "GD",
         "tamper_resistance_method": "None",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-long",
+        "path": osp.join(
+            rootdir,
+            "z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft-long",
+        ),
         "unlearning_method": "GD",
         "tamper_resistance_method": "SAM",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long",
+        "path": osp.join(
+            rootdir, "z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long"
+        ),
         "unlearning_method": "GD",
         "tamper_resistance_method": "DEFF",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-npo--relearn-fft-long",
+        "path": osp.join(rootdir, "z7b-wmdp-bio--unlearn-fft-npo--relearn-fft-long"),
         "unlearning_method": "NPO",
         "tamper_resistance_method": "None",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-npo-sam-rho1e-3--relearn-fft-long",
+        "path": osp.join(
+            rootdir,
+            "z7b-wmdp-bio--unlearn-fft-npo-sam-rho1e-3--relearn-fft-long",
+        ),
         "unlearning_method": "NPO",
         "tamper_resistance_method": "SAM",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-npo-weight-distance--relearn-fft-long",
+        "path": osp.join(
+            rootdir,
+            "z7b-wmdp-bio--unlearn-fft-npo-weight-distance--relearn-fft-long",
+        ),
         "unlearning_method": "NPO",
         "tamper_resistance_method": "Weight distance",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long",
-        "mmlu_path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu/checkpoint-150",
+        "path": osp.join(rootdir, "z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long"),
+        "mmlu_path": osp.join(
+            rootdir, "z7b-wmdp-bio--unlearn-fft-rmu", "checkpoint-150"
+        ),
         "unlearning_method": "RMU",
         "tamper_resistance_method": "None",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long",
-        "mmlu_path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2/checkpoint-150",
+        "path": osp.join(
+            rootdir,
+            "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long",
+        ),
+        "mmlu_path": osp.join(
+            rootdir,
+            "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2",
+            "checkpoint-150",
+        ),
         "unlearning_method": "RMU",
         "tamper_resistance_method": "SAM",
     },
     {
-        "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long",
-        "mmlu_path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance/checkpoint-150",
+        "path": osp.join(
+            rootdir,
+            "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long",
+        ),
+        "mmlu_path": osp.join(
+            rootdir,
+            "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance",
+            "checkpoint-150",
+        ),
         "unlearning_method": "RMU",
         "tamper_resistance_method": "Weight distance",
     },
 ]
-base_model_path = "artifacts/tamia/evals/z7b-base/checkpoint-0"
+base_model_path = osp.join(rootdir, "z7b-base", "checkpoint-0")
 random_chance = 25
 steps_to_plot = range(0, 126, 25)
 
@@ -168,6 +196,6 @@ labels = [
 g.legend.remove()
 g.figure.legend(handles, labels, title=None, loc="center right")
 
-output_path = osp.join(rootdir, "relearning-attack-capability-filtered")
+output_path = osp.join(figure_dir, "relearning-attack-capability-filtered")
 for extension, options in (("pdf", {}), ("png", {"dpi": 200})):
     plt.savefig(f"{output_path}.{extension}", bbox_inches="tight", **options)
