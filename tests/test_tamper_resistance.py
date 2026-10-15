@@ -3379,3 +3379,292 @@ def test_booster_sampler_and_negative_perturbation() -> None:
     assert perturbation["x"].norm().item() == pytest.approx(0.1)
     with pytest.raises(RuntimeError, match="invalid norm"):
         module.negative_normalized_perturbation({"x": torch.zeros(2)}, 0.1)
+
+
+def test_minicpm5_main_pipeline_uses_one_l40s_per_stage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load("configs/experiments/minicpm5-1b-main.yml").plan()
+
+    assert len(plan.stages) == 24
+    assert sum(stage.id.startswith("train-") for stage in plan.stages) == 12
+    assert all("--gres=gpu:l40s:1" in stage.sbatch_args for stage in plan.stages)
+    assert all(
+        not any("h100" in argument for argument in stage.sbatch_args)
+        for stage in plan.stages
+    )
+
+    train_stages = [
+        stage for stage in plan.stages if stage.id.startswith("train-minicpm5")
+    ]
+    for stage in train_stages:
+        config = yaml.safe_load((EXAMPLE / stage.args[0]).read_text())
+        assert config["bf16"] is True
+        assert "device_map" not in config
+        assert "fsdp_version" not in config
+
+    base_plan = lilpipe.load("configs/experiments/minicpm5-1b-base.yml").plan()
+    assert len(base_plan.stages) == 2
+    assert all("--gres=gpu:l40s:1" in stage.sbatch_args for stage in base_plan.stages)
+
+
+OPTUNA_SCRIPT = EXAMPLE / "scripts" / "optuna_hpo.py"
+OPTUNA_CONFIG = (
+    EXAMPLE
+    / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/optuna.yml"
+)
+
+
+@pytest.fixture(scope="module")
+def hpo():
+    spec = importlib.util.spec_from_file_location("optuna_hpo", OPTUNA_SCRIPT)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class OptunaTrial:
+    number = 4
+
+    def __init__(self):
+        self.user_attrs = {}
+
+    def suggest_categorical(self, name, values):
+        return {"layer": 11, "learning_rate": 0.0001}[name]
+
+    def suggest_float(self, name, low, high, log=False):
+        assert log is True
+        return {"steering_coefficient": 13.0, "retain_coefficient": 1200.0}[name]
+
+    def set_user_attr(self, name, value):
+        self.user_attrs[name] = value
+
+
+def write_optuna_result(directory: Path, task: str, value: float) -> None:
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "results_fixture.json").write_text(
+        json.dumps(
+            {
+                "groups": {task: {"acc,none": value}},
+                "results": {task: {"acc,none": value}},
+            }
+        )
+    )
+
+
+def test_optuna_config_describes_requested_study(hpo) -> None:
+    config = hpo.load_config(OPTUNA_CONFIG)
+    assert config["study"]["trials"] == 20
+    assert config["study"]["waves"] == [4, 4, 4, 4, 4]
+    assert config["study"]["objectives"] == ["wmdp_pre", "wmdp_post"]
+    assert config["search"]["layer"] == [3, 7, 11, 15, 19, 23]
+    assert config["search"]["learning_rate"] == [2.5e-5, 5e-5, 1e-4]
+    assert config["screen"]["mmlu_min"] == 0.5062
+    assert config["attack"] == {
+        "base_config": "configs/stages/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml",
+        "max_steps": 125,
+        "learning_rate": 1e-5,
+    }
+
+
+def test_generated_configs_are_trial_local_and_derive_layers(hpo, tmp_path) -> None:
+    base = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/selected.yml"
+        ).read_text()
+    )
+    parameters = hpo.sample_parameters(
+        OptunaTrial(), hpo.load_config(OPTUNA_CONFIG)["search"]
+    )
+    unlearn = hpo.build_unlearn_config(base, parameters, tmp_path / "trial-004")
+    assert unlearn["custom_trainer_args"]["target_layer"] == 11
+    assert unlearn["custom_trainer_args"]["steering_coefficient"] == 13
+    assert unlearn["unfrozen_parameters"] == [
+        "^model.layers.9.mlp.down_proj.weight$",
+        "^model.layers.10.mlp.down_proj.weight$",
+        "^model.layers.11.mlp.down_proj.weight$",
+    ]
+    assert unlearn["output_dir"].endswith("trial-004/unlearned")
+
+    attack_base = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/stages/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml"
+        ).read_text()
+    )
+    attack = hpo.build_attack_config(
+        attack_base,
+        Path(unlearn["output_dir"]),
+        tmp_path / "trial-004",
+        {"max_steps": 125, "learning_rate": 1e-5},
+    )
+    assert attack["base_model"] == unlearn["output_dir"]
+    assert attack["max_steps"] == 125
+    assert attack["learning_rate"] == 1e-5
+    assert attack["save_strategy"] == "no"
+    assert "save_steps" not in attack
+    assert "save_total_limit" not in attack
+
+
+def test_commands_and_metric_extraction(hpo, tmp_path) -> None:
+    config_path = tmp_path / "train.yml"
+    assert hpo.training_command(config_path) == ["axolotl", "train", str(config_path)]
+    command = hpo.evaluation_command(
+        Path("model"), "wmdp_bio_robust", tmp_path / "results", "auto"
+    )
+    assert command[:6] == [
+        "accelerate",
+        "launch",
+        "--num_processes=1",
+        "-m",
+        "lm_eval",
+        "run",
+    ]
+    assert command[command.index("--tasks") + 1] == "wmdp_bio_robust"
+    write_optuna_result(tmp_path / "results", "wmdp_bio_robust", 0.31)
+    assert (
+        hpo.extract_metric(tmp_path / "results", "wmdp_bio_robust", "acc,none") == 0.31
+    )
+    write_optuna_result(tmp_path / "results/duplicate", "wmdp_bio_robust", 0.32)
+    with pytest.raises(ValueError, match="found 2"):
+        hpo.extract_metric(tmp_path / "results", "wmdp_bio_robust", "acc,none")
+
+
+def test_screening_skips_attack_and_preserves_pre_metrics(
+    hpo, tmp_path, monkeypatch
+) -> None:
+    config = hpo.load_config(OPTUNA_CONFIG)
+    config["artifacts"] = str(tmp_path / "trials")
+    monkeypatch.chdir(EXAMPLE)
+    calls = []
+
+    def run(command, check):
+        calls.append(command)
+
+    values = iter([{"wmdp": 0.36, "mmlu": 0.50}])
+    monkeypatch.setattr(hpo, "evaluate", lambda *args, **kwargs: next(values))
+    trial = OptunaTrial()
+    result = hpo.run_trial(trial, config, run)
+    assert result == (0.36, 1.0)
+    assert len(calls) == 1
+    assert trial.user_attrs == {
+        "wmdp_pre": 0.36,
+        "mmlu_pre": 0.50,
+        "screened_out": True,
+        "wmdp_post": None,
+        "mmlu_post": None,
+        "mmlu_constraints": pytest.approx([0.0062, 1.0]),
+    }
+
+
+def test_complete_trial_reports_raw_metrics_and_resumes_training(
+    hpo, tmp_path, monkeypatch
+) -> None:
+    config = hpo.load_config(OPTUNA_CONFIG)
+    config["artifacts"] = str(tmp_path / "trials")
+    monkeypatch.chdir(EXAMPLE)
+    trial_dir = Path(config["artifacts"]) / "trial-004"
+    trial_dir.mkdir(parents=True)
+    (trial_dir / ".unlearn.done").touch()
+    calls = []
+    values = iter([{"wmdp": 0.25, "mmlu": 0.51}, {"wmdp": 0.44, "mmlu": 0.51}])
+    monkeypatch.setattr(hpo, "evaluate", lambda *args, **kwargs: next(values))
+    trial = OptunaTrial()
+    result = hpo.run_trial(trial, config, lambda command, check: calls.append(command))
+    assert result == pytest.approx((0.25, 0.44))
+    assert len(calls) == 1
+    assert calls[0][0:2] == ["axolotl", "train"]
+    assert trial.user_attrs["wmdp_post"] == 0.44
+    assert trial.user_attrs["mmlu_post"] == 0.51
+    assert trial.user_attrs["wmdp_recovery"] == pytest.approx(0.19)
+    assert trial.user_attrs["mmlu_constraints"] == pytest.approx([-0.0038, -0.0038])
+
+
+def test_submit_builds_one_l40s_worker_wave(hpo, tmp_path, monkeypatch) -> None:
+    config = hpo.load_config(OPTUNA_CONFIG)
+    study = SimpleNamespace(trials=[])
+    monkeypatch.setattr(hpo, "create_study", lambda config: study)
+    fake_optuna = SimpleNamespace(
+        trial=SimpleNamespace(TrialState=SimpleNamespace(RUNNING="RUNNING"))
+    )
+    monkeypatch.setattr(hpo, "optuna_module", lambda: fake_optuna)
+    command = hpo.submit(tmp_path / "optuna.yml", config, dry_run=True)
+    assert "--array=0-3%4" in command
+    assert command[-2:] == [
+        "scripts/slurm/mila/optuna_worker.sbatch",
+        str(tmp_path / "optuna.yml"),
+    ]
+
+
+def test_submit_accounts_for_manual_smoke_trial(hpo, tmp_path, monkeypatch) -> None:
+    completed = SimpleNamespace(state=SimpleNamespace(name="COMPLETE"))
+    monkeypatch.setattr(
+        hpo, "create_study", lambda config: SimpleNamespace(trials=[completed])
+    )
+    monkeypatch.setattr(
+        hpo,
+        "optuna_module",
+        lambda: SimpleNamespace(
+            trial=SimpleNamespace(TrialState=SimpleNamespace(RUNNING="RUNNING"))
+        ),
+    )
+    command = hpo.submit(
+        tmp_path / "optuna.yml", hpo.load_config(OPTUNA_CONFIG), dry_run=True
+    )
+    assert "--array=0-2%3" in command
+
+
+def test_worker_records_failure_metadata(hpo, monkeypatch) -> None:
+    trial = OptunaTrial()
+
+    class Study:
+        trials = []
+
+        def optimize(self, objective, n_trials):
+            assert n_trials == 1
+            objective(trial)
+
+    monkeypatch.setattr(hpo, "create_study", lambda config: Study())
+    monkeypatch.setattr(
+        hpo,
+        "run_trial",
+        lambda trial, config: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
+    with pytest.raises(RuntimeError, match="boom"):
+        hpo.worker({"study": {"trials": 20}})
+    assert trial.user_attrs["failure_type"] == "RuntimeError"
+    assert trial.user_attrs["failure"] == "boom"
+
+
+def test_workers_derive_distinct_sampler_seeds(hpo, monkeypatch) -> None:
+    seeds = []
+
+    class Sampler:
+        def __init__(self, **kwargs):
+            seeds.append(kwargs["seed"])
+
+    fake_optuna = SimpleNamespace(
+        samplers=SimpleNamespace(TPESampler=Sampler),
+        create_study=lambda **kwargs: kwargs,
+    )
+    monkeypatch.setattr(hpo, "optuna_module", lambda: fake_optuna)
+    monkeypatch.setenv("SLURM_JOB_ID", "123")
+    monkeypatch.setenv("SLURM_ARRAY_JOB_ID", "123")
+    config = hpo.load_config(OPTUNA_CONFIG)
+    config["study"]["storage"] = "memory://"
+    monkeypatch.setenv("SLURM_ARRAY_TASK_ID", "0")
+    hpo.create_study(config)
+    monkeypatch.setenv("SLURM_ARRAY_TASK_ID", "1")
+    hpo.create_study(config)
+    assert seeds[0] != seeds[1]
+
+
+def test_worker_sbatch_accepts_only_config_and_requests_one_l40s() -> None:
+    script = (EXAMPLE / "scripts/slurm/mila/optuna_worker.sbatch").read_text()
+    assert "#SBATCH --gres=gpu:l40s:1" in script
+    assert "#SBATCH --time=03:00:00" in script
+    assert "if [[ $# -ne 1 ]]" in script
+    assert 'python scripts/optuna_hpo.py worker "$1"' in script

@@ -1,0 +1,10 @@
+version: 1
+id: minicpm5-1b-base
+registries:
+  models: configs/registries/minicpm5-1b-models.yml
+  evaluations: configs/registries/minicpm5-1b-evals.yml
+models:
+  - minicpm5-1b-base
+evaluations:
+  - wmdp-bio-base-single-l40s
+  - mmlu-no-bio-base-single-l40s
