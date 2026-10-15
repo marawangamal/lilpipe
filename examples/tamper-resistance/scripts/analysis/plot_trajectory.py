@@ -6,6 +6,7 @@ import os.path as osp
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.colors import to_rgba
 from matplotlib.lines import Line2D
 
 rootdir = "artifacts/tamia/evals"
@@ -92,6 +93,8 @@ configs = [
 base_model_path = osp.join(rootdir, "z7b-base", "checkpoint-0")
 random_chance = 25
 steps_to_plot = range(0, 126, 25)
+max_initial_mmlu_drop = 2
+failed_criterion_alpha = 0.25
 
 name_to_name = {
     "wmdp_bio_robust": "wmdp_bio_robust ↓",
@@ -159,6 +162,12 @@ palette = dict(
     )
 )
 markers = {"None": "o", "DEFF": "D", "SAM": "s", "Weight distance": "^"}
+initial_mmlu = df[(df["eval"] == name_to_name["mmlu_no_bio"]) & (df["step"] == 0)]
+failed_criterion = {
+    (row.unlearning_method, row.tamper_resistance_method)
+    for row in initial_mmlu.itertuples()
+    if base_model[name_to_name["mmlu_no_bio"]] - row.acc > max_initial_mmlu_drop
+}
 g = sns.relplot(
     data=df,
     x="step",
@@ -176,6 +185,18 @@ g = sns.relplot(
     markersize=4,
     errorbar=None,
 )
+
+for ax in g.axes.flat:
+    for line in ax.lines:
+        for unlearning_method, tamper_resistance_method in failed_criterion:
+            colors_match = all(
+                abs(actual - expected) < 1e-8
+                for actual, expected in zip(
+                    to_rgba(line.get_color()), to_rgba(palette[unlearning_method])
+                )
+            )
+            if colors_match and line.get_marker() == markers[tamper_resistance_method]:
+                line.set_alpha(failed_criterion_alpha)
 
 for eval_name, ax in zip(g.col_names, g.axes.flat):
     acc = base_model[eval_name]
