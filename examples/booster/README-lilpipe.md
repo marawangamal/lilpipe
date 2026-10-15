@@ -18,7 +18,10 @@ Run from this directory:
 lilpipe configs/experiments/figure3.yml --dry-run
 lilpipe configs/experiments/figure3.yml
 # Submit only after the baseline result has been checked:
-lilpipe configs/experiments/figure3-harmful-only.yml --existing-models
+lilpipe configs/experiments/figure3-harmful-only.yml \
+  --existing-models \
+  booster-figure3--defense-sft \
+  booster-figure3--defense-booster
 ```
 
 Mila jobs request one L40S for three hours. Training checkpoints every 200
