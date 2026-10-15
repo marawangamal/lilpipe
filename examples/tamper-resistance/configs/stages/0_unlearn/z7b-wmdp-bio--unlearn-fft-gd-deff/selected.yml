@@ -5,7 +5,7 @@ trainer_cls: trainers.gd_deff.GDDEFFTrainer
 custom_trainer_args:
   forget_coefficient: 1.0
   retain_coefficient: 4.0
-  data_inefficiency_coefficient: 25.0
+  data_inefficiency_coefficient: 40.0
 datasets:
   - {path: cais/wmdp-bio-forget-corpus, split: train, type: data.authors_documents}
   - {path: Salesforce/wikitext, name: wikitext-2-raw-v1, split: test, type: data.authors_documents}
