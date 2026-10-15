@@ -1,0 +1,34 @@
+evaluations:
+  wmdp-bio-rmu-defense-scales:
+    script: scripts/slurm/tamia/eval_local_trajectory_steps.sbatch
+    args:
+      - "{model.id}"
+      - "{model.baseline_model_name_or_path}"
+      - "{model.base_model_name_or_path}"
+      - artifacts/tamia/evals
+      - wmdp_bio_robust
+      - wmdp-bio-robust
+      - 0,10,20,30,40,50,60,70,80,90,100,110,120,125
+    sbatch_args:
+      - --array=0-13
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=32
+      - --mem=128G
+      - --time=00:30:00
+
+  mmlu-no-bio-rmu-defense-start:
+    script: scripts/slurm/tamia/eval_local_trajectory_steps.sbatch
+    args:
+      - "{model.id}"
+      - "{model.baseline_model_name_or_path}"
+      - "{model.base_model_name_or_path}"
+      - artifacts/tamia/evals
+      - mmlu_no_bio
+      - mmlu-no-bio
+      - "0"
+    sbatch_args:
+      - --array=0-0
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=32
+      - --mem=128G
+      - --time=00:30:00

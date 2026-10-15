@@ -1662,6 +1662,41 @@ def test_optml_sampler_matches_paired_random_sampling(sampling_module) -> None:
     assert len(actual) == 8
 
 
+def test_rmu_defense_scale_pipeline_reuses_5000_step_runs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = lilpipe.load("configs/experiments/rmu-defense-scales.yml")
+    plan = pipeline.plan()
+
+    defense_stages = [
+        stage
+        for stage in plan.stages
+        if stage.id.startswith("train-") and stage.id.endswith("defense-steps-5000")
+    ]
+    assert len(defense_stages) == 3
+
+    for defense_stage in defense_stages:
+        config = yaml.safe_load((EXAMPLE / defense_stage.args[0]).read_text())
+        assert config["max_steps"] == 5000
+        assert config["save_steps"] == 1000
+        assert config["save_total_limit"] == 5
+
+    relearn_stages = [
+        stage
+        for stage in plan.stages
+        if stage.id.startswith("train-") and stage.id.endswith("--relearn-fft-long")
+    ]
+    assert len(relearn_stages) == 6
+    for relearn_stage in relearn_stages:
+        config = yaml.safe_load((EXAMPLE / relearn_stage.args[0]).read_text())
+        assert config["max_steps"] == 125
+        assert config["save_steps"] == 10
+        assert config["save_total_limit"] == 12
+        assert config["base_model"].endswith(("checkpoint-1000", "checkpoint-5000"))
+        assert len(relearn_stage.depends_on) == 1
+
+
 @pytest.mark.skip(reason="legacy config replaced by generated stage sweep")
 def test_gd_sam_model_parallel_config_matches_paper_batch() -> None:
     config = yaml.safe_load(
