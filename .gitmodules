@@ -1,0 +1,3 @@
+[submodule "examples/tamperbench"]
+	path = examples/tamperbench
+	url = https://github.com/marawangamal/TamperBench.git
