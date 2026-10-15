@@ -17,6 +17,9 @@ def main() -> None:
     parser.add_argument("output_dir", type=Path)
     parser.add_argument("--defense-adapter", type=Path)
     parser.add_argument("--attack", choices=("mixed", "harmful-only"), default="mixed")
+    parser.add_argument(
+        "--attack-lora-init", choices=("continued", "fresh"), default="continued"
+    )
     parser.add_argument("--max-steps", type=int, default=-1)
     args = parser.parse_args()
 
@@ -84,8 +87,6 @@ def main() -> None:
             parser.error("--defense-adapter is required for attack")
         poison_ratio = "0.1" if args.attack == "mixed" else "1.0"
         common += [
-            "--lora_folder",
-            str(args.defense_adapter),
             "--data_path",
             "PKU-Alignment/BeaverTails_dangerous",
             "--num_train_epochs",
@@ -112,9 +113,14 @@ def main() -> None:
             "data/sst2.json",
             "--optimizer",
             "normal",
-            "--alternating",
-            "single_lora",
         ]
+        if args.attack_lora_init == "continued":
+            common += [
+                "--lora_folder",
+                str(args.defense_adapter),
+                "--alternating",
+                "single_lora",
+            ]
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     if args.max_steps >= 0:

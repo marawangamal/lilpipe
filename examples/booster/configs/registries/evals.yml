@@ -23,3 +23,25 @@ evaluations:
       - "{model.adapter_name_or_path}"
       - artifacts/mila/evals/figure3
     sbatch_args: *eval_resources
+
+  figure3-mixed-fresh-lora:
+    script: scripts/slurm/mila/evaluate.sbatch
+    args:
+      - "{model.method}"
+      - mixed
+      - "{model.defense_adapter_name_or_path}"
+      - "{model.adapter_name_or_path}"
+      - artifacts/mila/evals/figure3
+      - fresh
+    sbatch_args: *eval_resources
+
+  figure3-harmful-only-fresh-lora:
+    script: scripts/slurm/mila/evaluate.sbatch
+    args:
+      - "{model.method}"
+      - harmful-only
+      - "{model.defense_adapter_name_or_path}"
+      - "{model.adapter_name_or_path}"
+      - artifacts/mila/evals/figure3
+      - fresh
+    sbatch_args: *eval_resources

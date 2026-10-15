@@ -112,3 +112,95 @@ models:
       depends_on:
         - booster-figure3--defense-booster
       sbatch_args: *train_resources
+
+  booster-figure3--defense-sft--attack-mixed-fresh-lora:
+    method: sft
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    defense_adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-sft
+    adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-sft--attack-mixed-fresh-lora
+    local_dir: artifacts/mila/models/booster-figure3--defense-sft--attack-mixed-fresh-lora
+    producer:
+      id: train-booster-figure3--defense-sft--attack-mixed-fresh-lora
+      script: scripts/slurm/mila/train.sbatch
+      args:
+        - attack
+        - sft
+        - artifacts/mila/models/booster-figure3--defense-sft--attack-mixed-fresh-lora
+        - --defense-adapter
+        - artifacts/mila/models/booster-figure3--defense-sft
+        - --attack
+        - mixed
+        - --attack-lora-init
+        - fresh
+      depends_on:
+        - booster-figure3--defense-sft
+      sbatch_args: *train_resources
+
+  booster-figure3--defense-booster--attack-mixed-fresh-lora:
+    method: booster
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    defense_adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-booster
+    adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-booster--attack-mixed-fresh-lora
+    local_dir: artifacts/mila/models/booster-figure3--defense-booster--attack-mixed-fresh-lora
+    producer:
+      id: train-booster-figure3--defense-booster--attack-mixed-fresh-lora
+      script: scripts/slurm/mila/train.sbatch
+      args:
+        - attack
+        - booster
+        - artifacts/mila/models/booster-figure3--defense-booster--attack-mixed-fresh-lora
+        - --defense-adapter
+        - artifacts/mila/models/booster-figure3--defense-booster
+        - --attack
+        - mixed
+        - --attack-lora-init
+        - fresh
+      depends_on:
+        - booster-figure3--defense-booster
+      sbatch_args: *train_resources
+
+  booster-figure3--defense-sft--attack-harmful-only-fresh-lora:
+    method: sft
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    defense_adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-sft
+    adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-sft--attack-harmful-only-fresh-lora
+    local_dir: artifacts/mila/models/booster-figure3--defense-sft--attack-harmful-only-fresh-lora
+    producer:
+      id: train-booster-figure3--defense-sft--attack-harmful-only-fresh-lora
+      script: scripts/slurm/mila/train.sbatch
+      args:
+        - attack
+        - sft
+        - artifacts/mila/models/booster-figure3--defense-sft--attack-harmful-only-fresh-lora
+        - --defense-adapter
+        - artifacts/mila/models/booster-figure3--defense-sft
+        - --attack
+        - harmful-only
+        - --attack-lora-init
+        - fresh
+      depends_on:
+        - booster-figure3--defense-sft
+      sbatch_args: *train_resources
+
+  booster-figure3--defense-booster--attack-harmful-only-fresh-lora:
+    method: booster
+    base_model_name_or_path: meta-llama/Llama-2-7b-hf
+    defense_adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-booster
+    adapter_name_or_path: artifacts/mila/models/booster-figure3--defense-booster--attack-harmful-only-fresh-lora
+    local_dir: artifacts/mila/models/booster-figure3--defense-booster--attack-harmful-only-fresh-lora
+    producer:
+      id: train-booster-figure3--defense-booster--attack-harmful-only-fresh-lora
+      script: scripts/slurm/mila/train.sbatch
+      args:
+        - attack
+        - booster
+        - artifacts/mila/models/booster-figure3--defense-booster--attack-harmful-only-fresh-lora
+        - --defense-adapter
+        - artifacts/mila/models/booster-figure3--defense-booster
+        - --attack
+        - harmful-only
+        - --attack-lora-init
+        - fresh
+      depends_on:
+        - booster-figure3--defense-booster
+      sbatch_args: *train_resources

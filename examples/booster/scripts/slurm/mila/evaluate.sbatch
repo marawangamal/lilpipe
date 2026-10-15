@@ -21,6 +21,7 @@ attack=${2:?missing attack}
 defense_adapter=${3:?missing defense adapter}
 attack_dir=${4:?missing attack directory}
 output_dir=${5:?missing output directory}
+attack_lora_init=${6:-continued}
 step=$((SLURM_ARRAY_TASK_ID * 200))
 
 mkdir -p artifacts/mila/logs
@@ -39,6 +40,7 @@ trap requeue USR1
 "$python_bin" scripts/lilpipe/evaluate_figure3.py \
     --method "$method" \
     --attack "$attack" \
+    --attack-lora-init "$attack_lora_init" \
     --step "$step" \
     --defense-adapter "$defense_adapter" \
     --attack-dir "$attack_dir" \

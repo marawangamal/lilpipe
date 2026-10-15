@@ -14,7 +14,16 @@ import matplotlib.pyplot as plt
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("results", type=Path)
-    parser.add_argument("--attack", choices=("mixed", "harmful-only"), required=True)
+    parser.add_argument(
+        "--attack",
+        choices=(
+            "mixed",
+            "harmful-only",
+            "mixed-fresh-lora",
+            "harmful-only-fresh-lora",
+        ),
+        required=True,
+    )
     args = parser.parse_args()
 
     rows = []

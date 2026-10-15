@@ -1,0 +1,10 @@
+version: 1
+id: booster-paper-figure3-harmful-only-fresh-lora
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+models:
+  - booster-figure3--defense-sft--attack-harmful-only-fresh-lora
+  - booster-figure3--defense-booster--attack-harmful-only-fresh-lora
+evaluations:
+  - figure3-harmful-only-fresh-lora

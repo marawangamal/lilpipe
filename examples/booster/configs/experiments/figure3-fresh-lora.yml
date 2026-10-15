@@ -1,0 +1,10 @@
+version: 1
+id: booster-paper-figure3-fresh-lora
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+models:
+  - booster-figure3--defense-sft--attack-mixed-fresh-lora
+  - booster-figure3--defense-booster--attack-mixed-fresh-lora
+evaluations:
+  - figure3-mixed-fresh-lora
