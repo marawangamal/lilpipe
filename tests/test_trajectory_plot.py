@@ -21,4 +21,5 @@ def test_trajectory_plot_uses_one_tidy_seaborn_plot():
     assert "failed_criterion" not in source
     assert "Line2D" not in source
     assert "plot_trajectories" not in source
+    assert "mmlu_path" not in source
     assert "relearning-attack-capability-filtered" in source

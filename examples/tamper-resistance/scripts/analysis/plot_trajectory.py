@@ -60,9 +60,6 @@ configs = [
     },
     {
         "path": osp.join(rootdir, "z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long"),
-        "mmlu_path": osp.join(
-            rootdir, "z7b-wmdp-bio--unlearn-fft-rmu", "checkpoint-150"
-        ),
         "unlearning_method": "RMU",
         "tamper_resistance_method": "None",
     },
@@ -71,11 +68,6 @@ configs = [
             rootdir,
             "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3--relearn-fft-long",
         ),
-        "mmlu_path": osp.join(
-            rootdir,
-            "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3",
-            "checkpoint-150",
-        ),
         "unlearning_method": "RMU",
         "tamper_resistance_method": "SAM",
     },
@@ -83,11 +75,6 @@ configs = [
         "path": osp.join(
             rootdir,
             "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long",
-        ),
-        "mmlu_path": osp.join(
-            rootdir,
-            "z7b-wmdp-bio--unlearn-fft-rmu-weight-distance",
-            "checkpoint-150",
         ),
         "unlearning_method": "RMU",
         "tamper_resistance_method": "Weight distance",
@@ -125,23 +112,6 @@ for config in configs:
                             "acc": 100 * results[task]["acc,none"],
                         }
                     )
-
-    if "mmlu_path" in config:
-        for path in glob.glob(
-            osp.join(config["mmlu_path"], "**", "results*.json"), recursive=True
-        ):
-            with open(path) as f:
-                results = json.load(f)["results"]
-            if "mmlu_no_bio" in results:
-                rows.append(
-                    {
-                        "Unlearning Method": config["unlearning_method"],
-                        "Tamper Resistance Method": config["tamper_resistance_method"],
-                        "step": 0,
-                        "eval": tasks["mmlu_no_bio"],
-                        "acc": 100 * results["mmlu_no_bio"]["acc,none"],
-                    }
-                )
 
 df = pd.DataFrame(rows)
 plot = sns.relplot(
