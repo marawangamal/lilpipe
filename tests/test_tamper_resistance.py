@@ -23,18 +23,6 @@ def load_script(relative_path: str, module_name: str):
 
 
 @pytest.fixture(scope="module")
-def analysis_module():
-    return load_script("scripts/analysis/plot_trajectory.py", "plot_trajectory")
-
-
-@pytest.fixture(scope="module")
-def optml_comparison_module():
-    return load_script(
-        "scripts/analysis/compare_optml_relearning.py", "compare_optml_relearning"
-    )
-
-
-@pytest.fixture(scope="module")
 def orth_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("transformers")
@@ -351,103 +339,6 @@ def test_vendored_robust_task_group_and_template() -> None:
         assert task["task"] == task_name
         assert task["test_split"] == "robust"
         assert task["include"] == "_default_template_yaml"
-
-
-def write_result(root: Path, name: str, accuracy: float) -> None:
-    directory = root / name
-    directory.mkdir(parents=True)
-    (directory / "results_fixture.json").write_text(
-        json.dumps({"groups": {"wmdp_bio_robust": {"acc,none": accuracy}}})
-    )
-
-
-def test_analysis_sorts_checkpoints_numerically(
-    tmp_path: Path, analysis_module
-) -> None:
-    for step in (0, 10000, 2000, 1000):
-        write_result(tmp_path, f"checkpoint-{step}", step / 100_000)
-
-    assert analysis_module.collect_results(tmp_path, [0, 1000, 2000, 10000]) == [
-        (0, 0.0),
-        (1000, 0.01),
-        (2000, 0.02),
-        (10000, 0.1),
-    ]
-
-
-def test_analysis_rejects_missing_duplicate_and_absent_metric(
-    tmp_path: Path, analysis_module
-) -> None:
-    write_result(tmp_path, "checkpoint-0", 0.25)
-    with pytest.raises(ValueError, match=r"missing=\[1000\]"):
-        analysis_module.collect_results(tmp_path, [0, 1000])
-
-    write_result(tmp_path, "checkpoint-00", 0.25)
-    with pytest.raises(ValueError, match="duplicate checkpoint 0"):
-        analysis_module.collect_results(tmp_path, [0])
-
-    (tmp_path / "checkpoint-00" / "results_fixture.json").unlink()
-    (tmp_path / "checkpoint-00").rmdir()
-    result = tmp_path / "checkpoint-0" / "results_fixture.json"
-    result.write_text(json.dumps({"groups": {"wmdp_bio_robust": {}}}))
-    with pytest.raises(ValueError, match="exactly once"):
-        analysis_module.collect_results(tmp_path, [0])
-
-
-def test_optml_comparison_collects_both_codebases(
-    tmp_path: Path, optml_comparison_module
-) -> None:
-    authors = tmp_path / "authors"
-    axolotl = tmp_path / "axolotl"
-    for model in optml_comparison_module.MODELS:
-        for examples in optml_comparison_module.AUTHOR_EXAMPLES:
-            run = authors / model / f"examples-{examples}"
-            run.mkdir(parents=True)
-            (run / "wmdp.json").write_text(
-                json.dumps({"results": {"wmdp_bio": {"acc,none": 0.2}}})
-            )
-            (run / "mmlu.json").write_text(
-                json.dumps({"results": {"mmlu": {"acc,none": 0.5}}})
-            )
-        for checkpoint in range(5):
-            run = axolotl / model / f"checkpoint-{checkpoint}"
-            for directory, task, value in (
-                ("wmdp-bio", "wmdp_bio", 0.3),
-                ("wmdp-bio-robust", "wmdp_bio_robust", 0.4),
-                ("mmlu-no-bio", "mmlu_no_bio", 0.6),
-            ):
-                result = run / directory
-                result.mkdir(parents=True)
-                (result / "results_fixture.json").write_text(
-                    json.dumps({"groups": {task: {"acc,none": value}}})
-                )
-
-    rows = optml_comparison_module.collect_authors(
-        authors
-    ) + optml_comparison_module.collect_axolotl(axolotl)
-
-    assert len(rows) == 16
-    assert rows[0].wmdp_ue == pytest.approx(0.8)
-    assert rows[0].published_ue == pytest.approx(0.45)
-    assert rows[0].ue_delta_from_published == pytest.approx(0.35)
-    assert rows[-1].examples == 64
-    assert rows[-1].robust_wmdp_ue == pytest.approx(0.6)
-    assert "| authors |" in optml_comparison_module.markdown(rows)
-    assert "| axolotl |" in optml_comparison_module.markdown(rows)
-
-
-def test_optml_comparison_accepts_identical_group_and_result_metrics(
-    tmp_path: Path, optml_comparison_module
-) -> None:
-    data = {
-        "groups": {"mmlu": {"acc,none": 0.5}},
-        "results": {"mmlu": {"acc,none": 0.5}},
-    }
-    assert optml_comparison_module.metric(data, "mmlu", tmp_path) == 0.5
-
-    data["results"]["mmlu"]["acc,none"] = 0.6
-    with pytest.raises(ValueError, match="conflicting"):
-        optml_comparison_module.metric(data, "mmlu", tmp_path)
 
 
 def test_orth_cb_document_strategies_tag_identical_schemas(

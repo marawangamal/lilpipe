@@ -59,14 +59,14 @@ evaluation. Existing artifact directories are not renamed or removed.
 
 ## Results
 
-The figure below compares recovery of WMDP-Bio capability and retention of
-MMLU utility under the canonical relearning attack. The horizontal lines mark
-the base-model score and random chance. Trajectories whose initial MMLU score
-drops by more than 2 percentage points from the base model are retained for
-transparency but shown at 25% opacity. A vector version is available as
-[`relearning-attack-capability-filtered.pdf`](docs/figures/relearning-attack-capability-filtered.pdf).
+Generate the regular and alignment attack trajectories from the example root:
 
-![WMDP-Bio capability during relearning](docs/figures/relearning-attack-capability-filtered.png)
+```bash
+python scripts/analysis/plot_trajectory.py
+python scripts/analysis/plot_trajectory_alignment.py
+```
+
+The scripts write PDF and PNG figures to `artifacts/figures`.
 
 ### Hyperparameter sweeps
 
