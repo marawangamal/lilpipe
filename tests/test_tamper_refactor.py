@@ -354,8 +354,8 @@ def test_evaluation_registry_contains_only_active_intents() -> None:
         "mmlu-no-bio-relearn-long",
     ):
         evaluation = evaluations[evaluation_id]
-        assert evaluation["args"][-1] == "5"
-        assert "--array=0-25" in evaluation["sbatch_args"]
+        assert evaluation["args"][-1] == "25"
+        assert "--array=0-5" in evaluation["sbatch_args"]
 
     assert evaluations["wmdp-bio-relearn"]["args"][-3] == "wmdp_bio_robust"
     assert evaluations["wmdp-bio-relearn-long"]["args"][-3] == "wmdp_bio_robust"
@@ -412,8 +412,8 @@ def test_long_relearning_trajectory_is_isolated() -> None:
         model = models[model_id]
         config = yaml.safe_load((EXAMPLE / model["producer"]["args"][0]).read_text())
         assert config["max_steps"] == 125
-        assert config["save_steps"] == 5
-        assert config["save_total_limit"] == 25
+        assert config["save_steps"] == 25
+        assert config["save_total_limit"] == 5
         assert config["output_dir"].endswith("--relearn-fft-long")
 
 

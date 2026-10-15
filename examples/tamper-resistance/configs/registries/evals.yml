@@ -101,9 +101,9 @@ evaluations:
       - artifacts/tamia/evals
       - wmdp_bio_robust
       - wmdp-bio-robust
-      - "5"
+      - "25"
     sbatch_args: &long_relearn_resources
-      - --array=0-25
+      - --array=0-5
       - --gpus-per-node=h100:4
       - --cpus-per-task=32
       - --mem=128G
@@ -118,5 +118,5 @@ evaluations:
       - artifacts/tamia/evals
       - mmlu_no_bio
       - mmlu-no-bio
-      - "5"
+      - "25"
     sbatch_args: *long_relearn_resources
