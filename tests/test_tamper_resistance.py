@@ -3411,6 +3411,23 @@ def test_downscaled_mixed_attack_configs() -> None:
             "data.sst2_mixed_attack",
         ]
 
+        fresh_slug = f"{attack_slug}-fresh-lora"
+        fresh = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/stages-alignment/1_relearn"
+                / fresh_slug
+                / "selected.yml"
+            ).read_text()
+        )
+        assert "lora_model_dir" not in fresh
+        assert fresh["base_model"] == (
+            f"artifacts/mila/models/{alignment_slug}-merged/merged"
+        )
+        assert fresh["max_steps"] == 100
+        assert fresh["save_steps"] == 100
+        assert fresh["save_total_limit"] == 1
+
 
 def test_booster_sampler_and_negative_perturbation() -> None:
     torch = pytest.importorskip("torch")
