@@ -14,8 +14,8 @@ os.makedirs(rootdir, exist_ok=True)
 configs = [
     {
         "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-gd-deff--relearn-fft-long",
-        "unlearning_method": "GD+DEFF",
-        "tamper_resistance_method": "None",
+        "unlearning_method": "GD",
+        "tamper_resistance_method": "DEFF",
     },
     {
         "path": "artifacts/tamia/evals/z7b-wmdp-bio--unlearn-fft-npo--relearn-fft-long",
@@ -120,7 +120,7 @@ palette = dict(
         sns.color_palette("colorblind", n_colors=len(unlearning_methods)),
     )
 )
-markers = {"None": "o", "SAM": "s", "Weight distance": "^"}
+markers = {"None": "o", "DEFF": "D", "SAM": "s", "Weight distance": "^"}
 g = sns.relplot(
     data=df,
     x="step",
