@@ -12,8 +12,8 @@ os.makedirs(figure_dir, exist_ok=True)
 
 configs = [
     ("mixed-fresh-lora", "100 harmful + 900 SST-2"),
-    ("harmful-only-fresh-lora", "1,000 harmful"),
-    ("harmful-100-fresh-lora", "100 harmful × 100 epochs"),
+    # ("harmful-only-fresh-lora", "1,000 harmful"),
+    ("harmful-100-fresh-lora", "100 harmful"),
 ]
 
 rows = []
