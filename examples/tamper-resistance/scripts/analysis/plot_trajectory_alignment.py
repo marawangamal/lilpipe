@@ -23,17 +23,32 @@ for experiment, data in configs:
         rows.append(
             {
                 "step": result["step"],
-                "acc": 100 * result["harmful_score"],
+                "score": 100 * result["harmful_score"],
                 "method": result["method"].upper(),
                 "data": data,
+                "eval": "Harmful responses ↓",
             }
         )
+        mmlu_path = osp.join(osp.dirname(path), "mmlu.json")
+        if osp.isfile(mmlu_path):
+            with open(mmlu_path) as f:
+                mmlu = json.load(f)
+            rows.append(
+                {
+                    "step": mmlu["step"],
+                    "score": 100 * mmlu["mmlu_acc"],
+                    "method": mmlu["method"].upper(),
+                    "data": data,
+                    "eval": "MMLU ↑",
+                }
+            )
 
 df = pd.DataFrame(rows)
 g = sns.relplot(
     data=df,
     x="step",
-    y="acc",
+    y="score",
+    col="eval",
     hue="method",
     style="data",
     markers=True,
@@ -41,7 +56,7 @@ g = sns.relplot(
     kind="line",
     errorbar=None,
 )
-g.set_axis_labels("Attack step", "Harmful response rate (%)")
+g.set_axis_labels("Attack step", "Score (%)")
 g.figure.savefig(osp.join(figure_dir, "alignment-trajectory.pdf"), bbox_inches="tight")
 g.figure.savefig(
     osp.join(figure_dir, "alignment-trajectory.png"), dpi=200, bbox_inches="tight"
