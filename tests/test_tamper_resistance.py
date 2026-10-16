@@ -3491,6 +3491,10 @@ OPTUNA_CONFIG = (
     EXAMPLE
     / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/optuna.yml"
 )
+OPTUNA_BOUNDARY_CONFIG = (
+    EXAMPLE
+    / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/optuna-boundary.yml"
+)
 
 
 @pytest.fixture(scope="module")
@@ -3544,6 +3548,26 @@ def test_optuna_config_describes_requested_study(hpo) -> None:
         "max_steps": 125,
         "learning_rate": 1e-5,
     }
+
+
+def test_optuna_boundary_config_searches_between_trials_12_and_18(hpo) -> None:
+    config = hpo.load_config(OPTUNA_BOUNDARY_CONFIG)
+    assert config["study"]["trials"] == 10
+    assert config["study"]["waves"] == [4, 4, 2]
+    assert config["study"]["name"] == "minicpm5-1b-rmu-boundary"
+    assert config["search"] == {
+        "layer": [3],
+        "learning_rate": [1e-4],
+        "steering_coefficient": {
+            "low": 9.692328066325716,
+            "high": 83.26873312246681,
+        },
+        "retain_coefficient": {
+            "low": 615.672187962073,
+            "high": 682.8453324349174,
+        },
+    }
+    assert config["screen"]["mmlu_min"] == 0.5062
 
 
 def test_generated_configs_are_trial_local_and_derive_layers(hpo, tmp_path) -> None:
