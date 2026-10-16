@@ -18,3 +18,4 @@ def test_alignment_trajectory_compares_data_with_markers_and_methods_with_color(
     assert '100 * mmlu["mmlu_acc"]' in script
     assert '"mixed-fresh-lora", "100 harmful + 900 SST-2"' in script
     assert '"harmful-only-fresh-lora", "1,000 harmful"' in script
+    assert '"harmful-100-fresh-lora", "100 harmful × 100 epochs"' in script

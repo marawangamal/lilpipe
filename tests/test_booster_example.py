@@ -68,10 +68,37 @@ def test_harmful_only_is_the_single_attack_data_change() -> None:
     wrapper = (EXAMPLE / "scripts/lilpipe/train.py").read_text(encoding="utf-8")
 
     assert 'poison_ratio = "0.1" if args.attack == "mixed" else "1.0"' in wrapper
-    assert '"--sample_num",\n            "1000"' in wrapper
-    assert '"--num_train_epochs",\n            "20"' in wrapper
+    assert 'sample_num = "100" if args.attack == "harmful-100" else "1000"' in wrapper
+    assert (
+        'num_train_epochs = "100" if args.attack == "harmful-100" else "20"' in wrapper
+    )
+    assert 'common += ["--max_steps", "1000"]' in wrapper
     assert '"--alternating"' in wrapper
     assert '"single_lora"' in wrapper
+
+
+def test_harmful_100_pipeline_runs_1000_fresh_lora_steps(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load("configs/experiments/figure3-harmful-100-fresh-lora.yml").plan()
+
+    assert len(plan.stages) == 8
+    for method in ("sft", "booster"):
+        model = f"booster-figure3--defense-{method}--attack-harmful-100-fresh-lora"
+        training = plan.stage_index[f"train-{model}"]
+        assert training.args[training.args.index("--attack") + 1] == "harmful-100"
+        assert training.args[training.args.index("--attack-lora-init") + 1] == "fresh"
+        assert "--gres=gpu:l40s:1" in training.sbatch_args
+        assert "--time=03:00:00" in training.sbatch_args
+
+        evaluations = [
+            stage
+            for stage in plan.stages
+            if stage.id.startswith("eval-") and stage.id.endswith(model)
+        ]
+        assert len(evaluations) == 2
+        assert all("--array=0-5" in stage.sbatch_args for stage in evaluations)
 
 
 def test_fresh_attack_merges_defense_before_initializing_new_adapter() -> None:

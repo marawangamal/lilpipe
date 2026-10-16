@@ -37,7 +37,11 @@ from moderation import QAModeration  # noqa: E402
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--method", choices=("sft", "booster"), required=True)
-    parser.add_argument("--attack", choices=("mixed", "harmful-only"), required=True)
+    parser.add_argument(
+        "--attack",
+        choices=("mixed", "harmful-only", "harmful-100"),
+        required=True,
+    )
     parser.add_argument(
         "--attack-lora-init", choices=("continued", "fresh"), default="continued"
     )
@@ -220,7 +224,7 @@ def main() -> None:
         return
 
     loss_model, tokenizer = load_adapter(args, official_score_loading=False)
-    harmful_count = 100 if args.attack == "mixed" else 1000
+    harmful_count = 100 if args.attack in ("mixed", "harmful-100") else 1000
     train_nll = mean_nll(loss_model, tokenizer, harmful_rows(0, harmful_count))
     test_nll = mean_nll(loss_model, tokenizer, harmful_rows(5000, 5000))
     del loss_model

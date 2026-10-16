@@ -22,11 +22,11 @@ def load_script():
 def test_step_zero_uses_defense_and_attack_steps_use_fresh_lora_checkpoint():
     module = load_script()
 
-    defense, attack = module.adapter_paths("models", "sft", 0)
+    defense, attack = module.adapter_paths("models", "sft", "harmful-100", 0)
     assert defense == "models/booster-figure3--defense-sft"
     assert attack is None
 
-    defense, attack = module.adapter_paths("models", "booster", 400)
+    defense, attack = module.adapter_paths("models", "booster", "harmful-only", 400)
     assert defense == "models/booster-figure3--defense-booster"
     assert attack == (
         "models/booster-figure3--defense-booster"
@@ -37,7 +37,7 @@ def test_step_zero_uses_defense_and_attack_steps_use_fresh_lora_checkpoint():
 def test_mmlu_output_lives_beside_harmful_only_fresh_trajectory():
     source = SCRIPT.read_text()
 
-    assert '"harmful-only-fresh-lora"' in source
+    assert 'f"{args.attack}-fresh-lora"' in source
     assert 'f"step-{args.step}"' in source
     assert '"mmlu.json"' in source
     assert 'tasks=["mmlu"]' in source

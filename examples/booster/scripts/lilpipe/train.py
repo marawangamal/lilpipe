@@ -16,7 +16,11 @@ def main() -> None:
     parser.add_argument("method", choices=("sft", "booster"))
     parser.add_argument("output_dir", type=Path)
     parser.add_argument("--defense-adapter", type=Path)
-    parser.add_argument("--attack", choices=("mixed", "harmful-only"), default="mixed")
+    parser.add_argument(
+        "--attack",
+        choices=("mixed", "harmful-only", "harmful-100"),
+        default="mixed",
+    )
     parser.add_argument(
         "--attack-lora-init", choices=("continued", "fresh"), default="continued"
     )
@@ -86,11 +90,13 @@ def main() -> None:
         if args.defense_adapter is None:
             parser.error("--defense-adapter is required for attack")
         poison_ratio = "0.1" if args.attack == "mixed" else "1.0"
+        sample_num = "100" if args.attack == "harmful-100" else "1000"
+        num_train_epochs = "100" if args.attack == "harmful-100" else "20"
         common += [
             "--data_path",
             "PKU-Alignment/BeaverTails_dangerous",
             "--num_train_epochs",
-            "20",
+            num_train_epochs,
             "--learning_rate",
             "1e-5",
             "--warmup_ratio",
@@ -106,7 +112,7 @@ def main() -> None:
             "--save_total_limit",
             "0",
             "--sample_num",
-            "1000",
+            sample_num,
             "--poison_ratio",
             poison_ratio,
             "--benign_dataset",
@@ -115,6 +121,8 @@ def main() -> None:
             "normal",
         ]
         common += ["--lora_folder", str(args.defense_adapter)]
+        if args.attack == "harmful-100":
+            common += ["--max_steps", "1000"]
         if args.attack_lora_init == "continued":
             common += ["--alternating", "single_lora"]
 

@@ -21,6 +21,7 @@ export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"
 export PATH="$HOME/.local/bin:$PATH"
 
 method=${1:?missing method}
+attack=${2:-harmful-only}
 step=$((SLURM_ARRAY_TASK_ID * 200))
 mkdir -p artifacts/mila/logs
 
@@ -39,6 +40,7 @@ uv sync --project ../tamper-resistance --offline --frozen --group eval
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 python scripts/lilpipe/evaluate_mmlu_trajectory.py \
     --method "$method" \
+    --attack "$attack" \
     --step "$step" &
 child=$!
 wait "$child"
