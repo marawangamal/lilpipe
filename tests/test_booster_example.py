@@ -103,6 +103,16 @@ def test_harmful_100_pipeline_runs_1000_fresh_lora_steps(
         assert all("--mem=24G" in stage.sbatch_args for stage in evaluations)
 
 
+def test_mmlu_job_uses_the_prepared_evaluation_environment() -> None:
+    script = (EXAMPLE / "scripts/slurm/mila/evaluate_mmlu_trajectory.sbatch").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'python_bin="../tamper-resistance/.venv-eval/bin/python"' in script
+    assert '"$python_bin" scripts/lilpipe/evaluate_mmlu_trajectory.py' in script
+    assert "uv sync" not in script
+
+
 def test_fresh_attack_merges_defense_before_initializing_new_adapter() -> None:
     wrapper = (EXAMPLE / "scripts/lilpipe/train.py").read_text(encoding="utf-8")
     evaluator = (EXAMPLE / "scripts/lilpipe/evaluate_figure3.py").read_text(

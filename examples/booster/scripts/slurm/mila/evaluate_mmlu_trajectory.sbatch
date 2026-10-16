@@ -14,11 +14,13 @@ export HF_HOME="$SCRATCH/.cache/huggingface"
 export HF_HUB_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
-export UV_CACHE_DIR="$SCRATCH/.cache/uv"
-export UV_OFFLINE=1
-export UV_LINK_MODE=copy
-export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"
 export PATH="$HOME/.local/bin:$PATH"
+
+python_bin="../tamper-resistance/.venv-eval/bin/python"
+if [[ ! -x "$python_bin" ]]; then
+    echo "Missing prepared evaluation environment: $python_bin" >&2
+    exit 2
+fi
 
 method=${1:?missing method}
 attack=${2:-harmful-only}
@@ -36,9 +38,7 @@ requeue() {
 }
 trap requeue USR1
 
-uv sync --project ../tamper-resistance --offline --frozen --group eval
-source "$UV_PROJECT_ENVIRONMENT/bin/activate"
-python scripts/lilpipe/evaluate_mmlu_trajectory.py \
+"$python_bin" scripts/lilpipe/evaluate_mmlu_trajectory.py \
     --method "$method" \
     --attack "$attack" \
     --step "$step" &
