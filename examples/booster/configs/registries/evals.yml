@@ -57,7 +57,7 @@ evaluations:
       - fresh
     sbatch_args: &compact_eval_resources
       - --partition=long
-      - --array=0-5
+      - --array=0-5%1
       - --gres=gpu:l40s:1
       - --cpus-per-task=8
       - --mem=32G

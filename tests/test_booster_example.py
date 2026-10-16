@@ -98,7 +98,7 @@ def test_harmful_100_pipeline_runs_1000_fresh_lora_steps(
             if stage.id.startswith("eval-") and stage.id.endswith(model)
         ]
         assert len(evaluations) == 2
-        assert all("--array=0-5" in stage.sbatch_args for stage in evaluations)
+        assert all("--array=0-5%1" in stage.sbatch_args for stage in evaluations)
 
 
 def test_fresh_attack_merges_defense_before_initializing_new_adapter() -> None:
