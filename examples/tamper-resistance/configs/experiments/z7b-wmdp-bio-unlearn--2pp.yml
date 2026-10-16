@@ -1,0 +1,13 @@
+version: 1
+id: z7b-wmdp-bio-unlearn--2pp
+registries:
+  models: configs/registries/z7b-2pp-models.yml
+  evaluations: configs/registries/z7b-threshold-evals.yml
+models:
+  - z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft
+  - z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
+  - z7b-wmdp-bio--2pp--unlearn-fft-rmu--relearn-fft
+  - z7b-wmdp-bio--2pp--unlearn-fft-rmu-sam-rho1e-3--relearn-fft
+evaluations:
+  - wmdp-trajectory
+  - mmlu-trajectory

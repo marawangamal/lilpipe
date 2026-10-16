@@ -34,13 +34,13 @@ smoothed summary.
 
 The canonical configs that produce this comparison are:
 
-- `examples/tamper-resistance/configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-gd/selected.yml`
-- `examples/tamper-resistance/configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2/selected.yml`
-- `examples/tamper-resistance/configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-gd--relearn-fft/selected.yml`
-- `examples/tamper-resistance/configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml`
+- `examples/tamper-resistance/configs/stages/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd/selected.yml`
+- `examples/tamper-resistance/configs/stages/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2/selected.yml`
+- `examples/tamper-resistance/configs/stages/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/selected.yml`
+- `examples/tamper-resistance/configs/stages/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml`
 
 They are selected together by
-`examples/tamper-resistance/configs/experiments/main.yml`.
+`examples/tamper-resistance/configs/experiments/z7b-wmdp-bio-unlearn--2pp.yml`.
 
 ### Fresh canonical reproduction
 
@@ -177,8 +177,8 @@ pipeline from the example root:
 
 ```bash
 cd examples/tamper-resistance
-lilpipe configs/experiments/main.yml --dry-run
-lilpipe configs/experiments/main.yml
+lilpipe configs/experiments/z7b-wmdp-bio-unlearn--2pp.yml --dry-run
+lilpipe configs/experiments/z7b-wmdp-bio-unlearn--2pp.yml
 ```
 
 The pipeline trains the selected unlearned and resistance models, applies the

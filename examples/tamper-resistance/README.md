@@ -36,8 +36,8 @@ promoted standalone `selected.yml`. Generate candidates from a sweep with:
 
 ```bash
 python scripts/hpo.py generate \
-  configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-gd/sweep.yml
-lilpipe artifacts/generated/hpo/z7b-wmdp-bio--unlearn-fft-gd-hpo/experiment.yml
+  configs/stages/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd/sweep.yml
+lilpipe artifacts/generated/hpo/z7b-wmdp-bio--2pp--unlearn-fft-gd-hpo/experiment.yml
 ```
 
 Generated configurations, their model registry, and their manifest are kept
@@ -49,9 +49,8 @@ lineage's `selected.yml` and promote its model in
 ## Run canonical lineages
 
 ```bash
-lilpipe configs/experiments/unlearn.yml
-lilpipe configs/experiments/main.yml
-lilpipe configs/experiments/relearn-long.yml
+lilpipe configs/experiments/z7b-wmdp-bio-unlearn--2pp.yml
+lilpipe configs/experiments/z7b-wmdp-bio-unlearn--10pp.yml
 ```
 
 Canonical relearning configurations retain trajectory checkpoints for
@@ -62,7 +61,8 @@ evaluation. Existing artifact directories are not renamed or removed.
 Generate the regular and alignment attack trajectories from the example root:
 
 ```bash
-python scripts/analysis/plot_trajectory.py
+python scripts/analysis/plot_trajectory.py --model z7b--2pp --output artifacts/figures/relearning-attack-z7b--2pp.pdf
+python scripts/analysis/plot_trajectory.py --model z7b--10pp --output artifacts/figures/relearning-attack-z7b--10pp.pdf
 python scripts/analysis/plot_trajectory_alignment.py
 ```
 

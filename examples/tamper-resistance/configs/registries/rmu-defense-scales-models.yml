@@ -1,113 +1,40 @@
 models:
-  z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000:
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000
-    adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000
-    producer:
-      id: train-z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000
-      script: scripts/slurm/tamia/train_model_parallel.sbatch
-      args:
-      - configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000/selected.yml
-      sbatch_args: &id001
-      - --gpus-per-node=h100:4
-      - --cpus-per-task=48
-      - --mem=480G
-      - --time=03:00:00
-  z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000:
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000
-    adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000
-    producer:
-      id: train-z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000
-      script: scripts/slurm/tamia/train_model_parallel.sbatch
-      args:
-      - configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000/selected.yml
-      sbatch_args: *id001
-  z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000:
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000
-    adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000
-    producer:
-      id: train-z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000
-      script: scripts/slurm/tamia/train_model_parallel.sbatch
-      args:
-      - configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000/selected.yml
-      sbatch_args: *id001
-  z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-1000--relearn-fft-long:
+  z7b-wmdp-bio--2pp--unlearn-fft-rmu-defense-steps-1000--relearn-fft-long:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000/checkpoint-1000
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-1000--relearn-fft-long
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-1000--relearn-fft-long
     producer:
-      id: train-z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-1000--relearn-fft-long
+      id: train-z7b-wmdp-bio--2pp--unlearn-fft-rmu-defense-steps-1000--relearn-fft-long
       script: scripts/slurm/tamia/train.sbatch
       args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-1000--relearn-fft-long/selected.yml
-      depends_on:
-      - z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000
-      sbatch_args: *id001
-  z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000--relearn-fft-long:
-    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000/checkpoint-5000
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000--relearn-fft-long
-    adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000--relearn-fft-long
-    producer:
-      id: train-z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000--relearn-fft-long
-      script: scripts/slurm/tamia/train.sbatch
-      args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000--relearn-fft-long/selected.yml
-      depends_on:
-      - z7b-wmdp-bio--unlearn-fft-rmu-defense-steps-5000
-      sbatch_args: *id001
-  z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-1000--relearn-fft-long:
+        - configs/stages/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-rmu-defense-steps-1000--relearn-fft-long/selected.yml
+      sbatch_args: &fft_resources
+        - --gpus-per-node=h100:4
+        - --cpus-per-task=48
+        - --mem=480G
+        - --time=03:00:00
+
+  z7b-wmdp-bio--2pp--unlearn-fft-rmu-sam-rho1e-2-defense-steps-1000--relearn-fft-long:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000/checkpoint-1000
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-1000--relearn-fft-long
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-1000--relearn-fft-long
     producer:
-      id: train-z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-1000--relearn-fft-long
+      id: train-z7b-wmdp-bio--2pp--unlearn-fft-rmu-sam-rho1e-2-defense-steps-1000--relearn-fft-long
       script: scripts/slurm/tamia/train.sbatch
       args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-1000--relearn-fft-long/selected.yml
-      depends_on:
-      - z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000
-      sbatch_args: *id001
-  z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000--relearn-fft-long:
-    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000/checkpoint-5000
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000--relearn-fft-long
-    adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000--relearn-fft-long
-    producer:
-      id: train-z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000--relearn-fft-long
-      script: scripts/slurm/tamia/train.sbatch
-      args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000--relearn-fft-long/selected.yml
-      depends_on:
-      - z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2-defense-steps-5000
-      sbatch_args: *id001
-  z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-1000--relearn-fft-long:
+        - configs/stages/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-rmu-sam-rho1e-2-defense-steps-1000--relearn-fft-long/selected.yml
+      sbatch_args: *fft_resources
+
+  z7b-wmdp-bio--2pp--unlearn-fft-rmu-weight-distance-defense-steps-1000--relearn-fft-long:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000/checkpoint-1000
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-1000--relearn-fft-long
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-1000--relearn-fft-long
     producer:
-      id: train-z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-1000--relearn-fft-long
+      id: train-z7b-wmdp-bio--2pp--unlearn-fft-rmu-weight-distance-defense-steps-1000--relearn-fft-long
       script: scripts/slurm/tamia/train.sbatch
       args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-1000--relearn-fft-long/selected.yml
-      depends_on:
-      - z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000
-      sbatch_args: *id001
-  z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000--relearn-fft-long:
-    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000/checkpoint-5000
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000--relearn-fft-long
-    adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000--relearn-fft-long
-    producer:
-      id: train-z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000--relearn-fft-long
-      script: scripts/slurm/tamia/train.sbatch
-      args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000--relearn-fft-long/selected.yml
-      depends_on:
-      - z7b-wmdp-bio--unlearn-fft-rmu-weight-distance-defense-steps-5000
-      sbatch_args: *id001
+        - configs/stages/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-rmu-weight-distance-defense-steps-1000--relearn-fft-long/selected.yml
+      sbatch_args: *fft_resources
