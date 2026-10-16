@@ -378,6 +378,67 @@ def test_threshold_manifests_select_only_available_comparisons() -> None:
     }
 
 
+def test_ten_pp_rmu_sweeps_vary_only_lr_and_retain() -> None:
+    root = EXAMPLE / "configs/stages/0_unlearn"
+    methods = {
+        "z7b-wmdp-bio--10pp--unlearn-fft-rmu": None,
+        "z7b-wmdp-bio--10pp--unlearn-fft-rmu-sam": 1e-3,
+    }
+
+    for method, rho in methods.items():
+        base = yaml.safe_load((root / method / "base.yml").read_text())
+        sweep = yaml.safe_load((root / method / "sweep.yml").read_text())
+        parameters = sweep["sweeps"][0]["parameters"]
+
+        assert parameters == {
+            "learning_rate": pytest.approx([1e-6, 5e-6, 1e-5]),
+            "custom_trainer_args.retain_coefficient": pytest.approx([300, 600, 1200]),
+        }
+        assert base["max_steps"] == base["save_steps"] == 125
+        assert base["learning_rate"] == pytest.approx(5e-5)
+        assert base["custom_trainer_args"]["steering_coefficient"] == pytest.approx(6.5)
+        if rho is not None:
+            assert base["custom_trainer_args"]["rho"] == pytest.approx(rho)
+
+
+def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:
+    root = EXAMPLE / "configs/stages/0_unlearn"
+    methods = (
+        "z7b-wmdp-bio--10pp--unlearn-fft-gd",
+        "z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2",
+    )
+
+    for method in methods:
+        directory = root / method
+        sweep = yaml.safe_load((directory / "sweep.yml").read_text())
+
+        assert sweep["sweeps"][0]["parameters"] == {
+            "learning_rate": pytest.approx([1e-6, 5e-6, 1e-5]),
+            "custom_trainer_args.retain_coefficient": pytest.approx([1, 2, 4]),
+        }
+        assert not (directory / "selected.yml").exists()
+        assert (directory / "legacy-selected.yml").is_file()
+
+
+def test_ten_pp_rmu_relearning_templates_use_canonical_attack() -> None:
+    root = EXAMPLE / "configs/stages/2_relearn"
+    methods = (
+        "z7b-wmdp-bio--10pp--unlearn-fft-rmu",
+        "z7b-wmdp-bio--10pp--unlearn-fft-rmu-sam",
+    )
+
+    for method in methods:
+        directory = root / f"{method}--relearn-fft"
+        config = yaml.safe_load((directory / "base.yml").read_text())
+
+        assert not (directory / "selected.yml").exists()
+        assert config["base_model"] == f"artifacts/tamia/models/{method}"
+        assert config["output_dir"] == (f"artifacts/tamia/models/{method}--relearn-fft")
+        assert config["max_steps"] == 16
+        assert config["learning_rate"] == pytest.approx(1e-5)
+        assert config["save_steps"] == 4
+
+
 def test_cb_weight_distance_matches_selected_gd_resistance() -> None:
     root = EXAMPLE / "configs/stages/1_resist"
     gd = yaml.safe_load(
