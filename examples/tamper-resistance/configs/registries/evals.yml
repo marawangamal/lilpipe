@@ -28,7 +28,7 @@ evaluations:
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
       - --mem=480G
-      - --time=00:30:00
+      - --time=03:00:00
 
   mmlu-no-bio-final:
     script: scripts/slurm/tamia/eval_mmlu_no_bio_ckpts.sbatch
@@ -78,7 +78,7 @@ evaluations:
       - --gpus-per-node=h100:4
       - --cpus-per-task=32
       - --mem=128G
-      - --time=00:30:00
+      - --time=03:00:00
 
   mmlu-no-bio-relearn:
     script: scripts/slurm/tamia/eval_local_trajectory.sbatch
@@ -107,7 +107,7 @@ evaluations:
       - --gpus-per-node=h100:4
       - --cpus-per-task=32
       - --mem=128G
-      - --time=00:30:00
+      - --time=03:00:00
 
   mmlu-no-bio-relearn-long:
     script: scripts/slurm/tamia/eval_local_trajectory.sbatch

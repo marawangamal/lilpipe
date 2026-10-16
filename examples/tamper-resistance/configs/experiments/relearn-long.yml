@@ -12,6 +12,7 @@ models:
   - z7b-wmdp-bio--unlearn-fft-cb-sam-rho1e-3--relearn-fft-long
   - z7b-wmdp-bio--unlearn-fft-cb--resist-fft-weight-distance--relearn-fft-long
   - z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long
+  - z7b-wmdp-bio--unlearn-fft-rmu-ao--relearn-fft-long
   - z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3--relearn-fft-long
   - z7b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long
   - z7b-wmdp-bio--unlearn-fft-npo--relearn-fft-long

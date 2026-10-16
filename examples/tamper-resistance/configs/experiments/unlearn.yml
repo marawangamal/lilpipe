@@ -6,6 +6,7 @@ registries:
 models:
   - z7b-wmdp-bio--unlearn-fft-gd
   - z7b-wmdp-bio--unlearn-fft-gd-ao
+  - z7b-wmdp-bio--unlearn-fft-rmu-ao
   - z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2
   - z7b-wmdp-bio--unlearn-fft-gd--resist-fft-weight-distance
   - z7b-wmdp-bio--unlearn-fft-cb

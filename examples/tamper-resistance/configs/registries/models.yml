@@ -301,6 +301,16 @@ models:
       args:
         - configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-rmu/selected.yml
       sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-rmu-ao:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-ao
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-ao
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-rmu-ao
+      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      args:
+        - configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-rmu-ao/selected.yml
+      sbatch_args: *fft_resources
   z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3:
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3
     adapter_name_or_path: '-'
@@ -346,6 +356,19 @@ models:
         - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml
       depends_on:
         - z7b-wmdp-bio--unlearn-fft-rmu
+      sbatch_args: *fft_resources
+  z7b-wmdp-bio--unlearn-fft-rmu-ao--relearn-fft-long:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-ao
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-ao--relearn-fft-long
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-ao--relearn-fft-long
+    producer:
+      id: train-z7b-wmdp-bio--unlearn-fft-rmu-ao--relearn-fft-long
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+        - configs/stages/2_relearn/z7b-wmdp-bio--unlearn-fft-rmu-ao--relearn-fft-long/selected.yml
+      depends_on:
+        - z7b-wmdp-bio--unlearn-fft-rmu-ao
       sbatch_args: *fft_resources
   z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3

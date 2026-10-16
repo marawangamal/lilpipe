@@ -2016,6 +2016,48 @@ def test_gd_ao_loss_has_retain_forget_and_orthogonality_terms(
     assert outputs["loss_activation_orthogonality"].item() == pytest.approx(4 * 0.96)
 
 
+def test_rmu_ao_loss_reuses_forget_activations(rmu_training_module) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.forget_rows = torch.nn.Parameter(
+                torch.tensor([[3.0, 4.0, 0.0], [4.0, 3.0, 0.0]])
+            )
+            self.calls = 0
+
+        def forward(self, **kwargs):
+            self.calls += 1
+            hidden = self.forget_rows.unsqueeze(1)
+            return SimpleNamespace(hidden_states=(None, hidden, hidden))
+
+    model = Model()
+    trainer = object.__new__(rmu_training_module.RMUAOTrainer)
+    trainer.target_layer = 0
+    trainer.target_layers = (0, 1)
+    trainer.steering_coefficient = 1.0
+    trainer.control_seed = 42
+    trainer._control_vector = None
+    trainer.activation_orthogonality_coefficient = 4.0
+    trainer.compute_retain_loss = lambda model, inputs: torch.tensor(2.0)
+    trainer.state = SimpleNamespace(global_step=0)
+    trainer._rmu_logged_step = None
+    trainer.log = lambda metrics: None
+    inputs = {
+        "input_ids": torch.tensor([[7], [2], [9], [4]]),
+        "attention_mask": torch.ones(4, 1),
+        "is_forget": torch.tensor([False, True, False, True]),
+    }
+
+    loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
+
+    assert loss.item() == pytest.approx(outputs["loss_forget"].item() + 2.0 + 4 * 0.96)
+    assert outputs["loss_retain"].item() == pytest.approx(2.0)
+    assert outputs["loss_activation_orthogonality"].item() == pytest.approx(4 * 0.96)
+    assert model.calls == 1
+
+
 def test_gd_ao_targets_all_transformer_layers_by_default(
     gd_ao_training_module, monkeypatch
 ) -> None:

@@ -85,13 +85,30 @@ stage form a Cartesian product. Other settings were inherited from the method's
 | NPO + SAM | - | `{0.5, 1, 2}` | - | `{0.001, 0.01, 0.1}` | - | - | 9 | retain `1`; rho `0.001` |
 | NPO + WD | - | `{0.5, 1, 2}` | - | - | `{100, 1000, 10000}` | - | 9 | retain `1`; weight distance `1000` |
 | RMU | - | `{300, 600, 1200}` | `{3.25, 6.5, 13}` | - | - | - | 9 | retain `600`; steering `6.5` |
+| RMU + AO | from RMU: `5e-5` | from RMU: `600` | from RMU: `6.5` | - | - | `{0, 0.01, 0.03, 0.05, 0.07, 0.1, 1, 10, 100}` | 9 | activation orthogonality `0.01` |
 | RMU + SAM | - | `{600, 1200, 2400}` | - | `{0.001, 0.01, 0.1}` | - | - | 9 | retain `600`; rho `0.001` |
 | RMU + WD | - | `{600, 1200, 2400}` | - | - | `{100, 1000, 10000}` | - | 9 | retain `1200`; weight distance `100` |
 
 GD + AO inherited the promoted GD learning rate and forget coefficient, then
 used six independent sweep stages in one manifest. The canonical relearning learning-rate sweep
 tested `{2.5e-6, 5e-6, 7.5e-6, 1e-5}` before promoting `1e-5` for the 125-step
-long attack.
+long attack. RMU + AO keeps the promoted RMU settings and trainable layers
+fixed, targets AO at layers 5--7, and varies only the AO coefficient.
+
+RMU + AO selected the strongest positive AO candidate satisfying a maximum
+2-point MMLU drop from the 58.59 base-model score:
+
+| $\lambda_{\mathrm{AO}}$ | WMDP-Bio robust $\downarrow$ | MMLU-no-bio $\uparrow$ | MMLU drop | Eligible |
+| ---: | ---: | ---: | ---: | :---: |
+| 0 | 27.65 | 56.72 | 1.87 | yes |
+| **0.01** | **28.23** | **57.03** | **1.55** | **yes; selected** |
+| 0.03 | 34.22 | 57.05 | 1.54 | yes |
+| 0.05 | 41.01 | 56.97 | 1.61 | yes |
+| 0.07 | 39.98 | 56.73 | 1.85 | yes |
+| 0.1 | 37.90 | 56.53 | 2.06 | no |
+| 1 | 29.72 | 55.75 | 2.84 | no |
+| 10 | 27.88 | 52.06 | 6.53 | no |
+| 100 | 25.81 | 44.12 | 14.46 | no |
 
 #### MiniCPM5-1B
 

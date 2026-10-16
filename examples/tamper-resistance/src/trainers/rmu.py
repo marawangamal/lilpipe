@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from axolotl.core.trainers.base import AxolotlTrainer
 
+from trainers.activation_orthogonality import ActivationOrthogonalityMixin
 from trainers.gd_sam import sam_perturbation
 from trainers.gradient_metrics import gradient_dict_l2_norm
 from trainers.sampling import MixedSourceSampler
@@ -141,7 +142,15 @@ class RMUTrainer(AxolotlTrainer):
 
     def compute_forget_loss(self, model, inputs):
         forget_inputs, _ = self.split_sources(inputs)
-        activation = self.activation(model, forget_inputs)
+        hidden_states = model(
+            **forget_inputs,
+            output_hidden_states=True,
+            use_cache=False,
+        ).hidden_states
+        return self.compute_forget_loss_from_hidden_states(hidden_states, forget_inputs)
+
+    def compute_forget_loss_from_hidden_states(self, hidden_states, forget_inputs):
+        activation = hidden_states[self.target_layer + 1]
         return self.activation_loss(
             activation,
             self.control_vector(activation),
@@ -177,6 +186,49 @@ class RMUTrainer(AxolotlTrainer):
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         loss = self.compute_rmu_loss(model, inputs)
         return (loss, {}) if return_outputs else loss
+
+
+class RMUAOTrainer(ActivationOrthogonalityMixin, RMUTrainer):
+    """Add forget-set activation orthogonality to RMU."""
+
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        forget_inputs, _ = self.split_sources(inputs)
+        if forget_inputs["input_ids"].shape[0] < 2:
+            raise ValueError("RMU+AO requires at least two forget rows per batch")
+
+        hidden_states = model(
+            **forget_inputs,
+            output_hidden_states=True,
+            use_cache=False,
+        ).hidden_states
+        loss_forget = self.compute_forget_loss_from_hidden_states(
+            hidden_states, forget_inputs
+        )
+        loss_retain = self.compute_retain_loss(model, inputs)
+        loss_activation_orthogonality = self.compute_activation_orthogonality_loss(
+            hidden_states, forget_inputs["attention_mask"]
+        )
+        loss = loss_forget + loss_retain + loss_activation_orthogonality
+
+        step = self.state.global_step
+        if step != self._rmu_logged_step:
+            self.log(
+                {
+                    "loss_forget": loss_forget.detach().item(),
+                    "loss_retain": loss_retain.detach().item(),
+                    "loss_activation_orthogonality": (
+                        loss_activation_orthogonality.detach().item()
+                    ),
+                }
+            )
+            self._rmu_logged_step = step
+
+        outputs = {
+            "loss_forget": loss_forget,
+            "loss_retain": loss_retain,
+            "loss_activation_orthogonality": loss_activation_orthogonality,
+        }
+        return (loss, outputs) if return_outputs else loss
 
 
 class RMUSAMTrainer(RMUTrainer):

@@ -64,6 +64,11 @@ configs = [
         "tamper_resistance_method": "None",
     },
     {
+        "path": osp.join(rootdir, "z7b-wmdp-bio--unlearn-fft-rmu-ao--relearn-fft-long"),
+        "unlearning_method": "RMU",
+        "tamper_resistance_method": "AO",
+    },
+    {
         "path": osp.join(
             rootdir,
             "z7b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-3--relearn-fft-long",
