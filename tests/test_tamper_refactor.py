@@ -419,6 +419,17 @@ def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:
         assert not (directory / "selected.yml").exists()
         assert (directory / "legacy-selected.yml").is_file()
 
+    sam = yaml.safe_load(
+        (root / "z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2/sweep.yml").read_text()
+    )
+    assert sam["sweeps"][1] == {
+        "name": "refine-retain",
+        "parameters": {
+            "learning_rate": [pytest.approx(5e-6)],
+            "custom_trainer_args.retain_coefficient": [pytest.approx(1.5)],
+        },
+    }
+
 
 def test_ten_pp_rmu_relearning_templates_use_canonical_attack() -> None:
     root = EXAMPLE / "configs/stages/2_relearn"
