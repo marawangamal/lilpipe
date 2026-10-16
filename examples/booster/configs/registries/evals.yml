@@ -56,7 +56,7 @@ evaluations:
       - artifacts/mila/evals/figure3
       - fresh
     sbatch_args: &compact_eval_resources
-      - --partition=main
+      - --partition=long
       - --array=0-5
       - --gres=gpu:l40s:1
       - --cpus-per-task=8

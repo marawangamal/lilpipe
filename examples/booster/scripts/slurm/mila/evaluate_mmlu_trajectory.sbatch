@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=main
+#SBATCH --partition=long
 #SBATCH --gres=gpu:l40s:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
