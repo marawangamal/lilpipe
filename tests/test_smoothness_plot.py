@@ -167,7 +167,7 @@ def test_smoothness_plot_groups_budgets_into_rows_of_four():
         "GradDiff (15pp)",
         "GradDiff + SAM (15pp)",
         "MaxEnt (5pp)",
-        "MaxEnt + SAM (5pp/15pp)",
+        "MaxEnt + SAM (5pp)",
     ]
 
     rows = module.panel_rows([{"label": label} for label in labels])
@@ -176,7 +176,7 @@ def test_smoothness_plot_groups_budgets_into_rows_of_four():
         ["Base model", "OPTML NPO", "OPTML NPO + SAM"],
         ["NPO (5pp)", "NPO + SAM (5pp)", "NPO (15pp)", "NPO + SAM (15pp)"],
         ["GradDiff (15pp)", "GradDiff + SAM (15pp)"],
-        ["MaxEnt (5pp)", "MaxEnt + SAM (5pp/15pp)"],
+        ["MaxEnt (5pp)", "MaxEnt + SAM (5pp)"],
     ]
     assert [
         len(row)
@@ -310,7 +310,7 @@ def test_tamia_smoothness_job_covers_every_method_at_several_scales():
     source = SBATCH.read_text()
 
     assert "#SBATCH --gpus-per-node=h100:4" in source
-    assert "#SBATCH --time=01:00:00" in source
+    assert "#SBATCH --time=03:00:00" in source
     assert "HF_HUB_OFFLINE=1" in source
     assert "HF_DATASETS_OFFLINE=1" in source
     assert "UV_OFFLINE=1" in source
@@ -322,7 +322,7 @@ def test_tamia_smoothness_job_covers_every_method_at_several_scales():
     assert "OPTML-Group/NPO-WMDP" in source
     assert "OPTML-Group/NPO-SAM-WMDP" in source
     assert "z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125" in source
-    # One MaxEnt + SAM model serves both budgets; measure and plot it once.
+    # MaxEnt + SAM is promoted only to 5pp; measure and plot it once.
     assert source.count("unlearn-fft-me-sam-rho1e-2/checkpoint-125") == 1
     assert "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125" in source
     assert "z7b-wmdp-bio--5pp--unlearn-fft-rmu/checkpoint-125" in source
@@ -333,7 +333,10 @@ def test_tamia_smoothness_job_covers_every_method_at_several_scales():
     assert source.count("CUDA_VISIBLE_DEVICES=$gpu") == 1
     assert "--dtype bfloat16" in source
     assert "--batch-size 2" in source
-    assert '"${DIRECTION_STDS:-0.003 0.01 0.03 0.1}"' in source
+    assert (
+        '"${DIRECTION_STDS:-0.001 0.005 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08'
+        ' 0.09 0.1}"' in source
+    )
     assert '--direction-std "${direction_stds[@]}"' in source
     assert '--direction-std "$direction_std"' in source
     assert "z7b-wmdp-bio-loss-landscape-sigma$tag-bf16.pdf" in source

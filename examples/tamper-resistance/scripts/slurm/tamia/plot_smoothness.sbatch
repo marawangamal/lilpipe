@@ -7,7 +7,7 @@
 #SBATCH --gpus-per-node=h100:4
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=480G
-#SBATCH --time=01:00:00
+#SBATCH --time=03:00:00
 set -euo pipefail
 
 export HF_HOME="$SCRATCH/.cache/huggingface"
@@ -23,7 +23,7 @@ export MPLCONFIGDIR="$SLURM_TMPDIR/matplotlib"
 export PATH="$HOME/.local/bin:$PATH"
 
 # Direction scales to evaluate; every model shares the same seeded directions.
-read -r -a direction_stds <<<"${DIRECTION_STDS:-0.003 0.01 0.03 0.1}"
+read -r -a direction_stds <<<"${DIRECTION_STDS:-0.001 0.005 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1}"
 
 # slug|label|model, in figure order.
 models=(
@@ -37,10 +37,10 @@ models=(
   # GradDiff is only trained under the 15pp budget.
   "grad-diff-15pp|GradDiff (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd/checkpoint-125"
   "grad-diff-sam-15pp|GradDiff + SAM (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/checkpoint-125"
-  # Vanilla MaxEnt has no 15pp model yet; one MaxEnt + SAM model is promoted
-  # to both budgets and stored under the 5pp lineage.
+  # Vanilla MaxEnt has no 15pp model yet; MaxEnt + SAM satisfies both budgets
+  # and is promoted only to the tighter 5pp one.
   "me-5pp|MaxEnt (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125"
-  "me-sam|MaxEnt + SAM (5pp/15pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
+  "me-sam-5pp|MaxEnt + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
   # RMU is only trained under the 5pp budget.
   "rmu-5pp|RMU (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu/checkpoint-125"
   "rmu-sam-5pp|RMU + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2/checkpoint-125"
@@ -114,7 +114,8 @@ for entry in "${models[@]}"; do
   inputs+=("$part_dir/$slug.json")
 done
 for direction_std in "${direction_stds[@]}"; do
-  tag=$(python -c "print(f'{float(\"$direction_std\"):.0e}'.replace('e-0', 'e-'))")
+  # Keep every significant digit so tags stay unique: 0.015 -> 1.5e-2.
+  tag=$(python -c "m, e = f'{float(\"$direction_std\"):e}'.split('e'); print(f\"{m.rstrip('0').rstrip('.')}e{int(e)}\")")
   python scripts/analysis/plot_smoothness.py "${inputs[@]}" \
     --direction-std "$direction_std" \
     --output "artifacts/figures/z7b-wmdp-bio-loss-landscape-sigma$tag-bf16.pdf"
