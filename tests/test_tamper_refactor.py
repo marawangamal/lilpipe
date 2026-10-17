@@ -498,6 +498,19 @@ def test_fifteen_pp_npo_sweeps_vary_lr_retain_and_beta() -> None:
         "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo"
     )
 
+    selected_sam = yaml.safe_load(
+        (
+            root / "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/selected.yml"
+        ).read_text()
+    )
+    assert selected_sam["learning_rate"] == pytest.approx(1e-5)
+    assert selected_sam["custom_trainer_args"]["retain_coefficient"] == pytest.approx(4)
+    assert selected_sam["custom_trainer_args"]["beta"] == pytest.approx(0.05)
+    assert selected_sam["custom_trainer_args"]["rho"] == pytest.approx(1e-2)
+    assert selected_sam["output_dir"] == (
+        "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2"
+    )
+
 
 def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:
     root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
