@@ -88,6 +88,28 @@ def test_smoothness_plot_accepts_shared_z_limits(tmp_path):
     assert axis.get_zlim() == (0, 10)
 
 
+def test_smoothness_plot_wraps_after_three_panels(tmp_path):
+    pytest.importorskip("matplotlib")
+    module = load_script()
+    output = tmp_path / "smoothness.png"
+    results = {
+        "coordinates": [-0.05, 0.0, 0.05],
+        "models": [
+            {"label": str(index), "loss": np.arange(9).reshape(3, 3).tolist()}
+            for index in range(4)
+        ],
+    }
+
+    module.plot_surfaces(results, output)
+
+    axes = [axis for axis in module.plt.gcf().axes if axis.name == "3d"]
+    positions = [
+        (axis.get_subplotspec().rowspan.start, axis.get_subplotspec().colspan.start)
+        for axis in axes
+    ]
+    assert positions == [(0, 0), (0, 1), (0, 2), (1, 0)]
+
+
 def test_smoothness_script_matches_the_paper_setup():
     generator_source = GENERATOR.read_text()
     plot_source = SCRIPT.read_text()

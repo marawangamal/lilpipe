@@ -17,7 +17,9 @@ def plot_surfaces(results, output, zlim=None):
     coordinates = np.asarray(results["coordinates"])
     x, y = np.meshgrid(coordinates, coordinates)
     losses = [np.asarray(result["loss"]) for result in results["models"]]
-    figure = plt.figure(figsize=(4 * len(results["models"]), 3.5))
+    columns = min(3, len(results["models"]))
+    rows = (len(results["models"]) + columns - 1) // columns
+    figure = plt.figure(figsize=(4 * columns, 3.5 * rows))
 
     for index, (result, loss) in enumerate(zip(results["models"], losses), start=1):
         panel_zlim = zlim
@@ -34,7 +36,7 @@ def plot_surfaces(results, output, zlim=None):
             title += f"\nσ={result['direction_std']:g}"
         title += f"\ncenter={center:.3g}  span={span:.3g}"
 
-        axis = figure.add_subplot(1, len(results["models"]), index, projection="3d")
+        axis = figure.add_subplot(rows, columns, index, projection="3d")
         axis.plot_surface(
             x,
             y,
