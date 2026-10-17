@@ -27,10 +27,10 @@ screen:
   mmlu_min: 0.5062
 
 unlearn:
-  base_config: configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/selected.yml
+  base_config: configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/selected.yml
 
 attack:
-  base_config: configs/stages/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd--relearn-fft-long/selected.yml
+  base_config: configs/stages-wmdp/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd--relearn-fft-long/selected.yml
   # A compact attack inside each HPO trial; promoted candidates receive the
   # full 125-step trajectory evaluation.
   max_steps: 25

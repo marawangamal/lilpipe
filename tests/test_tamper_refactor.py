@@ -288,7 +288,7 @@ def test_gd_ao_sweep_contains_25_historical_candidates(
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "tamper_hpo_ao_test")
     sweep = (
         EXAMPLE
-        / "configs/stages/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd-ao/sweep.yml"
+        / "configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd-ao/sweep.yml"
     )
     monkeypatch.chdir(EXAMPLE)
 
@@ -390,7 +390,7 @@ def test_threshold_manifests_select_only_available_comparisons() -> None:
 
 
 def test_ten_pp_rmu_sweeps_vary_only_lr_and_retain() -> None:
-    root = EXAMPLE / "configs/stages/0_unlearn"
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     methods = {
         "z7b-wmdp-bio--10pp--unlearn-fft-rmu": None,
         "z7b-wmdp-bio--10pp--unlearn-fft-rmu-sam": 1e-3,
@@ -413,7 +413,7 @@ def test_ten_pp_rmu_sweeps_vary_only_lr_and_retain() -> None:
 
 
 def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:
-    root = EXAMPLE / "configs/stages/0_unlearn"
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     methods = (
         "z7b-wmdp-bio--10pp--unlearn-fft-gd",
         "z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2",
@@ -457,7 +457,7 @@ def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:
 
 
 def test_ten_pp_rmu_relearning_templates_use_canonical_attack() -> None:
-    root = EXAMPLE / "configs/stages/2_relearn"
+    root = EXAMPLE / "configs/stages-wmdp/2_relearn"
     methods = (
         "z7b-wmdp-bio--10pp--unlearn-fft-rmu",
         "z7b-wmdp-bio--10pp--unlearn-fft-rmu-sam",
@@ -476,7 +476,7 @@ def test_ten_pp_rmu_relearning_templates_use_canonical_attack() -> None:
 
 
 def test_cb_weight_distance_matches_selected_gd_resistance() -> None:
-    root = EXAMPLE / "configs/stages/1_resist"
+    root = EXAMPLE / "configs/stages-wmdp/1_resist"
     gd = yaml.safe_load(
         (
             root
@@ -512,7 +512,7 @@ def test_cb_weight_distance_matches_selected_gd_resistance() -> None:
 
 def test_cb_weight_distance_sweep_brackets_selected_coefficient() -> None:
     root = (
-        EXAMPLE / "configs/stages/1_resist/"
+        EXAMPLE / "configs/stages-wmdp/1_resist/"
         "z7b-wmdp-bio--2pp--unlearn-fft-cb--resist-fft-weight-distance"
     )
     sweep = yaml.safe_load((root / "sweep.yml").read_text())
@@ -529,7 +529,7 @@ def test_active_manifests_reference_only_registered_evaluations() -> None:
     )
     referenced = set()
     paths = list((EXAMPLE / "configs/experiments").glob("*.yml"))
-    paths.extend((EXAMPLE / "configs/stages").glob("**/sweep.yml"))
+    paths.extend((EXAMPLE / "configs/stages-wmdp").glob("**/sweep.yml"))
     for path in paths:
         referenced.update(yaml.safe_load(path.read_text()).get("evaluations", ()))
 
@@ -539,13 +539,13 @@ def test_active_manifests_reference_only_registered_evaluations() -> None:
 def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
     gd = yaml.safe_load(
         (
-            EXAMPLE / "configs/stages/0_unlearn/"
+            EXAMPLE / "configs/stages-wmdp/0_unlearn/"
             "z7b-wmdp-bio--2pp--unlearn-fft-gd/selected.yml"
         ).read_text()
     )
     unlearn = yaml.safe_load(
         (
-            EXAMPLE / "configs/stages/0_unlearn/"
+            EXAMPLE / "configs/stages-wmdp/0_unlearn/"
             "z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2/selected.yml"
         ).read_text()
     )
@@ -594,7 +594,7 @@ def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
 
     relearn = yaml.safe_load(
         (
-            EXAMPLE / "configs/stages/2_relearn/"
+            EXAMPLE / "configs/stages-wmdp/2_relearn/"
             "z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml"
         ).read_text()
     )
@@ -605,7 +605,7 @@ def test_selected_gd_and_gd_sam_are_controlled_comparison() -> None:
 
 
 def test_selected_circuit_breakers_record_sweep_winners() -> None:
-    root = EXAMPLE / "configs/stages/0_unlearn"
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     cb = yaml.safe_load(
         (root / "z7b-wmdp-bio--2pp--unlearn-fft-cb/selected.yml").read_text()
     )
@@ -636,7 +636,7 @@ def test_selected_circuit_breakers_record_sweep_winners() -> None:
 
 
 def test_circuit_breaker_relearning_uses_canonical_attack() -> None:
-    root = EXAMPLE / "configs/stages/2_relearn"
+    root = EXAMPLE / "configs/stages-wmdp/2_relearn"
     canonical = yaml.safe_load(
         (
             root / "z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/selected.yml"
@@ -659,7 +659,7 @@ def test_circuit_breaker_relearning_uses_canonical_attack() -> None:
 
 
 def test_unlearning_sweep_bases_match_selected_configs() -> None:
-    root = EXAMPLE / "configs/stages/0_unlearn"
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     for slug in (
         "z7b-wmdp-bio--2pp--unlearn-fft-gd",
         "z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2",
@@ -677,7 +677,7 @@ def test_tamia_train_launchers_expose_refactored_python_packages() -> None:
 
 
 def test_rmu_sweeps_use_paper_architecture_and_bounded_grids() -> None:
-    root = EXAMPLE / "configs/stages/0_unlearn"
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     expected = {
         "z7b-wmdp-bio--2pp--unlearn-fft-rmu": "trainers.rmu.RMUTrainer",
         "z7b-wmdp-bio--2pp--unlearn-fft-rmu-sam-rho1e-3": (
@@ -717,7 +717,7 @@ def test_rmu_sweeps_use_paper_architecture_and_bounded_grids() -> None:
 
 
 def test_npo_sweeps_are_full_finetuning_and_bounded() -> None:
-    root = EXAMPLE / "configs/stages/0_unlearn"
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     expected = {
         "z7b-wmdp-bio--2pp--unlearn-fft-npo": "trainers.npo.NPOTrainer",
         "z7b-wmdp-bio--2pp--unlearn-fft-npo-sam": "trainers.npo.NPOSAMTrainer",
@@ -791,7 +791,7 @@ def test_weight_distance_accumulates_model_parallel_terms_on_one_device() -> Non
 
 
 def test_selected_rmu_configs_record_constrained_sweep_winners() -> None:
-    root = EXAMPLE / "configs/stages/0_unlearn"
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     rmu = yaml.safe_load(
         (root / "z7b-wmdp-bio--2pp--unlearn-fft-rmu/selected.yml").read_text()
     )
@@ -818,7 +818,7 @@ def test_selected_rmu_configs_record_constrained_sweep_winners() -> None:
 
 
 def test_rmu_relearning_uses_canonical_attack() -> None:
-    root = EXAMPLE / "configs/stages/2_relearn"
+    root = EXAMPLE / "configs/stages-wmdp/2_relearn"
     canonical = yaml.safe_load(
         (
             root / "z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/selected.yml"

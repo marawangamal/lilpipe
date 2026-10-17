@@ -34,10 +34,10 @@ smoothed summary.
 
 The canonical configs that produce this comparison are:
 
-- `examples/tamper-resistance/configs/stages/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd/selected.yml`
-- `examples/tamper-resistance/configs/stages/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2/selected.yml`
-- `examples/tamper-resistance/configs/stages/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/selected.yml`
-- `examples/tamper-resistance/configs/stages/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml`
+- `examples/tamper-resistance/configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd/selected.yml`
+- `examples/tamper-resistance/configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2/selected.yml`
+- `examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/selected.yml`
+- `examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml`
 
 They are selected together by
 `examples/tamper-resistance/configs/experiments/z7b-wmdp-bio-unlearn--2pp.yml`.

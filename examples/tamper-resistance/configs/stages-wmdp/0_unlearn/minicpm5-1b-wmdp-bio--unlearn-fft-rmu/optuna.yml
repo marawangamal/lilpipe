@@ -21,10 +21,10 @@ screen:
   dominated_wmdp_post: 1.0
 
 unlearn:
-  base_config: configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/selected.yml
+  base_config: configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/selected.yml
 
 attack:
-  base_config: configs/stages/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml
+  base_config: configs/stages-wmdp/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml
   max_steps: 125
   learning_rate: 1.0e-5
 

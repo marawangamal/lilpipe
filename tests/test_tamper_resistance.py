@@ -3194,10 +3194,10 @@ def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None
     assert "--dependency=afterok:dry-run-train-" in rendered
 
     config_paths = [
-        f"configs/stages-alignment/0_alignment/{sft}/selected.yml",
-        f"configs/stages-alignment/0_alignment/{booster}/selected.yml",
-        f"configs/stages-alignment/1_relearn/{sft}--relearn-lora/selected.yml",
-        f"configs/stages-alignment/1_relearn/{booster}--relearn-lora/selected.yml",
+        f"configs/stages-beavertails/0_alignment/{sft}/selected.yml",
+        f"configs/stages-beavertails/0_alignment/{booster}/selected.yml",
+        f"configs/stages-beavertails/1_relearn/{sft}--relearn-lora/selected.yml",
+        f"configs/stages-beavertails/1_relearn/{booster}--relearn-lora/selected.yml",
     ]
     configs = [yaml.safe_load((EXAMPLE / path).read_text()) for path in config_paths]
     for config in configs:
@@ -3540,7 +3540,7 @@ def test_paper_faithful_mixed_attack_data_and_configs() -> None:
     for slug in slugs:
         config = yaml.safe_load(
             (
-                EXAMPLE / "configs/stages-alignment/1_relearn" / slug / "selected.yml"
+                EXAMPLE / "configs/stages-beavertails/1_relearn" / slug / "selected.yml"
             ).read_text()
         )
         assert config["base_model"] == "meta-llama/Llama-2-7b-hf"
@@ -3573,7 +3573,7 @@ def test_fresh_lora_mixed_attack_configs_match_continued_attack() -> None:
         continued = yaml.safe_load(
             (
                 EXAMPLE
-                / "configs/stages-alignment/1_relearn"
+                / "configs/stages-beavertails/1_relearn"
                 / continued_slug
                 / "selected.yml"
             ).read_text()
@@ -3581,7 +3581,7 @@ def test_fresh_lora_mixed_attack_configs_match_continued_attack() -> None:
         fresh = yaml.safe_load(
             (
                 EXAMPLE
-                / "configs/stages-alignment/1_relearn"
+                / "configs/stages-beavertails/1_relearn"
                 / fresh_slug
                 / "selected.yml"
             ).read_text()
@@ -3608,7 +3608,7 @@ def test_downscaled_mixed_attack_configs() -> None:
         alignment = yaml.safe_load(
             (
                 EXAMPLE
-                / "configs/stages-alignment/0_alignment"
+                / "configs/stages-beavertails/0_alignment"
                 / alignment_slug
                 / "selected.yml"
             ).read_text()
@@ -3621,7 +3621,7 @@ def test_downscaled_mixed_attack_configs() -> None:
         attack = yaml.safe_load(
             (
                 EXAMPLE
-                / "configs/stages-alignment/1_relearn"
+                / "configs/stages-beavertails/1_relearn"
                 / attack_slug
                 / "selected.yml"
             ).read_text()
@@ -3639,7 +3639,7 @@ def test_downscaled_mixed_attack_configs() -> None:
         fresh = yaml.safe_load(
             (
                 EXAMPLE
-                / "configs/stages-alignment/1_relearn"
+                / "configs/stages-beavertails/1_relearn"
                 / fresh_slug
                 / "selected.yml"
             ).read_text()
@@ -3725,7 +3725,7 @@ def test_minicpm5_rmu_pipeline_and_promoted_trial(
     config = yaml.safe_load(
         (
             EXAMPLE
-            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/selected.yml"
+            / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/selected.yml"
         ).read_text()
     )
     assert config["learning_rate"] == 1e-4
@@ -3755,7 +3755,7 @@ def test_minicpm5_ssiuu_pipeline_and_promoted_trial(
     config = yaml.safe_load(
         (
             EXAMPLE
-            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/selected.yml"
+            / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/selected.yml"
         ).read_text()
     )
     assert config["learning_rate"] == 1e-6
@@ -3785,7 +3785,7 @@ def test_minicpm5_npo_pipeline_uses_promoted_trial(
     config = yaml.safe_load(
         (
             EXAMPLE
-            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/selected.yml"
+            / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/selected.yml"
         ).read_text()
     )
     assert config["learning_rate"] == 7.4e-6
@@ -3797,23 +3797,24 @@ def test_minicpm5_npo_pipeline_uses_promoted_trial(
 OPTUNA_SCRIPT = EXAMPLE / "scripts" / "optuna_hpo.py"
 OPTUNA_CONFIG = (
     EXAMPLE
-    / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/optuna.yml"
+    / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/optuna.yml"
 )
 OPTUNA_BOUNDARY_CONFIG = (
     EXAMPLE
-    / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/optuna-boundary.yml"
+    / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/optuna-boundary.yml"
 )
 OPTUNA_GD_CONFIG = (
-    EXAMPLE / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd/optuna.yml"
+    EXAMPLE
+    / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd/optuna.yml"
 )
 OPTUNA_NPO_CONFIG = (
     EXAMPLE
-    / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/optuna.yml"
+    / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/optuna.yml"
 )
 OPTUNA_NPO_BOUNDARY_CONFIG = OPTUNA_NPO_CONFIG.with_name("optuna-boundary.yml")
 OPTUNA_SSIUU_CONFIG = (
     EXAMPLE
-    / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/optuna.yml"
+    / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/optuna.yml"
 )
 
 
@@ -3864,7 +3865,7 @@ def test_optuna_config_describes_requested_study(hpo) -> None:
     assert config["search"]["learning_rate"] == [2.5e-5, 5e-5, 1e-4]
     assert config["screen"]["mmlu_min"] == 0.5062
     assert config["attack"] == {
-        "base_config": "configs/stages/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml",
+        "base_config": "configs/stages-wmdp/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml",
         "max_steps": 125,
         "learning_rate": 1e-5,
     }
@@ -3928,7 +3929,7 @@ def test_minicpm_gd_selected_config_promotes_best_feasible_trial() -> None:
     selected = yaml.safe_load(
         (
             EXAMPLE
-            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd/selected.yml"
+            / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd/selected.yml"
         ).read_text()
     )
     assert selected["learning_rate"] == 1e-6
@@ -3980,7 +3981,7 @@ def test_minicpm_npo_selected_config_promotes_best_feasible_trial() -> None:
     selected = yaml.safe_load(
         (
             EXAMPLE
-            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/selected.yml"
+            / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/selected.yml"
         ).read_text()
     )
     assert selected["learning_rate"] == 7.4e-6
@@ -4087,7 +4088,7 @@ def test_generated_configs_are_trial_local_and_derive_layers(hpo, tmp_path) -> N
     base = yaml.safe_load(
         (
             EXAMPLE
-            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/selected.yml"
+            / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/selected.yml"
         ).read_text()
     )
     parameters = hpo.sample_parameters(
@@ -4106,7 +4107,7 @@ def test_generated_configs_are_trial_local_and_derive_layers(hpo, tmp_path) -> N
     attack_base = yaml.safe_load(
         (
             EXAMPLE
-            / "configs/stages/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml"
+            / "configs/stages-wmdp/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml"
         ).read_text()
     )
     attack = hpo.build_attack_config(

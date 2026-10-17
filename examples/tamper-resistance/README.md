@@ -27,7 +27,7 @@ uv run --group eval python scripts/analysis/plot_trajectory.py \
 configs/
 ├── experiments/z7b-wmdp-bio-unlearn--2pp.yml  # models and evaluations to run
 ├── registries/                               # model producers and evaluation jobs
-└── stages/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd/
+└── stages-wmdp/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd/
     ├── base.yml                              # training config used by the sweep
     ├── sweep.yml                             # HPO parameter grid
     └── selected.yml                          # optimal training config found
@@ -38,7 +38,7 @@ configs/
 Generate and submit the GD sweep from this directory:
 ```sh
 uv run python scripts/hpo.py generate \
-  configs/stages/0_unlearn/z7b-wmdp-bio--10pp--unlearn-fft-gd/sweep.yml
+  configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--10pp--unlearn-fft-gd/sweep.yml
 
 lilpipe artifacts/generated/hpo/z7b-wmdp-bio--10pp--unlearn-fft-gd-hpo/experiment.yml
 ```

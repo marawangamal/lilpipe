@@ -7,7 +7,7 @@ models:
       id: train-llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages-alignment/0_alignment/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1/selected.yml
+      - configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1/selected.yml
       sbatch_args: &id001
       - --gres=gpu:l40s:1
       - --cpus-per-task=16
@@ -23,8 +23,8 @@ models:
       id: train-llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora
       script: scripts/slurm/mila/relearn_alignment.sbatch
       args:
-      - configs/stages-alignment/1_relearn/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora/selected.yml
-      - configs/stages-alignment/0_alignment/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1/selected.yml
+      - configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora/selected.yml
+      - configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1/selected.yml
       - artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1
       - artifacts/mila/models/llama2-7b-beavertail--align-lora-booster-l5-rho1e-1-merged
       depends_on:
@@ -38,7 +38,7 @@ models:
       id: train-llama2-7b-beavertail--align-lora-sft
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages-alignment/0_alignment/llama2-7b-beavertail--align-lora-sft/selected.yml
+      - configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-lora-sft/selected.yml
       sbatch_args: *id001
   llama2-7b-beavertail--align-lora-sft--relearn-lora:
     base_model_name_or_path: meta-llama/Llama-2-7b-hf
@@ -50,8 +50,8 @@ models:
       id: train-llama2-7b-beavertail--align-lora-sft--relearn-lora
       script: scripts/slurm/mila/relearn_alignment.sbatch
       args:
-      - configs/stages-alignment/1_relearn/llama2-7b-beavertail--align-lora-sft--relearn-lora/selected.yml
-      - configs/stages-alignment/0_alignment/llama2-7b-beavertail--align-lora-sft/selected.yml
+      - configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-lora-sft--relearn-lora/selected.yml
+      - configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-lora-sft/selected.yml
       - artifacts/mila/models/llama2-7b-beavertail--align-lora-sft
       - artifacts/mila/models/llama2-7b-beavertail--align-lora-sft-merged
       depends_on:
@@ -109,7 +109,7 @@ models:
       id: train-minicpm5-1b-wmdp-bio--unlearn-fft-gd
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd/selected.yml
+      - configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd/selected.yml
       sbatch_args: &id003
       - --gres=gpu:l40s:1
       - --cpus-per-task=8
@@ -124,7 +124,7 @@ models:
       id: train-minicpm5-1b-wmdp-bio--unlearn-fft-gd--relearn-fft-long
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd--relearn-fft-long/selected.yml
+      - configs/stages-wmdp/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd--relearn-fft-long/selected.yml
       depends_on:
       - minicpm5-1b-wmdp-bio--unlearn-fft-gd
       sbatch_args: *id003
@@ -136,7 +136,7 @@ models:
       id: train-minicpm5-1b-wmdp-bio--unlearn-fft-npo
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/selected.yml
+      - configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/selected.yml
       sbatch_args: *id003
   minicpm5-1b-wmdp-bio--unlearn-fft-npo--relearn-fft-long:
     baseline_model_name_or_path: artifacts/mila/models/minicpm5-1b-wmdp-bio--unlearn-fft-npo
@@ -147,7 +147,7 @@ models:
       id: train-minicpm5-1b-wmdp-bio--unlearn-fft-npo--relearn-fft-long
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo--relearn-fft-long/selected.yml
+      - configs/stages-wmdp/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo--relearn-fft-long/selected.yml
       depends_on:
       - minicpm5-1b-wmdp-bio--unlearn-fft-npo
       sbatch_args: *id003
@@ -159,7 +159,7 @@ models:
       id: train-minicpm5-1b-wmdp-bio--unlearn-fft-rmu
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/selected.yml
+      - configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/selected.yml
       sbatch_args: *id003
   minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long:
     baseline_model_name_or_path: artifacts/mila/models/minicpm5-1b-wmdp-bio--unlearn-fft-rmu
@@ -170,7 +170,7 @@ models:
       id: train-minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml
+      - configs/stages-wmdp/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml
       depends_on:
       - minicpm5-1b-wmdp-bio--unlearn-fft-rmu
       sbatch_args: *id003
@@ -182,7 +182,7 @@ models:
       id: train-minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/selected.yml
+      - configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/selected.yml
       sbatch_args: *id003
   minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu--relearn-fft-long:
     baseline_model_name_or_path: artifacts/mila/models/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu
@@ -193,7 +193,7 @@ models:
       id: train-minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu--relearn-fft-long
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu--relearn-fft-long/selected.yml
+      - configs/stages-wmdp/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu--relearn-fft-long/selected.yml
       depends_on:
       - minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu
       sbatch_args: *id003
@@ -207,7 +207,7 @@ models:
       id: train-z7b-wmdp-bio--10pp--unlearn-fft-gd--relearn-fft
       script: scripts/slurm/tamia/train_model_parallel.sbatch
       args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--10pp--unlearn-fft-gd--relearn-fft/selected.yml
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--10pp--unlearn-fft-gd--relearn-fft/selected.yml
       depends_on: []
       sbatch_args:
       - --gpus-per-node=h100:4
@@ -224,7 +224,7 @@ models:
       id: train-z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
       script: scripts/slurm/tamia/train_model_parallel.sbatch
       args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml
       depends_on: []
       sbatch_args:
       - --gpus-per-node=h100:4
@@ -239,7 +239,7 @@ models:
       id: train-z7b-wmdp-bio--2pp--unlearn-fft-cb
       script: scripts/slurm/tamia/train_model_parallel.sbatch
       args:
-      - configs/stages/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-cb/selected.yml
+      - configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-cb/selected.yml
       sbatch_args: &id004
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
@@ -259,7 +259,7 @@ models:
       id: train-z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft
       script: scripts/slurm/tamia/train_model_parallel.sbatch
       args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/selected.yml
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/selected.yml
       depends_on: []
       sbatch_args:
       - --gpus-per-node=h100:4
@@ -274,7 +274,7 @@ models:
       id: train-z7b-wmdp-bio--2pp--unlearn-fft-gd--resist-fft-weight-distance
       script: scripts/slurm/tamia/train.sbatch
       args:
-      - configs/stages/1_resist/z7b-wmdp-bio--2pp--unlearn-fft-gd--resist-fft-weight-distance/selected.yml
+      - configs/stages-wmdp/1_resist/z7b-wmdp-bio--2pp--unlearn-fft-gd--resist-fft-weight-distance/selected.yml
       depends_on:
       - z7b-wmdp-bio--2pp--unlearn-fft-gd
       sbatch_args: *id004
@@ -292,7 +292,7 @@ models:
       id: train-z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
       script: scripts/slurm/tamia/train_model_parallel.sbatch
       args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml
       depends_on: []
       sbatch_args:
       - --gpus-per-node=h100:4
@@ -309,7 +309,7 @@ models:
       id: train-z7b-wmdp-bio--2pp--unlearn-fft-rmu--relearn-fft
       script: scripts/slurm/tamia/train_model_parallel.sbatch
       args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-rmu--relearn-fft/selected.yml
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-rmu--relearn-fft/selected.yml
       depends_on: []
       sbatch_args:
       - --gpus-per-node=h100:4
@@ -326,7 +326,7 @@ models:
       id: train-z7b-wmdp-bio--2pp--unlearn-fft-rmu-sam-rho1e-3--relearn-fft
       script: scripts/slurm/tamia/train_model_parallel.sbatch
       args:
-      - configs/stages/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-rmu-sam-rho1e-3--relearn-fft/selected.yml
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-rmu-sam-rho1e-3--relearn-fft/selected.yml
       depends_on: []
       sbatch_args:
       - --gpus-per-node=h100:4

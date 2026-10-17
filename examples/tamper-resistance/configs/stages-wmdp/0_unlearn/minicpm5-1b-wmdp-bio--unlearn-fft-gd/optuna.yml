@@ -19,7 +19,7 @@ screen:
   mmlu_min: 0.5062
 
 unlearn:
-  base_config: configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd/selected.yml
+  base_config: configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd/selected.yml
 
 evaluation:
   wmdp: {task: wmdp_bio_robust, metric: "acc,none"}
