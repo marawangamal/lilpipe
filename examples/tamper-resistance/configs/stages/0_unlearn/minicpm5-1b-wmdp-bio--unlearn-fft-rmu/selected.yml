@@ -4,9 +4,9 @@ plugins:
 trainer_cls: trainers.rmu.RMUTrainer
 custom_trainer_args:
   reference_model_name_or_path: openbmb/MiniCPM5-1B
-  retain_coefficient: 600.0
-  steering_coefficient: 6.5
-  target_layer: 7
+  retain_coefficient: 637.6272203987833
+  steering_coefficient: 25.679644599841616
+  target_layer: 3
   control_seed: 42
 datasets:
   - {path: cais/wmdp-bio-forget-corpus, split: train, type: data.authors_documents}
@@ -24,16 +24,16 @@ train_on_inputs: true
 micro_batch_size: 8
 gradient_accumulation_steps: 1
 max_steps: 150
-learning_rate: 5.0e-5
+learning_rate: 1.0e-4
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: constant
 warmup_steps: 0
 max_grad_norm: 0.0
 unfrozen_parameters:
-  - ^model.layers.5.mlp.down_proj.weight$
-  - ^model.layers.6.mlp.down_proj.weight$
-  - ^model.layers.7.mlp.down_proj.weight$
+  - ^model.layers.1.mlp.down_proj.weight$
+  - ^model.layers.2.mlp.down_proj.weight$
+  - ^model.layers.3.mlp.down_proj.weight$
 bf16: true
 tf32: false
 gradient_checkpointing: false

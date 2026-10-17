@@ -12,6 +12,50 @@ os.makedirs(figure_dir, exist_ok=True)
 
 experiments = [
     {
+        "model": "minicpm5-1b",
+        "rootdir": "artifacts/mila/evals",
+        "output": "relearning-attack-capability-filtered-minicpm5-1b",
+        "configs": [
+            ("minicpm5-1b-base", "Base model", "Base model", True),
+            (
+                "minicpm5-1b-wmdp-bio--unlearn-fft-npo--relearn-fft-long",
+                "NPO",
+                "None",
+                False,
+            ),
+            (
+                "minicpm5-1b-wmdp-bio--unlearn-fft-npo-sam-rho1e-3--relearn-fft-long",
+                "NPO",
+                "SAM",
+                False,
+            ),
+            (
+                "minicpm5-1b-wmdp-bio--unlearn-fft-npo-weight-distance--relearn-fft-long",
+                "NPO",
+                "Weight distance",
+                False,
+            ),
+            (
+                "minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long",
+                "RMU",
+                "None",
+                False,
+            ),
+            (
+                "minicpm5-1b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long",
+                "RMU",
+                "SAM",
+                False,
+            ),
+            (
+                "minicpm5-1b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long",
+                "RMU",
+                "Weight distance",
+                False,
+            ),
+        ],
+    },
+    {
         "model": "z7b--2pp",
         "rootdir": "artifacts/tamia/evals/thresholds/2pp",
         "base_rootdir": "artifacts/tamia/evals",

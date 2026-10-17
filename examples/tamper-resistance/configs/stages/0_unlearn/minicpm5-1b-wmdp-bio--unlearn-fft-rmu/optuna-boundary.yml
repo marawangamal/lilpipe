@@ -1,4 +1,5 @@
 version: 1
+gpu: l40s
 study:
   name: minicpm5-1b-rmu-boundary
   storage: sqlite:///artifacts/mila/optuna/minicpm5-1b-rmu-boundary/study.db

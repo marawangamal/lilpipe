@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run and report the MiniCPM5 RMU tamper-resistance Optuna study."""
+"""Run and report MiniCPM5 tamper-resistance Optuna studies."""
 
 from __future__ import annotations
 
@@ -44,9 +44,20 @@ def validate_config(config: dict[str, Any]) -> None:
     study = config.get("study", {})
     if study.get("trials") != sum(study.get("waves", [])):
         raise ValueError("study.trials must equal the sum of study.waves")
-    if study.get("directions") != ["minimize", "minimize"]:
-        raise ValueError("directions must minimize pre- and post-attack WMDP")
-    for section in ("search", "screen", "unlearn", "attack", "evaluation"):
+    objectives = study.get("objectives")
+    directions = study.get("directions")
+    if objectives not in (["wmdp_pre"], ["wmdp_pre", "wmdp_post"]):
+        raise ValueError(
+            "objectives must optimize pre-attack WMDP, optionally post-attack"
+        )
+    if directions != ["minimize"] * len(objectives):
+        raise ValueError("each WMDP objective must be minimized")
+    if config.get("gpu", "l40s") not in {"l40s", "rtx8000"}:
+        raise ValueError("gpu must be l40s or rtx8000")
+    sections = ["search", "screen", "unlearn", "evaluation"]
+    if "wmdp_post" in objectives:
+        sections.append("attack")
+    for section in sections:
         if not isinstance(config.get(section), dict):
             raise ValueError(f"{section} must be a mapping")
 
@@ -67,7 +78,8 @@ def create_study(config: dict[str, Any]):
         )
 
     def mmlu_constraints(trial: Any) -> list[float]:
-        return trial.user_attrs.get("mmlu_constraints", [0.0, 0.0])
+        default = [0.0] * len(study_config["objectives"])
+        return trial.user_attrs.get("mmlu_constraints", default)
 
     seed = study_config["seed"]
     if "SLURM_ARRAY_TASK_ID" in os.environ:
@@ -86,7 +98,52 @@ def create_study(config: dict[str, Any]):
     )
 
 
+def enqueue_initial_trials(study: Any, config: dict[str, Any]) -> None:
+    for parameters in config["study"].get("initial_trials", []):
+        study.enqueue_trial(parameters, skip_if_exists=True)
+
+
 def sample_parameters(trial: Any, search: dict[str, Any]) -> dict[str, Any]:
+    if "steering_coefficient" not in search:
+        learning_rate = search["learning_rate"]
+        retain = search["retain_coefficient"]
+        parameters = {
+            "learning_rate": (
+                trial.suggest_float(
+                    "learning_rate",
+                    learning_rate["low"],
+                    learning_rate["high"],
+                    log=learning_rate.get("log", False),
+                )
+                if isinstance(learning_rate, dict)
+                else trial.suggest_categorical("learning_rate", learning_rate)
+            ),
+            "retain_coefficient": trial.suggest_float(
+                "retain_coefficient",
+                retain["low"],
+                retain["high"],
+                log=retain.get("log", False),
+            ),
+        }
+        if "max_steps" in search:
+            parameters["max_steps"] = trial.suggest_categorical(
+                "max_steps", search["max_steps"]
+            )
+        if "beta" in search:
+            beta = search["beta"]
+            parameters["beta"] = trial.suggest_float(
+                "beta", beta["low"], beta["high"], log=beta.get("log", False)
+            )
+        if "ssiuu_coefficient" in search:
+            coefficient = search["ssiuu_coefficient"]
+            parameters["ssiuu_coefficient"] = trial.suggest_float(
+                "ssiuu_coefficient",
+                coefficient["low"],
+                coefficient["high"],
+                log=coefficient.get("log", False),
+            )
+        return parameters
+
     c = search["steering_coefficient"]
     alpha = search["retain_coefficient"]
     return {
@@ -111,20 +168,41 @@ def build_unlearn_config(
 ) -> dict[str, Any]:
     config = dict(base)
     config["custom_trainer_args"] = dict(base["custom_trainer_args"])
-    layer = parameters["layer"]
-    config["custom_trainer_args"].update(
-        target_layer=layer,
-        steering_coefficient=parameters["steering_coefficient"],
-        retain_coefficient=parameters["retain_coefficient"],
-    )
-    config["learning_rate"] = parameters["learning_rate"]
-    config["unfrozen_parameters"] = [
-        rf"^model.layers.{index}.mlp.down_proj.weight$"
-        for index in range(layer - 2, layer + 1)
+    config["custom_trainer_args"]["retain_coefficient"] = parameters[
+        "retain_coefficient"
     ]
+    if "beta" in parameters:
+        config["custom_trainer_args"]["beta"] = parameters["beta"]
+    if "ssiuu_coefficient" in parameters:
+        config["custom_trainer_args"]["ssiuu_coefficient"] = parameters[
+            "ssiuu_coefficient"
+        ]
+    if "steering_coefficient" in parameters:
+        layer = parameters["layer"]
+        config["custom_trainer_args"].update(
+            target_layer=layer,
+            steering_coefficient=parameters["steering_coefficient"],
+        )
+        config["unfrozen_parameters"] = [
+            rf"^model.layers.{index}.mlp.down_proj.weight$"
+            for index in range(layer - 2, layer + 1)
+        ]
+    if "max_steps" in parameters:
+        config["max_steps"] = parameters["max_steps"]
+        config["save_steps"] = parameters["max_steps"]
+    config["learning_rate"] = parameters["learning_rate"]
     config["dataset_prepared_path"] = str(trial_dir / "cache" / "unlearn")
     config["output_dir"] = str(trial_dir / "unlearned")
-    config["wandb_name"] = f"minicpm5-rmu-optuna-{trial_dir.name}"
+    method = (
+        "rmu"
+        if "steering_coefficient" in parameters
+        else (
+            "npo"
+            if "beta" in parameters
+            else "ssiuu" if "ssiuu_coefficient" in parameters else "gd"
+        )
+    )
+    config["wandb_name"] = f"minicpm5-{method}-optuna-{trial_dir.name}"
     return config
 
 
@@ -139,7 +217,7 @@ def build_attack_config(
         max_steps=attack["max_steps"],
         learning_rate=attack["learning_rate"],
         save_strategy="no",
-        wandb_name=f"minicpm5-rmu-optuna-{trial_dir.name}-attack",
+        wandb_name=f"minicpm5-optuna-{trial_dir.parent.parent.name}-{trial_dir.name}-attack",
     )
     config.pop("save_steps", None)
     config.pop("save_total_limit", None)
@@ -228,7 +306,7 @@ def run_trial(
     trial: Any,
     config: dict[str, Any],
     run: Callable[..., Any] = subprocess.run,
-) -> tuple[float, float]:
+) -> float | tuple[float, float]:
     trial_dir = Path(config["artifacts"]) / f"trial-{trial.number:03d}"
     trial_dir.mkdir(parents=True, exist_ok=True)
     parameters = sample_parameters(trial, config["search"])
@@ -250,6 +328,11 @@ def run_trial(
 
     screen = config["screen"]
     pre_constraint = screen["mmlu_min"] - pre["mmlu"]
+    if config["study"]["objectives"] == ["wmdp_pre"]:
+        trial.set_user_attr("screened_out", pre_constraint > 0)
+        trial.set_user_attr("mmlu_constraints", [pre_constraint])
+        return pre["wmdp"]
+
     if pre_constraint > 0:
         trial.set_user_attr("screened_out", True)
         trial.set_user_attr("wmdp_post", None)
@@ -289,7 +372,7 @@ def worker(config: dict[str, Any]) -> None:
     if live_trials >= config["study"]["trials"]:
         return
 
-    def objective(trial: Any) -> tuple[float, float]:
+    def objective(trial: Any) -> float | tuple[float, float]:
         try:
             return run_trial(trial, config)
         except Exception as error:
@@ -300,16 +383,18 @@ def worker(config: dict[str, Any]) -> None:
     study.optimize(objective, n_trials=1)
 
 
+def initialize(config: dict[str, Any]) -> None:
+    """Create a study and enqueue any literature-derived starting points once."""
+    study = create_study(config)
+    enqueue_initial_trials(study, config)
+
+
 def submit(
     config_path: Path, config: dict[str, Any], dry_run: bool = False
 ) -> list[str] | None:
     study = create_study(config)
-    optuna = optuna_module()
-    active = [
-        trial
-        for trial in study.trials
-        if trial.state == optuna.trial.TrialState.RUNNING
-    ]
+    enqueue_initial_trials(study, config)
+    active = [trial for trial in study.trials if trial.state.name == "RUNNING"]
     if active:
         print(f"{len(active)} trial(s) are still running; no wave submitted")
         return None
@@ -329,6 +414,7 @@ def submit(
     command = [
         "sbatch",
         f"--array=0-{wave_size - 1}%{wave_size}",
+        f"--gres=gpu:{config.get('gpu', 'l40s')}:1",
         config["worker_script"],
         str(config_path),
     ]
@@ -367,7 +453,7 @@ def report(config: dict[str, Any], output: Path) -> None:
         writer.writerows(rows)
     pareto = {trial.number for trial in study.best_trials}
     lines = [
-        "# MiniCPM5-1B RMU Optuna trials",
+        f"# {config['study']['name']} Optuna trials",
         "",
         "| trial | state | WMDP pre | MMLU pre | WMDP post | recovery | MMLU post | Pareto |",
         "|---:|:---|---:|---:|---:|---:|---:|:---:|",
@@ -397,7 +483,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     config = load_config(args.config)
     if args.command == "initialize":
-        create_study(config)
+        initialize(config)
     elif args.command == "worker":
         worker(config)
     elif args.command == "submit":

@@ -20,4 +20,4 @@ producer:
 evaluations:
 - wmdp-bio-final
 - mmlu-no-bio-final
-evaluation_registry: configs/registries/z7b-threshold-evals.yml
+evaluation_registry: configs/registries/evals.yml

@@ -1,0 +1,12 @@
+version: 1
+id: llama32-tofu-unlearn
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+models:
+  - llama32-tofu--unlearn-fft-gd
+  - llama32-tofu--unlearn-fft-ssiuu
+evaluations:
+  - tofu-table2
+  - tofu-harmful-relearn
+  - tofu-benign-relearn

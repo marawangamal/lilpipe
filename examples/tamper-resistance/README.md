@@ -33,7 +33,7 @@ configs/
     └── selected.yml                          # optimal training config found
 ```
 
-## Hyperparameter optimization (native)
+## Hyperparameter optimization
 
 Generate and submit the GD sweep from this directory:
 ```sh

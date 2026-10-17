@@ -136,6 +136,19 @@ def src_gd_training_module():
 
 
 @pytest.fixture(scope="module")
+def ssiuu_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE / "src"))
+    try:
+        return load_script("src/trainers/ssiuu.py", "ssiuu_training")
+    finally:
+        sys.path.remove(str(EXAMPLE / "src"))
+
+
+@pytest.fixture(scope="module")
 def src_gd_sam_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
@@ -1420,6 +1433,249 @@ def test_src_grad_diff_logs_component_losses_and_gradient_norms(
     ]
     assert model.forget_weight.grad.item() == pytest.approx(-6.0)
     assert model.retain_weight.grad.item() == pytest.approx(8.0)
+
+
+def test_ssiuu_sequence_probability_masks_prompt_and_padding(
+    ssiuu_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    logits = torch.zeros(2, 4, 3)
+    logits[0, 1, 1] = torch.log(torch.tensor(2.0))
+    logits[0, 2, 2] = torch.log(torch.tensor(3.0))
+    logits[1, 1, 2] = torch.log(torch.tensor(4.0))
+    labels = torch.tensor([[-100, -100, 1, 2], [-100, -100, 2, -100]])
+
+    probability = ssiuu_training_module.SSIUUTrainer.sequence_probability(
+        logits, labels
+    )
+
+    assert probability.item() == pytest.approx((2 / 4) * (3 / 5) + 4 / 6)
+
+
+def test_ssiuu_geometric_mean_probability_does_not_underflow(
+    ssiuu_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    logits = torch.zeros(1, 513, 2)
+    labels = torch.ones(1, 513, dtype=torch.long)
+
+    raw = ssiuu_training_module.SSIUUTrainer.sequence_probability(logits, labels)
+    normalized = ssiuu_training_module.SSIUUTrainer.sequence_probability(
+        logits, labels, "geometric_mean"
+    )
+
+    assert raw.item() == 0.0
+    assert normalized.item() == pytest.approx(0.5)
+
+
+def test_ssiuu_attribution_is_parameter_times_probability_gradient(
+    ssiuu_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(2.0))
+
+        def forward(self, input_ids, attention_mask, labels, use_cache):
+            del attention_mask, labels
+            assert not use_cache
+            logits = torch.zeros(input_ids.shape[0], 3, 2)
+            logits[:, 1, 1] = self.weight
+            return SimpleNamespace(logits=logits)
+
+    model = Model()
+    trainer = object.__new__(ssiuu_training_module.SSIUUTrainer)
+    inputs = {
+        "input_ids": torch.tensor([[0, 0, 1], [0, 0, 0]]),
+        "attention_mask": torch.ones(2, 3),
+        "labels": torch.tensor([[-100, -100, 1], [-100, -100, 0]]),
+        "is_forget": torch.tensor([True, False]),
+    }
+
+    probability, (attribution,) = trainer.compute_attributions(model, inputs)
+    expected_probability = torch.sigmoid(model.weight.detach())
+    expected_attribution = (
+        model.weight.detach() * expected_probability * (1 - expected_probability)
+    )
+
+    assert probability.item() == pytest.approx(expected_probability.item())
+    assert attribution.item() == pytest.approx(expected_attribution.item())
+    assert attribution.requires_grad
+    torch.autograd.grad(attribution, model.weight)
+
+
+def test_ssiuu_penalizes_only_currently_negative_attribution_drift(
+    ssiuu_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor([2.0, 3.0]))
+
+    model = Model()
+    trainer = object.__new__(ssiuu_training_module.SSIUUTrainer)
+    trainer.ssiuu_coefficient = 0.5
+    trainer._previous_attributions = (torch.tensor([-1.0, 10.0]),)
+
+    current = model.weight * torch.tensor([-2.0, 2.0])
+    trainer.compute_attributions = lambda model, inputs: (current.sum(), (current,))
+    loss = trainer.compute_ssiuu_loss(model, {})
+
+    assert loss.item() == pytest.approx(0.5 * (-4.0 - -1.0) ** 2)
+    loss.backward()
+    assert model.weight.grad.tolist() == pytest.approx([6.0, 0.0])
+    assert trainer._previous_attributions[0].tolist() == pytest.approx([-4.0, 6.0])
+    assert not trainer._previous_attributions[0].requires_grad
+
+
+def test_ssiuu_first_iteration_has_zero_regularizer(ssiuu_training_module) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(2.0))
+
+    model = Model()
+    trainer = object.__new__(ssiuu_training_module.SSIUUTrainer)
+    trainer.ssiuu_coefficient = 1.0
+    trainer._previous_attributions = None
+    attribution = model.weight.square()
+    trainer.compute_attributions = lambda model, inputs: (attribution, (attribution,))
+
+    loss = trainer.compute_ssiuu_loss(model, {})
+
+    assert loss.item() == 0.0
+    assert trainer._previous_attributions[0].item() == 4.0
+
+
+def test_tofu_table2_pipeline_contains_only_gd_and_ssiuu_methods(monkeypatch) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load("configs/experiments/llama32-tofu-unlearn.yml").plan()
+
+    assert {stage.id for stage in plan.stages} == {
+        "train-llama32-tofu",
+        "train-llama32-tofu--unlearn-fft-gd",
+        "train-llama32-tofu--unlearn-fft-ssiuu",
+        "eval-tofu-table2-llama32-tofu--unlearn-fft-gd",
+        "eval-tofu-harmful-relearn-llama32-tofu--unlearn-fft-gd",
+        "eval-tofu-benign-relearn-llama32-tofu--unlearn-fft-gd",
+        "eval-tofu-table2-llama32-tofu--unlearn-fft-ssiuu",
+        "eval-tofu-harmful-relearn-llama32-tofu--unlearn-fft-ssiuu",
+        "eval-tofu-benign-relearn-llama32-tofu--unlearn-fft-ssiuu",
+    }
+    gd = plan.stage_index["train-llama32-tofu--unlearn-fft-gd"]
+    ssiuu = plan.stage_index["train-llama32-tofu--unlearn-fft-ssiuu"]
+    assert gd.depends_on == ("train-llama32-tofu",)
+    assert ssiuu.depends_on == ("train-llama32-tofu",)
+    assert "--gres=gpu:rtx8000:1" in gd.sbatch_args
+    assert "--gres=gpu:rtx8000:1" in ssiuu.sbatch_args
+    assert "--mem=96G" in ssiuu.sbatch_args
+    assert plan.stage_index[
+        "eval-tofu-table2-llama32-tofu--unlearn-fft-gd"
+    ].depends_on == ("train-llama32-tofu--unlearn-fft-gd",)
+
+
+def test_tofu_table2_uses_paper_probability_and_coefficient() -> None:
+    config = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/stages-tofu/1_unlearn/llama32-tofu--unlearn-fft-ssiuu/selected.yml"
+        ).read_text()
+    )
+    args = config["custom_trainer_args"]
+    assert args["probability_normalization"] == "none"
+    assert args["ssiuu_coefficient"] == pytest.approx(1e-4)
+    assert config["micro_batch_size"] * config["gradient_accumulation_steps"] == 32
+    assert config["optimizer"] == "paged_adamw_32bit"
+    assert config["weight_decay"] == pytest.approx(0.01)
+    assert config["warmup_steps"] == 2
+    assert config["save_strategy"] == "steps"
+    assert config["save_steps"] == 1
+
+
+def test_tofu_pretraining_matches_openunlearning_recipe() -> None:
+    config = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages-tofu/0_pretrain/llama32-tofu/selected.yml"
+        ).read_text()
+    )
+
+    assert config["micro_batch_size"] * config["gradient_accumulation_steps"] == 32
+    assert config["num_epochs"] == 5
+    assert config["learning_rate"] == pytest.approx(1e-5)
+    assert config["optimizer"] == "paged_adamw_32bit"
+    assert config["weight_decay"] == pytest.approx(0.01)
+    assert config["lr_scheduler"] == "linear"
+    assert config["warmup_steps"] == 125
+
+
+def test_tofu_checkpoint_selector_uses_first_qualifying_step(
+    monkeypatch, tmp_path
+) -> None:
+    monkeypatch.syspath_prepend(str(EXAMPLE / "scripts"))
+    module = load_script("scripts/select_tofu_checkpoint.py", "select_tofu_checkpoint")
+    checkpoints = tmp_path / "checkpoints"
+    for step in (1, 2, 3):
+        (checkpoints / f"checkpoint-{step}").mkdir(parents=True)
+    scores = {1: 30.0, 2: 19.5, 3: 10.0}
+    module.forget_score = lambda path, batch_size: (
+        scores[module.checkpoint_step(path)],
+        ["prediction"],
+    )
+
+    selected = tmp_path / "selected"
+    result = module.select_checkpoint(checkpoints, selected, threshold=19.71)
+
+    assert result["selected"]["step"] == 2
+    assert [row["step"] for row in result["trajectory"]] == [1, 2]
+    assert selected.resolve() == (checkpoints / "checkpoint-2").resolve()
+
+
+def test_tofu_summary_places_paper_and_reproduction_side_by_side() -> None:
+    module = load_script("scripts/summarize_tofu_table2.py", "tofu_summary")
+    reproduced = [
+        {
+            "method": method,
+            **{key: value + 1 for key, value in module.PAPER_RESULTS[method].items()},
+        }
+        for method in ("GD", "SSIUU")
+    ]
+
+    table = module.markdown_table(reproduced)
+
+    assert "| GD | Paper | 19.32 | 89.36 | 92.88 | 45.41 | 51.73 | 20.98 |" in table
+    assert "| SSIUU | Reproduction | 18.75 |" in table
+
+
+def test_tofu_attack_split_is_deterministic_and_disjoint(monkeypatch) -> None:
+    monkeypatch.syspath_prepend(str(EXAMPLE / "src"))
+    pytest.importorskip("axolotl")
+    module = load_script("src/data/tofu.py", "tofu_data")
+    first = module.harmful_indices(40, 0.1, 1)
+    second = module.harmful_indices(40, 0.1, 1)
+    larger = module.harmful_indices(40, 0.3, 1)
+
+    assert first == second
+    assert len(first) == 4
+    assert len(larger) == 12
+    assert len(set(first)) == len(first)
+    assert set(range(40)) - set(first)
+
+
+def test_tofu_table2_attack_grid_covers_paper_conditions(monkeypatch) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load("configs/experiments/llama32-tofu-unlearn.yml").plan()
+    attacks = [stage for stage in plan.stages if "relearn" in stage.id]
+
+    assert len(attacks) == 4
+    assert sum("--array=0-17%2" in stage.sbatch_args for stage in attacks) == 2
+    assert sum("--array=0-8%2" in stage.sbatch_args for stage in attacks) == 2
+    assert all("--gres=gpu:rtx8000:1" in stage.sbatch_args for stage in attacks)
 
 
 @pytest.mark.parametrize("sources", [[1, 1], [0, 0]])
@@ -2916,18 +3172,18 @@ def test_final_adapter_evaluator_uses_direct_adapter_without_array() -> None:
 
 def test_alignment_pipeline_and_configs(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(EXAMPLE)
-    pipeline = lilpipe.load("configs/experiments/main-alignment.yml")
+    pipeline = lilpipe.load("configs/experiments/llama2-7b-beavertail.yml")
     plan = pipeline.plan()
     sft = "llama2-7b-beavertail--align-lora-sft"
     booster = "llama2-7b-beavertail--align-lora-booster-l5-rho1e-1"
-    assert [stage.id for stage in plan.stages] == [
+    assert {stage.id for stage in plan.stages} == {
         f"train-{sft}",
         f"train-{booster}",
         f"train-{sft}--relearn-lora",
         f"train-{booster}--relearn-lora",
         f"eval-beavertail-alignment-{sft}--relearn-lora",
         f"eval-beavertail-alignment-{booster}--relearn-lora",
-    ]
+    }
     assert plan.stage_index[f"train-{sft}--relearn-lora"].depends_on == (
         f"train-{sft}",
     )
@@ -3423,14 +3679,14 @@ def test_booster_sampler_and_negative_perturbation() -> None:
         module.negative_normalized_perturbation({"x": torch.zeros(2)}, 0.1)
 
 
-def test_minicpm5_main_pipeline_uses_one_l40s_per_stage(
+def test_minicpm5_pipeline_unifies_methods_on_one_l40s_per_stage(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(EXAMPLE)
-    plan = lilpipe.load("configs/experiments/minicpm5-1b-main.yml").plan()
+    plan = lilpipe.load("configs/experiments/minicpm5-1b-wmdp-bio-unlearn.yml").plan()
 
-    assert len(plan.stages) == 24
-    assert sum(stage.id.startswith("train-") for stage in plan.stages) == 12
+    assert len(plan.stages) == 16
+    assert sum(stage.id.startswith("train-") for stage in plan.stages) == 8
     assert all("--gres=gpu:l40s:1" in stage.sbatch_args for stage in plan.stages)
     assert all(
         not any("h100" in argument for argument in stage.sbatch_args)
@@ -3446,9 +3702,96 @@ def test_minicpm5_main_pipeline_uses_one_l40s_per_stage(
         assert "device_map" not in config
         assert "fsdp_version" not in config
 
-    base_plan = lilpipe.load("configs/experiments/minicpm5-1b-base.yml").plan()
-    assert len(base_plan.stages) == 2
-    assert all("--gres=gpu:l40s:1" in stage.sbatch_args for stage in base_plan.stages)
+
+def test_minicpm5_rmu_pipeline_and_promoted_trial(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = (
+        lilpipe.load("configs/experiments/minicpm5-1b-wmdp-bio-unlearn.yml")
+        .select(
+            models=["minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long"],
+        )
+        .plan()
+    )
+
+    assert len(plan.stages) == 4
+    assert all("--gres=gpu:l40s:1" in stage.sbatch_args for stage in plan.stages)
+    eval_stages = [stage for stage in plan.stages if stage.id.startswith("eval-")]
+    assert len(eval_stages) == 2
+    assert all("--array=0-25%1" in stage.sbatch_args for stage in eval_stages)
+    assert all(stage.args[-1] == "5" for stage in eval_stages)
+
+    config = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/selected.yml"
+        ).read_text()
+    )
+    assert config["learning_rate"] == 1e-4
+    assert config["custom_trainer_args"]["target_layer"] == 3
+    assert config["custom_trainer_args"]["steering_coefficient"] == pytest.approx(
+        25.679644599841616
+    )
+    assert config["custom_trainer_args"]["retain_coefficient"] == pytest.approx(
+        637.6272203987833
+    )
+
+
+def test_minicpm5_ssiuu_pipeline_and_promoted_trial(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = (
+        lilpipe.load("configs/experiments/minicpm5-1b-wmdp-bio-unlearn.yml")
+        .select(models=["minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu--relearn-fft-long"])
+        .plan()
+    )
+
+    assert len(plan.stages) == 4
+    assert sum(stage.id.startswith("train-") for stage in plan.stages) == 2
+    assert all("--gres=gpu:l40s:1" in stage.sbatch_args for stage in plan.stages)
+
+    config = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/selected.yml"
+        ).read_text()
+    )
+    assert config["learning_rate"] == 1e-6
+    assert config["max_steps"] == 100
+    assert config["custom_trainer_args"]["retain_coefficient"] == pytest.approx(
+        2.0224857803679672
+    )
+    assert config["custom_trainer_args"]["ssiuu_coefficient"] == pytest.approx(
+        0.00035514729501627665
+    )
+
+
+def test_minicpm5_npo_pipeline_uses_promoted_trial(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = (
+        lilpipe.load("configs/experiments/minicpm5-1b-wmdp-bio-unlearn.yml")
+        .select(models=["minicpm5-1b-wmdp-bio--unlearn-fft-npo--relearn-fft-long"])
+        .plan()
+    )
+
+    assert len(plan.stages) == 4
+    assert sum(stage.id.startswith("train-") for stage in plan.stages) == 2
+    assert all("--gres=gpu:l40s:1" in stage.sbatch_args for stage in plan.stages)
+
+    config = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/selected.yml"
+        ).read_text()
+    )
+    assert config["learning_rate"] == 7.4e-6
+    assert config["max_steps"] == 150
+    assert config["custom_trainer_args"]["beta"] == 0.0225
+    assert config["custom_trainer_args"]["retain_coefficient"] == 2.0
 
 
 OPTUNA_SCRIPT = EXAMPLE / "scripts" / "optuna_hpo.py"
@@ -3459,6 +3802,18 @@ OPTUNA_CONFIG = (
 OPTUNA_BOUNDARY_CONFIG = (
     EXAMPLE
     / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/optuna-boundary.yml"
+)
+OPTUNA_GD_CONFIG = (
+    EXAMPLE / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd/optuna.yml"
+)
+OPTUNA_NPO_CONFIG = (
+    EXAMPLE
+    / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/optuna.yml"
+)
+OPTUNA_NPO_BOUNDARY_CONFIG = OPTUNA_NPO_CONFIG.with_name("optuna-boundary.yml")
+OPTUNA_SSIUU_CONFIG = (
+    EXAMPLE
+    / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/optuna.yml"
 )
 
 
@@ -3533,6 +3888,199 @@ def test_optuna_boundary_config_searches_between_trials_12_and_18(hpo) -> None:
         },
     }
     assert config["screen"]["mmlu_min"] == 0.5062
+
+
+def test_minicpm_gd_optuna_search_and_generated_config(hpo, tmp_path) -> None:
+    config = hpo.load_config(OPTUNA_GD_CONFIG)
+    assert config["study"]["trials"] == 24
+    assert config["study"]["waves"] == [4, 4, 4, 4, 4, 4]
+    assert config["study"]["objectives"] == ["wmdp_pre"]
+    assert config["study"]["directions"] == ["minimize"]
+    assert "attack" not in config
+    assert config["search"]["learning_rate"] == [5e-7, 1e-6, 2.5e-6, 5e-6, 1e-5]
+    assert config["search"]["max_steps"] == [50, 100, 150, 250]
+
+    class GDTrial:
+        def suggest_categorical(self, name, values):
+            return {"learning_rate": 2.5e-6, "max_steps": 100}[name]
+
+        def suggest_float(self, name, low, high, log=False):
+            assert name == "retain_coefficient"
+            assert (low, high, log) == (0.25, 16.0, True)
+            return 3.5
+
+    parameters = hpo.sample_parameters(GDTrial(), config["search"])
+    base = hpo.load_mapping(EXAMPLE / config["unlearn"]["base_config"])
+    generated = hpo.build_unlearn_config(base, parameters, tmp_path / "trial-000")
+    assert generated["trainer_cls"] == "trainers.gd.GradDiffTrainer"
+    assert generated["learning_rate"] == 2.5e-6
+    assert generated["max_steps"] == 100
+    assert generated["save_steps"] == 100
+    assert generated["custom_trainer_args"] == {
+        "forget_coefficient": 1.0,
+        "retain_coefficient": 3.5,
+        "sampling": "optml",
+    }
+    assert "unfrozen_parameters" not in generated
+
+
+def test_minicpm_gd_selected_config_promotes_best_feasible_trial() -> None:
+    selected = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd/selected.yml"
+        ).read_text()
+    )
+    assert selected["learning_rate"] == 1e-6
+    assert selected["max_steps"] == 100
+    assert selected["save_steps"] == 100
+    assert selected["custom_trainer_args"]["retain_coefficient"] == pytest.approx(
+        0.630454472334528
+    )
+
+
+def test_minicpm_npo_optuna_search_and_generated_config(hpo, tmp_path) -> None:
+    config = hpo.load_config(OPTUNA_NPO_CONFIG)
+    assert config["study"]["trials"] == 8
+    assert config["study"]["waves"] == [4, 4]
+    assert config["study"]["objectives"] == ["wmdp_pre"]
+    assert config["study"]["directions"] == ["minimize"]
+    assert "attack" not in config
+    assert config["search"] == {
+        "learning_rate": [2.5e-6, 5e-6, 1e-5],
+        "retain_coefficient": {"low": 1.0, "high": 2.5},
+        "beta": {"low": 0.01, "high": 0.05},
+    }
+
+    class NPOTrial:
+        def suggest_categorical(self, name, values):
+            assert name == "learning_rate"
+            return 5e-6
+
+        def suggest_float(self, name, low, high, log=False):
+            assert log is False
+            return {"retain_coefficient": 1.75, "beta": 0.0225}[name]
+
+    parameters = hpo.sample_parameters(NPOTrial(), config["search"])
+    base = hpo.load_mapping(EXAMPLE / config["unlearn"]["base_config"])
+    generated = hpo.build_unlearn_config(base, parameters, tmp_path / "trial-000")
+    assert generated["trainer_cls"] == "trainers.npo.NPOTrainer"
+    assert generated["max_steps"] == 150
+    assert generated["save_steps"] == 150
+    assert generated["learning_rate"] == 5e-6
+    assert generated["custom_trainer_args"] == {
+        "reference_model_name_or_path": "openbmb/MiniCPM5-1B",
+        "beta": 0.0225,
+        "retain_coefficient": 1.75,
+    }
+    assert generated["wandb_name"] == "minicpm5-npo-optuna-trial-000"
+
+
+def test_minicpm_npo_selected_config_promotes_best_feasible_trial() -> None:
+    selected = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/selected.yml"
+        ).read_text()
+    )
+    assert selected["learning_rate"] == 7.4e-6
+    assert selected["max_steps"] == 150
+    assert selected["custom_trainer_args"]["beta"] == 0.0225
+    assert selected["custom_trainer_args"]["retain_coefficient"] == 2.0
+
+
+def test_minicpm_npo_boundary_study_searches_continuous_learning_rate(hpo) -> None:
+    config = hpo.load_config(OPTUNA_NPO_BOUNDARY_CONFIG)
+    assert config["study"]["trials"] == 12
+    assert config["study"]["waves"] == [4, 4, 4]
+    assert config["search"]["learning_rate"] == {"low": 5e-6, "high": 1e-5}
+    assert [trial["learning_rate"] for trial in config["study"]["initial_trials"]] == [
+        6e-6,
+        7e-6,
+        8e-6,
+        9e-6,
+        7.2e-6,
+        7.4e-6,
+        7.6e-6,
+        7.8e-6,
+        7.7e-6,
+        7.7e-6,
+        7.7e-6,
+        7.8e-6,
+    ]
+
+    class BoundaryTrial:
+        def suggest_categorical(self, name, values):
+            raise AssertionError("the boundary search must use a continuous LR")
+
+        def suggest_float(self, name, low, high, log=False):
+            assert log is False
+            return {
+                "learning_rate": 7.5e-6,
+                "retain_coefficient": 2.0,
+                "beta": 0.0225,
+            }[name]
+
+    assert hpo.sample_parameters(BoundaryTrial(), config["search"]) == {
+        "learning_rate": 7.5e-6,
+        "retain_coefficient": 2.0,
+        "beta": 0.0225,
+    }
+
+
+def test_minicpm_ssiuu_optuna_starts_from_paper_values(hpo, tmp_path) -> None:
+    config = hpo.load_config(OPTUNA_SSIUU_CONFIG)
+    assert config["study"]["objectives"] == ["wmdp_pre", "wmdp_post"]
+    assert [
+        trial["ssiuu_coefficient"] for trial in config["study"]["initial_trials"]
+    ] == [0.0001, 0.001, 0.01, 1.0]
+
+    class SSIUUTrial:
+        def suggest_categorical(self, name, values):
+            return {"learning_rate": 2.5e-6, "max_steps": 150}[name]
+
+        def suggest_float(self, name, low, high, log=False):
+            assert log
+            return {"retain_coefficient": 4.0, "ssiuu_coefficient": 0.001}[name]
+
+    parameters = hpo.sample_parameters(SSIUUTrial(), config["search"])
+    base = hpo.load_mapping(EXAMPLE / config["unlearn"]["base_config"])
+    generated = hpo.build_unlearn_config(base, parameters, tmp_path / "trial-000")
+    assert generated["trainer_cls"] == "trainers.ssiuu.SSIUUTrainer"
+    assert generated["custom_trainer_args"]["ssiuu_coefficient"] == 0.001
+    assert generated["custom_trainer_args"]["probability_normalization"] == (
+        "geometric_mean"
+    )
+    assert generated["wandb_name"] == "minicpm5-ssiuu-optuna-trial-000"
+
+
+def test_pre_attack_only_trial_skips_attack(hpo, tmp_path, monkeypatch) -> None:
+    config = hpo.load_config(OPTUNA_GD_CONFIG)
+    config["artifacts"] = str(tmp_path / "trials")
+    monkeypatch.chdir(EXAMPLE)
+    calls = []
+    monkeypatch.setattr(
+        hpo, "evaluate", lambda *args, **kwargs: {"wmdp": 0.23, "mmlu": 0.51}
+    )
+
+    class GDTrial:
+        number = 0
+        user_attrs = {}
+
+        def suggest_categorical(self, name, values):
+            return {"learning_rate": 2.5e-6, "max_steps": 100}[name]
+
+        def suggest_float(self, name, low, high, log=False):
+            return 4.0
+
+        def set_user_attr(self, name, value):
+            self.user_attrs[name] = value
+
+    trial = GDTrial()
+    result = hpo.run_trial(trial, config, lambda command, check: calls.append(command))
+    assert result == pytest.approx(0.23)
+    assert len(calls) == 1
+    assert trial.user_attrs["mmlu_constraints"] == pytest.approx([-0.0038])
 
 
 def test_generated_configs_are_trial_local_and_derive_layers(hpo, tmp_path) -> None:
@@ -3659,10 +4207,26 @@ def test_submit_builds_one_l40s_worker_wave(hpo, tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(hpo, "optuna_module", lambda: fake_optuna)
     command = hpo.submit(tmp_path / "optuna.yml", config, dry_run=True)
     assert "--array=0-3%4" in command
+    assert "--gres=gpu:l40s:1" in command
     assert command[-2:] == [
         "scripts/slurm/mila/optuna_worker.sbatch",
         str(tmp_path / "optuna.yml"),
     ]
+
+
+def test_submit_selects_rtx8000_from_study_config(hpo, tmp_path, monkeypatch) -> None:
+    config = hpo.load_config(OPTUNA_NPO_CONFIG)
+    monkeypatch.setattr(hpo, "create_study", lambda config: SimpleNamespace(trials=[]))
+    monkeypatch.setattr(
+        hpo,
+        "optuna_module",
+        lambda: SimpleNamespace(
+            trial=SimpleNamespace(TrialState=SimpleNamespace(RUNNING="RUNNING"))
+        ),
+    )
+    command = hpo.submit(tmp_path / "optuna.yml", config, dry_run=True)
+    assert "--array=0-3%4" in command
+    assert "--gres=gpu:rtx8000:1" in command
 
 
 def test_submit_accounts_for_manual_smoke_trial(hpo, tmp_path, monkeypatch) -> None:
@@ -3703,6 +4267,26 @@ def test_worker_records_failure_metadata(hpo, monkeypatch) -> None:
         hpo.worker({"study": {"trials": 20}})
     assert trial.user_attrs["failure_type"] == "RuntimeError"
     assert trial.user_attrs["failure"] == "boom"
+
+
+def test_worker_claims_enqueued_literature_trial(hpo, monkeypatch) -> None:
+    states = ["COMPLETE"] * 8 + ["WAITING"] * 4
+
+    class Study:
+        trials = [SimpleNamespace(state=SimpleNamespace(name=name)) for name in states]
+        optimized = False
+
+        def optimize(self, objective, n_trials):
+            del objective
+            assert n_trials == 1
+            self.optimized = True
+
+    study = Study()
+    monkeypatch.setattr(hpo, "create_study", lambda config: study)
+
+    hpo.worker({"study": {"trials": 12}})
+
+    assert study.optimized
 
 
 def test_workers_derive_distinct_sampler_seeds(hpo, monkeypatch) -> None:

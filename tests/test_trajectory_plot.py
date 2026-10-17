@@ -19,6 +19,7 @@ def test_trajectory_plot_uses_one_tidy_seaborn_plot():
     assert 'style="Tamper Resistance Method"' in source
     assert 'col="eval"' in source
     assert '("z7b-base", "Base model", "Base model", True)' in source
+    assert '("minicpm5-1b-base", "Base model", "Base model", True)' in source
     assert 'palette["Base model"] = "black"' in source
     assert 'line.get_color() == "black"' in source
     assert 'line.set_marker("")' in source
@@ -28,6 +29,7 @@ def test_trajectory_plot_uses_one_tidy_seaborn_plot():
     assert "Line2D" not in source
     assert "plot_trajectories" not in source
     assert "mmlu_path" not in source
+    assert "relearning-attack-capability-filtered" in source
     assert '"model": "z7b",' not in source
     assert '"model": "z7b--2pp"' in source
     assert '"rootdir": "artifacts/tamia/evals/thresholds/2pp"' in source

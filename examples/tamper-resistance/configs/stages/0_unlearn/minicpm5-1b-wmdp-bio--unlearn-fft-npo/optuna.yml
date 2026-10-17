@@ -1,0 +1,31 @@
+version: 1
+gpu: rtx8000
+study:
+  name: minicpm5-1b-npo
+  storage: sqlite:///artifacts/mila/optuna/minicpm5-1b-npo/study.db
+  trials: 8
+  seed: 42
+  directions: [minimize]
+  objectives: [wmdp_pre]
+  waves: [4, 4]
+
+search:
+  # Parameter ranges follow Unlearn-Smooth; all methods receive 150 unlearning steps.
+  learning_rate: [2.5e-6, 5.0e-6, 1.0e-5]
+  retain_coefficient: {low: 1.0, high: 2.5}
+  beta: {low: 0.01, high: 0.05}
+
+screen:
+  # MiniCPM5-1B baseline: 0.526197; allow at most a 2 percentage-point drop.
+  mmlu_min: 0.5062
+
+unlearn:
+  base_config: configs/stages/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/selected.yml
+
+evaluation:
+  wmdp: {task: wmdp_bio_robust, metric: "acc,none"}
+  mmlu: {task: mmlu_no_bio, metric: "acc,none"}
+  batch_size: auto
+
+artifacts: artifacts/mila/optuna/minicpm5-1b-npo/trials
+worker_script: scripts/slurm/mila/optuna_worker.sbatch
