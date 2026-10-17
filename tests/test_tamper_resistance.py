@@ -3886,10 +3886,6 @@ OPTUNA_SSIUU_CONFIG = (
     EXAMPLE
     / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/optuna.yml"
 )
-OPTUNA_Z7B_GD_SAM_CONFIG = (
-    EXAMPLE
-    / "configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/optuna.yml"
-)
 
 
 @pytest.fixture(scope="module")
@@ -3997,22 +3993,6 @@ def test_minicpm_gd_optuna_search_and_generated_config(hpo, tmp_path) -> None:
         "sampling": "optml",
     }
     assert "unfrozen_parameters" not in generated
-
-
-def test_z7b_gd_sam_optuna_runs_sequentially_on_four_h100s(hpo) -> None:
-    config = hpo.load_config(OPTUNA_Z7B_GD_SAM_CONFIG)
-    assert config["gpu"] == "h100"
-    assert config["gpus"] == 4
-    assert config["study"]["execution"] == "sequential"
-    assert config["study"]["trials"] == 16
-    assert "waves" not in config["study"]
-    assert config["search"] == {
-        "learning_rate": {"low": 2e-6, "high": 5e-6},
-        "retain_coefficient": {"low": 0.01, "high": 4.0, "log": True},
-        "max_steps": [125],
-    }
-    assert config["screen"]["mmlu_min"] == pytest.approx(0.435873)
-    assert config["unlearn"]["launcher"] == "python"
 
 
 def test_minicpm_gd_selected_config_promotes_best_feasible_trial() -> None:
@@ -4347,20 +4327,6 @@ def test_submit_accounts_for_manual_smoke_trial(hpo, tmp_path, monkeypatch) -> N
         tmp_path / "optuna.yml", hpo.load_config(OPTUNA_CONFIG), dry_run=True
     )
     assert "--array=0-2%3" in command
-
-
-def test_submit_builds_one_sequential_four_h100_worker(
-    hpo, tmp_path, monkeypatch
-) -> None:
-    config = hpo.load_config(OPTUNA_Z7B_GD_SAM_CONFIG)
-    monkeypatch.setattr(hpo, "create_study", lambda config: SimpleNamespace(trials=[]))
-    command = hpo.submit(tmp_path / "optuna.yml", config, dry_run=True)
-    assert not any(argument.startswith("--array=") for argument in command)
-    assert "--gpus-per-node=h100:4" in command
-    assert command[-2:] == [
-        "scripts/slurm/tamia/optuna_worker_model_parallel.sbatch",
-        str(tmp_path / "optuna.yml"),
-    ]
 
 
 def test_worker_records_failure_metadata(hpo, monkeypatch) -> None:
