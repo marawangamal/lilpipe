@@ -436,6 +436,13 @@ def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:
             "custom_trainer_args.retain_coefficient": [pytest.approx(1.75)],
         },
     }
+    assert sam["sweeps"][3] == {
+        "name": "refine-retain-1p95",
+        "parameters": {
+            "learning_rate": [pytest.approx(5e-6)],
+            "custom_trainer_args.retain_coefficient": [pytest.approx(1.95)],
+        },
+    }
 
 
 def test_ten_pp_rmu_relearning_templates_use_canonical_attack() -> None:
