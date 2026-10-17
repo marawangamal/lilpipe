@@ -160,6 +160,18 @@ experiments = [
                 "SAM",
                 False,
             ),
+            (
+                "optml-z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft",
+                "NPO",
+                "None",
+                False,
+            ),
+            (
+                "optml-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam--relearn-fft",
+                "NPO",
+                "SAM",
+                False,
+            ),
         ],
     },
 ]

@@ -2652,7 +2652,7 @@ def test_z7b_fft_s125_gd_sam_relearning_uses_promoted_rho_model(
     promoted = "artifacts/tamia/models/z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3"
 
     assert len(pipeline.selected_models) == 4
-    assert len(plan.stages) == 12
+    assert len(plan.stages) == 6
     for learning_rate_slug, learning_rate in learning_rates.items():
         model_id = (
             "z7b-wmdp-bio-fft-s125-unlearn-gd-sam-rho1e-3-relearn-hpo-"
@@ -2842,7 +2842,7 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
     plan = pipeline.plan()
 
     assert len(pipeline.selected_models) == 2
-    assert len(plan.stages) == 6
+    assert len(plan.stages) == 12
     methods = {
         "gd": ("configs.training.trainers.gd.GradDiffTrainer", 2.5e-6),
         "gd-sam-rho1e-2": (
@@ -3730,9 +3730,9 @@ def test_optml_z7b_15pp_pipeline_relearns_published_models(
         "configs/experiments/optml-z7b-wmdp-bio-unlearn--15pp.yml"
     ).plan()
 
-    assert len(plan.stages) == 6
+    assert len(plan.stages) == 12
     train_stages = [stage for stage in plan.stages if stage.id.startswith("train-")]
-    assert len(train_stages) == 2
+    assert len(train_stages) == 4
     assert all(
         stage.script.endswith("/train_model_parallel.sbatch") for stage in train_stages
     )
@@ -3740,6 +3740,8 @@ def test_optml_z7b_15pp_pipeline_relearns_published_models(
     hub_models = {
         "gd": "OPTML-Group/GradDiff-WMDP",
         "gd-sam-rho1e-2": "OPTML-Group/GradDiff-SAM-WMDP",
+        "npo": "OPTML-Group/NPO-WMDP",
+        "npo-sam": "OPTML-Group/NPO-SAM-WMDP",
     }
     for method, hub_model in hub_models.items():
         slug = f"optml-z7b-wmdp-bio--15pp--unlearn-fft-{method}--relearn-fft"
