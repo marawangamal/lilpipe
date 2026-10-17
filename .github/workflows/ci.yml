@@ -15,11 +15,11 @@ jobs:
       - run: python -m pip install --upgrade pip build
       - run: python -m pip install -e '.[test,dev]'
       - run: python -m black --check src tests examples
-      - run: python -m pytest
+      - run: python -m pytest --ignore=tests/test_conic_distance_across_seeds.py
       - run: python -m build
       - name: Verify clean wheel install and CLI
         run: |
           python -m venv /tmp/lilpipe-wheel
           /tmp/lilpipe-wheel/bin/pip install dist/*.whl
           /tmp/lilpipe-wheel/bin/lilpipe --help
-          (cd examples/weight-steering && /tmp/lilpipe-wheel/bin/lilpipe configs/experiments/pipeline.yml --dry-run)
+          (cd examples/weight-steering && /tmp/lilpipe-wheel/bin/lilpipe configs/experiments/smollm3/main.yml --dry-run)

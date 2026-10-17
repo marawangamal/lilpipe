@@ -25,9 +25,9 @@ SPEC.loader.exec_module(utils)
 
 
 def _patch_outcomes(monkeypatch, outcomes: dict[str, bool]) -> None:
-    monkeypatch.setattr(utils, "extract_code", lambda completion: completion)
+    monkeypatch.setattr(deception_utils, "extract_code", lambda completion: completion)
     monkeypatch.setattr(
-        utils,
+        deception_utils,
         "passes_assertion",
         lambda code, setup, test: outcomes[test],
     )

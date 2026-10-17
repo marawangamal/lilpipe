@@ -317,6 +317,6 @@ def test_inspect_torch_packages_use_the_same_linux_cuda_index() -> None:
     assert "torchaudio" in inspect_dependencies
     for package in ("torch", "torchaudio", "torchvision"):
         assert sources[package] == {
-            "index": "pytorch-cu128",
+            "index": "pytorch-cu130",
             "marker": "sys_platform == 'linux'",
         }
