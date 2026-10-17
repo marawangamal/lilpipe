@@ -538,6 +538,67 @@ def test_fifteen_pp_npo_relearning_uses_canonical_attack() -> None:
     ]
 
 
+def test_five_pp_selections_and_relearning_use_threshold_paths() -> None:
+    unlearn_root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
+    selected_hparams = {
+        "z7b-wmdp-bio--5pp--unlearn-fft-rmu": (1e-5, 300, None, None),
+        "z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2": (
+            1e-5,
+            300,
+            None,
+            1e-2,
+        ),
+        "z7b-wmdp-bio--5pp--unlearn-fft-npo": (5e-6, 1, 0.01, None),
+        "z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2": (
+            5e-6,
+            4,
+            0.025,
+            1e-2,
+        ),
+    }
+
+    for method, (learning_rate, retain, beta, rho) in selected_hparams.items():
+        selected = yaml.safe_load((unlearn_root / method / "selected.yml").read_text())
+        custom = selected["custom_trainer_args"]
+        assert selected["learning_rate"] == pytest.approx(learning_rate)
+        assert custom["retain_coefficient"] == pytest.approx(retain)
+        assert selected["max_steps"] == selected["save_steps"] == 125
+        assert selected["output_dir"] == f"artifacts/tamia/models/{method}"
+        if beta is not None:
+            assert custom["beta"] == pytest.approx(beta)
+        if rho is not None:
+            assert custom["rho"] == pytest.approx(rho)
+
+        relearn = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/stages-wmdp/2_relearn"
+                / f"{method}--relearn-fft/selected.yml"
+            ).read_text()
+        )
+        assert relearn["base_model"] == f"artifacts/tamia/models/{method}"
+        assert relearn["output_dir"] == (
+            f"artifacts/tamia/models/{method}--relearn-fft"
+        )
+        assert relearn["max_steps"] == 16
+        assert relearn["save_steps"] == 4
+        assert relearn["learning_rate"] == pytest.approx(1e-5)
+
+    experiment = yaml.safe_load(
+        (EXAMPLE / "configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml").read_text()
+    )
+    assert experiment["models"] == [
+        f"{method}--relearn-fft" for method in selected_hparams
+    ]
+    models = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
+        "models"
+    ]
+    for model in experiment["models"]:
+        assert models[model]["evaluation_root"] == (
+            "artifacts/tamia/evals/thresholds/5pp"
+        )
+
+
 def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:
     root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     methods = (

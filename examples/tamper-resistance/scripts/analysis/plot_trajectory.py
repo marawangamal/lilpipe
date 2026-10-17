@@ -85,6 +85,40 @@ experiments = [
         ],
     },
     {
+        "model": "z7b--5pp",
+        "rootdir": "artifacts/tamia/evals/thresholds/5pp",
+        "base_rootdir": "artifacts/tamia/evals",
+        "output": "relearning-attack-z7b--5pp",
+        "steps": range(0, 17, 4),
+        "configs": [
+            ("z7b-base", "Base model", "Base model", True),
+            (
+                "z7b-wmdp-bio--5pp--unlearn-fft-rmu--relearn-fft",
+                "RMU",
+                "None",
+                False,
+            ),
+            (
+                "z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft",
+                "RMU",
+                "SAM",
+                False,
+            ),
+            (
+                "z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft",
+                "NPO",
+                "None",
+                False,
+            ),
+            (
+                "z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft",
+                "NPO",
+                "SAM",
+                False,
+            ),
+        ],
+    },
+    {
         "model": "z7b--10pp",
         "rootdir": "artifacts/tamia/evals/thresholds/10pp",
         "base_rootdir": "artifacts/tamia/evals",
