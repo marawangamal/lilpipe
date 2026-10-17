@@ -64,12 +64,12 @@ def test_smoothness_plot_uses_each_models_raw_loss_range(tmp_path):
     assert output.is_file()
     axes = module.plt.gcf().axes
     assert sum(axis.name == "3d" for axis in axes) == 2
-    assert sum(axis.name == "rectilinear" for axis in axes) == 2
     surfaces = [axis for axis in axes if axis.name == "3d"]
+    assert [len(axis.child_axes) for axis in surfaces] == [1, 1]
     assert [axis.get_zlim() for axis in surfaces] == [(1, 9), (101, 109)]
     assert [axis.get_title() for axis in surfaces] == [
-        "NPO\nσ=0.003\ncenter=5  span=8",
-        "NPO + SAM\nσ=0.01\ncenter=105  span=8",
+        "NPO",
+        "NPO + SAM",
     ]
 
 
@@ -135,7 +135,7 @@ def test_smoothness_plot_keeps_sam_variants_on_their_methods_row(tmp_path):
 
     axes = [axis for axis in module.plt.gcf().axes if axis.name == "3d"]
     positions = {
-        axis.get_title().split("\n")[0]: (
+        axis.get_title(): (
             axis.get_subplotspec().rowspan.start,
             axis.get_subplotspec().colspan.start,
         )

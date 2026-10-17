@@ -53,13 +53,6 @@ def plot_surfaces(results, output, zlim=None):
             padding = max(abs(panel_zlim[0]), 1.0) * 0.01
             panel_zlim = (panel_zlim[0] - padding, panel_zlim[1] + padding)
 
-        center = loss[len(loss) // 2, len(loss) // 2]
-        span = loss.max() - loss.min()
-        title = result["label"]
-        if result.get("direction_std") is not None:
-            title += f"\nσ={result['direction_std']:g}"
-        title += f"\ncenter={center:.3g}  span={span:.3g}"
-
         axis = figure.add_subplot(rows, columns, index, projection="3d")
         axis.plot_surface(
             x,
@@ -71,7 +64,7 @@ def plot_surfaces(results, output, zlim=None):
             linewidth=0,
         )
         axis.set(
-            title=title,
+            title=result["label"],
             xlabel="x",
             ylabel="y",
             zlabel="z",
