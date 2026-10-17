@@ -3675,7 +3675,9 @@ def test_z7b_15pp_pipeline_uses_promoted_gd_sweep_models(
     assert len(plan.stages) == 6
     train_stages = [stage for stage in plan.stages if stage.id.startswith("train-")]
     assert len(train_stages) == 2
-    assert all(stage.script.endswith("/train.sbatch") for stage in train_stages)
+    assert all(
+        stage.script.endswith("/train_model_parallel.sbatch") for stage in train_stages
+    )
     eval_stages = [stage for stage in plan.stages if stage.id.startswith("eval-")]
     assert len(eval_stages) == 4
     assert all(
@@ -3692,6 +3694,16 @@ def test_z7b_15pp_pipeline_uses_promoted_gd_sweep_models(
             ).read_text()
         )
         assert selected[method]["output_dir"] == f"artifacts/tamia/models/{slug}"
+        attack = yaml.safe_load(
+            (
+                EXAMPLE
+                / "configs/stages-wmdp/2_relearn"
+                / f"{slug}--relearn-fft"
+                / "selected.yml"
+            ).read_text()
+        )
+        assert "fsdp_version" not in attack
+        assert attack["device_map"] == selected[method]["device_map"]
 
     assert selected["gd"]["learning_rate"] == 5e-6
     assert selected["gd"]["custom_trainer_args"]["retain_coefficient"] == 4
