@@ -44,7 +44,7 @@ def test_smoothness_plot_writes_one_comparable_surface_per_model(tmp_path):
         ],
     }
 
-    module.plot_surfaces(results, output)
+    module.plot_surfaces(results, output, zlim=(0, 10))
 
     assert output.is_file()
     axes = module.plt.gcf().axes
@@ -110,4 +110,5 @@ def test_tamia_smoothness_job_uses_the_existing_four_gpu_models():
     assert source.count("CUDA_VISIBLE_DEVICES=$gpu") == 1
     assert source.count("run_surface ") == 3
     assert "--dtype bfloat16" in source
+    assert "--batch-size 2" in source
     assert source.count("pids+=($!)") == 2

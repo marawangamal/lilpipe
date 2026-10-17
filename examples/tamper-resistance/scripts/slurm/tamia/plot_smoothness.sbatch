@@ -47,6 +47,7 @@ run_surface() {
   CUDA_VISIBLE_DEVICES=$gpu python scripts/analysis/gen_smoothness.py \
     --model "$label" "$model" \
     --dtype bfloat16 \
+    --batch-size 2 \
     --output "$part_dir/$slug.json" \
     "$@" >"$part_dir/$slug.log" 2>&1
 }

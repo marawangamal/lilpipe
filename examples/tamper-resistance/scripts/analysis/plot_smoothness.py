@@ -8,17 +8,20 @@ import os.path as osp
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from matplotlib.ticker import MaxNLocator
 
 figure_dir = "artifacts/figures"
 
 
-def plot_surfaces(results, output):
+def plot_surfaces(results, output, zlim=None):
     coordinates = np.asarray(results["coordinates"])
     x, y = np.meshgrid(coordinates, coordinates)
+    losses = [np.asarray(result["loss"]) for result in results["models"]]
+    if zlim is None:
+        zlim = (min(loss.min() for loss in losses), max(loss.max() for loss in losses))
     figure = plt.figure(figsize=(4 * len(results["models"]), 3.5))
 
-    for index, result in enumerate(results["models"], start=1):
-        loss = np.asarray(result["loss"])
+    for index, (result, loss) in enumerate(zip(results["models"], losses), start=1):
         axis = figure.add_subplot(1, len(results["models"]), index, projection="3d")
         axis.plot_surface(x, y, loss, cmap="viridis", linewidth=0)
         axis.set(
@@ -28,9 +31,9 @@ def plot_surfaces(results, output):
             zlabel="z",
             xticks=coordinates[::2],
             yticks=coordinates[::2],
-            zticks=np.linspace(0, 10, 5),
-            zlim=(0, 10),
+            zlim=zlim,
         )
+        axis.zaxis.set_major_locator(MaxNLocator(5))
 
         contour = axis.inset_axes([0.0, 0.68, 0.3, 0.3])
         contour.contour(x, y, loss, levels=10, cmap="viridis")
@@ -59,6 +62,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default=osp.join(figure_dir, "smoothness.png"))
     parser.add_argument(
+        "--zlim",
+        type=float,
+        nargs=2,
+        metavar=("MIN", "MAX"),
+        help="Use fixed shared z-axis limits instead of the data range",
+    )
+    parser.add_argument(
         "inputs",
         nargs="+",
         metavar="JSON",
@@ -68,7 +78,7 @@ def main():
 
     sns.set_theme(style="whitegrid")
     results = merge_results(args.inputs)
-    plot_surfaces(results, args.output)
+    plot_surfaces(results, args.output, args.zlim)
 
 
 if __name__ == "__main__":
