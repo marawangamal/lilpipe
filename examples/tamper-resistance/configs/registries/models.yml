@@ -265,6 +265,40 @@ models:
       - --cpus-per-task=48
       - --mem=480G
       - --time=03:00:00
+  optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft:
+    baseline_model_name_or_path: OPTML-Group/GradDiff-WMDP
+    base_model_name_or_path: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft
+    evaluation_root: artifacts/tamia/evals/thresholds/15pp
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft
+    producer:
+      id: train-optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft
+      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      args:
+      - configs/stages-wmdp/2_relearn/optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft/selected.yml
+      depends_on: []
+      sbatch_args:
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  optml-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft:
+    baseline_model_name_or_path: OPTML-Group/GradDiff-SAM-WMDP
+    base_model_name_or_path: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
+    evaluation_root: artifacts/tamia/evals/thresholds/15pp
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
+    producer:
+      id: train-optml-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
+      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      args:
+      - configs/stages-wmdp/2_relearn/optml-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml
+      depends_on: []
+      sbatch_args:
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
   z7b-wmdp-bio--2pp--unlearn-fft-cb:
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-cb
     adapter_name_or_path: '-'

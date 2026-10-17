@@ -3714,6 +3714,41 @@ def test_z7b_15pp_pipeline_uses_promoted_gd_sweep_models(
     assert selected["gd-sam-rho1e-2"]["custom_trainer_args"]["rho"] == 0.01
 
 
+def test_optml_z7b_15pp_pipeline_relearns_published_models(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load(
+        "configs/experiments/optml-z7b-wmdp-bio-unlearn--15pp.yml"
+    ).plan()
+
+    assert len(plan.stages) == 6
+    train_stages = [stage for stage in plan.stages if stage.id.startswith("train-")]
+    assert len(train_stages) == 2
+    assert all(
+        stage.script.endswith("/train_model_parallel.sbatch") for stage in train_stages
+    )
+
+    hub_models = {
+        "gd": "OPTML-Group/GradDiff-WMDP",
+        "gd-sam-rho1e-2": "OPTML-Group/GradDiff-SAM-WMDP",
+    }
+    for method, hub_model in hub_models.items():
+        slug = f"optml-z7b-wmdp-bio--15pp--unlearn-fft-{method}--relearn-fft"
+        config = yaml.safe_load(
+            (
+                EXAMPLE / "configs/stages-wmdp/2_relearn" / slug / "selected.yml"
+            ).read_text()
+        )
+        assert config["base_model"] == hub_model
+        assert config["output_dir"] == f"artifacts/tamia/models/{slug}"
+        assert config["max_steps"] == 16
+        assert config["learning_rate"] == 1e-5
+        assert config["save_steps"] == 4
+        assert "fsdp_version" not in config
+        assert len(config["device_map"]) == 35
+
+
 def test_minicpm5_rmu_pipeline_and_promoted_trial(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
