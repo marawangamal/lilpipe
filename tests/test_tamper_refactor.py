@@ -465,13 +465,12 @@ def test_fifteen_pp_maxent_sam_sweep_mirrors_maxent() -> None:
     assert sweep_candidate_count(sweep) == 13
 
 
-@pytest.mark.parametrize("budget", ["5pp", "15pp"])
-def test_maxent_sam_promotes_grid_candidate(budget: str) -> None:
+def test_maxent_sam_promotes_grid_candidate_to_five_pp() -> None:
     root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     base = yaml.safe_load(
         (root / "z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2/base.yml").read_text()
     )
-    method = f"z7b-wmdp-bio--{budget}--unlearn-fft-me-sam-rho1e-2"
+    method = "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2"
     selected = yaml.safe_load((root / method / "selected.yml").read_text())
 
     assert selected["trainer_cls"] == "trainers.me.MaxEntSAMTrainer"

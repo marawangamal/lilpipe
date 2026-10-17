@@ -36,12 +36,12 @@ def test_trajectory_plot_uses_one_tidy_seaborn_plot():
     assert '"output": "relearning-attack-z7b--5pp"' in source
     assert '"z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft"' in source
     assert '"z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2--relearn-fft"' in source
-    assert '"z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2--relearn-fft"' in source
+    assert "z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2--relearn-fft" not in source
     assert '"model": "z7b--15pp"' in source
     assert '"rootdir": "artifacts/tamia/evals/thresholds/15pp"' in source
     assert '"output": "relearning-attack-z7b--15pp"' in source
-    assert '"z7b-wmdp-bio--15pp--unlearn-fft-rmu--relearn-fft"' in source
-    assert '"z7b-wmdp-bio--15pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft"' in source
+    assert "z7b-wmdp-bio--15pp--unlearn-fft-rmu--relearn-fft" not in source
+    assert "z7b-wmdp-bio--15pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft" not in source
     assert '"model": "optml-z7b--15pp"' in source
     assert '"output": "relearning-attack-optml-z7b--15pp"' in source
     assert '"optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft"' in source
@@ -54,5 +54,6 @@ def test_trajectory_plot_uses_one_tidy_seaborn_plot():
     assert '"steps": range(0, 17, 4)' in source
     assert 'steps = experiment.get("steps", range(0, 126, 25))' in source
     assert 'parser.add_argument("--output"' in source
+    assert ".png" not in source
     assert 'parser.add_argument("--out"' not in source
     assert "No measured trajectories found" in source

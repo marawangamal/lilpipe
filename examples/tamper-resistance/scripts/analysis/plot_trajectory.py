@@ -6,6 +6,7 @@ import os.path as osp
 
 import pandas as pd
 import seaborn as sns
+from matplotlib.ticker import MaxNLocator
 
 figure_dir = "artifacts/figures"
 os.makedirs(figure_dir, exist_ok=True)
@@ -122,18 +123,6 @@ experiments = [
             #     False,
             # ),
             (
-                "z7b-wmdp-bio--15pp--unlearn-fft-rmu--relearn-fft",
-                "RMU",
-                "None",
-                False,
-            ),
-            (
-                "z7b-wmdp-bio--15pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft",
-                "RMU",
-                "SAM",
-                False,
-            ),
-            (
                 "z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft",
                 "NPO",
                 "None",
@@ -142,12 +131,6 @@ experiments = [
             (
                 "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft",
                 "NPO",
-                "SAM",
-                False,
-            ),
-            (
-                "z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2--relearn-fft",
-                "MaxEnt",
                 "SAM",
                 False,
             ),
@@ -193,6 +176,14 @@ tasks = {
     "wmdp_bio_robust": "wmdp_bio_robust ↓",
     "mmlu_no_bio": "mmlu_no_bio ↑",
 }
+# Okabe-Ito colors, fixed per method so a method keeps its color across figures.
+method_colors = {
+    "RMU": "#0072B2",
+    "NPO": "#D55E00",
+    "MaxEnt": "#009E73",
+    "GD": "#CC79A7",
+}
+sns.set_theme(context="paper", style="ticks", font_scale=1.5)
 parser = argparse.ArgumentParser(description="Plot relearning evaluation trajectories")
 parser.add_argument(
     "--model",
@@ -203,8 +194,8 @@ parser.add_argument("--output", help="Write one PDF or PNG file at this path")
 args = parser.parse_args()
 if args.output and not args.model:
     parser.error("--output requires --model")
-if args.output and osp.splitext(args.output)[1].lower() not in {".pdf", ".png"}:
-    parser.error("--output must end in .pdf or .png")
+if args.output and osp.splitext(args.output)[1].lower() != ".pdf":
+    parser.error("--output must end in .pdf")
 for experiment in experiments:
     if args.model and experiment["model"] != args.model:
         continue
@@ -250,7 +241,7 @@ for experiment in experiments:
     methods = [
         method for method in df["Unlearning Method"].unique() if method != "Base model"
     ]
-    palette = dict(zip(methods, sns.color_palette(n_colors=len(methods))))
+    palette = {method: method_colors[method] for method in methods}
     palette["Base model"] = "black"
     plot = sns.relplot(
         data=df,
@@ -264,23 +255,48 @@ for experiment in experiments:
         dashes=False,
         kind="line",
         errorbar=None,
+        height=2.6,
+        aspect=1.1,
+        linewidth=1.5,
+        markersize=6,
     )
     for axis in plot.axes.flat:
         for line in axis.lines:
             if line.get_color() == "black":
                 line.set_marker("")
+    method_entries, resistance_entries = {}, {}
     for label, handle in zip(plot.legend.texts, plot.legend.legend_handles):
         if label.get_text() == "Base model":
             handle.set_marker("")
+        text = label.get_text()
+        if text in palette:
+            method_entries.setdefault(text, handle)
+        elif text in set(df["Tamper Resistance Method"]) - {"Base model"}:
+            name = "Unlearning only" if text == "None" else f"+ {text}"
+            resistance_entries[name] = handle
+    plot.legend.remove()
+    plot.set_titles("{col_name}")
     plot.set_axis_labels("Relearning step", "Accuracy (%)")
+    for axis in plot.axes.flat:
+        axis.set_xticks(list(steps))
+        axis.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1, 2, 5, 10]))
+        axis.grid(axis="y", alpha=0.3)
+    plot.figure.set_size_inches(5.8, 2.9)
+    plot.figure.tight_layout()
+    for row, entries in enumerate((method_entries, resistance_entries)):
+        plot.figure.legend(
+            entries.values(),
+            entries.keys(),
+            loc="upper center",
+            bbox_to_anchor=(0.5, 0.03 - 0.09 * row),
+            ncol=len(entries),
+            frameon=False,
+            handlelength=1.6,
+            columnspacing=1.2,
+        )
     if args.output:
         os.makedirs(osp.dirname(args.output) or ".", exist_ok=True)
-        plot.figure.savefig(
-            args.output,
-            bbox_inches="tight",
-            dpi=200 if args.output.lower().endswith(".png") else None,
-        )
+        output = args.output
     else:
-        output = osp.join(figure_dir, experiment["output"])
-        plot.figure.savefig(f"{output}.pdf", bbox_inches="tight")
-        plot.figure.savefig(f"{output}.png", bbox_inches="tight", dpi=200)
+        output = osp.join(figure_dir, f'{experiment["output"]}.pdf')
+    plot.figure.savefig(output, bbox_inches="tight")

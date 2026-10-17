@@ -3919,14 +3919,14 @@ def test_z7b_15pp_pipeline_uses_promoted_sweep_models(
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/z7b-wmdp-bio-unlearn--15pp.yml").plan()
 
-    assert len(plan.stages) == 18
+    assert len(plan.stages) == 12
     train_stages = [stage for stage in plan.stages if stage.id.startswith("train-")]
-    assert len(train_stages) == 6
+    assert len(train_stages) == 4
     assert all(
         stage.script.endswith("/train_model_parallel.sbatch") for stage in train_stages
     )
     eval_stages = [stage for stage in plan.stages if stage.id.startswith("eval-")]
-    assert len(eval_stages) == 12
+    assert len(eval_stages) == 8
     assert all(
         stage.args[3] == "artifacts/tamia/evals/thresholds/15pp"
         for stage in eval_stages
@@ -3936,8 +3936,6 @@ def test_z7b_15pp_pipeline_uses_promoted_sweep_models(
     for method in (
         "gd",
         "gd-sam-rho1e-2",
-        "rmu",
-        "rmu-sam-rho1e-2",
         "npo",
         "npo-sam-rho1e-2",
     ):
@@ -3966,14 +3964,12 @@ def test_z7b_15pp_pipeline_uses_promoted_sweep_models(
         selected["gd-sam-rho1e-2"]["custom_trainer_args"]["retain_coefficient"] == 2.2
     )
     assert selected["gd-sam-rho1e-2"]["custom_trainer_args"]["rho"] == 0.01
-    assert selected["rmu"]["learning_rate"] == 1e-5
-    assert selected["rmu"]["custom_trainer_args"]["retain_coefficient"] == 300
-    assert selected["rmu"]["custom_trainer_args"]["steering_coefficient"] == 6.5
-    assert selected["rmu-sam-rho1e-2"]["learning_rate"] == 1e-5
-    assert (
-        selected["rmu-sam-rho1e-2"]["custom_trainer_args"]["retain_coefficient"] == 300
-    )
-    assert selected["rmu-sam-rho1e-2"]["custom_trainer_args"]["rho"] == 0.01
+    for method in ("rmu", "rmu-sam-rho1e-2", "me-sam-rho1e-2"):
+        slug = f"z7b-wmdp-bio--15pp--unlearn-fft-{method}"
+        assert not (
+            EXAMPLE / "configs/stages-wmdp/0_unlearn" / slug / "selected.yml"
+        ).exists()
+        assert all(f"{slug}--relearn-fft" not in stage.id for stage in plan.stages)
 
 
 def test_optml_z7b_15pp_pipeline_relearns_published_models(

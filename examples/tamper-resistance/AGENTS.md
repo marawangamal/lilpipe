@@ -50,8 +50,8 @@ Evaluations for a budget are written under `artifacts/tamia/evals/thresholds/<N>
    **Tie-break:** when eligible candidates' WMDP scores are within noise of each
    other (about one standard error, ~1.6 points), prefer the one with the
    smaller MMLU drop. This matters most when several candidates reach chance.
-   A candidate may be promoted to every budget it satisfies, e.g. both `--5pp--`
-   and `--15pp--`.
+   A candidate that satisfies several budgets is promoted only to the tightest
+   one (e.g. `--5pp--`); do not keep the same model under two budget names.
 6. **Refine if needed.** If the best eligible point sits on the edge of the grid,
    or the jump between neighbouring points is large, e.g. from eligible to
    collapsed, add a finer sweep stage around it and repeat from step 2.
@@ -84,15 +84,12 @@ copy, and a model move; nothing is retrained.
 
 3. **Move the model on Tamia.** Move the candidate's sweep output to the
    lineage's canonical path, so it survives clearing `artifacts/generated/hpo`
-   and later stages such as relearning can use it. When the same candidate is
-   promoted to a second budget, link that budget's path to the first instead of
-   copying (as `--5pp--` RMU links to `--15pp--` RMU):
+   and later stages such as relearning can use it:
 
    ```bash
    cd artifacts/tamia/models
    mv -T ../../generated/hpo/<sweep-id>/models/<sweep-id>--<stage>--NNN \
      z7b-wmdp-bio--<N>pp--<method>
-   ln -s z7b-wmdp-bio--<N>pp--<method> z7b-wmdp-bio--<M>pp--<method>  # optional
    ```
 
 4. **Sync the evals locally.** `artifacts/tamia` is a scratch copy of Tamia's
@@ -110,10 +107,8 @@ copy, and a model move; nothing is retrained.
 6. **Rerun the plot** to the tracked figure names:
 
    ```bash
-   for ext in pdf png; do
-     .venv-eval/bin/python scripts/analysis/plot_trajectory.py --model z7b--<N>pp \
-       --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--<N>pp.$ext
-   done
+   .venv-eval/bin/python scripts/analysis/plot_trajectory.py --model z7b--<N>pp \
+     --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--<N>pp.pdf
    ```
 
 7. **Test and document.** Pin the selected values in a regression test, list
