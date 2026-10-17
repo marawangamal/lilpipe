@@ -18,10 +18,23 @@ def plot_surfaces(results, output):
     figure = plt.figure(figsize=(4 * len(results["models"]), 3.5))
 
     for index, result in enumerate(results["models"], start=1):
+        loss = np.asarray(result["loss"])
         axis = figure.add_subplot(1, len(results["models"]), index, projection="3d")
-        axis.plot_surface(x, y, np.asarray(result["loss"]), cmap="viridis")
-        axis.set(title=result["label"], xlabel="x", ylabel="y", zlabel="Loss")
-        axis.set_zlim(0, 10)
+        axis.plot_surface(x, y, loss, cmap="viridis", linewidth=0)
+        axis.set(
+            title=result["label"],
+            xlabel="x",
+            ylabel="y",
+            zlabel="z",
+            xticks=coordinates[::2],
+            yticks=coordinates[::2],
+            zticks=np.linspace(0, 10, 5),
+            zlim=(0, 10),
+        )
+
+        contour = axis.inset_axes([0.0, 0.68, 0.3, 0.3])
+        contour.contour(x, y, loss, levels=10, cmap="viridis")
+        contour.set(xticks=[], yticks=[], xlim=axis.get_xlim(), ylim=axis.get_ylim())
 
     figure.tight_layout()
     os.makedirs(osp.dirname(output) or ".", exist_ok=True)

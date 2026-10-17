@@ -47,7 +47,10 @@ def test_smoothness_plot_writes_one_comparable_surface_per_model(tmp_path):
     module.plot_surfaces(results, output)
 
     assert output.is_file()
-    assert len(module.plt.gcf().axes) == 2
+    axes = module.plt.gcf().axes
+    assert sum(axis.name == "3d" for axis in axes) == 2
+    assert sum(axis.name == "rectilinear" for axis in axes) == 2
+    assert all(axis.get_zlim() == (0, 10) for axis in axes if axis.name == "3d")
 
 
 def test_smoothness_script_matches_the_paper_setup():
@@ -64,7 +67,7 @@ def test_smoothness_script_matches_the_paper_setup():
     assert 'desc="Loss surface"' in generator_source
     assert 'device_map="balanced"' in generator_source
     assert '"--model"' in generator_source
-    assert "axis.set_zlim(0, 10)" in plot_source
+    assert ".contour(" in plot_source
 
 
 def test_smoothness_results_from_parallel_workers_can_be_combined(tmp_path):
