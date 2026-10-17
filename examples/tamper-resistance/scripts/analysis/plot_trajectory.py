@@ -93,6 +93,12 @@ experiments = [
                 "None",
                 False,
             ),
+            (
+                "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2--relearn-fft",
+                "MaxEnt",
+                "SAM",
+                False,
+            ),
         ],
     },
     {
@@ -136,6 +142,12 @@ experiments = [
             (
                 "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft",
                 "NPO",
+                "SAM",
+                False,
+            ),
+            (
+                "z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2--relearn-fft",
+                "MaxEnt",
                 "SAM",
                 False,
             ),

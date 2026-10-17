@@ -465,6 +465,33 @@ def test_fifteen_pp_maxent_sam_sweep_mirrors_maxent() -> None:
     assert sweep_candidate_count(sweep) == 13
 
 
+@pytest.mark.parametrize("budget", ["5pp", "15pp"])
+def test_maxent_sam_promotes_grid_candidate(budget: str) -> None:
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
+    base = yaml.safe_load(
+        (root / "z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2/base.yml").read_text()
+    )
+    method = f"z7b-wmdp-bio--{budget}--unlearn-fft-me-sam-rho1e-2"
+    selected = yaml.safe_load((root / method / "selected.yml").read_text())
+
+    assert selected["trainer_cls"] == "trainers.me.MaxEntSAMTrainer"
+    assert selected["learning_rate"] == pytest.approx(5e-6)
+    assert selected["custom_trainer_args"]["retain_coefficient"] == pytest.approx(4)
+    assert selected["custom_trainer_args"]["rho"] == pytest.approx(0.01)
+    assert selected["output_dir"] == f"artifacts/tamia/models/{method}"
+    assert selected["wandb_name"] == method
+    assert f"/{method}/" in selected["dataset_prepared_path"]
+    renamed = (
+        "custom_trainer_args",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    )
+    assert {k: v for k, v in selected.items() if k not in renamed} == {
+        k: v for k, v in base.items() if k not in renamed
+    }
+
+
 def test_five_pp_maxent_promotes_retain_lo_candidate() -> None:
     root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     base = yaml.safe_load(
@@ -593,6 +620,8 @@ def test_five_pp_selections_and_relearning_use_threshold_paths() -> None:
             0.025,
             1e-2,
         ),
+        "z7b-wmdp-bio--5pp--unlearn-fft-me": (5e-6, 0.25, None, None),
+        "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2": (5e-6, 4, None, 1e-2),
     }
 
     for method, (learning_rate, retain, beta, rho) in selected_hparams.items():

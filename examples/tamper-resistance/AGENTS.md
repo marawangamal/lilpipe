@@ -47,6 +47,11 @@ Evaluations for a budget are written under `artifacts/tamia/evals/thresholds/<N>
    candidates, select the one with the **lowest WMDP-Bio robust accuracy**,
    i.e. the strongest unlearning. Candidates near chance on WMDP (~25%) usually
    fail the budget because MMLU collapses too; never select them.
+   **Tie-break:** when eligible candidates' WMDP scores are within noise of each
+   other (about one standard error, ~1.6 points), prefer the one with the
+   smaller MMLU drop. This matters most when several candidates reach chance.
+   A candidate may be promoted to every budget it satisfies, e.g. both `--5pp--`
+   and `--15pp--`.
 6. **Refine if needed.** If the best eligible point sits on the edge of the grid,
    or the jump between neighbouring points is large, e.g. from eligible to
    collapsed, add a finer sweep stage around it and repeat from step 2.
@@ -58,8 +63,8 @@ Evaluations for a budget are written under `artifacts/tamia/evals/thresholds/<N>
 
 A candidate is promoted into a budget `<N>pp` that it satisfies. That budget
 may differ from the one the sweep ran under: a `--15pp--` sweep candidate within
-5 points can be promoted to `--5pp--`. Promotion is a config copy plus an eval
-copy; nothing is retrained.
+5 points can be promoted to `--5pp--`. Promotion is a config copy, an eval
+copy, and a model move; nothing is retrained.
 
 1. **Copy the config.** Write
    `configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--<N>pp--<method>/selected.yml`
@@ -77,7 +82,20 @@ copy; nothing is retrained.
    mkdir -p $DST && cp -r $SRC/wmdp-bio-robust $SRC/mmlu-no-bio $DST/
    ```
 
-3. **Sync the evals locally.** `artifacts/tamia` is a scratch copy of Tamia's
+3. **Move the model on Tamia.** Move the candidate's sweep output to the
+   lineage's canonical path, so it survives clearing `artifacts/generated/hpo`
+   and later stages such as relearning can use it. When the same candidate is
+   promoted to a second budget, link that budget's path to the first instead of
+   copying (as `--5pp--` RMU links to `--15pp--` RMU):
+
+   ```bash
+   cd artifacts/tamia/models
+   mv -T ../../generated/hpo/<sweep-id>/models/<sweep-id>--<stage>--NNN \
+     z7b-wmdp-bio--<N>pp--<method>
+   ln -s z7b-wmdp-bio--<N>pp--<method> z7b-wmdp-bio--<M>pp--<method>  # optional
+   ```
+
+4. **Sync the evals locally.** `artifacts/tamia` is a scratch copy of Tamia's
    artifacts; plots are made from it:
 
    ```bash
@@ -85,11 +103,11 @@ copy; nothing is retrained.
    rsync -a tamia:projects/lilpipe/examples/tamper-resistance/$D/ $D/
    ```
 
-4. **Add it to the plot.** Append
+5. **Add it to the plot.** Append
    `("z7b-wmdp-bio--<N>pp--<method>--relearn-fft", "<Method>", "None", False)`
    to the `z7b--<N>pp` experiment in `scripts/analysis/plot_trajectory.py`.
    Until relearning runs exist, the method is plotted only at step 0.
-5. **Rerun the plot** to the tracked figure names:
+6. **Rerun the plot** to the tracked figure names:
 
    ```bash
    for ext in pdf png; do
@@ -98,6 +116,6 @@ copy; nothing is retrained.
    done
    ```
 
-6. **Test and document.** Pin the selected values in a regression test, list
+7. **Test and document.** Pin the selected values in a regression test, list
    the plot entry in `tests/test_trajectory_plot.py`, and record the promoted
    setting in `docs/experiments.md`.
