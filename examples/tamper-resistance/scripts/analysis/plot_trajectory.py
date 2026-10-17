@@ -126,6 +126,12 @@ experiments = [
                 "SAM",
                 False,
             ),
+            (
+                "z7b-wmdp-bio--15pp--unlearn-fft-rmu--relearn-fft",
+                "RMU",
+                "None",
+                False,
+            ),
         ],
     },
     {
