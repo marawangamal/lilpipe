@@ -22,4 +22,4 @@ jobs:
           python -m venv /tmp/lilpipe-wheel
           /tmp/lilpipe-wheel/bin/pip install dist/*.whl
           /tmp/lilpipe-wheel/bin/lilpipe --help
-          (cd examples/weight-steering && /tmp/lilpipe-wheel/bin/lilpipe configs/experiments/smollm3/main.yml --dry-run)
+          (cd examples/minimal && /tmp/lilpipe-wheel/bin/lilpipe configs/experiments/pipeline.yml --dry-run)

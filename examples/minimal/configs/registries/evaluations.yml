@@ -1,0 +1,7 @@
+evaluations:
+  toy-score:
+    script: scripts/evaluate.sbatch
+    args:
+      - "{model.artifact}"
+      - "artifacts/evals/{model.id}/toy-score"
+      - "{model.label}"

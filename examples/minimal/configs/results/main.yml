@@ -1,0 +1,26 @@
+version: 1
+id: minimal-results
+
+columns:
+  - id: accuracy
+    label: Accuracy
+    direction: maximize
+    format: percent
+    precision: 1
+
+rows:
+  - id: base
+    label: Toy base
+    root: artifacts/evals/toy-base
+    group: baselines
+  - id: tuned
+    label: Toy tuned
+    root: artifacts/evals/toy-tuned
+    group: derived
+
+metrics:
+  - column: accuracy
+    task: toy_task
+    key: "acc,none"
+    files:
+      - "toy-score/results*.json"

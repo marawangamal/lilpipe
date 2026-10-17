@@ -1,0 +1,22 @@
+models:
+  toy-base:
+    artifact: artifacts/models/toy-base
+    label: Toy base
+    producer:
+      id: produce-toy-base
+      script: scripts/produce.sbatch
+      args:
+        - artifacts/models/toy-base
+        - base
+
+  toy-tuned:
+    artifact: artifacts/models/toy-tuned
+    label: Toy tuned
+    producer:
+      id: produce-toy-tuned
+      script: scripts/produce.sbatch
+      args:
+        - artifacts/models/toy-tuned
+        - tuned
+      depends_on:
+        - toy-base

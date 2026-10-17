@@ -1,0 +1,12 @@
+version: 1
+id: minimal-toy-lineage
+
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evaluations.yml
+
+models:
+  - toy-tuned
+
+evaluations:
+  - toy-score

@@ -1,207 +1,137 @@
 # lilpipe
 
-`lilpipe` is a small declarative Slurm pipeline for ML experiments. A pipeline
-selects models and evaluations from separate YAML registries. Models may declare
-producer jobs, and producers may depend on other models' producers, so `lilpipe`
-can submit multi-stage builds with Slurm `afterok` dependencies.
+`lilpipe` is a small declarative Slurm pipeline for ML experiments. It reads an
+experiment specification, builds the dependency graph, and submits each job
+with the right Slurm `afterok` dependencies.
+
+A lilpipe experiment typically uses three configuration files:
+
+1. Model registry (`configs/registries/models.yml`). Lists the available models
+   and the Slurm jobs that produce them.
+2. Evaluation registry (`configs/registries/evaluations.yml`). Defines the
+   evaluation jobs and their arguments.
+3. Experiment specification (`configs/experiments/pipeline.yml`). Selects the
+   models to produce and the evaluations to run for one experiment.
 
 ## Install
 
 > [!WARNING]
-> The `lilpipe` project currently published on PyPI is unrelated. Do not run
-> `pip install lilpipe`; install this project from its tagged GitHub release.
+> The package named `lilpipe` on PyPI is unrelated. Do not run
+> `pip install lilpipe`; install this project from a Git tag.
 
-Install the released package directly from GitHub:
+Python 3.12 or newer is required. Install the current release directly from
+GitHub:
 
-```bash
-pip install 'lilpipe @ git+https://github.com/marawangamal/lilpipe.git@v0.3.0'
+```sh
+python -m pip install \
+  'lilpipe @ git+https://github.com/marawangamal/lilpipe.git@v0.3.0'
 ```
 
-For development, clone the repository and use an editable install:
+For development:
 
-```bash
+```sh
 python -m venv .venv
 source .venv/bin/activate
-pip install -e '.[test]'
+python -m pip install -e '.[test]'
 ```
 
-Python 3.12 or newer is required.
+## Example walkthrough
 
-## Project layout
+This walkthrough uses the [minimal sample project](examples/minimal). The sample
+project defines two models in
+[`models.yml`](examples/minimal/configs/registries/models.yml) and how each one
+is created. For example, `toy-tuned` is created by running
+`scripts/produce.sbatch` with the positional arguments
+`artifacts/models/toy-tuned` and `tuned`. It also depends on `toy-base`.
+Therefore, running
+[`pipeline.yml`](examples/minimal/configs/experiments/pipeline.yml) produces both
+`toy-base` and `toy-tuned`, even though only `toy-tuned` is specified in
+`pipeline.yml`.
 
-Run `lilpipe` from the project root. Every relative path—including the pipeline,
-registries, and Slurm scripts—is resolved from that working directory.
+From `examples/minimal`, run the following command to see the Slurm DAG that
+would be submitted:
 
-```text
-project/
-├── configs/
-│   ├── experiments/
-│   │   └── pipeline.yml
-│   └── registries/
-│       ├── models.yml
-│       └── evals.yml
-└── scripts/
-    ├── train.sbatch
-    └── evaluate.sbatch
-```
-
-The pipeline selects registry entries:
-
-```yaml
-version: 1
-id: smollm3-hacking-model-organism-steering
-
-registries:
-  models: configs/registries/models.yml
-  evaluations: configs/registries/evals.yml
-
-models:
-  - SmolLM3-3B
-  - SmolLM3-3B-HMO
-  - SmolLM3-3B-HMO-FT-Cheat
-  - SmolLM3-3B-HMO-FT-Non-Cheat
-  - SmolLM3-3B-HMO-W-Steer-a-1
-
-evaluations:
-  - mbpp
-```
-
-See the [complete example](https://github.com/marawangamal/lilpipe/tree/main/examples/weight-steering).
-It uses Axolotl to build a SmolLM3-3B hacking model organism, trains contrastive
-cheat/non-cheat adapters, constructs an alpha-1 task-arithmetic adapter, and
-evaluates every model on MBPP accuracy and hardcode rate:
-
-```yaml
-SmolLM3-3B-HMO-W-Steer-a-1:
-  base_model: artifacts/models/SmolLM3-3B-HMO/merged
-  adapter: artifacts/models/SmolLM3-3B-HMO-W-Steer-a-1
-  producer:
-    id: build-SmolLM3-3B-HMO-W-Steer-a-1
-    script: scripts/slurm/task_vector.sbatch
-    depends_on:
-      - SmolLM3-3B-HMO-FT-Cheat
-      - SmolLM3-3B-HMO-FT-Non-Cheat
-```
-
-Producer dependencies use model slugs. `lilpipe` resolves them to producer stage
-IDs and retains their transitive graph even when the intermediate models are not
-selected for evaluation.
-
-Evaluation arguments may interpolate scalar model fields:
-
-```yaml
-args:
-  - "{model.base_model}"
-  - "{model.adapter}"
-  - "artifacts/evals/{model.id}/mbpp"
-```
-
-Templates intentionally support only `{model.<field>}` placeholders. A missing
-field is an error; there are no conditionals, defaults, or template execution.
-
-## CLI
-
-Submit the selections in a pipeline:
-
-```bash
-lilpipe configs/experiments/pipeline.yml
-```
-
-Preview without invoking `sbatch`:
-
-```bash
+```sh
 lilpipe configs/experiments/pipeline.yml --dry-run
 ```
 
-Replace the configured selections with one or more values:
+## Essential commands
 
-```bash
+Preview or submit the selections in a manifest:
+
+```sh
+lilpipe configs/experiments/pipeline.yml --dry-run
+lilpipe configs/experiments/pipeline.yml
+```
+
+Replace the manifest's selections from the command line:
+
+```sh
 lilpipe configs/experiments/pipeline.yml \
-  --models SmolLM3-3B-HMO SmolLM3-3B-HMO-W-Steer-a-1 \
-  --evaluations mbpp
+  --models toy-tuned --evaluations toy-score
 ```
 
-Skip producers by model slug, or skip an evaluation using its generated stage ID:
+Skip a producer by model slug (or any stage by its stage ID):
 
-```bash
+```sh
+lilpipe configs/experiments/pipeline.yml --skip toy-base
+```
+
+Trust and reuse existing artifacts without submitting their producer jobs:
+
+```sh
 lilpipe configs/experiments/pipeline.yml \
-  --skip SmolLM3-3B-HMO-FT-Cheat
+  --existing-models toy-base --existing-models toy-tuned
 ```
 
-Reuse model artifacts that have already been produced while continuing to run
-their downstream producers and evaluations:
+`lilpipe` does not inspect declared model paths. With `--existing-models`, you
+are asserting that the artifacts needed downstream already exist.
 
-```bash
+Pass additional options to every `sbatch` invocation:
+
+```sh
 lilpipe configs/experiments/pipeline.yml \
-  --models SmolLM3-3B-HMO-W-Steer-a-1 \
-  --existing-models SmolLM3-3B-HMO-FT-Cheat SmolLM3-3B-HMO-FT-Non-Cheat
+  --sbatch-args='--account=my-account --time=00:10:00'
 ```
 
-`--existing-models` may be repeated and can be combined with `--skip`. Each
-model must have a producer and belong to the active selection's dependency graph.
-Lilpipe trusts that the named artifacts exist; it does not inspect model paths,
-which may be remote identifiers or follow project-specific layouts.
+Render collected results as Markdown (the default), CSV, or JSON:
 
-Append options to every `sbatch` invocation. Global arguments follow stage-specific
-arguments, allowing Slurm's usual last-value precedence to apply:
-
-```bash
-lilpipe configs/experiments/pipeline.yml \
-  --sbatch-args='--account=rrg-bengioy-ad --exclude=fc10512'
+```sh
+lilpipe results configs/results/main.yml
+lilpipe results configs/results/main.yml --format csv
+lilpipe results configs/results/main.yml --format json
 ```
 
-## Python API
+## Guides and examples
 
-Loading captures the current working directory as the project root. `select()`
-and `plan()` return new immutable objects.
+- [Getting started](docs/getting-started.md): install, dry-run, submit, inspect
+  logs, and collect results.
+- [Pipeline configuration](docs/pipelines.md): registries, dependencies,
+  interpolation, selections, reuse, and Slurm options.
+- [Results tables](docs/results.md): lm-eval discovery, formatting, grouping,
+  missing values, and best-value highlighting.
+- [Minimal example](examples/minimal): the canonical tutorial project.
+- [Weight steering](examples/weight-steering) and
+  [tamper resistance](examples/tamper-resistance): maintained research examples.
 
-```python
-import lilpipe
+## Example project
 
-pipeline = lilpipe.load("configs/experiments/pipeline.yml")
-selected = pipeline.select(
-    models=["SmolLM3-3B-HMO-W-Steer-a-1"],
-    evaluations=["mbpp"],
-)
-plan = selected.plan(existing_models=["SmolLM3-3B-HMO-FT-Cheat"])
+Use `examples/minimal` as a template rather than copying incomplete YAML
+fragments. Its project layout is:
 
-print(plan.render())
-job_ids = lilpipe.submit(plan)
+```text
+examples/minimal/
+├── configs/
+│   ├── experiments/pipeline.yml   # selects models and evaluations
+│   ├── registries/models.yml      # defines artifacts and producer jobs
+│   ├── registries/evaluations.yml # defines evaluation jobs
+│   └── results/main.yml           # defines the results table
+└── scripts/
+    ├── produce.sbatch
+    └── evaluate.sbatch
 ```
 
-`load()` validates the versioned YAML schema and selections. `plan()` validates
-producer references, duplicate stage IDs, unknown dependencies, and cycles before
-returning a topologically ordered `Plan`.
-
-## Results tables
-
-`lilpipe` can collect lm-eval artifacts into a results table:
-
-```bash
-lilpipe results configs/results/results.yml
-lilpipe results configs/results/results.yml --format csv
-lilpipe results configs/results/results.yml --format json
-```
-
-Row roots are resolved from the current working directory, just like pipeline
-paths. Each metric explicitly declares its artifact patterns relative to that root:
-
-```yaml
-version: 1
-id: evaluation-results
-columns:
-  - {id: accuracy, label: Accuracy, direction: maximize, format: percent, precision: 1}
-rows:
-  - {id: base, label: Base model, root: artifacts/evals/base, group: baselines}
-metrics:
-  - column: accuracy
-    task: mbpp_evalplus
-    key: "pass_at_1,none"
-    files: ["mbpp/results*.json"]
-```
-
-The newest matching file containing each task/key is selected independently for
-each metric. Missing values render as dashes in Markdown and empty CSV cells.
-Markdown highlights all tied best values according to each column's direction.
-Rows may declare an optional `group`; Markdown inserts a blank separator whenever
-the group changes. CSV and JSON output remain unchanged.
+Producer `depends_on` entries name model slugs. Evaluation arguments may use
+scalar `{model.<field>}` placeholders; missing fields are errors, and there are
+no defaults, conditionals, or template execution. See the
+[pipeline guide](docs/pipelines.md) for the annotated configuration.
