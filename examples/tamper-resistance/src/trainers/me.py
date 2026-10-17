@@ -1,4 +1,4 @@
-"""Plain gradient-difference unlearning with balanced forget and retain batches."""
+"""Maximum-entropy unlearning with balanced forget and retain batches."""
 
 import torch
 
@@ -12,8 +12,8 @@ from trainers.sampling import (
 )
 
 
-class GradDiffTrainer(AxolotlTrainer):
-    """Minimize retain cross-entropy while maximizing forget cross-entropy."""
+class MaxEntTrainer(AxolotlTrainer):
+    """Minimize retain cross-entropy while maximizing forget entropy."""
 
     def __init__(
         self,
@@ -87,24 +87,40 @@ class GradDiffTrainer(AxolotlTrainer):
     ):
         forget_mask = inputs["is_forget"].bool()
         if not forget_mask.any():
-            raise ValueError("GradDiff requires forget and retain rows in every batch")
+            raise ValueError("MaxEnt requires forget and retain rows in every batch")
         fields = ("input_ids", "attention_mask", "labels")
         forget_inputs = {field: inputs[field][forget_mask] for field in fields}
-        return self.compute_loss_term(
-            model,
-            forget_inputs,
-            -self.forget_coefficient,
-            return_grads,
-            return_outputs,
-            model_kwargs,
+        outputs = model(**forget_inputs, **(model_kwargs or {}))
+        log_probs = torch.log_softmax(outputs.logits.float(), dim=-1)
+        probs = torch.exp(log_probs)
+        negative_entropy_per_token = torch.sum(probs * log_probs, dim=-1)
+        loss = self.forget_coefficient * torch.mean(
+            negative_entropy_per_token[forget_inputs["attention_mask"].bool()]
         )
+
+        if return_grads:
+            parameters = tuple(
+                parameter for parameter in model.parameters() if parameter.requires_grad
+            )
+            grads = torch.autograd.grad(
+                loss,
+                parameters,
+                retain_graph=True,
+                allow_unused=True,
+            )
+            if return_outputs:
+                return loss, grads, outputs
+            return loss, grads
+        if return_outputs:
+            return loss, outputs
+        return loss
 
     def compute_retain_loss(
         self, model, inputs, return_grads=False, return_outputs=False
     ):
         retain_mask = ~inputs["is_forget"].bool()
         if not retain_mask.any():
-            raise ValueError("GradDiff requires forget and retain rows in every batch")
+            raise ValueError("MaxEnt requires forget and retain rows in every batch")
         fields = ("input_ids", "attention_mask", "labels")
         retain_inputs = {field: inputs[field][retain_mask] for field in fields}
         return self.compute_loss_term(

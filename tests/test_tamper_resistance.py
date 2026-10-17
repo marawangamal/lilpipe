@@ -136,6 +136,19 @@ def src_gd_training_module():
 
 
 @pytest.fixture(scope="module")
+def me_training_module():
+    pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+
+    sys.path.insert(0, str(EXAMPLE / "src"))
+    try:
+        return load_script("src/trainers/me.py", "me_training")
+    finally:
+        sys.path.remove(str(EXAMPLE / "src"))
+
+
+@pytest.fixture(scope="module")
 def ssiuu_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
@@ -1433,6 +1446,98 @@ def test_src_grad_diff_logs_component_losses_and_gradient_norms(
     ]
     assert model.forget_weight.grad.item() == pytest.approx(-6.0)
     assert model.retain_weight.grad.item() == pytest.approx(8.0)
+
+
+def test_maxent_loss_masks_padding_and_preserves_trainer_contract(
+    me_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.forget_scale = torch.nn.Parameter(torch.tensor(0.7))
+            self.retain_scale = torch.nn.Parameter(torch.tensor(0.4))
+            self.forget_outputs = None
+
+        def forward(self, input_ids, attention_mask, labels):
+            is_forget_call = torch.all(input_ids[:, 0] == 0)
+            scale = self.forget_scale if is_forget_call else self.retain_scale
+            values = input_ids.float() * scale
+            logits = torch.stack((values, torch.zeros_like(values), -values), dim=-1)
+            shifted_logits = logits[:, :-1].reshape(-1, logits.shape[-1])
+            shifted_labels = labels[:, 1:].reshape(-1)
+            loss = torch.nn.functional.cross_entropy(
+                shifted_logits, shifted_labels, ignore_index=-100
+            )
+            outputs = SimpleNamespace(loss=loss, logits=logits)
+            if is_forget_call:
+                self.forget_outputs = outputs
+            return outputs
+
+    model = Model()
+    trainer = object.__new__(me_training_module.MaxEntTrainer)
+    trainer.forget_coefficient = 2.0
+    trainer.retain_coefficient = 0.5
+    logged = []
+    trainer.log = logged.append
+    inputs = {
+        "input_ids": torch.tensor([[1, 0, 2], [0, 1, 2], [1, 2, 0], [0, 2, 1]]),
+        "attention_mask": torch.tensor([[1, 1, 1], [1, 1, 0], [1, 1, 1], [1, 0, 0]]),
+        "labels": torch.tensor([[-100, 0, 2], [2, 0, 1], [-100, 2, 0], [1, 2, 0]]),
+        "is_forget": torch.tensor([False, True, False, True]),
+    }
+
+    active_forget_ids = torch.tensor([0.0, 1.0, 0.0])
+    forget_values = active_forget_ids * model.forget_scale
+    forget_logits = torch.stack(
+        (forget_values, torch.zeros_like(forget_values), -forget_values), dim=-1
+    )
+    forget_log_probs = torch.log_softmax(forget_logits, dim=-1)
+    expected_forget = 2.0 * torch.mean(
+        torch.sum(torch.exp(forget_log_probs) * forget_log_probs, dim=-1)
+    )
+
+    retain_inputs = inputs["input_ids"][[0, 2]]
+    retain_values = retain_inputs.float() * model.retain_scale
+    retain_logits = torch.stack(
+        (retain_values, torch.zeros_like(retain_values), -retain_values), dim=-1
+    )
+    expected_retain = 0.5 * torch.nn.functional.cross_entropy(
+        retain_logits[:, :-1].reshape(-1, 3),
+        inputs["labels"][[0, 2], 1:].reshape(-1),
+    )
+    expected_forget_grad = torch.autograd.grad(
+        expected_forget, model.forget_scale, retain_graph=True
+    )[0]
+    expected_retain_grad = torch.autograd.grad(
+        expected_retain, model.retain_scale, retain_graph=True
+    )[0]
+
+    loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
+    loss.backward()
+
+    assert loss.item() == pytest.approx(
+        (expected_forget + expected_retain).detach().item()
+    )
+    assert outputs is model.forget_outputs
+    assert model.forget_scale.grad.item() == pytest.approx(expected_forget_grad.item())
+    assert model.retain_scale.grad.item() == pytest.approx(expected_retain_grad.item())
+    assert logged == [
+        {
+            "loss_forget": pytest.approx(-expected_forget.detach().item()),
+            "loss_retain": pytest.approx(expected_retain.detach().item()),
+            "grad_norm_forget": pytest.approx(abs(expected_forget_grad.item())),
+            "grad_norm_retain": pytest.approx(abs(expected_retain_grad.item())),
+        }
+    ]
+
+    changed_labels = dict(inputs)
+    changed_labels["labels"] = inputs["labels"].clone()
+    changed_labels["labels"][inputs["is_forget"]] = torch.tensor([[0, 1, 2], [2, 1, 0]])
+    assert trainer.compute_forget_loss(model, changed_labels).item() == pytest.approx(
+        expected_forget.detach().item()
+    )
 
 
 def test_ssiuu_sequence_probability_masks_prompt_and_padding(
