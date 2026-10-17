@@ -326,7 +326,7 @@ def test_tamia_training_optionally_merges_lora() -> None:
 
 @pytest.mark.parametrize("cluster", ["mila", "tamia"])
 def test_slurm_templates_use_hugging_face_cache_offline(cluster: str) -> None:
-    script = (ROOT / f"slurm/template_{cluster}.sbatch").read_text()
+    script = (EXAMPLE / f"scripts/slurm/template_{cluster}.sbatch").read_text()
 
     assert "export HF_HUB_OFFLINE=1" in script
     assert "export HF_DATASETS_OFFLINE=1" in script

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Create artifacts/logs before submitting.
 #   mkdir -p artifacts/logs
-#   sbatch --export=ALL,UV_GROUP=train slurm/template_mila.sbatch python train.py
+#   sbatch --export=ALL,UV_GROUP=train scripts/slurm/template_mila.sbatch python train.py
 #SBATCH --job-name=lilpipe
 #SBATCH --output=artifacts/logs/slurm-%j.out
 #SBATCH --partition=long
