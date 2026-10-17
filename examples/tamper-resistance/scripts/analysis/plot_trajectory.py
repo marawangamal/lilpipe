@@ -56,35 +56,6 @@ experiments = [
         ],
     },
     {
-        "model": "z7b--2pp",
-        "rootdir": "artifacts/tamia/evals/thresholds/2pp",
-        "base_rootdir": "artifacts/tamia/evals",
-        "output": "relearning-attack-z7b--2pp",
-        "steps": range(0, 17, 4),
-        "configs": [
-            ("z7b-base", "Base model", "Base model", True),
-            ("z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft", "GD", "None", False),
-            (
-                "z7b-wmdp-bio--2pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft",
-                "GD",
-                "SAM",
-                False,
-            ),
-            (
-                "z7b-wmdp-bio--2pp--unlearn-fft-rmu--relearn-fft",
-                "RMU",
-                "None",
-                False,
-            ),
-            (
-                "z7b-wmdp-bio--2pp--unlearn-fft-rmu-sam-rho1e-3--relearn-fft",
-                "RMU",
-                "SAM",
-                False,
-            ),
-        ],
-    },
-    {
         "model": "z7b--5pp",
         "rootdir": "artifacts/tamia/evals/thresholds/5pp",
         "base_rootdir": "artifacts/tamia/evals",
@@ -113,28 +84,6 @@ experiments = [
             (
                 "z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft",
                 "NPO",
-                "SAM",
-                False,
-            ),
-        ],
-    },
-    {
-        "model": "z7b--10pp",
-        "rootdir": "artifacts/tamia/evals/thresholds/10pp",
-        "base_rootdir": "artifacts/tamia/evals",
-        "output": "relearning-attack-z7b--10pp",
-        "steps": range(0, 17, 4),
-        "configs": [
-            ("z7b-base", "Base model", "Base model", True),
-            (
-                "z7b-wmdp-bio--10pp--unlearn-fft-gd--relearn-fft",
-                "GD",
-                "None",
-                False,
-            ),
-            (
-                "z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft",
-                "GD",
                 "SAM",
                 False,
             ),

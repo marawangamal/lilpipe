@@ -2519,7 +2519,7 @@ def test_z7b_lora_s125_gd_unlearning_sweep_uses_selected_learning_rates(
     learning_rates = ("2p5e-6", "5e-6", "1e-5", "5e-5", "7p5e-5", "1e-4")
 
     assert len(pipeline.selected_models) == 6
-    assert len(plan.stages) == 18
+    assert len(plan.stages) == 12
     for learning_rate in learning_rates:
         model_id = f"z7b-wmdp-bio-lora-s125-unlearn-gd-hpo-lr{learning_rate}"
         config = yaml.safe_load(
@@ -2842,7 +2842,7 @@ def test_z7b_fft_s125_canonical_pipeline_saves_trajectory(
     plan = pipeline.plan()
 
     assert len(pipeline.selected_models) == 2
-    assert len(plan.stages) == 12
+    assert len(plan.stages) == 18
     methods = {
         "gd": ("configs.training.trainers.gd.GradDiffTrainer", 2.5e-6),
         "gd-sam-rho1e-2": (
@@ -3672,21 +3672,28 @@ def test_z7b_15pp_pipeline_uses_promoted_sweep_models(
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/z7b-wmdp-bio-unlearn--15pp.yml").plan()
 
-    assert len(plan.stages) == 12
+    assert len(plan.stages) == 18
     train_stages = [stage for stage in plan.stages if stage.id.startswith("train-")]
-    assert len(train_stages) == 4
+    assert len(train_stages) == 6
     assert all(
         stage.script.endswith("/train_model_parallel.sbatch") for stage in train_stages
     )
     eval_stages = [stage for stage in plan.stages if stage.id.startswith("eval-")]
-    assert len(eval_stages) == 8
+    assert len(eval_stages) == 12
     assert all(
         stage.args[3] == "artifacts/tamia/evals/thresholds/15pp"
         for stage in eval_stages
     )
 
     selected = {}
-    for method in ("gd", "gd-sam-rho1e-2", "rmu", "rmu-sam-rho1e-2"):
+    for method in (
+        "gd",
+        "gd-sam-rho1e-2",
+        "rmu",
+        "rmu-sam-rho1e-2",
+        "npo",
+        "npo-sam-rho1e-2",
+    ):
         slug = f"z7b-wmdp-bio--15pp--unlearn-fft-{method}"
         selected[method] = yaml.safe_load(
             (
@@ -3716,9 +3723,9 @@ def test_z7b_15pp_pipeline_uses_promoted_sweep_models(
     assert selected["rmu"]["custom_trainer_args"]["retain_coefficient"] == 300
     assert selected["rmu"]["custom_trainer_args"]["steering_coefficient"] == 6.5
     assert selected["rmu-sam-rho1e-2"]["learning_rate"] == 1e-5
-    assert selected["rmu-sam-rho1e-2"]["custom_trainer_args"][
-        "retain_coefficient"
-    ] == 300
+    assert (
+        selected["rmu-sam-rho1e-2"]["custom_trainer_args"]["retain_coefficient"] == 300
+    )
     assert selected["rmu-sam-rho1e-2"]["custom_trainer_args"]["rho"] == 0.01
 
 
@@ -3881,7 +3888,7 @@ OPTUNA_SSIUU_CONFIG = (
 )
 OPTUNA_Z7B_GD_SAM_CONFIG = (
     EXAMPLE
-    / "configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2/optuna.yml"
+    / "configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/optuna.yml"
 )
 
 
@@ -4004,7 +4011,7 @@ def test_z7b_gd_sam_optuna_runs_sequentially_on_four_h100s(hpo) -> None:
         "retain_coefficient": {"low": 0.01, "high": 4.0, "log": True},
         "max_steps": [125],
     }
-    assert config["screen"]["mmlu_min"] == pytest.approx(0.485873)
+    assert config["screen"]["mmlu_min"] == pytest.approx(0.435873)
     assert config["unlearn"]["launcher"] == "python"
 
 

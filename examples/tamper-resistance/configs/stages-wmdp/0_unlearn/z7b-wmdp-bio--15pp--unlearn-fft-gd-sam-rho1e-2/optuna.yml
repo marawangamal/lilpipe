@@ -2,8 +2,8 @@ version: 1
 gpu: h100
 gpus: 4
 study:
-  name: z7b-wmdp-bio-10pp-gd-sam
-  storage: sqlite:///artifacts/tamia/optuna/z7b-wmdp-bio-10pp-gd-sam/study.db
+  name: z7b-wmdp-bio-15pp-gd-sam
+  storage: sqlite:///artifacts/tamia/optuna/z7b-wmdp-bio-15pp-gd-sam/study.db
   execution: sequential
   trials: 16
   seed: 42
@@ -16,11 +16,11 @@ search:
   max_steps: [125]
 
 screen:
-  # Base MMLU is 0.585872992; require a drop strictly below 0.10.
-  mmlu_min: 0.485873
+  # Base MMLU is 0.585872992; require a drop strictly below 0.15.
+  mmlu_min: 0.435873
 
 unlearn:
-  base_config: configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2/base.yml
+  base_config: configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/selected.yml
   launcher: python
 
 evaluation:
@@ -28,5 +28,5 @@ evaluation:
   mmlu: {task: mmlu_no_bio, metric: "acc,none"}
   batch_size: auto
 
-artifacts: artifacts/tamia/optuna/z7b-wmdp-bio-10pp-gd-sam/trials
+artifacts: artifacts/tamia/optuna/z7b-wmdp-bio-15pp-gd-sam/trials
 worker_script: scripts/slurm/tamia/optuna_worker_model_parallel.sbatch

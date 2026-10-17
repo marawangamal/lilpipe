@@ -14,18 +14,18 @@ cd examples/tamper-resistance
 UV_PROJECT_ENVIRONMENT=.venv-train uv sync --locked --group train
 UV_PROJECT_ENVIRONMENT=.venv-eval uv sync --locked --group eval
 
-# 2. Run GradDiff unlearning
+# 2. Run a selected 5pp unlearning method
 source .venv-train/bin/activate
-axolotl train configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd/selected.yml
+axolotl train configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-rmu/selected.yml
 
 # 3. Run relearning
 source .venv-train/bin/activate
-axolotl train configs/stages-wmdp/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/selected.yml
+axolotl train configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-rmu--relearn-fft/selected.yml
 
 # 4. Run eval on final ckpt
 source .venv-eval/bin/activate
-CHECKPOINT=artifacts/models/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/checkpoint-16
-OUTPUT=artifacts/evals/thresholds/2pp/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/checkpoint-16
+CHECKPOINT=artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu--relearn-fft/checkpoint-16
+OUTPUT=artifacts/tamia/evals/thresholds/5pp/z7b-wmdp-bio--5pp--unlearn-fft-rmu--relearn-fft/checkpoint-16
 accelerate launch --num_processes=1 -m lm_eval run \
   --model hf \
   --model_args "pretrained=$CHECKPOINT,dtype=bfloat16,trust_remote_code=True" \
@@ -40,8 +40,8 @@ accelerate launch --num_processes=1 -m lm_eval run \
 # running the plotting code
 source .venv-eval/bin/activate
 python scripts/analysis/plot_trajectory.py \
-  --model z7b--2pp \
-  --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--2pp.pdf
+  --model z7b--5pp \
+  --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf
 ```
 
 ## Reproduce Figure 1. using lilpipe
@@ -50,32 +50,32 @@ python scripts/analysis/plot_trajectory.py \
 ```sh
 # 1. Run all unlearning and tamper resistance methods and evals
 # for the Zephyr-7B model, on SLURM.
-lilpipe configs/experiments/z7b-wmdp-bio-unlearn--2pp.yml
+lilpipe configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml
 
 # 2. Plot the relearning trajectory
 source .venv-eval/bin/activate 
 python scripts/analysis/plot_trajectory.py \
-  --model z7b--2pp \
-  --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--2pp.pdf
+  --model z7b--5pp \
+  --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf
 ```
 
 ## Hyperparameter optimization
 
-Generate and submit the GD sweep from this directory:
+Generate and submit an RMU sweep from this directory:
 ```sh
 python scripts/hpo.py generate \
-  configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--10pp--unlearn-fft-gd/sweep.yml
+  configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-rmu/sweep.yml
 
-lilpipe artifacts/generated/hpo/z7b-wmdp-bio--10pp--unlearn-fft-gd-hpo/experiment.yml
+lilpipe artifacts/generated/hpo/z7b-wmdp-bio--15pp--unlearn-fft-rmu-hpo/experiment.yml
 ```
 
 
 ## Project structure
 ```text
 configs/
-├── experiments/z7b-wmdp-bio-unlearn--2pp.yml  # models and evaluations to run
+├── experiments/z7b-wmdp-bio-unlearn--5pp.yml  # models and evaluations to run
 ├── registries/                               # model producers and evaluation jobs
-└── stages-wmdp/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd/
+└── stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-rmu/
     ├── base.yml                              # training config used by the sweep
     ├── sweep.yml                             # HPO parameter grid
     └── selected.yml                          # optimal training config found
