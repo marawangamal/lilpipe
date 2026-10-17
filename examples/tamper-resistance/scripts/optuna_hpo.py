@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run and report MiniCPM5 tamper-resistance Optuna studies."""
+"""Run and report tamper-resistance Optuna studies."""
 
 from __future__ import annotations
 
@@ -42,8 +42,16 @@ def validate_config(config: dict[str, Any]) -> None:
     if config.get("version") != 1:
         raise ValueError("optuna config version must be 1")
     study = config.get("study", {})
-    if study.get("trials") != sum(study.get("waves", [])):
-        raise ValueError("study.trials must equal the sum of study.waves")
+    execution = study.get("execution", "parallel")
+    if execution not in {"parallel", "sequential"}:
+        raise ValueError("study.execution must be parallel or sequential")
+    if execution == "parallel":
+        if study.get("trials") != sum(study.get("waves", [])):
+            raise ValueError("study.trials must equal the sum of study.waves")
+    elif study.get("waves"):
+        raise ValueError("sequential studies must not define waves")
+    if not isinstance(study.get("trials"), int) or study["trials"] < 1:
+        raise ValueError("study.trials must be a positive integer")
     objectives = study.get("objectives")
     directions = study.get("directions")
     if objectives not in (["wmdp_pre"], ["wmdp_pre", "wmdp_post"]):
@@ -52,8 +60,10 @@ def validate_config(config: dict[str, Any]) -> None:
         )
     if directions != ["minimize"] * len(objectives):
         raise ValueError("each WMDP objective must be minimized")
-    if config.get("gpu", "l40s") not in {"l40s", "rtx8000"}:
-        raise ValueError("gpu must be l40s or rtx8000")
+    if config.get("gpu", "l40s") not in {"h100", "l40s", "rtx8000"}:
+        raise ValueError("gpu must be h100, l40s, or rtx8000")
+    if not isinstance(config.get("gpus", 1), int) or config.get("gpus", 1) < 1:
+        raise ValueError("gpus must be a positive integer")
     sections = ["search", "screen", "unlearn", "evaluation"]
     if "wmdp_post" in objectives:
         sections.append("attack")
@@ -193,16 +203,8 @@ def build_unlearn_config(
     config["learning_rate"] = parameters["learning_rate"]
     config["dataset_prepared_path"] = str(trial_dir / "cache" / "unlearn")
     config["output_dir"] = str(trial_dir / "unlearned")
-    method = (
-        "rmu"
-        if "steering_coefficient" in parameters
-        else (
-            "npo"
-            if "beta" in parameters
-            else "ssiuu" if "ssiuu_coefficient" in parameters else "gd"
-        )
-    )
-    config["wandb_name"] = f"minicpm5-{method}-optuna-{trial_dir.name}"
+    wandb_name = base.get("wandb_name", "unlearn")
+    config["wandb_name"] = f"{wandb_name}-optuna-{trial_dir.name}"
     return config
 
 
@@ -217,15 +219,18 @@ def build_attack_config(
         max_steps=attack["max_steps"],
         learning_rate=attack["learning_rate"],
         save_strategy="no",
-        wandb_name=f"minicpm5-optuna-{trial_dir.parent.parent.name}-{trial_dir.name}-attack",
+        wandb_name=f"{base.get('wandb_name', 'attack')}-optuna-{trial_dir.name}",
     )
     config.pop("save_steps", None)
     config.pop("save_total_limit", None)
     return config
 
 
-def training_command(config_path: Path) -> list[str]:
-    return ["axolotl", "train", str(config_path)]
+def training_command(config_path: Path, launcher: str | None = None) -> list[str]:
+    command = ["axolotl", "train", str(config_path)]
+    if launcher:
+        command.extend(["--launcher", launcher])
+    return command
 
 
 def evaluation_command(
@@ -319,7 +324,11 @@ def run_trial(
     )
     unlearn_path = trial_dir / "unlearn.yml"
     dump_yaml(unlearn_path, unlearn)
-    run_once(training_command(unlearn_path), trial_dir / ".unlearn.done", run)
+    run_once(
+        training_command(unlearn_path, config["unlearn"].get("launcher")),
+        trial_dir / ".unlearn.done",
+        run,
+    )
     pre = evaluate(
         Path(unlearn["output_dir"]), trial_dir / "eval-pre", config["evaluation"], run
     )
@@ -348,7 +357,11 @@ def run_trial(
     )
     attack_path = trial_dir / "attack.yml"
     dump_yaml(attack_path, attack)
-    run_once(training_command(attack_path), trial_dir / ".attack.done", run)
+    run_once(
+        training_command(attack_path, config["attack"].get("launcher")),
+        trial_dir / ".attack.done",
+        run,
+    )
     post = evaluate(
         Path(attack["output_dir"]), trial_dir / "eval-post", config["evaluation"], run
     )
@@ -369,7 +382,8 @@ def worker(config: dict[str, Any]) -> None:
     live_trials = sum(
         trial.state.name in {"COMPLETE", "RUNNING"} for trial in study.trials
     )
-    if live_trials >= config["study"]["trials"]:
+    remaining = config["study"]["trials"] - live_trials
+    if remaining <= 0:
         return
 
     def objective(trial: Any) -> float | tuple[float, float]:
@@ -380,7 +394,10 @@ def worker(config: dict[str, Any]) -> None:
             trial.set_user_attr("failure", str(error))
             raise
 
-    study.optimize(objective, n_trials=1)
+    n_trials = (
+        remaining if config["study"].get("execution", "parallel") == "sequential" else 1
+    )
+    study.optimize(objective, n_trials=n_trials)
 
 
 def initialize(config: dict[str, Any]) -> None:
@@ -403,6 +420,19 @@ def submit(
     if existing >= total:
         print(f"study already has {existing}/{total} trials")
         return None
+    if config["study"].get("execution", "parallel") == "sequential":
+        command = [
+            "sbatch",
+            f"--gpus-per-node={config.get('gpu', 'l40s')}:{config.get('gpus', 1)}",
+            config["worker_script"],
+            str(config_path),
+        ]
+        print(f"submitting one sequential worker: {total - existing} trials")
+        print(" ".join(command))
+        if not dry_run:
+            subprocess.run(command, check=True)
+        return command
+
     wave_index = 0
     boundary = 0
     for index, size in enumerate(config["study"]["waves"]):

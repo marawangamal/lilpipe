@@ -3779,6 +3779,10 @@ OPTUNA_SSIUU_CONFIG = (
     EXAMPLE
     / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/optuna.yml"
 )
+OPTUNA_Z7B_GD_SAM_CONFIG = (
+    EXAMPLE
+    / "configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2/optuna.yml"
+)
 
 
 @pytest.fixture(scope="module")
@@ -3888,6 +3892,22 @@ def test_minicpm_gd_optuna_search_and_generated_config(hpo, tmp_path) -> None:
     assert "unfrozen_parameters" not in generated
 
 
+def test_z7b_gd_sam_optuna_runs_sequentially_on_four_h100s(hpo) -> None:
+    config = hpo.load_config(OPTUNA_Z7B_GD_SAM_CONFIG)
+    assert config["gpu"] == "h100"
+    assert config["gpus"] == 4
+    assert config["study"]["execution"] == "sequential"
+    assert config["study"]["trials"] == 16
+    assert "waves" not in config["study"]
+    assert config["search"] == {
+        "learning_rate": {"low": 2e-6, "high": 5e-6},
+        "retain_coefficient": {"low": 0.01, "high": 4.0, "log": True},
+        "max_steps": [125],
+    }
+    assert config["screen"]["mmlu_min"] == pytest.approx(0.485873)
+    assert config["unlearn"]["launcher"] == "python"
+
+
 def test_minicpm_gd_selected_config_promotes_best_feasible_trial() -> None:
     selected = yaml.safe_load(
         (
@@ -3937,7 +3957,9 @@ def test_minicpm_npo_optuna_search_and_generated_config(hpo, tmp_path) -> None:
         "beta": 0.0225,
         "retain_coefficient": 1.75,
     }
-    assert generated["wandb_name"] == "minicpm5-npo-optuna-trial-000"
+    assert generated["wandb_name"] == (
+        "minicpm5-1b-wmdp-bio--unlearn-fft-npo-optuna-trial-000"
+    )
 
 
 def test_minicpm_npo_selected_config_promotes_best_feasible_trial() -> None:
@@ -4015,7 +4037,9 @@ def test_minicpm_ssiuu_optuna_starts_from_paper_values(hpo, tmp_path) -> None:
     assert generated["custom_trainer_args"]["probability_normalization"] == (
         "geometric_mean"
     )
-    assert generated["wandb_name"] == "minicpm5-ssiuu-optuna-trial-000"
+    assert generated["wandb_name"] == (
+        "minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu-optuna-trial-000"
+    )
 
 
 def test_pre_attack_only_trial_skips_attack(hpo, tmp_path, monkeypatch) -> None:
@@ -4090,6 +4114,13 @@ def test_generated_configs_are_trial_local_and_derive_layers(hpo, tmp_path) -> N
 def test_commands_and_metric_extraction(hpo, tmp_path) -> None:
     config_path = tmp_path / "train.yml"
     assert hpo.training_command(config_path) == ["axolotl", "train", str(config_path)]
+    assert hpo.training_command(config_path, "python") == [
+        "axolotl",
+        "train",
+        str(config_path),
+        "--launcher",
+        "python",
+    ]
     command = hpo.evaluation_command(
         Path("model"), "wmdp_bio_robust", tmp_path / "results", "auto"
     )
@@ -4211,6 +4242,20 @@ def test_submit_accounts_for_manual_smoke_trial(hpo, tmp_path, monkeypatch) -> N
     assert "--array=0-2%3" in command
 
 
+def test_submit_builds_one_sequential_four_h100_worker(
+    hpo, tmp_path, monkeypatch
+) -> None:
+    config = hpo.load_config(OPTUNA_Z7B_GD_SAM_CONFIG)
+    monkeypatch.setattr(hpo, "create_study", lambda config: SimpleNamespace(trials=[]))
+    command = hpo.submit(tmp_path / "optuna.yml", config, dry_run=True)
+    assert not any(argument.startswith("--array=") for argument in command)
+    assert "--gpus-per-node=h100:4" in command
+    assert command[-2:] == [
+        "scripts/slurm/tamia/optuna_worker_model_parallel.sbatch",
+        str(tmp_path / "optuna.yml"),
+    ]
+
+
 def test_worker_records_failure_metadata(hpo, monkeypatch) -> None:
     trial = OptunaTrial()
 
@@ -4253,6 +4298,23 @@ def test_worker_claims_enqueued_literature_trial(hpo, monkeypatch) -> None:
     assert study.optimized
 
 
+def test_sequential_worker_runs_every_remaining_trial(hpo, monkeypatch) -> None:
+    states = ["COMPLETE"] * 3
+
+    class Study:
+        trials = [SimpleNamespace(state=SimpleNamespace(name=name)) for name in states]
+        optimized_trials = None
+
+        def optimize(self, objective, n_trials):
+            del objective
+            self.optimized_trials = n_trials
+
+    study = Study()
+    monkeypatch.setattr(hpo, "create_study", lambda config: study)
+    hpo.worker({"study": {"execution": "sequential", "trials": 16}})
+    assert study.optimized_trials == 13
+
+
 def test_workers_derive_distinct_sampler_seeds(hpo, monkeypatch) -> None:
     seeds = []
 
@@ -4279,6 +4341,16 @@ def test_workers_derive_distinct_sampler_seeds(hpo, monkeypatch) -> None:
 def test_worker_sbatch_accepts_only_config_and_requests_one_l40s() -> None:
     script = (EXAMPLE / "scripts/slurm/mila/optuna_worker.sbatch").read_text()
     assert "#SBATCH --gres=gpu:l40s:1" in script
+    assert "#SBATCH --time=03:00:00" in script
+    assert "if [[ $# -ne 1 ]]" in script
+    assert 'python scripts/optuna_hpo.py worker "$1"' in script
+
+
+def test_tamia_sequential_worker_requests_four_h100s() -> None:
+    script = (
+        EXAMPLE / "scripts/slurm/tamia/optuna_worker_model_parallel.sbatch"
+    ).read_text()
+    assert "#SBATCH --gpus-per-node=h100:4" in script
     assert "#SBATCH --time=03:00:00" in script
     assert "if [[ $# -ne 1 ]]" in script
     assert 'python scripts/optuna_hpo.py worker "$1"' in script
