@@ -77,7 +77,7 @@ def merge_results(paths):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", default=osp.join(figure_dir, "smoothness.png"))
+    parser.add_argument("--output", default=osp.join(figure_dir, "smoothness.pdf"))
     parser.add_argument(
         "--zlim",
         type=float,

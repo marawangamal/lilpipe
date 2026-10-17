@@ -75,6 +75,8 @@ def test_smoothness_script_matches_the_paper_setup():
     assert 'device_map="balanced"' in generator_source
     assert '"--model"' in generator_source
     assert '"--direction-std"' in generator_source
+    assert 'default="artifacts/smoothness/smoothness.json"' in generator_source
+    assert 'osp.join(figure_dir, "smoothness.pdf")' in plot_source
     assert ".contour(" in plot_source
 
 
@@ -144,5 +146,5 @@ def test_tamia_smoothness_job_uses_the_existing_four_gpu_models():
     assert "--dtype bfloat16" in source
     assert "--batch-size 2" in source
     assert "--direction-std 0.03" in source
-    assert "z7b-wmdp-bio-loss-landscape--15pp-sigma3e-2-bf16.png" in source
+    assert "z7b-wmdp-bio-loss-landscape--15pp-sigma3e-2-bf16.pdf" in source
     assert source.count("pids+=($!)") == 2

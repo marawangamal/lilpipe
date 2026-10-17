@@ -71,4 +71,4 @@ python scripts/analysis/plot_smoothness.py \
   "$part_dir/origin.json" \
   "$part_dir/grad-diff.json" \
   "$part_dir/grad-diff-sam.json" \
-  --output artifacts/figures/z7b-wmdp-bio-loss-landscape--15pp-sigma3e-2-bf16.png
+  --output artifacts/figures/z7b-wmdp-bio-loss-landscape--15pp-sigma3e-2-bf16.pdf

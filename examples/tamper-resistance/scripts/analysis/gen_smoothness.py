@@ -104,7 +104,7 @@ def loss_surface(model, batches, coordinates, seed, direction_std):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", default="artifacts/figures/smoothness.json")
+    parser.add_argument("--output", default="artifacts/smoothness/smoothness.json")
     parser.add_argument("--documents", type=int, default=64)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--sequence-length", type=int, default=512)
