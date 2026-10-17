@@ -88,7 +88,7 @@ def test_smoothness_plot_accepts_shared_z_limits(tmp_path):
     assert axis.get_zlim() == (0, 10)
 
 
-def test_smoothness_plot_wraps_after_three_panels(tmp_path):
+def test_smoothness_plot_puts_each_method_on_its_own_row(tmp_path):
     pytest.importorskip("matplotlib")
     module = load_script()
     output = tmp_path / "smoothness.png"
@@ -107,7 +107,49 @@ def test_smoothness_plot_wraps_after_three_panels(tmp_path):
         (axis.get_subplotspec().rowspan.start, axis.get_subplotspec().colspan.start)
         for axis in axes
     ]
-    assert positions == [(0, 0), (0, 1), (0, 2), (1, 0)]
+    assert positions == [(0, 0), (1, 0), (2, 0), (3, 0)]
+
+
+def test_smoothness_plot_keeps_sam_variants_on_their_methods_row(tmp_path):
+    pytest.importorskip("matplotlib")
+    module = load_script()
+    output = tmp_path / "smoothness.png"
+    labels = [
+        "Origin",
+        "NPO",
+        "NPO + SAM",
+        "GradDiff",
+        "GradDiff + SAM",
+        "OPTML NPO",
+        "OPTML NPO + SAM",
+    ]
+    results = {
+        "coordinates": [-0.05, 0.0, 0.05],
+        "models": [
+            {"label": label, "loss": np.arange(9).reshape(3, 3).tolist()}
+            for label in labels
+        ],
+    }
+
+    module.plot_surfaces(results, output)
+
+    axes = [axis for axis in module.plt.gcf().axes if axis.name == "3d"]
+    positions = {
+        axis.get_title().split("\n")[0]: (
+            axis.get_subplotspec().rowspan.start,
+            axis.get_subplotspec().colspan.start,
+        )
+        for axis in axes
+    }
+    assert positions == {
+        "Base model": (0, 0),
+        "NPO": (0, 1),
+        "NPO + SAM": (0, 2),
+        "GradDiff": (1, 0),
+        "GradDiff + SAM": (1, 1),
+        "OPTML NPO": (2, 0),
+        "OPTML NPO + SAM": (2, 1),
+    }
 
 
 def test_smoothness_script_matches_the_paper_setup():
@@ -115,7 +157,7 @@ def test_smoothness_script_matches_the_paper_setup():
     plot_source = SCRIPT.read_text()
 
     assert 'dataset_name = "cais/wmdp-bio-forget-corpus"' in generator_source
-    assert '"HuggingFaceH4/zephyr-7b-beta", "Origin"' in generator_source
+    assert '"HuggingFaceH4/zephyr-7b-beta", "Base model"' in generator_source
     assert '"NPO + SAM"' in generator_source
     assert "np.linspace(-args.radius, args.radius, args.points)" in generator_source
     assert "parameter.add_(x_noise" in generator_source

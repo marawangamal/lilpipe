@@ -11,17 +11,41 @@ import seaborn as sns
 from matplotlib.ticker import MaxNLocator
 
 figure_dir = "artifacts/figures"
+base_labels = {"Origin", "Base model"}
+
+
+def panel_rows(models):
+    """Group models so each method shares a row with its SAM variant.
+
+    The base model is placed at the start of the first row.
+    """
+    base, families = [], {}
+    for model in models:
+        if model["label"] in base_labels:
+            base.append({**model, "label": "Base model"})
+            continue
+        family = model["label"].removesuffix(" + SAM")
+        families.setdefault(family, []).append(model)
+    rows = list(families.values()) or [[]]
+    rows[0] = base + rows[0]
+    return rows
 
 
 def plot_surfaces(results, output, zlim=None):
     coordinates = np.asarray(results["coordinates"])
     x, y = np.meshgrid(coordinates, coordinates)
-    losses = [np.asarray(result["loss"]) for result in results["models"]]
-    columns = min(3, len(results["models"]))
-    rows = (len(results["models"]) + columns - 1) // columns
+    layout = panel_rows(results["models"])
+    columns = max(len(row) for row in layout)
+    rows = len(layout)
     figure = plt.figure(figsize=(4 * columns, 3.5 * rows))
+    panels = [
+        (row_index * columns + column_index + 1, result)
+        for row_index, row in enumerate(layout)
+        for column_index, result in enumerate(row)
+    ]
 
-    for index, (result, loss) in enumerate(zip(results["models"], losses), start=1):
+    for index, result in panels:
+        loss = np.asarray(result["loss"])
         panel_zlim = zlim
         if panel_zlim is None:
             panel_zlim = (float(loss.min()), float(loss.max()))

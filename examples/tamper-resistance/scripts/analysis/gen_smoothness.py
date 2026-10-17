@@ -9,7 +9,7 @@ from itertools import product
 import numpy as np
 
 configs = [
-    ("HuggingFaceH4/zephyr-7b-beta", "Origin"),
+    ("HuggingFaceH4/zephyr-7b-beta", "Base model"),
     ("artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-npo", "NPO"),
     (
         "artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-npo-sam-rho1e-3",

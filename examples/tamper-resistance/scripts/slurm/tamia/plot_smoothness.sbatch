@@ -53,7 +53,7 @@ run_surface() {
     "$@" >"$part_dir/$slug.log" 2>&1
 }
 
-run_surface 0 origin Origin HuggingFaceH4/zephyr-7b-beta "$@" &
+run_surface 0 origin "Base model" HuggingFaceH4/zephyr-7b-beta "$@" &
 pids=($!)
 run_surface 1 grad-diff GradDiff "$gd" "$@" &
 pids+=($!)
