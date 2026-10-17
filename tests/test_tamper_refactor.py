@@ -322,6 +322,8 @@ def test_evaluation_registry_contains_only_active_intents() -> None:
     assert set(evaluations) == {
         "wmdp-bio-final",
         "mmlu-no-bio-final",
+        "wmdp-bio-final-15pp",
+        "mmlu-no-bio-final-15pp",
         "wmdp-bio-step-150",
         "mmlu-no-bio-step-150",
         "wmdp-bio-relearn",
@@ -410,6 +412,43 @@ def test_ten_pp_rmu_sweeps_vary_only_lr_and_retain() -> None:
         assert base["custom_trainer_args"]["steering_coefficient"] == pytest.approx(6.5)
         if rho is not None:
             assert base["custom_trainer_args"]["rho"] == pytest.approx(rho)
+
+
+def test_fifteen_pp_rmu_sweeps_vary_only_lr_and_retain() -> None:
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
+    methods = {
+        "z7b-wmdp-bio--15pp--unlearn-fft-rmu": None,
+        "z7b-wmdp-bio--15pp--unlearn-fft-rmu-sam-rho1e-2": 1e-2,
+    }
+
+    for method, rho in methods.items():
+        base = yaml.safe_load((root / method / "base.yml").read_text())
+        sweep = yaml.safe_load((root / method / "sweep.yml").read_text())
+
+        assert sweep_candidate_count(sweep) == 9
+        assert sweep["sweeps"][0]["parameters"] == {
+            "learning_rate": pytest.approx([1e-6, 5e-6, 1e-5]),
+            "custom_trainer_args.retain_coefficient": pytest.approx([300, 600, 1200]),
+        }
+        assert sweep["evaluations"] == [
+            "wmdp-bio-final-15pp",
+            "mmlu-no-bio-final-15pp",
+        ]
+        assert base["max_steps"] == base["save_steps"] == 125
+        assert base["custom_trainer_args"]["steering_coefficient"] == pytest.approx(6.5)
+        assert "--15pp--" in base["dataset_prepared_path"]
+        assert "--15pp--" in base["output_dir"]
+        if rho is not None:
+            assert base["custom_trainer_args"]["rho"] == pytest.approx(rho)
+
+    evaluations = yaml.safe_load(
+        (EXAMPLE / "configs/registries/evals.yml").read_text()
+    )["evaluations"]
+    for evaluation_id in ("wmdp-bio-final-15pp", "mmlu-no-bio-final-15pp"):
+        assert evaluations[evaluation_id]["args"][3] == (
+            "artifacts/tamia/evals/thresholds/15pp"
+        )
+        assert evaluations[evaluation_id]["args"][-2:] == ["125", "125"]
 
 
 def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:

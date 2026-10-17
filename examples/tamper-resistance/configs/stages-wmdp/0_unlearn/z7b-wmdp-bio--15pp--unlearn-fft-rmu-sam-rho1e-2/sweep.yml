@@ -1,0 +1,23 @@
+id: z7b-wmdp-bio--15pp--unlearn-fft-rmu-sam-rho1e-2-hpo
+sweeps:
+- name: grid
+  parameters:
+    learning_rate:
+    - 1.0e-06
+    - 5.0e-06
+    - 1.0e-05
+    custom_trainer_args.retain_coefficient:
+    - 300
+    - 600
+    - 1200
+producer:
+  script: scripts/slurm/tamia/train_model_parallel.sbatch
+  sbatch_args:
+  - --gpus-per-node=h100:4
+  - --cpus-per-task=48
+  - --mem=480G
+  - --time=03:00:00
+evaluations:
+- wmdp-bio-final-15pp
+- mmlu-no-bio-final-15pp
+evaluation_registry: configs/registries/evals.yml
