@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import os.path as osp
+from itertools import product
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -86,29 +87,34 @@ def prediction_loss(model, batches):
 def loss_surface(model, batches, coordinates, seed):
     """Evaluate loss(theta + x r1 + y r2) on a square coordinate grid."""
     import torch
+    from tqdm.auto import tqdm
 
     parameters = list(model.parameters())
+    center = [parameter.detach().clone() for parameter in parameters]
     x_direction, y_direction = random_directions(model, seed)
+    torch.cuda.empty_cache()
     surface = np.empty((len(coordinates), len(coordinates)))
 
-    for row, y in enumerate(coordinates):
-        for column, x in enumerate(coordinates):
-            with torch.no_grad():
-                for parameter, x_noise, y_noise in zip(
-                    parameters, x_direction, y_direction
-                ):
-                    parameter.add_(x_noise, alpha=float(x))
-                    parameter.add_(y_noise, alpha=float(y))
-            try:
-                surface[row, column] = prediction_loss(model, batches)
-            finally:
-                with torch.no_grad():
-                    for parameter, x_noise, y_noise in zip(
-                        parameters, x_direction, y_direction
-                    ):
-                        parameter.add_(y_noise, alpha=-float(y))
-                        parameter.add_(x_noise, alpha=-float(x))
-            print(f"  x={x:+.4f}, y={y:+.4f}, loss={surface[row, column]:.4f}")
+    points = product(enumerate(coordinates), enumerate(coordinates))
+    progress = tqdm(points, total=surface.size, desc="Loss surface", unit="point")
+    for (row, y), (column, x) in progress:
+        with torch.no_grad():
+            for parameter, original, x_noise, y_noise in zip(
+                parameters, center, x_direction, y_direction
+            ):
+                parameter.copy_(original)
+                parameter.add_(x_noise, alpha=float(x))
+                parameter.add_(y_noise, alpha=float(y))
+        surface[row, column] = prediction_loss(model, batches)
+        progress.set_postfix(loss=f"{surface[row, column]:.4f}")
+        print(
+            f"  x={x:+.4f}, y={y:+.4f}, loss={surface[row, column]:.4f}",
+            flush=True,
+        )
+
+    with torch.no_grad():
+        for parameter, original in zip(parameters, center):
+            parameter.copy_(original)
 
     return surface
 
@@ -129,6 +135,20 @@ def plot_surfaces(results, output):
     figure.savefig(output, bbox_inches="tight", dpi=200)
 
 
+def merge_results(paths):
+    """Combine independently computed model surfaces on the same grid."""
+    combined = None
+    for path in paths:
+        with open(path) as handle:
+            result = json.load(handle)
+        if combined is None:
+            combined = {"coordinates": result["coordinates"], "models": []}
+        elif result["coordinates"] != combined["coordinates"]:
+            raise ValueError("cannot combine surfaces with different coordinates")
+        combined["models"].extend(result["models"])
+    return combined
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default=osp.join(figure_dir, "smoothness.png"))
@@ -139,6 +159,14 @@ def main():
     parser.add_argument("--points", type=int, default=9)
     parser.add_argument("--radius", type=float, default=0.05)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--dtype", choices=("float32", "bfloat16"), default="float32")
+    parser.add_argument("--tokenizer", default=configs[0][0])
+    parser.add_argument("--no-plot", action="store_true")
+    parser.add_argument(
+        "--input",
+        action="append",
+        help="Combine this previously computed JSON file instead of evaluating models",
+    )
     parser.add_argument(
         "--model",
         action="append",
@@ -148,16 +176,24 @@ def main():
     )
     args = parser.parse_args()
 
+    sns.set_theme(style="whitegrid")
+    if args.input:
+        results = merge_results(args.input)
+        os.makedirs(osp.dirname(args.data) or ".", exist_ok=True)
+        with open(args.data, "w") as handle:
+            json.dump(results, handle, indent=2)
+        plot_surfaces(results, args.output)
+        return
+
     import torch
     from datasets import load_dataset
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    sns.set_theme(style="whitegrid")
     documents = load_dataset(dataset_name, split="train")
     selected_configs = (
         [(path, label) for label, path in args.model] if args.model else configs
     )
-    tokenizer = AutoTokenizer.from_pretrained(selected_configs[0][0])
+    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
     batches = list(
@@ -177,7 +213,7 @@ def main():
         print(f"{label}: {path}")
         model = AutoModelForCausalLM.from_pretrained(
             path,
-            torch_dtype=torch.float32,
+            dtype=getattr(torch, args.dtype),
             device_map="balanced",
             attn_implementation="eager",
         ).eval()
@@ -191,7 +227,8 @@ def main():
         del model
         torch.cuda.empty_cache()
 
-    plot_surfaces(results, args.output)
+    if not args.no_plot:
+        plot_surfaces(results, args.output)
 
 
 if __name__ == "__main__":

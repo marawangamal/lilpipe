@@ -35,8 +35,38 @@ module load httpproxy/1.0
 uv sync --frozen --group eval
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 
+part_dir="artifacts/tamia/smoothness/$SLURM_JOB_ID"
+mkdir -p "$part_dir"
+
+run_surface() {
+  local gpu=$1
+  local slug=$2
+  local label=$3
+  local model=$4
+  shift 4
+  CUDA_VISIBLE_DEVICES=$gpu python scripts/analysis/plot_smoothness.py \
+    --model "$label" "$model" \
+    --dtype bfloat16 \
+    --data "$part_dir/$slug.json" \
+    --no-plot \
+    "$@" >"$part_dir/$slug.log" 2>&1
+}
+
+run_surface 0 origin Origin HuggingFaceH4/zephyr-7b-beta "$@" &
+pids=($!)
+run_surface 1 grad-diff GradDiff "$gd" "$@" &
+pids+=($!)
+run_surface 2 grad-diff-sam "GradDiff + SAM" "$sam" "$@" &
+pids+=($!)
+
+echo "Per-model logs: $part_dir/{origin,grad-diff,grad-diff-sam}.log"
+trap 'kill "${pids[@]}" 2>/dev/null || true' EXIT
+for pid in "${pids[@]}"; do
+  wait "$pid"
+done
+trap - EXIT
+
 python scripts/analysis/plot_smoothness.py \
-  --model Origin HuggingFaceH4/zephyr-7b-beta \
-  --model GradDiff "$gd" \
-  --model "GradDiff + SAM" "$sam" \
-  "$@"
+  --input "$part_dir/origin.json" \
+  --input "$part_dir/grad-diff.json" \
+  --input "$part_dir/grad-diff-sam.json"

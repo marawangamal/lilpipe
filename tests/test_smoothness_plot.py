@@ -59,8 +59,34 @@ def test_smoothness_script_matches_the_paper_setup():
     assert "axis.set_zlim(0, 10)" in source
     assert "parameter.add_(x_noise" in source
     assert "parameter.add_(y_noise" in source
+    assert "parameter.copy_(original)" in source
+    assert 'desc="Loss surface"' in source
     assert 'device_map="balanced"' in source
     assert '"--model"' in source
+
+
+def test_smoothness_results_from_parallel_workers_can_be_combined(tmp_path):
+    pytest.importorskip("matplotlib")
+    module = load_script()
+    paths = []
+    for label in ("Origin", "GradDiff"):
+        path = tmp_path / f"{label}.json"
+        path.write_text(
+            __import__("json").dumps(
+                {
+                    "coordinates": [-0.05, 0.0, 0.05],
+                    "models": [{"label": label, "loss": [[1.0] * 3] * 3}],
+                }
+            )
+        )
+        paths.append(path)
+
+    result = module.merge_results(paths)
+
+    assert [model["label"] for model in result["models"]] == [
+        "Origin",
+        "GradDiff",
+    ]
 
 
 def test_tamia_smoothness_job_uses_the_existing_four_gpu_models():
@@ -75,3 +101,7 @@ def test_tamia_smoothness_job_uses_the_existing_four_gpu_models():
     assert "z7b-wmdp-bio--15pp--unlearn-fft-gd/checkpoint-125" in source
     assert "z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/checkpoint-125" in source
     assert "python scripts/analysis/plot_smoothness.py" in source
+    assert source.count("CUDA_VISIBLE_DEVICES=$gpu") == 1
+    assert source.count("run_surface ") == 3
+    assert "--dtype bfloat16" in source
+    assert source.count("pids+=($!)") == 2
