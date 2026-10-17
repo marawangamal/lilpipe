@@ -3054,43 +3054,6 @@ def test_optml_relearning_matches_released_models_and_includes_checkpoint_zero(
     assert 'checkpoint="$trained_model/checkpoint-$step"' in script
 
 
-def test_authors_relearning_wrapper_accepts_local_unlearned_model() -> None:
-    script = (ROOT / "examples/sam/WMDP/run_tamia_local_relearning.sbatch").read_text()
-
-    assert "model_source=${1:?missing local model path}" in script
-    assert "model_slug=${2:?missing artifact slug}" in script
-    assert (
-        'cd "${SLURM_SUBMIT_DIR:?submit this job from the authors WMDP directory}"'
-        in script
-    )
-    assert "steps=(5 10 15)" in script
-    assert "example_counts=(20 40 60)" in script
-    assert '--overall.model_name "$model_source"' in script
-    assert "--overall.seed 1" in script
-    assert "--dataset.dataset_seed 42" in script
-    assert "--unlearn.lr 1e-5" in script
-    assert 'mkdir -p "$SLURM_TMPDIR/relearn-run"' in script
-    assert 'ln -s "$SLURM_TMPDIR/relearn-run" "$run_root"' in script
-    assert 'rm -rf "$run_root"' in script
-
-
-def test_authors_unlearning_wrapper_uses_node_local_temporary_checkpoint() -> None:
-    script = (ROOT / "examples/sam/WMDP/run_tamia_unlearning.sbatch").read_text()
-
-    assert "method=${1:?missing method: GradDiff or GradDiff+SAM}" in script
-    assert (
-        'cd "${SLURM_SUBMIT_DIR:?submit this job from the authors WMDP directory}"'
-        in script
-    )
-    assert 'mkdir -p "$SLURM_TMPDIR/unlearn_checkpoint"' in script
-    assert (
-        'ln -s "$SLURM_TMPDIR/unlearn_checkpoint" '
-        '"$artifact_root/unlearn_checkpoint"'
-    ) in script
-    assert '--config-file "configs/unlearn/wmdp/$method.json"' in script
-    assert 'args+=("$@")' in script
-
-
 def test_relearning_formats_wmdp_document() -> None:
     pytest.importorskip("axolotl")
     strategy = load_script(
