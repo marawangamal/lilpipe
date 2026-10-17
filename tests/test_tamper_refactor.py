@@ -396,6 +396,34 @@ def test_fifteen_pp_gd_sweeps_preserve_executed_ten_pp_grids() -> None:
     )
 
 
+def test_fifteen_pp_maxent_sweep_matches_gd_search_budget() -> None:
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
+    method = "z7b-wmdp-bio--15pp--unlearn-fft-me"
+    base = yaml.safe_load((root / method / "base.yml").read_text())
+    sweep = yaml.safe_load((root / method / "sweep.yml").read_text())
+
+    assert base["trainer_cls"] == "trainers.me.MaxEntTrainer"
+    assert base["custom_trainer_args"] == {
+        "forget_coefficient": pytest.approx(1.0),
+        "retain_coefficient": pytest.approx(1.0),
+        "sampling": "optml",
+    }
+    assert base["max_steps"] == base["save_steps"] == 125
+    assert base["output_dir"] == f"artifacts/tamia/models/{method}"
+    assert "--15pp--" in base["dataset_prepared_path"]
+
+    assert sweep_candidate_count(sweep) == 9
+    assert sweep["id"] == f"{method}-hpo"
+    assert sweep["sweeps"][0]["parameters"] == {
+        "learning_rate": pytest.approx([1e-6, 5e-6, 1e-5]),
+        "custom_trainer_args.retain_coefficient": pytest.approx([1, 2, 4]),
+    }
+    assert sweep["evaluations"] == [
+        "wmdp-bio-final-15pp",
+        "mmlu-no-bio-final-15pp",
+    ]
+
+
 def test_fifteen_pp_npo_sweeps_vary_lr_retain_and_beta() -> None:
     root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     methods = {
