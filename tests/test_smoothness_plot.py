@@ -163,7 +163,7 @@ def test_smoothness_script_matches_the_paper_setup():
     assert "parameter.add_(x_noise" in generator_source
     assert "parameter.add_(y_noise" in generator_source
     assert "parameter.copy_(original)" in generator_source
-    assert 'desc="Loss surface"' in generator_source
+    assert 'desc=f"Loss surface σ={direction_std:g}"' in generator_source
     assert 'device_map="balanced"' in generator_source
     assert '"--model"' in generator_source
     assert '"--direction-std"' in generator_source
@@ -196,6 +196,56 @@ def test_smoothness_directions_are_scaled_gaussian_samples():
         )
 
 
+def test_smoothness_surfaces_share_directions_across_scales():
+    torch = pytest.importorskip("torch")
+    module = load_generator()
+    torch.manual_seed(0)
+    model = torch.nn.Linear(2, 1)
+    seed = 3
+    coordinates = np.array([-1.0, 0.0, 1.0])
+    batches = [torch.ones(1, 2)]
+    module.prediction_loss = lambda model, batches: model(batches[0]).sum().item()
+    center = [parameter.detach().clone() for parameter in model.parameters()]
+
+    surfaces = module.loss_surfaces(model, batches, coordinates, seed, [0.1, 0.2])
+
+    x_direction, y_direction = module.random_directions(model, seed, 1.0)
+    for std, surface in surfaces.items():
+        for row, y in enumerate(coordinates):
+            for column, x in enumerate(coordinates):
+                weight, bias = (
+                    original + x * std * x_noise + y * std * y_noise
+                    for original, x_noise, y_noise in zip(
+                        center, x_direction, y_direction
+                    )
+                )
+                expected = float(weight.sum() + bias.sum())
+                assert surface[row, column] == pytest.approx(expected, rel=1e-5)
+    assert all(
+        torch.equal(parameter, original)
+        for parameter, original in zip(model.parameters(), center)
+    )
+
+
+def test_smoothness_plot_selects_one_direction_scale():
+    module = load_script()
+    results = {
+        "coordinates": [-0.05, 0.0, 0.05],
+        "models": [
+            {"label": "NPO", "direction_std": std, "loss": [[float(std)] * 3] * 3}
+            for std in (0.003, 0.03)
+        ],
+    }
+
+    selected = module.select_direction_std(results, 0.03)
+
+    assert [model["direction_std"] for model in selected["models"]] == [0.03]
+    with pytest.raises(ValueError, match="mix direction scales"):
+        module.select_direction_std(results)
+    with pytest.raises(ValueError, match="no surfaces"):
+        module.select_direction_std(results, 0.1)
+
+
 def test_smoothness_results_from_parallel_workers_can_be_combined(tmp_path):
     pytest.importorskip("matplotlib")
     module = load_script()
@@ -222,23 +272,27 @@ def test_smoothness_results_from_parallel_workers_can_be_combined(tmp_path):
     assert [model["direction_std"] for model in result["models"]] == [0.003, 0.003]
 
 
-def test_tamia_smoothness_job_uses_the_existing_four_gpu_models():
+def test_tamia_smoothness_job_covers_every_method_at_several_scales():
     source = SBATCH.read_text()
 
     assert "#SBATCH --gpus-per-node=h100:4" in source
-    assert "#SBATCH --time=03:00:00" in source
+    assert "#SBATCH --time=01:00:00" in source
     assert "HF_HUB_OFFLINE=1" in source
     assert "HF_DATASETS_OFFLINE=1" in source
     assert "UV_OFFLINE=1" in source
     assert "uv sync --frozen --group eval" in source
     assert "z7b-wmdp-bio--15pp--unlearn-fft-gd/checkpoint-125" in source
     assert "z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/checkpoint-125" in source
+    assert "z7b-wmdp-bio--15pp--unlearn-fft-npo/checkpoint-125" in source
+    assert "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/checkpoint-125" in source
+    assert "OPTML-Group/NPO-WMDP" in source
+    assert "OPTML-Group/NPO-SAM-WMDP" in source
     assert "python scripts/analysis/gen_smoothness.py" in source
     assert "python scripts/analysis/plot_smoothness.py" in source
     assert source.count("CUDA_VISIBLE_DEVICES=$gpu") == 1
-    assert source.count("run_surface ") == 3
     assert "--dtype bfloat16" in source
     assert "--batch-size 2" in source
-    assert "--direction-std 0.03" in source
-    assert "z7b-wmdp-bio-loss-landscape--15pp-sigma3e-2-bf16.pdf" in source
-    assert source.count("pids+=($!)") == 2
+    assert '"${DIRECTION_STDS:-0.003 0.01 0.03 0.1}"' in source
+    assert '--direction-std "${direction_stds[@]}"' in source
+    assert '--direction-std "$direction_std"' in source
+    assert "z7b-wmdp-bio-loss-landscape--15pp-sigma$tag-bf16.pdf" in source

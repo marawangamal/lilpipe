@@ -108,6 +108,25 @@ def merge_results(paths):
     return combined
 
 
+def select_direction_std(results, direction_std=None):
+    """Keep the surfaces for one direction scale; never mix scales in a figure."""
+    models = results["models"]
+    if direction_std is not None:
+        models = [
+            model
+            for model in models
+            if model.get("direction_std") is not None
+            and np.isclose(model["direction_std"], direction_std)
+        ]
+        if not models:
+            raise ValueError(f"no surfaces with direction_std={direction_std:g}")
+    scales = {model.get("direction_std") for model in models}
+    if len(scales) > 1:
+        listed = ", ".join(sorted(f"{scale:g}" for scale in scales if scale))
+        raise ValueError(f"surfaces mix direction scales ({listed}); pick one")
+    return {**results, "models": models}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default=osp.join(figure_dir, "smoothness.pdf"))
@@ -120,6 +139,12 @@ def main():
         help="Optional shared z-axis limits (default: automatic per panel)",
     )
     parser.add_argument(
+        "--direction-std",
+        type=float,
+        default=None,
+        help="Plot only surfaces computed with this direction scale",
+    )
+    parser.add_argument(
         "inputs",
         nargs="+",
         metavar="JSON",
@@ -128,7 +153,7 @@ def main():
     args = parser.parse_args()
 
     sns.set_theme(style="whitegrid")
-    results = merge_results(args.inputs)
+    results = select_direction_std(merge_results(args.inputs), args.direction_std)
     plot_surfaces(results, args.output, args.zlim)
 
 
