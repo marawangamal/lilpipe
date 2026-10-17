@@ -1,0 +1,137 @@
+id: z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2-hpo
+sweeps:
+- name: grid
+  parameters:
+    learning_rate:
+    - 1.0e-06
+    - 5.0e-06
+    - 1.0e-05
+    custom_trainer_args.retain_coefficient:
+    - 1
+    - 2
+    - 4
+- name: refine-retain
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 1.5
+- name: refine-retain-1p75
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 1.75
+- name: refine-retain-1p95
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 1.95
+- name: refine-retain-1p99
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 1.99
+- name: refine-retain-2p1
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 2.1
+- name: refine-retain-2p15
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 2.15
+- name: refine-retain-2p2
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 2.2
+- name: refine-retain-2p25
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 2.25
+- name: refine-retain-2p3
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 2.3
+- name: refine-retain-2p4
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 2.4
+- name: refine-retain-2p5
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 2.5
+- name: refine-retain-3p0
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 3.0
+- name: refine-lr1e-6-retain-0p1
+  parameters:
+    learning_rate:
+    - 1.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 0.1
+- name: refine-lr1e-6-retain-0p05
+  parameters:
+    learning_rate:
+    - 1.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 0.05
+- name: refine-lr2e-6-retain-0p1
+  parameters:
+    learning_rate:
+    - 2.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 0.1
+- name: refine-lr2e-6-retain-0p01
+  parameters:
+    learning_rate:
+    - 2.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 0.01
+- name: refine-lr4e-6-retain-0p01
+  parameters:
+    learning_rate:
+    - 4.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 0.01
+- name: refine-lr3e-6-retain-0p01
+  parameters:
+    learning_rate:
+    - 3.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 0.01
+- name: legacy-point
+  parameters:
+    learning_rate:
+    - 3.28e-06
+    custom_trainer_args.retain_coefficient:
+    - 1.0
+producer:
+  script: scripts/slurm/tamia/train_model_parallel.sbatch
+  sbatch_args:
+  - --gpus-per-node=h100:4
+  - --cpus-per-task=48
+  - --mem=480G
+  - --time=03:00:00
+evaluations:
+- wmdp-bio-final-15pp
+- mmlu-no-bio-final-15pp
+evaluation_registry: configs/registries/evals.yml

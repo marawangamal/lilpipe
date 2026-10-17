@@ -358,6 +358,44 @@ def test_fifteen_pp_rmu_sweeps_vary_only_lr_and_retain() -> None:
         assert evaluations[evaluation_id]["args"][-2:] == ["125", "125"]
 
 
+def test_fifteen_pp_gd_sweeps_preserve_executed_ten_pp_grids() -> None:
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
+    methods = {
+        "z7b-wmdp-bio--15pp--unlearn-fft-gd": 10,
+        "z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2": 28,
+    }
+
+    for method, candidate_count in methods.items():
+        base = yaml.safe_load((root / method / "base.yml").read_text())
+        sweep = yaml.safe_load((root / method / "sweep.yml").read_text())
+
+        assert sweep_candidate_count(sweep) == candidate_count
+        assert sweep["sweeps"][0]["parameters"] == {
+            "learning_rate": pytest.approx([1e-6, 5e-6, 1e-5]),
+            "custom_trainer_args.retain_coefficient": pytest.approx([1, 2, 4]),
+        }
+        assert sweep["evaluations"] == [
+            "wmdp-bio-final-15pp",
+            "mmlu-no-bio-final-15pp",
+        ]
+        assert sweep["id"] == f"{method}-hpo"
+        assert base["max_steps"] == base["save_steps"] == 125
+        assert "--15pp--" in base["dataset_prepared_path"]
+        assert "--15pp--" in base["output_dir"]
+
+    sam_sweep = yaml.safe_load(
+        (root / "z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/sweep.yml").read_text()
+    )
+    assert any(
+        stage["parameters"]
+        == {
+            "learning_rate": [5e-6],
+            "custom_trainer_args.retain_coefficient": [2.2],
+        }
+        for stage in sam_sweep["sweeps"]
+    )
+
+
 def test_fifteen_pp_npo_sweeps_vary_lr_retain_and_beta() -> None:
     root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     methods = {
