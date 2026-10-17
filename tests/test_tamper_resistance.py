@@ -1458,6 +1458,127 @@ def test_src_grad_diff_logs_component_losses_and_gradient_norms(
     assert model.retain_weight.grad.item() == pytest.approx(8.0)
 
 
+def _maxent_sam_fixture(torch, me_training_module, rho):
+    from contextlib import nullcontext
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.forget_scale = torch.nn.Parameter(torch.tensor(0.7))
+            self.retain_scale = torch.nn.Parameter(torch.tensor(0.4))
+
+        def forward(self, input_ids, attention_mask, labels=None):
+            is_forget_call = torch.all(input_ids[:, 0] == 0)
+            scale = self.forget_scale if is_forget_call else self.retain_scale
+            values = input_ids.float() * scale
+            logits = torch.stack((values, torch.zeros_like(values), -values), dim=-1)
+            loss = None
+            if labels is not None:
+                loss = torch.nn.functional.cross_entropy(
+                    logits[:, :-1].reshape(-1, 3),
+                    labels[:, 1:].reshape(-1),
+                    ignore_index=-100,
+                )
+            return SimpleNamespace(loss=loss, logits=logits)
+
+    class Accelerator:
+        def backward(self, loss):
+            loss.backward()
+
+    trainer = object.__new__(me_training_module.MaxEntSAMTrainer)
+    trainer.forget_coefficient = 2.0
+    trainer.retain_coefficient = 0.5
+    trainer.log_gradient_norms = False
+    trainer.rho = rho
+    trainer.optimizer = None
+    trainer.accelerator = Accelerator()
+    trainer.current_gradient_accumulation_steps = 2
+    trainer._layer_offload_ctx = nullcontext()
+    trainer.activation_offload_context = nullcontext()
+    trainer._prepare_inputs = lambda batch: batch
+    trainer.compute_loss_context_manager = nullcontext
+    logged = []
+    trainer.log = logged.append
+    inputs = {
+        "input_ids": torch.tensor([[1, 0, 2], [0, 1, 2], [1, 2, 0], [0, 2, 1]]),
+        "attention_mask": torch.ones(4, 3),
+        "labels": torch.tensor(
+            [[-100, 0, 2], [-100, 1, 2], [-100, 2, 0], [-100, 2, 1]]
+        ),
+        "is_forget": torch.tensor([False, True, False, True]),
+    }
+    return Model, trainer, inputs, logged
+
+
+def test_maxent_sam_at_zero_radius_matches_maxent_gradient(
+    me_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    Model, trainer, inputs, _ = _maxent_sam_fixture(torch, me_training_module, 0.0)
+
+    maxent_model = Model()
+    (trainer.compute_loss(maxent_model, inputs) / 2).backward()
+    sam_model = Model()
+    trainer.training_step(sam_model, inputs)
+
+    for name in ("forget_scale", "retain_scale"):
+        torch.testing.assert_close(
+            getattr(sam_model, name).grad, getattr(maxent_model, name).grad
+        )
+
+
+def test_maxent_sam_perturbs_forget_only_and_restores_weights(
+    me_training_module,
+) -> None:
+    torch = pytest.importorskip("torch")
+    rho = 0.05
+    Model, trainer, inputs, logged = _maxent_sam_fixture(torch, me_training_module, rho)
+    model = Model()
+    model.forget_scale.grad = torch.tensor(4.0)
+    model.retain_scale.grad = torch.tensor(-1.0)
+
+    reference = Model()
+    forget_grad = torch.autograd.grad(
+        trainer.compute_forget_loss(reference, inputs), reference.forget_scale
+    )[0]
+    step = rho * torch.sign(forget_grad)
+    with torch.no_grad():
+        reference.forget_scale.add_(step)
+    perturbed_forget_grad = torch.autograd.grad(
+        trainer.compute_forget_loss(reference, inputs), reference.forget_scale
+    )[0]
+    with torch.no_grad():
+        reference.forget_scale.sub_(step)
+    retain_grad = torch.autograd.grad(
+        trainer.compute_retain_loss(reference, inputs), reference.retain_scale
+    )[0]
+
+    loss = trainer.training_step(model, inputs)
+
+    assert loss.isfinite()
+    assert model.forget_scale.item() == pytest.approx(0.7)
+    assert model.retain_scale.item() == pytest.approx(0.4)
+    assert model.forget_scale.grad.item() == pytest.approx(
+        4.0 + perturbed_forget_grad.item() / 2
+    )
+    assert model.retain_scale.grad.item() == pytest.approx(
+        -1.0 + retain_grad.item() / 2
+    )
+    assert perturbed_forget_grad.item() != pytest.approx(forget_grad.item())
+    assert set(logged[-1]) == {
+        "entropy_forget",
+        "loss_retain",
+        "grad_norm_forget",
+        "grad_norm_retain",
+        "grad_norm_forget_at_perturbation",
+    }
+
+
+def test_maxent_sam_rejects_nonpositive_radius(me_training_module) -> None:
+    with pytest.raises(ValueError, match="rho must be positive"):
+        me_training_module.MaxEntSAMTrainer(rho=0.0)
+
+
 def test_maxent_loss_masks_padding_and_preserves_trainer_contract(
     me_training_module,
 ) -> None:

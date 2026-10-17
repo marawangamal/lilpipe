@@ -87,6 +87,12 @@ experiments = [
                 "SAM",
                 False,
             ),
+            (
+                "z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft",
+                "MaxEnt",
+                "None",
+                False,
+            ),
         ],
     },
     {

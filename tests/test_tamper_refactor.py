@@ -430,6 +430,65 @@ def test_fifteen_pp_maxent_sweep_matches_gd_search_budget() -> None:
     ]
 
 
+def test_fifteen_pp_maxent_sam_sweep_mirrors_maxent() -> None:
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
+    plain = "z7b-wmdp-bio--15pp--unlearn-fft-me"
+    method = f"{plain}-sam-rho1e-2"
+    plain_base = yaml.safe_load((root / plain / "base.yml").read_text())
+    base = yaml.safe_load((root / method / "base.yml").read_text())
+    plain_sweep = yaml.safe_load((root / plain / "sweep.yml").read_text())
+    sweep = yaml.safe_load((root / method / "sweep.yml").read_text())
+
+    assert base["trainer_cls"] == "trainers.me.MaxEntSAMTrainer"
+    assert base["custom_trainer_args"] == {
+        **plain_base["custom_trainer_args"],
+        "rho": pytest.approx(0.01),
+    }
+    assert base["output_dir"] == f"artifacts/tamia/models/{method}"
+    assert base["wandb_name"] == method
+    assert f"/{method}/" in base["dataset_prepared_path"]
+    renamed = {
+        "trainer_cls",
+        "custom_trainer_args",
+        "output_dir",
+        "wandb_name",
+        "dataset_prepared_path",
+    }
+    assert {k: v for k, v in base.items() if k not in renamed} == {
+        k: v for k, v in plain_base.items() if k not in renamed
+    }
+
+    assert sweep["id"] == f"{method}-hpo"
+    assert {k: v for k, v in sweep.items() if k != "id"} == {
+        k: v for k, v in plain_sweep.items() if k != "id"
+    }
+    assert sweep_candidate_count(sweep) == 13
+
+
+def test_five_pp_maxent_promotes_retain_lo_candidate() -> None:
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
+    base = yaml.safe_load(
+        (root / "z7b-wmdp-bio--15pp--unlearn-fft-me/base.yml").read_text()
+    )
+    method = "z7b-wmdp-bio--5pp--unlearn-fft-me"
+    selected = yaml.safe_load((root / method / "selected.yml").read_text())
+
+    assert selected["learning_rate"] == pytest.approx(5e-6)
+    assert selected["custom_trainer_args"]["retain_coefficient"] == pytest.approx(0.25)
+    assert selected["output_dir"] == f"artifacts/tamia/models/{method}"
+    assert selected["wandb_name"] == method
+    assert "--5pp--" in selected["dataset_prepared_path"]
+    renamed = (
+        "custom_trainer_args",
+        "dataset_prepared_path",
+        "output_dir",
+        "wandb_name",
+    )
+    assert {k: v for k, v in selected.items() if k not in renamed} == {
+        k: v for k, v in base.items() if k not in renamed
+    }
+
+
 def test_fifteen_pp_npo_sweeps_vary_lr_retain_and_beta() -> None:
     root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     methods = {
