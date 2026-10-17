@@ -1,8 +1,10 @@
 import importlib.util
 from pathlib import Path
 
-import numpy as np
 import pytest
+
+# numpy is not in the root test extra; the plotting env provides it.
+np = pytest.importorskip("numpy")
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = (
