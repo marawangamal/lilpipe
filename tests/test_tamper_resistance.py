@@ -3673,7 +3673,9 @@ def test_z7b_15pp_pipeline_uses_promoted_gd_sweep_models(
     plan = lilpipe.load("configs/experiments/z7b-wmdp-bio-unlearn--15pp.yml").plan()
 
     assert len(plan.stages) == 6
-    assert sum(stage.id.startswith("train-") for stage in plan.stages) == 2
+    train_stages = [stage for stage in plan.stages if stage.id.startswith("train-")]
+    assert len(train_stages) == 2
+    assert all(stage.script.endswith("/train.sbatch") for stage in train_stages)
     eval_stages = [stage for stage in plan.stages if stage.id.startswith("eval-")]
     assert len(eval_stages) == 4
     assert all(

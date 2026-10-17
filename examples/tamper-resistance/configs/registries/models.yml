@@ -205,7 +205,7 @@ models:
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--10pp--unlearn-fft-gd--relearn-fft
     producer:
       id: train-z7b-wmdp-bio--10pp--unlearn-fft-gd--relearn-fft
-      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      script: scripts/slurm/tamia/train.sbatch
       args:
       - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--10pp--unlearn-fft-gd--relearn-fft/selected.yml
       depends_on: []
@@ -222,7 +222,7 @@ models:
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
     producer:
       id: train-z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
-      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      script: scripts/slurm/tamia/train.sbatch
       args:
       - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--10pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml
       depends_on: []
@@ -239,7 +239,7 @@ models:
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft
     producer:
       id: train-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft
-      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      script: scripts/slurm/tamia/train.sbatch
       args:
       - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft/selected.yml
       depends_on: []
@@ -256,7 +256,7 @@ models:
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
     producer:
       id: train-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
-      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      script: scripts/slurm/tamia/train.sbatch
       args:
       - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft/selected.yml
       depends_on: []
