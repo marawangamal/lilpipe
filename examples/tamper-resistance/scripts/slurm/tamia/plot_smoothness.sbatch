@@ -41,7 +41,19 @@ models=(
   # to both budgets (the 5pp directory links to the 15pp one).
   "me-5pp|MaxEnt (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125"
   "me-sam|MaxEnt + SAM (5pp/15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
+  # RMU is only trained under the 5pp budget.
+  "rmu-5pp|RMU (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu/checkpoint-125"
+  "rmu-sam-5pp|RMU + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2/checkpoint-125"
 )
+# ONLY="slug ..." measures a subset; surfaces share seeded directions, so they
+# can be plotted together with those from earlier jobs.
+if [[ -n ${ONLY:-} ]]; then
+  selected=()
+  for entry in "${models[@]}"; do
+    [[ " $ONLY " == *" ${entry%%|*} "* ]] && selected+=("$entry")
+  done
+  models=("${selected[@]}")
+fi
 for entry in "${models[@]}"; do
   IFS='|' read -r _ _ model <<<"$entry"
   if [[ $model == artifacts/* && ! -f "$model/config.json" ]]; then

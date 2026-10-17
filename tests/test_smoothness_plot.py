@@ -321,6 +321,9 @@ def test_tamia_smoothness_job_covers_every_method_at_several_scales():
     assert "OPTML-Group/NPO-SAM-WMDP" in source
     assert "z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125" in source
     assert "z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125" in source
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-rmu/checkpoint-125" in source
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2/checkpoint-125" in source
+    assert 'if [[ -n ${ONLY:-} ]]; then' in source
     # The 5pp MaxEnt + SAM directory links to the 15pp model; plot it once.
     assert "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2" not in source
     assert "python scripts/analysis/gen_smoothness.py" in source
