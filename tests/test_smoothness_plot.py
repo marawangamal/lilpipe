@@ -74,22 +74,24 @@ def test_smoothness_script_matches_the_paper_setup():
     assert 'desc="Loss surface"' in generator_source
     assert 'device_map="balanced"' in generator_source
     assert '"--model"' in generator_source
+    assert '"--direction-std"' in generator_source
     assert ".contour(" in plot_source
 
 
-def test_smoothness_directions_are_unnormalized_gaussian_samples():
+def test_smoothness_directions_are_scaled_gaussian_samples():
     torch = pytest.importorskip("torch")
     module = load_generator()
     model = torch.nn.Sequential(torch.nn.Linear(3, 2), torch.nn.LayerNorm(2))
     seed = 7
+    std = 0.1
 
     torch.manual_seed(seed)
     expected = [[], []]
     for parameter in model.parameters():
         for direction in expected:
-            direction.append(torch.randn_like(parameter))
+            direction.append(torch.randn_like(parameter) * std)
 
-    actual = module.random_directions(model, seed)
+    actual = module.random_directions(model, seed, std)
 
     for actual_direction, expected_direction in zip(actual, expected):
         assert all(
@@ -141,4 +143,5 @@ def test_tamia_smoothness_job_uses_the_existing_four_gpu_models():
     assert source.count("run_surface ") == 3
     assert "--dtype bfloat16" in source
     assert "--batch-size 2" in source
+    assert "--direction-std 0.1" in source
     assert source.count("pids+=($!)") == 2

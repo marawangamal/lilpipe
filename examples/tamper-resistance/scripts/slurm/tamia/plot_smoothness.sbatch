@@ -48,6 +48,7 @@ run_surface() {
     --model "$label" "$model" \
     --dtype bfloat16 \
     --batch-size 2 \
+    --direction-std 0.1 \
     --output "$part_dir/$slug.json" \
     "$@" >"$part_dir/$slug.log" 2>&1
 }

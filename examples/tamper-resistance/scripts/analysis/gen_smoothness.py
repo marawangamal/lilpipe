@@ -42,7 +42,7 @@ def make_batches(tokenizer, documents, limit, batch_size, sequence_length):
         yield {name: value for name, value in batch.items() if torch.is_tensor(value)}
 
 
-def random_directions(model, seed):
+def random_directions(model, seed, std):
     """Sample two Gaussian directions in parameter space."""
     import torch
 
@@ -51,7 +51,7 @@ def random_directions(model, seed):
     directions = [[], []]
     for parameter in model.parameters():
         for direction in directions:
-            direction.append(torch.randn_like(parameter))
+            direction.append(torch.randn_like(parameter) * std)
     return directions
 
 
@@ -71,14 +71,14 @@ def prediction_loss(model, batches):
     return total_loss / total_examples
 
 
-def loss_surface(model, batches, coordinates, seed):
+def loss_surface(model, batches, coordinates, seed, direction_std):
     """Evaluate loss(theta + x r1 + y r2) on a square coordinate grid."""
     import torch
     from tqdm.auto import tqdm
 
     parameters = list(model.parameters())
     center = [parameter.detach().clone() for parameter in parameters]
-    x_direction, y_direction = random_directions(model, seed)
+    x_direction, y_direction = random_directions(model, seed, direction_std)
     torch.cuda.empty_cache()
     surface = np.empty((len(coordinates), len(coordinates)))
 
@@ -110,6 +110,7 @@ def main():
     parser.add_argument("--sequence-length", type=int, default=512)
     parser.add_argument("--points", type=int, default=9)
     parser.add_argument("--radius", type=float, default=0.05)
+    parser.add_argument("--direction-std", type=float, default=0.1)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dtype", choices=("float32", "bfloat16"), default="float32")
     parser.add_argument("--tokenizer", default=configs[0][0])
@@ -143,7 +144,11 @@ def main():
         )
     )
     coordinates = np.linspace(-args.radius, args.radius, args.points)
-    results = {"coordinates": coordinates.tolist(), "models": []}
+    results = {
+        "coordinates": coordinates.tolist(),
+        "direction_std": args.direction_std,
+        "models": [],
+    }
     os.makedirs(osp.dirname(args.output) or ".", exist_ok=True)
 
     for path, label in selected_configs:
@@ -155,7 +160,9 @@ def main():
             attn_implementation="eager",
         ).eval()
         model.config.use_cache = False
-        surface = loss_surface(model, batches, coordinates, args.seed)
+        surface = loss_surface(
+            model, batches, coordinates, args.seed, args.direction_std
+        )
         results["models"].append(
             {"path": path, "label": label, "loss": surface.tolist()}
         )
