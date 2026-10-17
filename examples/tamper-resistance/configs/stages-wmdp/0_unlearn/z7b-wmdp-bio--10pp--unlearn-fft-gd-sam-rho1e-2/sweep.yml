@@ -112,6 +112,12 @@ sweeps:
     - 4.0e-06
     custom_trainer_args.retain_coefficient:
     - 0.01
+- name: refine-lr3e-6-retain-0p01
+  parameters:
+    learning_rate:
+    - 3.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 0.01
 producer:
   script: scripts/slurm/tamia/train_model_parallel.sbatch
   sbatch_args:

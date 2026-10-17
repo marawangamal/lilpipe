@@ -552,6 +552,13 @@ def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:
             "custom_trainer_args.retain_coefficient": [pytest.approx(0.01)],
         },
     }
+    assert sam["sweeps"][18] == {
+        "name": "refine-lr3e-6-retain-0p01",
+        "parameters": {
+            "learning_rate": [pytest.approx(3e-6)],
+            "custom_trainer_args.retain_coefficient": [pytest.approx(0.01)],
+        },
+    }
 
 
 def test_ten_pp_rmu_relearning_templates_use_canonical_attack() -> None:
