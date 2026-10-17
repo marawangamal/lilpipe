@@ -10,6 +10,12 @@ sweeps:
     - 1
     - 2
     - 4
+- name: legacy-point
+  parameters:
+    learning_rate:
+    - 3.28e-06
+    custom_trainer_args.retain_coefficient:
+    - 1.0
 producer:
   script: scripts/slurm/tamia/train_model_parallel.sbatch
   sbatch_args:

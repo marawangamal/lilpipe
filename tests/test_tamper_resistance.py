@@ -3666,6 +3666,40 @@ def test_minicpm5_pipeline_unifies_methods_on_one_l40s_per_stage(
         assert "fsdp_version" not in config
 
 
+def test_z7b_15pp_pipeline_uses_promoted_gd_sweep_models(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(EXAMPLE)
+    plan = lilpipe.load("configs/experiments/z7b-wmdp-bio-unlearn--15pp.yml").plan()
+
+    assert len(plan.stages) == 6
+    assert sum(stage.id.startswith("train-") for stage in plan.stages) == 2
+    eval_stages = [stage for stage in plan.stages if stage.id.startswith("eval-")]
+    assert len(eval_stages) == 4
+    assert all(
+        stage.args[3] == "artifacts/tamia/evals/thresholds/15pp"
+        for stage in eval_stages
+    )
+
+    selected = {}
+    for method in ("gd", "gd-sam-rho1e-2"):
+        slug = f"z7b-wmdp-bio--15pp--unlearn-fft-{method}"
+        selected[method] = yaml.safe_load(
+            (
+                EXAMPLE / "configs/stages-wmdp/0_unlearn" / slug / "selected.yml"
+            ).read_text()
+        )
+        assert selected[method]["output_dir"] == f"artifacts/tamia/models/{slug}"
+
+    assert selected["gd"]["learning_rate"] == 5e-6
+    assert selected["gd"]["custom_trainer_args"]["retain_coefficient"] == 4
+    assert selected["gd-sam-rho1e-2"]["learning_rate"] == 5e-6
+    assert (
+        selected["gd-sam-rho1e-2"]["custom_trainer_args"]["retain_coefficient"] == 2.2
+    )
+    assert selected["gd-sam-rho1e-2"]["custom_trainer_args"]["rho"] == 0.01
+
+
 def test_minicpm5_rmu_pipeline_and_promoted_trial(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
