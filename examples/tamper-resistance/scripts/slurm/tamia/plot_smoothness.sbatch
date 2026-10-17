@@ -44,11 +44,10 @@ run_surface() {
   local label=$3
   local model=$4
   shift 4
-  CUDA_VISIBLE_DEVICES=$gpu python scripts/analysis/plot_smoothness.py \
+  CUDA_VISIBLE_DEVICES=$gpu python scripts/analysis/gen_smoothness.py \
     --model "$label" "$model" \
     --dtype bfloat16 \
-    --data "$part_dir/$slug.json" \
-    --no-plot \
+    --output "$part_dir/$slug.json" \
     "$@" >"$part_dir/$slug.log" 2>&1
 }
 
@@ -67,6 +66,7 @@ done
 trap - EXIT
 
 python scripts/analysis/plot_smoothness.py \
-  --input "$part_dir/origin.json" \
-  --input "$part_dir/grad-diff.json" \
-  --input "$part_dir/grad-diff-sam.json"
+  "$part_dir/origin.json" \
+  "$part_dir/grad-diff.json" \
+  "$part_dir/grad-diff-sam.json" \
+  --output artifacts/figures/z7b-wmdp-bio-loss-landscape--15pp-bf16.png

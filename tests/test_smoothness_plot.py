@@ -13,6 +13,7 @@ SCRIPT = (
     / "analysis"
     / "plot_smoothness.py"
 )
+GENERATOR = SCRIPT.with_name("gen_smoothness.py")
 SBATCH = (
     ROOT
     / "examples"
@@ -50,19 +51,20 @@ def test_smoothness_plot_writes_one_comparable_surface_per_model(tmp_path):
 
 
 def test_smoothness_script_matches_the_paper_setup():
-    source = SCRIPT.read_text()
+    generator_source = GENERATOR.read_text()
+    plot_source = SCRIPT.read_text()
 
-    assert 'dataset_name = "cais/wmdp-bio-forget-corpus"' in source
-    assert '"HuggingFaceH4/zephyr-7b-beta", "Origin"' in source
-    assert '"NPO + SAM"' in source
-    assert "np.linspace(-args.radius, args.radius, args.points)" in source
-    assert "axis.set_zlim(0, 10)" in source
-    assert "parameter.add_(x_noise" in source
-    assert "parameter.add_(y_noise" in source
-    assert "parameter.copy_(original)" in source
-    assert 'desc="Loss surface"' in source
-    assert 'device_map="balanced"' in source
-    assert '"--model"' in source
+    assert 'dataset_name = "cais/wmdp-bio-forget-corpus"' in generator_source
+    assert '"HuggingFaceH4/zephyr-7b-beta", "Origin"' in generator_source
+    assert '"NPO + SAM"' in generator_source
+    assert "np.linspace(-args.radius, args.radius, args.points)" in generator_source
+    assert "parameter.add_(x_noise" in generator_source
+    assert "parameter.add_(y_noise" in generator_source
+    assert "parameter.copy_(original)" in generator_source
+    assert 'desc="Loss surface"' in generator_source
+    assert 'device_map="balanced"' in generator_source
+    assert '"--model"' in generator_source
+    assert "axis.set_zlim(0, 10)" in plot_source
 
 
 def test_smoothness_results_from_parallel_workers_can_be_combined(tmp_path):
@@ -100,6 +102,7 @@ def test_tamia_smoothness_job_uses_the_existing_four_gpu_models():
     assert "uv sync --frozen --group eval" in source
     assert "z7b-wmdp-bio--15pp--unlearn-fft-gd/checkpoint-125" in source
     assert "z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/checkpoint-125" in source
+    assert "python scripts/analysis/gen_smoothness.py" in source
     assert "python scripts/analysis/plot_smoothness.py" in source
     assert source.count("CUDA_VISIBLE_DEVICES=$gpu") == 1
     assert source.count("run_surface ") == 3
