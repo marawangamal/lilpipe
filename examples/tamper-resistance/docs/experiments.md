@@ -72,7 +72,7 @@ stage form a Cartesian product. Other settings were inherited from the method's
 | Method | Learning rate | $\lambda_{\mathrm{ret}}$ | $\lambda_{\mathrm{steer}}$ | $\rho_{\mathrm{SAM}}$ | $\lambda_{\text{weight-dist}}$ | $\lambda_{\mathrm{AO}}$ | Runs | Promoted setting |
 | --- | --- | --- | --- | --- | --- | --- | ---: | --- |
 | GD | `{5e-7, 1e-6, 2e-6, 2.5e-6, 3.28e-6}` | `{1, 3, 4, 4.25, 4.3, 4.35, 4.4, 4.45, 4.5, 4.75, 5, 10}` | - | - | - | - | 23 | learning rate `2.5e-6`; retain `4` |
-| MaxEnt | `{1e-6, 5e-6, 1e-5}` | `{1, 2, 4}` | - | - | - | - | 9 | not yet selected |
+| MaxEnt | `{1e-6, 5e-6, 1e-5}` | `{0.1, 0.25, 0.5, 1, 2, 4, 8}` | - | - | - | - | 13 | not yet selected |
 | GD + SAM | `{2.5e-6, 3.28e-6, 5e-6}` | from GD: `1` | - | `{0.001, 0.01, 0.1}` | - | - | 6 | learning rate `2e-6`; retain `1`; rho `0.01` |
 | GD + WD | - | - | - | - | `{1e5, 3e5, 1e6, 3e6, 5e6}` | - | 5 | weight distance `3e5` |
 | GD + AO | from GD: `2.5e-6` | `{1.5, 2, 3, 4, 5, 7, 10}` | - | - | - | `{0, 0.001, 0.003, 0.005, 0.01, 0.1, 1, 10, 20, 25, 30, 35, 40, 60, 80, 100}` | 25 | activation orthogonality `40`; retain `4` |

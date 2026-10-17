@@ -187,6 +187,7 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
             seen_configs.add(signature)
             artifact = f"artifacts/generated/hpo/{sweep_id}/models/{candidate_id}"
             config["output_dir"] = artifact
+            config["wandb_name"] = candidate_id
             config_path = config_dir / f"{candidate_id}.yml"
             dump_yaml(config_path, config)
 

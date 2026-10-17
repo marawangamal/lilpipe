@@ -12,7 +12,8 @@ export UV_CACHE_DIR="$SCRATCH/.cache/uv"
 export WANDB_DIR="$PWD/artifacts/tamia/logs"
 export WANDB_CACHE_DIR="$SCRATCH/.cache/wandb"
 export WANDB_DATA_DIR="$SCRATCH/.cache/wandb/staging"
-export WANDB_MODE=offline
+export WANDB_MODE=online
+export WANDB_INIT_TIMEOUT=120
 
 # Job-local environment.
 export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"

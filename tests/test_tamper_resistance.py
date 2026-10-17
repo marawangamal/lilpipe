@@ -326,8 +326,18 @@ def test_tamia_training_keeps_wandb_state_on_scratch() -> None:
 
     assert 'export WANDB_CACHE_DIR="$SCRATCH/.cache/wandb"' in script
     assert 'export WANDB_DATA_DIR="$SCRATCH/.cache/wandb/staging"' in script
-    assert "export WANDB_MODE=offline" in script
     assert 'mkdir -p "$WANDB_DIR" "$WANDB_CACHE_DIR" "$WANDB_DATA_DIR"' in script
+
+
+@pytest.mark.parametrize(
+    "name", ["train", "train_model_parallel", "optuna_worker_model_parallel"]
+)
+def test_tamia_training_logs_wandb_online_through_proxy(name: str) -> None:
+    script = (EXAMPLE / f"scripts/slurm/tamia/{name}.sbatch").read_text()
+
+    assert "export WANDB_MODE=online" in script
+    assert "export WANDB_INIT_TIMEOUT=120" in script
+    assert "module load httpproxy/1.0" in script
 
 
 def test_tamia_training_optionally_merges_lora() -> None:

@@ -110,6 +110,7 @@ def test_hpo_expansion_is_deterministic_and_supports_dotted_paths(
         (1e-5, 0.2),
         (2e-5, 0.2),
     ]
+    assert [item["wandb_name"] for item in configs] == [path.stem for path in first]
     assert yaml.safe_load(experiment_path.read_text())["models"] == [
         f"test-sweep--grid--{index:03d}" for index in range(1, 5)
     ]
@@ -412,11 +413,16 @@ def test_fifteen_pp_maxent_sweep_matches_gd_search_budget() -> None:
     assert base["output_dir"] == f"artifacts/tamia/models/{method}"
     assert "--15pp--" in base["dataset_prepared_path"]
 
-    assert sweep_candidate_count(sweep) == 9
+    assert sweep_candidate_count(sweep) == 13
     assert sweep["id"] == f"{method}-hpo"
     assert sweep["sweeps"][0]["parameters"] == {
         "learning_rate": pytest.approx([1e-6, 5e-6, 1e-5]),
         "custom_trainer_args.retain_coefficient": pytest.approx([1, 2, 4]),
+    }
+    assert sweep["sweeps"][1]["name"] == "retain-lo"
+    assert sweep["sweeps"][1]["parameters"] == {
+        "learning_rate": pytest.approx([5e-6]),
+        "custom_trainer_args.retain_coefficient": pytest.approx([0.1, 0.25, 0.5, 8]),
     }
     assert sweep["evaluations"] == [
         "wmdp-bio-final-15pp",
