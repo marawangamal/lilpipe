@@ -483,20 +483,34 @@ def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:
         },
     }
     assert sam["sweeps"][8] == {
+        "name": "refine-retain-2p25",
+        "parameters": {
+            "learning_rate": [pytest.approx(5e-6)],
+            "custom_trainer_args.retain_coefficient": [pytest.approx(2.25)],
+        },
+    }
+    assert sam["sweeps"][9] == {
+        "name": "refine-retain-2p3",
+        "parameters": {
+            "learning_rate": [pytest.approx(5e-6)],
+            "custom_trainer_args.retain_coefficient": [pytest.approx(2.3)],
+        },
+    }
+    assert sam["sweeps"][10] == {
         "name": "refine-retain-2p4",
         "parameters": {
             "learning_rate": [pytest.approx(5e-6)],
             "custom_trainer_args.retain_coefficient": [pytest.approx(2.4)],
         },
     }
-    assert sam["sweeps"][9] == {
+    assert sam["sweeps"][11] == {
         "name": "refine-retain-2p5",
         "parameters": {
             "learning_rate": [pytest.approx(5e-6)],
             "custom_trainer_args.retain_coefficient": [pytest.approx(2.5)],
         },
     }
-    assert sam["sweeps"][10] == {
+    assert sam["sweeps"][12] == {
         "name": "refine-retain-3p0",
         "parameters": {
             "learning_rate": [pytest.approx(5e-6)],
