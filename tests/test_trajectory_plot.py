@@ -37,6 +37,12 @@ def test_trajectory_plot_uses_one_tidy_seaborn_plot():
     assert '"model": "z7b--10pp"' in source
     assert '"rootdir": "artifacts/tamia/evals/thresholds/10pp"' in source
     assert '"output": "relearning-attack-z7b--10pp"' in source
+    assert '"model": "optml-z7b--15pp"' in source
+    assert '"output": "relearning-attack-optml-z7b--15pp"' in source
+    assert '"optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft"' in source
+    assert (
+        '"optml-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft"' in source
+    )
     assert '"base_rootdir": "artifacts/tamia/evals"' in source
     assert '"steps": range(0, 17, 4)' in source
     assert 'steps = experiment.get("steps", range(0, 126, 25))' in source

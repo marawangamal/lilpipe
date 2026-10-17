@@ -128,6 +128,28 @@ experiments = [
             ),
         ],
     },
+    {
+        "model": "optml-z7b--15pp",
+        "rootdir": "artifacts/tamia/evals/thresholds/15pp",
+        "base_rootdir": "artifacts/tamia/evals",
+        "output": "relearning-attack-optml-z7b--15pp",
+        "steps": range(0, 17, 4),
+        "configs": [
+            ("z7b-base", "Base model", "Base model", True),
+            (
+                "optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft",
+                "GD",
+                "None",
+                False,
+            ),
+            (
+                "optml-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft",
+                "GD",
+                "SAM",
+                False,
+            ),
+        ],
+    },
 ]
 
 tasks = {
