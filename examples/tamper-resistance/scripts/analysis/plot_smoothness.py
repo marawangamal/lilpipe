@@ -13,7 +13,7 @@ from matplotlib.ticker import MaxNLocator
 figure_dir = "artifacts/figures"
 
 
-def plot_surfaces(results, output, zlim=None):
+def plot_surfaces(results, output, zlim=(0, 10)):
     coordinates = np.asarray(results["coordinates"])
     x, y = np.meshgrid(coordinates, coordinates)
     losses = [np.asarray(result["loss"]) for result in results["models"]]
@@ -66,7 +66,8 @@ def main():
         type=float,
         nargs=2,
         metavar=("MIN", "MAX"),
-        help="Use fixed shared z-axis limits instead of the data range",
+        default=(0, 10),
+        help="Shared z-axis limits (default: 0 10)",
     )
     parser.add_argument(
         "inputs",
