@@ -3672,21 +3672,21 @@ def test_z7b_15pp_pipeline_uses_promoted_sweep_models(
     monkeypatch.chdir(EXAMPLE)
     plan = lilpipe.load("configs/experiments/z7b-wmdp-bio-unlearn--15pp.yml").plan()
 
-    assert len(plan.stages) == 9
+    assert len(plan.stages) == 12
     train_stages = [stage for stage in plan.stages if stage.id.startswith("train-")]
-    assert len(train_stages) == 3
+    assert len(train_stages) == 4
     assert all(
         stage.script.endswith("/train_model_parallel.sbatch") for stage in train_stages
     )
     eval_stages = [stage for stage in plan.stages if stage.id.startswith("eval-")]
-    assert len(eval_stages) == 6
+    assert len(eval_stages) == 8
     assert all(
         stage.args[3] == "artifacts/tamia/evals/thresholds/15pp"
         for stage in eval_stages
     )
 
     selected = {}
-    for method in ("gd", "gd-sam-rho1e-2", "rmu"):
+    for method in ("gd", "gd-sam-rho1e-2", "rmu", "rmu-sam-rho1e-2"):
         slug = f"z7b-wmdp-bio--15pp--unlearn-fft-{method}"
         selected[method] = yaml.safe_load(
             (
@@ -3715,6 +3715,11 @@ def test_z7b_15pp_pipeline_uses_promoted_sweep_models(
     assert selected["rmu"]["learning_rate"] == 1e-5
     assert selected["rmu"]["custom_trainer_args"]["retain_coefficient"] == 300
     assert selected["rmu"]["custom_trainer_args"]["steering_coefficient"] == 6.5
+    assert selected["rmu-sam-rho1e-2"]["learning_rate"] == 1e-5
+    assert selected["rmu-sam-rho1e-2"]["custom_trainer_args"][
+        "retain_coefficient"
+    ] == 300
+    assert selected["rmu-sam-rho1e-2"]["custom_trainer_args"]["rho"] == 0.01
 
 
 def test_optml_z7b_15pp_pipeline_relearns_published_models(

@@ -132,6 +132,12 @@ experiments = [
                 "None",
                 False,
             ),
+            (
+                "z7b-wmdp-bio--15pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft",
+                "RMU",
+                "SAM",
+                False,
+            ),
         ],
     },
     {
