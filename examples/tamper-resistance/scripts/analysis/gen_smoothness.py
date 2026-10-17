@@ -9,7 +9,7 @@ from itertools import product
 import numpy as np
 
 configs = [
-    ("HuggingFaceH4/zephyr-7b-beta", "Origin"),
+    ("HuggingFaceH4/zephyr-7b-beta", "Base model"),
     ("artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-npo", "NPO"),
     (
         "artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-npo-sam-rho1e-3",
@@ -71,35 +71,47 @@ def prediction_loss(model, batches):
     return total_loss / total_examples
 
 
-def loss_surface(model, batches, coordinates, seed, direction_std):
-    """Evaluate loss(theta + x r1 + y r2) on a square coordinate grid."""
+def loss_surfaces(model, batches, coordinates, seed, direction_stds):
+    """Evaluate loss(theta + x r1 + y r2) on a square grid for each direction scale.
+
+    The Gaussian directions are sampled once per model and rescaled for every
+    standard deviation, so the surfaces differ only in the perturbation radius.
+    """
     import torch
     from tqdm.auto import tqdm
 
     parameters = list(model.parameters())
     center = [parameter.detach().clone() for parameter in parameters]
-    x_direction, y_direction = random_directions(model, seed, direction_std)
+    x_direction, y_direction = random_directions(model, seed, 1.0)
     torch.cuda.empty_cache()
-    surface = np.empty((len(coordinates), len(coordinates)))
+    surfaces = {}
 
-    points = product(enumerate(coordinates), enumerate(coordinates))
-    progress = tqdm(points, total=surface.size, desc="Loss surface", unit="point")
-    for (row, y), (column, x) in progress:
-        with torch.no_grad():
-            for parameter, original, x_noise, y_noise in zip(
-                parameters, center, x_direction, y_direction
-            ):
-                parameter.copy_(original)
-                parameter.add_(x_noise, alpha=float(x))
-                parameter.add_(y_noise, alpha=float(y))
-        surface[row, column] = prediction_loss(model, batches)
-        progress.set_postfix(loss=f"{surface[row, column]:.4f}")
+    for direction_std in direction_stds:
+        surface = np.empty((len(coordinates), len(coordinates)))
+        points = product(enumerate(coordinates), enumerate(coordinates))
+        progress = tqdm(
+            points,
+            total=surface.size,
+            desc=f"Loss surface σ={direction_std:g}",
+            unit="point",
+        )
+        for (row, y), (column, x) in progress:
+            with torch.no_grad():
+                for parameter, original, x_noise, y_noise in zip(
+                    parameters, center, x_direction, y_direction
+                ):
+                    parameter.copy_(original)
+                    parameter.add_(x_noise, alpha=float(x * direction_std))
+                    parameter.add_(y_noise, alpha=float(y * direction_std))
+            surface[row, column] = prediction_loss(model, batches)
+            progress.set_postfix(loss=f"{surface[row, column]:.4f}")
+        surfaces[direction_std] = surface
 
     with torch.no_grad():
         for parameter, original in zip(parameters, center):
             parameter.copy_(original)
 
-    return surface
+    return surfaces
 
 
 def main():
@@ -110,7 +122,13 @@ def main():
     parser.add_argument("--sequence-length", type=int, default=512)
     parser.add_argument("--points", type=int, default=9)
     parser.add_argument("--radius", type=float, default=0.05)
-    parser.add_argument("--direction-std", type=float, default=0.03)
+    parser.add_argument(
+        "--direction-std",
+        type=float,
+        nargs="+",
+        default=[0.003, 0.01, 0.03],
+        help="Direction scales to evaluate; directions are shared across scales",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dtype", choices=("float32", "bfloat16"), default="float32")
     parser.add_argument("--tokenizer", default=configs[0][0])
@@ -146,7 +164,7 @@ def main():
     coordinates = np.linspace(-args.radius, args.radius, args.points)
     results = {
         "coordinates": coordinates.tolist(),
-        "direction_std": args.direction_std,
+        "seed": args.seed,
         "models": [],
     }
     os.makedirs(osp.dirname(args.output) or ".", exist_ok=True)
@@ -160,12 +178,18 @@ def main():
             attn_implementation="eager",
         ).eval()
         model.config.use_cache = False
-        surface = loss_surface(
+        surfaces = loss_surfaces(
             model, batches, coordinates, args.seed, args.direction_std
         )
-        results["models"].append(
-            {"path": path, "label": label, "loss": surface.tolist()}
-        )
+        for direction_std, surface in surfaces.items():
+            results["models"].append(
+                {
+                    "path": path,
+                    "label": label,
+                    "direction_std": direction_std,
+                    "loss": surface.tolist(),
+                }
+            )
         with open(args.output, "w") as handle:
             json.dump(results, handle, indent=2)
         del model

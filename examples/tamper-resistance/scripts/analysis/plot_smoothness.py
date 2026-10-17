@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import os.path as osp
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,30 +12,61 @@ import seaborn as sns
 from matplotlib.ticker import MaxNLocator
 
 figure_dir = "artifacts/figures"
+base_labels = {"Origin", "Base model"}
+budget_suffix = re.compile(r" \(\d+pp(/\d+pp)*\)$")
+
+
+def method_family(label):
+    """Name the method behind a label, e.g. "NPO + SAM (5pp)" -> "NPO"."""
+    return budget_suffix.sub("", label).replace(" + SAM", "")
+
+
+def wrap(models, max_columns):
+    return [
+        models[start : start + max_columns]
+        for start in range(0, len(models), max_columns)
+    ]
+
+
+def panel_rows(models, max_columns=4):
+    """Group models so each method shares a row with its SAM and budget variants.
+
+    The base model is placed at the start of the first row, and rows longer
+    than ``max_columns`` wrap.
+    """
+    base, families = [], {}
+    for model in models:
+        if model["label"] in base_labels:
+            base.append({**model, "label": "Base model"})
+            continue
+        families.setdefault(method_family(model["label"]), []).append(model)
+    rows = [row for family in families.values() for row in wrap(family, max_columns)]
+    rows = rows or [[]]
+    rows[0:1] = wrap(base + rows[0], max_columns) or [[]]
+    return rows
 
 
 def plot_surfaces(results, output, zlim=None):
     coordinates = np.asarray(results["coordinates"])
     x, y = np.meshgrid(coordinates, coordinates)
-    losses = [np.asarray(result["loss"]) for result in results["models"]]
-    columns = min(3, len(results["models"]))
-    rows = (len(results["models"]) + columns - 1) // columns
+    layout = panel_rows(results["models"])
+    columns = max(len(row) for row in layout)
+    rows = len(layout)
     figure = plt.figure(figsize=(4 * columns, 3.5 * rows))
+    panels = [
+        (row_index * columns + column_index + 1, result)
+        for row_index, row in enumerate(layout)
+        for column_index, result in enumerate(row)
+    ]
 
-    for index, (result, loss) in enumerate(zip(results["models"], losses), start=1):
+    for index, result in panels:
+        loss = np.asarray(result["loss"])
         panel_zlim = zlim
         if panel_zlim is None:
             panel_zlim = (float(loss.min()), float(loss.max()))
         if np.isclose(*panel_zlim):
             padding = max(abs(panel_zlim[0]), 1.0) * 0.01
             panel_zlim = (panel_zlim[0] - padding, panel_zlim[1] + padding)
-
-        center = loss[len(loss) // 2, len(loss) // 2]
-        span = loss.max() - loss.min()
-        title = result["label"]
-        if result.get("direction_std") is not None:
-            title += f"\nσ={result['direction_std']:g}"
-        title += f"\ncenter={center:.3g}  span={span:.3g}"
 
         axis = figure.add_subplot(rows, columns, index, projection="3d")
         axis.plot_surface(
@@ -47,7 +79,7 @@ def plot_surfaces(results, output, zlim=None):
             linewidth=0,
         )
         axis.set(
-            title=title,
+            title=result["label"],
             xlabel="x",
             ylabel="y",
             zlabel="z",
@@ -91,6 +123,25 @@ def merge_results(paths):
     return combined
 
 
+def select_direction_std(results, direction_std=None):
+    """Keep the surfaces for one direction scale; never mix scales in a figure."""
+    models = results["models"]
+    if direction_std is not None:
+        models = [
+            model
+            for model in models
+            if model.get("direction_std") is not None
+            and np.isclose(model["direction_std"], direction_std)
+        ]
+        if not models:
+            raise ValueError(f"no surfaces with direction_std={direction_std:g}")
+    scales = {model.get("direction_std") for model in models}
+    if len(scales) > 1:
+        listed = ", ".join(sorted(f"{scale:g}" for scale in scales if scale))
+        raise ValueError(f"surfaces mix direction scales ({listed}); pick one")
+    return {**results, "models": models}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default=osp.join(figure_dir, "smoothness.pdf"))
@@ -103,6 +154,12 @@ def main():
         help="Optional shared z-axis limits (default: automatic per panel)",
     )
     parser.add_argument(
+        "--direction-std",
+        type=float,
+        default=None,
+        help="Plot only surfaces computed with this direction scale",
+    )
+    parser.add_argument(
         "inputs",
         nargs="+",
         metavar="JSON",
@@ -111,7 +168,7 @@ def main():
     args = parser.parse_args()
 
     sns.set_theme(style="whitegrid")
-    results = merge_results(args.inputs)
+    results = select_direction_std(merge_results(args.inputs), args.direction_std)
     plot_surfaces(results, args.output, args.zlim)
 
 
