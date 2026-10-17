@@ -7,11 +7,10 @@
 
 ## Quickstart
 
-Run these commands from `examples/tamper-resistance`. Training and evaluation use
-different uv environments because their dependency groups are not compatible.
-
 ```sh
 # 0. Setup
+cd examples/tamper-resistance
+# NOTE: Training and eval use diff uv envs due to incompatible dependencies
 UV_PROJECT_ENVIRONMENT=.venv-train uv sync --locked --group train
 UV_PROJECT_ENVIRONMENT=.venv-eval uv sync --locked --group eval
 
@@ -23,7 +22,7 @@ axolotl train configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd/se
 source .venv-train/bin/activate
 axolotl train configs/stages-wmdp/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/selected.yml
 
-# 4. Run evals
+# 4. Run eval on final ckpt
 source .venv-eval/bin/activate
 CHECKPOINT=artifacts/models/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/checkpoint-16
 OUTPUT=artifacts/evals/thresholds/2pp/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/checkpoint-16
