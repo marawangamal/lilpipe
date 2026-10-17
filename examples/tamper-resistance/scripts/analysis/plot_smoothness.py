@@ -13,7 +13,7 @@ from matplotlib.ticker import MaxNLocator
 
 figure_dir = "artifacts/figures"
 base_labels = {"Origin", "Base model"}
-budget_suffix = re.compile(r" \(\d+pp\)$")
+budget_suffix = re.compile(r" \(\d+pp(/\d+pp)*\)$")
 
 
 def method_family(label):

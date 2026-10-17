@@ -165,8 +165,7 @@ def test_smoothness_plot_groups_budgets_into_rows_of_four():
         "GradDiff (15pp)",
         "GradDiff + SAM (15pp)",
         "MaxEnt (5pp)",
-        "MaxEnt + SAM (5pp)",
-        "MaxEnt + SAM (15pp)",
+        "MaxEnt + SAM (5pp/15pp)",
     ]
 
     rows = module.panel_rows([{"label": label} for label in labels])
@@ -175,7 +174,7 @@ def test_smoothness_plot_groups_budgets_into_rows_of_four():
         ["Base model", "OPTML NPO", "OPTML NPO + SAM"],
         ["NPO (5pp)", "NPO + SAM (5pp)", "NPO (15pp)", "NPO + SAM (15pp)"],
         ["GradDiff (15pp)", "GradDiff + SAM (15pp)"],
-        ["MaxEnt (5pp)", "MaxEnt + SAM (5pp)", "MaxEnt + SAM (15pp)"],
+        ["MaxEnt (5pp)", "MaxEnt + SAM (5pp/15pp)"],
     ]
     assert [
         len(row)
@@ -321,7 +320,9 @@ def test_tamia_smoothness_job_covers_every_method_at_several_scales():
     assert "OPTML-Group/NPO-WMDP" in source
     assert "OPTML-Group/NPO-SAM-WMDP" in source
     assert "z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125" in source
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125" in source
+    assert "z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125" in source
+    # The 5pp MaxEnt + SAM directory links to the 15pp model; plot it once.
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2" not in source
     assert "python scripts/analysis/gen_smoothness.py" in source
     assert "python scripts/analysis/plot_smoothness.py" in source
     assert source.count("CUDA_VISIBLE_DEVICES=$gpu") == 1

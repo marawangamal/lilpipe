@@ -37,10 +37,10 @@ models=(
   # GradDiff is only trained under the 15pp budget.
   "grad-diff-15pp|GradDiff (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd/checkpoint-125"
   "grad-diff-sam-15pp|GradDiff + SAM (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/checkpoint-125"
-  # Vanilla MaxEnt has no 15pp model yet.
+  # Vanilla MaxEnt has no 15pp model yet; one MaxEnt + SAM model is promoted
+  # to both budgets (the 5pp directory links to the 15pp one).
   "me-5pp|MaxEnt (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125"
-  "me-sam-5pp|MaxEnt + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
-  "me-sam-15pp|MaxEnt + SAM (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
+  "me-sam|MaxEnt + SAM (5pp/15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
 )
 for entry in "${models[@]}"; do
   IFS='|' read -r _ _ model <<<"$entry"
