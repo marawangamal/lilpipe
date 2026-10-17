@@ -3748,6 +3748,13 @@ def test_optml_z7b_15pp_pipeline_relearns_published_models(
         assert "fsdp_version" not in config
         assert len(config["device_map"]) == 35
 
+    eval_script = (
+        EXAMPLE / "scripts/slurm/tamia/eval_local_trajectory.sbatch"
+    ).read_text()
+    assert 'repo_cache="$HF_HOME/hub/models--${checkpoint//\\//--}"' in eval_script
+    assert 'revision=$(<"$repo_cache/refs/main")' in eval_script
+    assert 'checkpoint="$repo_cache/snapshots/$revision"' in eval_script
+
 
 def test_minicpm5_rmu_pipeline_and_promoted_trial(
     monkeypatch: pytest.MonkeyPatch,

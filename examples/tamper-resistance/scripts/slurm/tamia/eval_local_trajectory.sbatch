@@ -25,8 +25,17 @@ else
   checkpoint="$trained_model/checkpoint-$step"
 fi
 if [[ ! -f "$checkpoint/config.json" ]]; then
-  echo "Missing model checkpoint: $checkpoint" >&2
-  exit 1
+  repo_cache="$HF_HOME/hub/models--${checkpoint//\//--}"
+  if (( step != 0 )) || [[ ! -f "$repo_cache/refs/main" ]]; then
+    echo "Missing model checkpoint: $checkpoint" >&2
+    exit 1
+  fi
+  revision=$(<"$repo_cache/refs/main")
+  checkpoint="$repo_cache/snapshots/$revision"
+  if [[ ! -f "$checkpoint/config.json" ]]; then
+    echo "Missing cached model snapshot: $checkpoint" >&2
+    exit 1
+  fi
 fi
 
 module load httpproxy/1.0
