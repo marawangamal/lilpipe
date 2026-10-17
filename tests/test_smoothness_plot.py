@@ -39,25 +39,53 @@ def load_generator():
     return module
 
 
-def test_smoothness_plot_writes_one_comparable_surface_per_model(tmp_path):
+def test_smoothness_plot_uses_each_models_raw_loss_range(tmp_path):
     pytest.importorskip("matplotlib")
     module = load_script()
     output = tmp_path / "smoothness.png"
     results = {
         "coordinates": [-0.05, 0.0, 0.05],
         "models": [
-            {"label": "NPO", "loss": np.ones((3, 3)).tolist()},
-            {"label": "NPO + SAM", "loss": np.full((3, 3), 2).tolist()},
+            {
+                "label": "NPO",
+                "direction_std": 0.003,
+                "loss": np.arange(1, 10).reshape(3, 3).tolist(),
+            },
+            {
+                "label": "NPO + SAM",
+                "direction_std": 0.01,
+                "loss": np.arange(101, 110).reshape(3, 3).tolist(),
+            },
         ],
     }
 
-    module.plot_surfaces(results, output, zlim=(0, 10))
+    module.plot_surfaces(results, output)
 
     assert output.is_file()
     axes = module.plt.gcf().axes
     assert sum(axis.name == "3d" for axis in axes) == 2
     assert sum(axis.name == "rectilinear" for axis in axes) == 2
-    assert all(axis.get_zlim() == (0, 10) for axis in axes if axis.name == "3d")
+    surfaces = [axis for axis in axes if axis.name == "3d"]
+    assert [axis.get_zlim() for axis in surfaces] == [(1, 9), (101, 109)]
+    assert [axis.get_title() for axis in surfaces] == [
+        "NPO\nσ=0.003\ncenter=5  span=8",
+        "NPO + SAM\nσ=0.01\ncenter=105  span=8",
+    ]
+
+
+def test_smoothness_plot_accepts_shared_z_limits(tmp_path):
+    pytest.importorskip("matplotlib")
+    module = load_script()
+    output = tmp_path / "smoothness.png"
+    results = {
+        "coordinates": [-0.05, 0.0, 0.05],
+        "models": [{"label": "Origin", "loss": np.ones((3, 3)).tolist()}],
+    }
+
+    module.plot_surfaces(results, output, zlim=(0, 10))
+
+    axis = next(axis for axis in module.plt.gcf().axes if axis.name == "3d")
+    assert axis.get_zlim() == (0, 10)
 
 
 def test_smoothness_script_matches_the_paper_setup():
@@ -114,6 +142,7 @@ def test_smoothness_results_from_parallel_workers_can_be_combined(tmp_path):
             __import__("json").dumps(
                 {
                     "coordinates": [-0.05, 0.0, 0.05],
+                    "direction_std": 0.003,
                     "models": [{"label": label, "loss": [[1.0] * 3] * 3}],
                 }
             )
@@ -126,6 +155,7 @@ def test_smoothness_results_from_parallel_workers_can_be_combined(tmp_path):
         "Origin",
         "GradDiff",
     ]
+    assert [model["direction_std"] for model in result["models"]] == [0.003, 0.003]
 
 
 def test_tamia_smoothness_job_uses_the_existing_four_gpu_models():

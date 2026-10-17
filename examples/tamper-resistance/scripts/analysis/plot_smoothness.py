@@ -13,34 +13,45 @@ from matplotlib.ticker import MaxNLocator
 figure_dir = "artifacts/figures"
 
 
-def plot_surfaces(results, output, zlim=(0, 10)):
+def plot_surfaces(results, output, zlim=None):
     coordinates = np.asarray(results["coordinates"])
     x, y = np.meshgrid(coordinates, coordinates)
     losses = [np.asarray(result["loss"]) for result in results["models"]]
-    if zlim is None:
-        zlim = (min(loss.min() for loss in losses), max(loss.max() for loss in losses))
     figure = plt.figure(figsize=(4 * len(results["models"]), 3.5))
 
     for index, (result, loss) in enumerate(zip(results["models"], losses), start=1):
-        displayed_loss = np.clip(loss, *zlim)
+        panel_zlim = zlim
+        if panel_zlim is None:
+            panel_zlim = (float(loss.min()), float(loss.max()))
+        if np.isclose(*panel_zlim):
+            padding = max(abs(panel_zlim[0]), 1.0) * 0.01
+            panel_zlim = (panel_zlim[0] - padding, panel_zlim[1] + padding)
+
+        center = loss[len(loss) // 2, len(loss) // 2]
+        span = loss.max() - loss.min()
+        title = result["label"]
+        if result.get("direction_std") is not None:
+            title += f"\nσ={result['direction_std']:g}"
+        title += f"\ncenter={center:.3g}  span={span:.3g}"
+
         axis = figure.add_subplot(1, len(results["models"]), index, projection="3d")
         axis.plot_surface(
             x,
             y,
-            displayed_loss,
+            loss,
             cmap="viridis",
-            vmin=zlim[0],
-            vmax=zlim[1],
+            vmin=panel_zlim[0],
+            vmax=panel_zlim[1],
             linewidth=0,
         )
         axis.set(
-            title=result["label"],
+            title=title,
             xlabel="x",
             ylabel="y",
             zlabel="z",
             xticks=coordinates[::2],
             yticks=coordinates[::2],
-            zlim=zlim,
+            zlim=panel_zlim,
         )
         axis.zaxis.set_major_locator(MaxNLocator(5))
 
@@ -48,11 +59,11 @@ def plot_surfaces(results, output, zlim=(0, 10)):
         contour.contour(
             x,
             y,
-            displayed_loss,
-            levels=np.linspace(*zlim, 11),
+            loss,
+            levels=np.linspace(*panel_zlim, 11),
             cmap="viridis",
-            vmin=zlim[0],
-            vmax=zlim[1],
+            vmin=panel_zlim[0],
+            vmax=panel_zlim[1],
         )
         contour.set(xticks=[], yticks=[], xlim=axis.get_xlim(), ylim=axis.get_ylim())
 
@@ -71,7 +82,10 @@ def merge_results(paths):
             combined = {"coordinates": result["coordinates"], "models": []}
         elif result["coordinates"] != combined["coordinates"]:
             raise ValueError("cannot combine surfaces with different coordinates")
-        combined["models"].extend(result["models"])
+        for model in result["models"]:
+            model = dict(model)
+            model.setdefault("direction_std", result.get("direction_std"))
+            combined["models"].append(model)
     return combined
 
 
@@ -83,8 +97,8 @@ def main():
         type=float,
         nargs=2,
         metavar=("MIN", "MAX"),
-        default=(0, 10),
-        help="Shared z-axis limits (default: 0 10)",
+        default=None,
+        help="Optional shared z-axis limits (default: automatic per panel)",
     )
     parser.add_argument(
         "inputs",
