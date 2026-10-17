@@ -1459,17 +1459,21 @@ def test_maxent_loss_masks_padding_and_preserves_trainer_contract(
             self.forget_scale = torch.nn.Parameter(torch.tensor(0.7))
             self.retain_scale = torch.nn.Parameter(torch.tensor(0.4))
             self.forget_outputs = None
+            self.calls = []
 
-        def forward(self, input_ids, attention_mask, labels):
+        def forward(self, input_ids, attention_mask, labels=None):
             is_forget_call = torch.all(input_ids[:, 0] == 0)
+            self.calls.append((is_forget_call.item(), labels is None))
             scale = self.forget_scale if is_forget_call else self.retain_scale
             values = input_ids.float() * scale
             logits = torch.stack((values, torch.zeros_like(values), -values), dim=-1)
-            shifted_logits = logits[:, :-1].reshape(-1, logits.shape[-1])
-            shifted_labels = labels[:, 1:].reshape(-1)
-            loss = torch.nn.functional.cross_entropy(
-                shifted_logits, shifted_labels, ignore_index=-100
-            )
+            loss = None
+            if labels is not None:
+                shifted_logits = logits[:, :-1].reshape(-1, logits.shape[-1])
+                shifted_labels = labels[:, 1:].reshape(-1)
+                loss = torch.nn.functional.cross_entropy(
+                    shifted_logits, shifted_labels, ignore_index=-100
+                )
             outputs = SimpleNamespace(loss=loss, logits=logits)
             if is_forget_call:
                 self.forget_outputs = outputs
@@ -1479,16 +1483,19 @@ def test_maxent_loss_masks_padding_and_preserves_trainer_contract(
     trainer = object.__new__(me_training_module.MaxEntTrainer)
     trainer.forget_coefficient = 2.0
     trainer.retain_coefficient = 0.5
+    trainer.log_gradient_norms = False
     logged = []
     trainer.log = logged.append
     inputs = {
         "input_ids": torch.tensor([[1, 0, 2], [0, 1, 2], [1, 2, 0], [0, 2, 1]]),
         "attention_mask": torch.tensor([[1, 1, 1], [1, 1, 0], [1, 1, 1], [1, 0, 0]]),
-        "labels": torch.tensor([[-100, 0, 2], [2, 0, 1], [-100, 2, 0], [1, 2, 0]]),
+        "labels": torch.tensor(
+            [[-100, 0, 2], [-100, -100, 1], [-100, 2, 0], [-100, 2, -100]]
+        ),
         "is_forget": torch.tensor([False, True, False, True]),
     }
 
-    active_forget_ids = torch.tensor([0.0, 1.0, 0.0])
+    active_forget_ids = torch.tensor([1.0, 0.0])
     forget_values = active_forget_ids * model.forget_scale
     forget_logits = torch.stack(
         (forget_values, torch.zeros_like(forget_values), -forget_values), dim=-1
@@ -1521,20 +1528,24 @@ def test_maxent_loss_masks_padding_and_preserves_trainer_contract(
         (expected_forget + expected_retain).detach().item()
     )
     assert outputs is model.forget_outputs
+    assert model.calls == [(True, True), (False, False)]
     assert model.forget_scale.grad.item() == pytest.approx(expected_forget_grad.item())
     assert model.retain_scale.grad.item() == pytest.approx(expected_retain_grad.item())
     assert logged == [
         {
-            "loss_forget": pytest.approx(-expected_forget.detach().item()),
+            "entropy_forget": pytest.approx(
+                (-expected_forget / trainer.forget_coefficient).detach().item()
+            ),
+            "entropy_ceiling": pytest.approx(torch.log(torch.tensor(3.0)).item()),
             "loss_retain": pytest.approx(expected_retain.detach().item()),
-            "grad_norm_forget": pytest.approx(abs(expected_forget_grad.item())),
-            "grad_norm_retain": pytest.approx(abs(expected_retain_grad.item())),
         }
     ]
 
     changed_labels = dict(inputs)
     changed_labels["labels"] = inputs["labels"].clone()
-    changed_labels["labels"][inputs["is_forget"]] = torch.tensor([[0, 1, 2], [2, 1, 0]])
+    changed_labels["labels"][inputs["is_forget"]] = torch.tensor(
+        [[-100, -100, 2], [-100, 1, -100]]
+    )
     assert trainer.compute_forget_loss(model, changed_labels).item() == pytest.approx(
         expected_forget.detach().item()
     )
