@@ -7,20 +7,69 @@
 
 ## Quickstart
 
+Run these commands from `examples/tamper-resistance`. Training and evaluation use
+different uv environments because their dependency groups are not compatible.
+
 ```sh
-# Put artifacts and Slurm logs on scratch
-mkdir -p "$SCRATCH/lilpipe/examples/tamper-resistance/artifacts/tamia/logs"
-ln -sfnT "$SCRATCH/lilpipe/examples/tamper-resistance/artifacts" artifacts
+# 0. Setup
+UV_PROJECT_ENVIRONMENT=.venv-train uv sync --locked --group train
+UV_PROJECT_ENVIRONMENT=.venv-eval uv sync --locked --group eval
 
-# Run GD, GD+SAM, RMU, RMU+SAM, and other Zephyr-7B lineages
-lilpipe configs/experiments/z7b-wmdp-bio-unlearn--2pp.yml
+# 2. Run GradDiff unlearning
+source .venv-train/bin/activate
+axolotl train configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--2pp--unlearn-fft-gd/selected.yml
 
-# Plot the Zephyr-7B relearning trajectory after the jobs finish
-UV_PROJECT_ENVIRONMENT="$SCRATCH/lilpipe/examples/tamper-resistance/.venv-eval" \
-uv run --group eval python scripts/analysis/plot_trajectory.py \
+# 3. Run relearning
+source .venv-train/bin/activate
+axolotl train configs/stages-wmdp/2_relearn/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/selected.yml
+
+# 4. Run evals
+source .venv-eval/bin/activate
+CHECKPOINT=artifacts/models/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/checkpoint-16
+OUTPUT=artifacts/evals/thresholds/2pp/z7b-wmdp-bio--2pp--unlearn-fft-gd--relearn-fft/checkpoint-16
+accelerate launch --num_processes=1 -m lm_eval run \
+  --model hf \
+  --model_args "pretrained=$CHECKPOINT,dtype=bfloat16,trust_remote_code=True" \
+  --include_path lm_eval_tasks \
+  --tasks wmdp_bio_robust,mmlu_no_bio \
+  --num_fewshot 0 \
+  --batch_size 32 \
+  --output_path $OUTPUT
+
+# 5. Plot the Zephyr-7B relearning trajectory after the jobs finish
+# Note: run the above eval for every ckpt in the relearning trajectory before
+# running the plotting code
+source .venv-eval/bin/activate
+python scripts/analysis/plot_trajectory.py \
   --model z7b--2pp \
   --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--2pp.pdf
 ```
+
+## Reproduce Figure 1. using lilpipe
+
+
+```sh
+# 1. Run all unlearning and tamper resistance methods and evals
+# for the Zephyr-7B model, on SLURM.
+lilpipe configs/experiments/z7b-wmdp-bio-unlearn--2pp.yml
+
+# 2. Plot the relearning trajectory
+source .venv-eval/bin/activate 
+python scripts/analysis/plot_trajectory.py \
+  --model z7b--2pp \
+  --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--2pp.pdf
+```
+
+## Hyperparameter optimization
+
+Generate and submit the GD sweep from this directory:
+```sh
+python scripts/hpo.py generate \
+  configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--10pp--unlearn-fft-gd/sweep.yml
+
+lilpipe artifacts/generated/hpo/z7b-wmdp-bio--10pp--unlearn-fft-gd-hpo/experiment.yml
+```
+
 
 ## Project structure
 ```text
@@ -31,14 +80,4 @@ configs/
     ├── base.yml                              # training config used by the sweep
     ├── sweep.yml                             # HPO parameter grid
     └── selected.yml                          # optimal training config found
-```
-
-## Hyperparameter optimization
-
-Generate and submit the GD sweep from this directory:
-```sh
-uv run python scripts/hpo.py generate \
-  configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--10pp--unlearn-fft-gd/sweep.yml
-
-lilpipe artifacts/generated/hpo/z7b-wmdp-bio--10pp--unlearn-fft-gd-hpo/experiment.yml
 ```
