@@ -426,10 +426,14 @@ def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:
         "name": "refine-retain",
         "parameters": {
             "learning_rate": [pytest.approx(5e-6)],
-            "custom_trainer_args.retain_coefficient": [
-                pytest.approx(1.5),
-                pytest.approx(1.75),
-            ],
+            "custom_trainer_args.retain_coefficient": [pytest.approx(1.5)],
+        },
+    }
+    assert sam["sweeps"][2] == {
+        "name": "refine-retain-1p75",
+        "parameters": {
+            "learning_rate": [pytest.approx(5e-6)],
+            "custom_trainer_args.retain_coefficient": [pytest.approx(1.75)],
         },
     }
 
