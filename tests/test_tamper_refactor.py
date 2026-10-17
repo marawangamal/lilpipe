@@ -488,6 +488,16 @@ def test_fifteen_pp_npo_sweeps_vary_lr_retain_and_beta() -> None:
         else:
             assert base["custom_trainer_args"]["rho"] == pytest.approx(rho)
 
+    selected = yaml.safe_load(
+        (root / "z7b-wmdp-bio--15pp--unlearn-fft-npo/selected.yml").read_text()
+    )
+    assert selected["learning_rate"] == pytest.approx(1e-5)
+    assert selected["custom_trainer_args"]["retain_coefficient"] == pytest.approx(4)
+    assert selected["custom_trainer_args"]["beta"] == pytest.approx(0.025)
+    assert selected["output_dir"] == (
+        "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo"
+    )
+
 
 def test_ten_pp_gd_sweeps_vary_lr_and_retain() -> None:
     root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
