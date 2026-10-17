@@ -138,6 +138,18 @@ experiments = [
                 "SAM",
                 False,
             ),
+            (
+                "z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft",
+                "NPO",
+                "None",
+                False,
+            ),
+            (
+                "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft",
+                "NPO",
+                "SAM",
+                False,
+            ),
         ],
     },
     {

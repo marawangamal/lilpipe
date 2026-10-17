@@ -8,6 +8,8 @@ models:
   - z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
   - z7b-wmdp-bio--15pp--unlearn-fft-rmu--relearn-fft
   - z7b-wmdp-bio--15pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft
+  - z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft
+  - z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
 evaluations:
   - wmdp-trajectory
   - mmlu-trajectory
