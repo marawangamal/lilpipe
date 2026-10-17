@@ -43,7 +43,7 @@ def make_batches(tokenizer, documents, limit, batch_size, sequence_length):
 
 
 def random_directions(model, seed):
-    """Make two Gaussian directions with filter-wise weight normalization."""
+    """Sample two Gaussian directions in parameter space."""
     import torch
 
     torch.manual_seed(seed)
@@ -51,17 +51,7 @@ def random_directions(model, seed):
     directions = [[], []]
     for parameter in model.parameters():
         for direction in directions:
-            noise = torch.randn_like(parameter)
-            if parameter.ndim <= 1:
-                noise.zero_()
-            else:
-                weights = parameter.flatten(1)
-                noise = noise.flatten(1)
-                noise *= weights.norm(dim=1, keepdim=True) / noise.norm(
-                    dim=1, keepdim=True
-                ).clamp_min(1e-12)
-                noise = noise.reshape_as(parameter)
-            direction.append(noise)
+            direction.append(torch.randn_like(parameter))
     return directions
 
 

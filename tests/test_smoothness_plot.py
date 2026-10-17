@@ -32,6 +32,13 @@ def load_script():
     return module
 
 
+def load_generator():
+    spec = importlib.util.spec_from_file_location("gen_smoothness", GENERATOR)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_smoothness_plot_writes_one_comparable_surface_per_model(tmp_path):
     pytest.importorskip("matplotlib")
     module = load_script()
@@ -68,6 +75,29 @@ def test_smoothness_script_matches_the_paper_setup():
     assert 'device_map="balanced"' in generator_source
     assert '"--model"' in generator_source
     assert ".contour(" in plot_source
+
+
+def test_smoothness_directions_are_unnormalized_gaussian_samples():
+    torch = pytest.importorskip("torch")
+    module = load_generator()
+    model = torch.nn.Sequential(torch.nn.Linear(3, 2), torch.nn.LayerNorm(2))
+    seed = 7
+
+    torch.manual_seed(seed)
+    expected = [[], []]
+    for parameter in model.parameters():
+        for direction in expected:
+            direction.append(torch.randn_like(parameter))
+
+    actual = module.random_directions(model, seed)
+
+    for actual_direction, expected_direction in zip(actual, expected):
+        assert all(
+            torch.equal(actual_noise, expected_noise)
+            for actual_noise, expected_noise in zip(
+                actual_direction, expected_direction
+            )
+        )
 
 
 def test_smoothness_results_from_parallel_workers_can_be_combined(tmp_path):
