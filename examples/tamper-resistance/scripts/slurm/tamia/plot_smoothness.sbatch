@@ -34,6 +34,9 @@ models=(
   "grad-diff-sam|GradDiff + SAM|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/checkpoint-125"
   "optml-npo|OPTML NPO|OPTML-Group/NPO-WMDP"
   "optml-npo-sam|OPTML NPO + SAM|OPTML-Group/NPO-SAM-WMDP"
+  # MaxEnt is only trained under the 5pp budget.
+  "me-5pp|MaxEnt (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125"
+  "me-sam-5pp|MaxEnt (5pp) + SAM|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
 )
 for entry in "${models[@]}"; do
   IFS='|' read -r _ _ model <<<"$entry"

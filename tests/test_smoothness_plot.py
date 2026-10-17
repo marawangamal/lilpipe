@@ -287,6 +287,8 @@ def test_tamia_smoothness_job_covers_every_method_at_several_scales():
     assert "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/checkpoint-125" in source
     assert "OPTML-Group/NPO-WMDP" in source
     assert "OPTML-Group/NPO-SAM-WMDP" in source
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125" in source
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125" in source
     assert "python scripts/analysis/gen_smoothness.py" in source
     assert "python scripts/analysis/plot_smoothness.py" in source
     assert source.count("CUDA_VISIBLE_DEVICES=$gpu") == 1
