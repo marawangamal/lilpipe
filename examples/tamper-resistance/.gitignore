@@ -1,4 +1,6 @@
-artifacts
+artifacts/*
+!artifacts/figures/
+!artifacts/figures/**
 .venv-train
 .venv-eval
 wandb/
