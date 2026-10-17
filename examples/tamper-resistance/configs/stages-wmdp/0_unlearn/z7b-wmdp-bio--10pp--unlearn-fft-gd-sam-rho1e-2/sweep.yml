@@ -28,6 +28,18 @@ sweeps:
     - 5.0e-06
     custom_trainer_args.retain_coefficient:
     - 1.95
+- name: refine-retain-1p99
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 1.99
+- name: refine-retain-2p1
+  parameters:
+    learning_rate:
+    - 5.0e-06
+    custom_trainer_args.retain_coefficient:
+    - 2.1
 - name: refine-retain-2p5
   parameters:
     learning_rate:
