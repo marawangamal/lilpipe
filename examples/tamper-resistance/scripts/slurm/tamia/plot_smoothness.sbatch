@@ -48,7 +48,7 @@ run_surface() {
     --model "$label" "$model" \
     --dtype bfloat16 \
     --batch-size 2 \
-    --direction-std 0.1 \
+    --direction-std 0.03 \
     --output "$part_dir/$slug.json" \
     "$@" >"$part_dir/$slug.log" 2>&1
 }
@@ -71,4 +71,4 @@ python scripts/analysis/plot_smoothness.py \
   "$part_dir/origin.json" \
   "$part_dir/grad-diff.json" \
   "$part_dir/grad-diff-sam.json" \
-  --output artifacts/figures/z7b-wmdp-bio-loss-landscape--15pp-bf16.png
+  --output artifacts/figures/z7b-wmdp-bio-loss-landscape--15pp-sigma3e-2-bf16.png

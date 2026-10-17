@@ -110,7 +110,7 @@ def main():
     parser.add_argument("--sequence-length", type=int, default=512)
     parser.add_argument("--points", type=int, default=9)
     parser.add_argument("--radius", type=float, default=0.05)
-    parser.add_argument("--direction-std", type=float, default=0.1)
+    parser.add_argument("--direction-std", type=float, default=0.03)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dtype", choices=("float32", "bfloat16"), default="float32")
     parser.add_argument("--tokenizer", default=configs[0][0])

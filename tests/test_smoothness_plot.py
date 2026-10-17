@@ -143,5 +143,6 @@ def test_tamia_smoothness_job_uses_the_existing_four_gpu_models():
     assert source.count("run_surface ") == 3
     assert "--dtype bfloat16" in source
     assert "--batch-size 2" in source
-    assert "--direction-std 0.1" in source
+    assert "--direction-std 0.03" in source
+    assert "z7b-wmdp-bio-loss-landscape--15pp-sigma3e-2-bf16.png" in source
     assert source.count("pids+=($!)") == 2
