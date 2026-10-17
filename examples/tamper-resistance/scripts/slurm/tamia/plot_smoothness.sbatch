@@ -38,9 +38,9 @@ models=(
   "grad-diff-15pp|GradDiff (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd/checkpoint-125"
   "grad-diff-sam-15pp|GradDiff + SAM (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/checkpoint-125"
   # Vanilla MaxEnt has no 15pp model yet; one MaxEnt + SAM model is promoted
-  # to both budgets (the 5pp directory links to the 15pp one).
+  # to both budgets and stored under the 5pp lineage.
   "me-5pp|MaxEnt (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125"
-  "me-sam|MaxEnt + SAM (5pp/15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
+  "me-sam|MaxEnt + SAM (5pp/15pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
   # RMU is only trained under the 5pp budget.
   "rmu-5pp|RMU (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu/checkpoint-125"
   "rmu-sam-5pp|RMU + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2/checkpoint-125"
