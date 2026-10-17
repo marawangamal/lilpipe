@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import os.path as osp
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,22 +13,36 @@ from matplotlib.ticker import MaxNLocator
 
 figure_dir = "artifacts/figures"
 base_labels = {"Origin", "Base model"}
+budget_suffix = re.compile(r" \(\d+pp\)$")
 
 
-def panel_rows(models):
-    """Group models so each method shares a row with its SAM variant.
+def method_family(label):
+    """Name the method behind a label, e.g. "NPO + SAM (5pp)" -> "NPO"."""
+    return budget_suffix.sub("", label).replace(" + SAM", "")
 
-    The base model is placed at the start of the first row.
+
+def wrap(models, max_columns):
+    return [
+        models[start : start + max_columns]
+        for start in range(0, len(models), max_columns)
+    ]
+
+
+def panel_rows(models, max_columns=4):
+    """Group models so each method shares a row with its SAM and budget variants.
+
+    The base model is placed at the start of the first row, and rows longer
+    than ``max_columns`` wrap.
     """
     base, families = [], {}
     for model in models:
         if model["label"] in base_labels:
             base.append({**model, "label": "Base model"})
             continue
-        family = model["label"].removesuffix(" + SAM")
-        families.setdefault(family, []).append(model)
-    rows = list(families.values()) or [[]]
-    rows[0] = base + rows[0]
+        families.setdefault(method_family(model["label"]), []).append(model)
+    rows = [row for family in families.values() for row in wrap(family, max_columns)]
+    rows = rows or [[]]
+    rows[0:1] = wrap(base + rows[0], max_columns) or [[]]
     return rows
 
 

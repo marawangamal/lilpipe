@@ -28,15 +28,19 @@ read -r -a direction_stds <<<"${DIRECTION_STDS:-0.003 0.01 0.03 0.1}"
 # slug|label|model, in figure order.
 models=(
   "origin|Base model|HuggingFaceH4/zephyr-7b-beta"
-  "npo|NPO|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo/checkpoint-125"
-  "npo-sam|NPO + SAM|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/checkpoint-125"
-  "grad-diff|GradDiff|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd/checkpoint-125"
-  "grad-diff-sam|GradDiff + SAM|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/checkpoint-125"
   "optml-npo|OPTML NPO|OPTML-Group/NPO-WMDP"
   "optml-npo-sam|OPTML NPO + SAM|OPTML-Group/NPO-SAM-WMDP"
-  # MaxEnt is only trained under the 5pp budget.
+  "npo-5pp|NPO (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo/checkpoint-125"
+  "npo-sam-5pp|NPO + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2/checkpoint-125"
+  "npo-15pp|NPO (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo/checkpoint-125"
+  "npo-sam-15pp|NPO + SAM (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/checkpoint-125"
+  # GradDiff is only trained under the 15pp budget.
+  "grad-diff-15pp|GradDiff (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd/checkpoint-125"
+  "grad-diff-sam-15pp|GradDiff + SAM (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/checkpoint-125"
+  # Vanilla MaxEnt has no 15pp model yet.
   "me-5pp|MaxEnt (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125"
-  "me-sam-5pp|MaxEnt (5pp) + SAM|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
+  "me-sam-5pp|MaxEnt + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
+  "me-sam-15pp|MaxEnt + SAM (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
 )
 for entry in "${models[@]}"; do
   IFS='|' read -r _ _ model <<<"$entry"
@@ -101,5 +105,5 @@ for direction_std in "${direction_stds[@]}"; do
   tag=$(python -c "print(f'{float(\"$direction_std\"):.0e}'.replace('e-0', 'e-'))")
   python scripts/analysis/plot_smoothness.py "${inputs[@]}" \
     --direction-std "$direction_std" \
-    --output "artifacts/figures/z7b-wmdp-bio-loss-landscape--15pp-sigma$tag-bf16.pdf"
+    --output "artifacts/figures/z7b-wmdp-bio-loss-landscape-sigma$tag-bf16.pdf"
 done

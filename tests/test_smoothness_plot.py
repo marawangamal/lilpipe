@@ -152,6 +152,39 @@ def test_smoothness_plot_keeps_sam_variants_on_their_methods_row(tmp_path):
     }
 
 
+def test_smoothness_plot_groups_budgets_into_rows_of_four():
+    module = load_script()
+    labels = [
+        "Base model",
+        "OPTML NPO",
+        "OPTML NPO + SAM",
+        "NPO (5pp)",
+        "NPO + SAM (5pp)",
+        "NPO (15pp)",
+        "NPO + SAM (15pp)",
+        "GradDiff (15pp)",
+        "GradDiff + SAM (15pp)",
+        "MaxEnt (5pp)",
+        "MaxEnt + SAM (5pp)",
+        "MaxEnt + SAM (15pp)",
+    ]
+
+    rows = module.panel_rows([{"label": label} for label in labels])
+
+    assert [[model["label"] for model in row] for row in rows] == [
+        ["Base model", "OPTML NPO", "OPTML NPO + SAM"],
+        ["NPO (5pp)", "NPO + SAM (5pp)", "NPO (15pp)", "NPO + SAM (15pp)"],
+        ["GradDiff (15pp)", "GradDiff + SAM (15pp)"],
+        ["MaxEnt (5pp)", "MaxEnt + SAM (5pp)", "MaxEnt + SAM (15pp)"],
+    ]
+    assert [
+        len(row)
+        for row in module.panel_rows(
+            [{"label": "Base model"}] + [{"label": f"NPO ({n}pp)"} for n in range(4)]
+        )
+    ] == [4, 1]
+
+
 def test_smoothness_script_matches_the_paper_setup():
     generator_source = GENERATOR.read_text()
     plot_source = SCRIPT.read_text()
@@ -297,4 +330,4 @@ def test_tamia_smoothness_job_covers_every_method_at_several_scales():
     assert '"${DIRECTION_STDS:-0.003 0.01 0.03 0.1}"' in source
     assert '--direction-std "${direction_stds[@]}"' in source
     assert '--direction-std "$direction_std"' in source
-    assert "z7b-wmdp-bio-loss-landscape--15pp-sigma$tag-bf16.pdf" in source
+    assert "z7b-wmdp-bio-loss-landscape-sigma$tag-bf16.pdf" in source
