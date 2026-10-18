@@ -126,6 +126,7 @@ than as one Cartesian product. All non-RMU method families remain unspecified.
 | RMU | `{2.5e-5, 5e-5, 1e-4}` | `{300, 600, 1200, 2400}` | `{3.25, 6.5, 13, 30, 100, 300}` | - | - | - | `{3..23}` | `{150, 300, 500}` | - | - |
 | RMU + SAM | - | - | - | - | - | - | - | - | - | - |
 | RMU + WD | - | - | - | - | - | - | - | - | - | - |
+| RMU + WD (5pp) | from 5pp RMU: `1e-5` | from 5pp RMU: `300` | from 5pp RMU: `6.5` | - | `{0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6}` | - | 7 | weight distance `1e2` (promoted to 5pp) |
 
 The MiniCPM5-1B GD study minimizes pre-attack WMDP-Bio robust accuracy subject
 to MMLU-no-bio accuracy remaining at least `0.5062` (at most a two-point drop

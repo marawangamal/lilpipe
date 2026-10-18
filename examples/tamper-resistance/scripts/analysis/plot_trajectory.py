@@ -86,6 +86,13 @@ experiments = [
                 1,
             ),
             (
+                "z7b-wmdp-bio--5pp--unlearn-fft-rmu-wd--relearn-fft",
+                "RMU",
+                "Weight distance",
+                False,
+                1,
+            ),
+            (
                 "z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft",
                 "NPO",
                 "None",
