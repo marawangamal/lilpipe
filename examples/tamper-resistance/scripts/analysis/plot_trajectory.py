@@ -127,6 +127,13 @@ experiments = [
                 False,
                 1,
             ),
+            (
+                "z7b-wmdp-bio--5pp--unlearn-fft-me-wd--relearn-fft",
+                "MaxEnt",
+                "Weight distance",
+                False,
+                1,
+            ),
         ],
     },
     {
