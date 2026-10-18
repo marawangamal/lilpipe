@@ -1,15 +1,16 @@
+"""Plot WMDP-Bio and MMLU accuracy along relearning attacks.
+
+Each config is (eval slug, unlearning method, tamper-resistance method,
+is base model, run). Runs rank repeated attacks on one model, 1 = strongest.
+"""
+
 import argparse
 import glob
 import json
-import os
-import os.path as osp
+from itertools import zip_longest
 
 import pandas as pd
 import seaborn as sns
-from matplotlib.ticker import MaxNLocator
-
-figure_dir = "artifacts/figures"
-os.makedirs(figure_dir, exist_ok=True)
 
 experiments = [
     {
@@ -17,42 +18,48 @@ experiments = [
         "rootdir": "artifacts/mila/evals",
         "output": "relearning-attack-capability-filtered-minicpm5-1b",
         "configs": [
-            ("minicpm5-1b-base", "Base model", "Base model", True),
+            ("minicpm5-1b-base", "Base model", "Base model", True, 1),
             (
                 "minicpm5-1b-wmdp-bio--unlearn-fft-npo--relearn-fft-long",
                 "NPO",
                 "None",
                 False,
+                1,
             ),
             (
                 "minicpm5-1b-wmdp-bio--unlearn-fft-npo-sam-rho1e-3--relearn-fft-long",
                 "NPO",
                 "SAM",
                 False,
+                1,
             ),
             (
                 "minicpm5-1b-wmdp-bio--unlearn-fft-npo-weight-distance--relearn-fft-long",
                 "NPO",
                 "Weight distance",
                 False,
+                1,
             ),
             (
                 "minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long",
                 "RMU",
                 "None",
                 False,
+                1,
             ),
             (
                 "minicpm5-1b-wmdp-bio--unlearn-fft-rmu-sam-rho1e-2--relearn-fft-long",
                 "RMU",
                 "SAM",
                 False,
+                1,
             ),
             (
                 "minicpm5-1b-wmdp-bio--unlearn-fft-rmu-weight-distance--relearn-fft-long",
                 "RMU",
                 "Weight distance",
                 False,
+                1,
             ),
         ],
     },
@@ -63,48 +70,62 @@ experiments = [
         "output": "relearning-attack-z7b--5pp",
         "steps": range(0, 17, 4),
         "configs": [
-            ("z7b-base", "Base model", "Base model", True),
+            ("z7b-base", "Base", "None", True, 1),
             (
                 "z7b-wmdp-bio--5pp--unlearn-fft-rmu--relearn-fft",
                 "RMU",
                 "None",
                 False,
+                1,
             ),
             (
                 "z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft",
                 "RMU",
                 "SAM",
                 False,
+                1,
             ),
             (
                 "z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft",
                 "NPO",
                 "None",
                 False,
+                1,
             ),
             (
                 "z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft",
                 "NPO",
                 "SAM",
                 False,
+                1,
             ),
             (
                 "z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft",
                 "NPO",
                 "Weight distance",
                 False,
+                2,
+            ),
+            (
+                "z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft-s2",
+                "NPO",
+                "Weight distance",
+                False,
+                1,
             ),
             (
                 "z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft",
                 "MaxEnt",
                 "None",
                 False,
+                1,
             ),
             (
                 "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2--relearn-fft",
                 "MaxEnt",
                 "SAM",
                 False,
+                1,
             ),
         ],
     },
@@ -115,30 +136,34 @@ experiments = [
         "output": "relearning-attack-z7b--15pp",
         "steps": range(0, 17, 4),
         "configs": [
-            ("z7b-base", "Base model", "Base model", True),
+            ("z7b-base", "Base model", "Base model", True, 1),
             # (
             #     "z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft",
             #     "GD",
             #     "None",
             #     False,
+            #     1,
             # ),
             # (
             #     "z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft",
             #     "GD",
             #     "SAM",
             #     False,
+            #     1,
             # ),
             (
                 "z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft",
                 "NPO",
                 "None",
                 False,
+                1,
             ),
             (
                 "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft",
                 "NPO",
                 "SAM",
                 False,
+                1,
             ),
         ],
     },
@@ -149,160 +174,135 @@ experiments = [
         "output": "relearning-attack-optml-z7b--15pp",
         "steps": range(0, 17, 4),
         "configs": [
-            ("z7b-base", "Base model", "Base model", True),
+            ("z7b-base", "Base model", "Base model", True, 1),
             (
                 "optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft",
                 "GD",
                 "None",
                 False,
+                1,
             ),
             (
                 "optml-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft",
                 "GD",
                 "SAM",
                 False,
+                1,
             ),
             (
                 "optml-z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft",
                 "NPO",
                 "None",
                 False,
+                1,
             ),
             (
                 "optml-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam--relearn-fft",
                 "NPO",
                 "SAM",
                 False,
+                1,
             ),
         ],
     },
 ]
 
-tasks = {
-    "wmdp_bio_robust": "wmdp_bio_robust ↓",
-    "mmlu_no_bio": "mmlu_no_bio ↑",
-}
-# Okabe-Ito colors, fixed per method so a method keeps its color across figures.
-method_colors = {
-    "RMU": "#0072B2",
-    "NPO": "#D55E00",
-    "MaxEnt": "#009E73",
-    "GD": "#CC79A7",
-}
-sns.set_theme(context="paper", style="ticks", font_scale=1.5)
-parser = argparse.ArgumentParser(description="Plot relearning evaluation trajectories")
-parser.add_argument(
-    "--model",
-    choices=[experiment["model"] for experiment in experiments],
-    help="Plot only this model group (default: all groups)",
-)
-parser.add_argument("--output", help="Write one PDF or PNG file at this path")
-args = parser.parse_args()
-if args.output and not args.model:
-    parser.error("--output requires --model")
-if args.output and osp.splitext(args.output)[1].lower() != ".pdf":
-    parser.error("--output must end in .pdf")
-for experiment in experiments:
-    if args.model and experiment["model"] != args.model:
-        continue
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--model", required=True, choices=[e["model"] for e in experiments]
+    )
+    parser.add_argument("--output", type=str)
+    args = parser.parse_args()
+
+    tasks = {"wmdp_bio_robust": "wmdp_bio_robust ↓", "mmlu_no_bio": "mmlu_no_bio ↑"}
+    # Paul Tol's bright scheme: https://sronpersonalpages.nl/~pault/
+    palette = {
+        "Base": "black",
+        "RMU": "#4477AA",
+        "NPO": "#EE6677",
+        "MaxEnt": "#228833",
+        "GD": "#AA3377",
+    }
+    sns.set_theme(context="paper", style="ticks", font_scale=1.5)
+
+    experiment = next(e for e in experiments if e["model"] == args.model)
     steps = experiment.get("steps", range(0, 126, 25))
     rows = []
-    for slug, unlearning, resistance, base_model in experiment["configs"]:
-        rootdir = (
-            experiment.get("base_rootdir", experiment["rootdir"])
-            if base_model
-            else experiment["rootdir"]
-        )
-        checkpoints = glob.glob(osp.join(rootdir, slug, "checkpoint-*"))
-        for checkpoint in checkpoints:
-            step = int(osp.basename(checkpoint).split("-")[-1])
-            if step not in steps:
-                continue
-            for path in glob.glob(
-                osp.join(checkpoint, "**", "results*.json"), recursive=True
-            ):
-                with open(path) as f:
-                    results = json.load(f)["results"]
-                for task, label in tasks.items():
-                    if task not in results:
-                        continue
-                    for plot_step in steps if base_model else [step]:
-                        rows.append(
-                            {
-                                "Unlearning Method": unlearning,
-                                "Tamper Resistance Method": resistance,
-                                "step": plot_step,
-                                "eval": label,
-                                "acc": 100 * results[task]["acc,none"],
-                            }
-                        )
-
-    if not any(row["Unlearning Method"] != "Base model" for row in rows):
-        raise FileNotFoundError(
-            f'No measured trajectories found for {experiment["model"]} under '
-            f'{experiment["rootdir"]}'
-        )
-
+    for slug, unlearning, resistance, base_model, run in experiment["configs"]:
+        root = experiment["rootdir"]
+        if base_model:
+            root = experiment.get("base_rootdir", root)
+        for path in glob.glob(
+            f"{root}/{slug}/checkpoint-*/**/results*.json", recursive=True
+        ):
+            step = int(path.split("checkpoint-")[1].split("/")[0])
+            results = json.load(open(path))["results"]
+            for task, label in tasks.items():
+                if task not in results or step not in steps:
+                    continue
+                # The base model is unattacked: draw it flat across all steps.
+                for x in steps if base_model else [step]:
+                    rows.append(
+                        {
+                            "Unlearn method": unlearning,
+                            "Tamper resistance method": resistance,
+                            "Seed": run,
+                            "Step": x,
+                            "Eval": label,
+                            "Acc": 100 * results[task]["acc,none"],
+                        }
+                    )
     df = pd.DataFrame(rows)
-    methods = [
-        method for method in df["Unlearning Method"].unique() if method != "Base model"
-    ]
-    palette = {method: method_colors[method] for method in methods}
-    palette["Base model"] = "black"
+
     plot = sns.relplot(
         data=df,
-        x="step",
-        y="acc",
-        col="eval",
-        hue="Unlearning Method",
-        style="Tamper Resistance Method",
-        palette=palette,
+        kind="line",
+        x="Step",
+        y="Acc",
+        col="Eval",
+        hue="Unlearn method",
+        style="Tamper resistance method",
+        size="Seed",
+        sizes={s: 1 if s == 1 else 0.3 for s in df["Seed"].unique()},
+        palette={k: v for k, v in palette.items() if k in set(df["Unlearn method"])},
         markers=True,
         dashes=False,
-        kind="line",
-        errorbar=None,
-        height=2.6,
-        aspect=1.1,
-        linewidth=1.5,
-        markersize=6,
+        height=3.4,
+        aspect=1,
     )
-    for axis in plot.axes.flat:
-        for line in axis.lines:
-            if line.get_color() == "black":
-                line.set_marker("")
-    method_entries, resistance_entries = {}, {}
-    for label, handle in zip(plot.legend.texts, plot.legend.legend_handles):
-        if label.get_text() == "Base model":
-            handle.set_marker("")
-        text = label.get_text()
-        if text in palette:
-            method_entries.setdefault(text, handle)
-        elif text in set(df["Tamper Resistance Method"]) - {"Base model"}:
-            name = "Unlearning only" if text == "None" else f"+ {text}"
-            resistance_entries[name] = handle
-    plot.legend.remove()
-    plot.set_titles("{col_name}")
-    plot.set_axis_labels("Relearning step", "Accuracy (%)")
-    for axis in plot.axes.flat:
-        axis.set_xticks(list(steps))
-        axis.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1, 2, 5, 10]))
-        axis.grid(axis="y", alpha=0.3)
-    plot.figure.set_size_inches(5.8, 2.9)
-    plot.figure.tight_layout()
-    for row, entries in enumerate((method_entries, resistance_entries)):
-        plot.figure.legend(
-            entries.values(),
-            entries.keys(),
-            loc="upper center",
-            bbox_to_anchor=(0.5, 0.03 - 0.09 * row),
-            ncol=len(entries),
-            frameon=False,
-            handlelength=1.6,
-            columnspacing=1.2,
-        )
-    if args.output:
-        os.makedirs(osp.dirname(args.output) or ".", exist_ok=True)
-        output = args.output
-    else:
-        output = osp.join(figure_dir, f'{experiment["output"]}.pdf')
+
+    # # No markers for plain unlearning and the base model.
+    # # Labels appear twice when a level is both a hue and a style ("Base
+    # # model"): keep the coloured hue handle, take markers from the style one.
+    # legend, markers = {}, {}
+    # for text, handle in zip(plot.legend.texts, plot.legend.legend_handles):
+    #     legend.setdefault(text.get_text(), handle)
+    #     markers[text.get_text()] = handle.get_marker()
+    # unmarked = {markers[k] for k in ("None", "Base model") if k in markers}
+    # lines = [line for ax in plot.axes.flat for line in ax.lines]
+    # for line in [*plot.legend.legend_handles, *lines]:
+    #     if line.get_marker() in unmarked:
+    #         line.set_marker("")
+    # # Two legend rows below the panels: methods, then tamper resistance.
+    # methods = [m for m in palette if m in set(df["Unlearning method"])]
+    # resistances = [
+    #     r for r in legend if r in set(df["Tamper resistance"]) - {"Base model"}
+    # ]
+    # order = [k for pair in zip_longest(methods, resistances) for k in pair if k]
+    # plot.legend.remove()
+    # plot.figure.legend(
+    #     [legend[k] for k in order],
+    #     order,
+    #     loc="upper center",
+    #     bbox_to_anchor=(0.5, 0.02),
+    #     ncol=len(methods),
+    #     frameon=False,
+    # )
+    # plot.set_titles("{col_name}")
+    # plot.set_axis_labels("Relearning step", "Accuracy (%)")
+    # plot.set(xticks=list(steps))
+
+    output = args.output or f'artifacts/figures/{experiment["output"]}.pdf'
     plot.figure.savefig(output, bbox_inches="tight")
