@@ -62,18 +62,47 @@ def global_rms_distance(parameters, anchors, eps=1e-8):
 class WDBaseTrainer:
     """Add an RMS weight-distance term to an unlearning trainer.
 
-    Mix in before an unlearning trainer that exposes ``theta`` and ``theta_ref``.
-    Every argument except ``coefficient_weight_dist`` is forwarded to that trainer.
+    Mix in before an unlearning trainer. The distance is measured from the
+    anchor model; every other argument is forwarded to the unlearning trainer.
     """
 
-    def __init__(self, *args, coefficient_weight_dist=1.0, **kwargs):
+    def __init__(
+        self,
+        *args,
+        anchor_model_name_or_path,
+        coefficient_weight_dist=1.0,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
+        self.anchor_model_name_or_path = anchor_model_name_or_path
         self.coefficient_weight_dist = coefficient_weight_dist
+        self._theta_anchor = None
         self._weight_distance_logged_step = None
+
+    @property
+    def theta(self):
+        return {
+            name: parameter
+            for name, parameter in self.model.named_parameters()
+            if parameter.requires_grad
+        }
+
+    @property
+    def theta_anchor(self):
+        theta = self.theta
+        if self._theta_anchor is None:
+            self._theta_anchor = load_reference_parameters(
+                theta, self.anchor_model_name_or_path
+            )
+        if theta.keys() != self._theta_anchor.keys():
+            raise RuntimeError(
+                "trainable parameters changed after weight-distance snapshot"
+            )
+        return self._theta_anchor
 
     def compute_weight_dist_loss(self):
         return -self.coefficient_weight_dist * global_rms_distance(
-            self.theta.values(), self.theta_ref.values()
+            self.theta.values(), self.theta_anchor.values()
         )
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
@@ -90,47 +119,17 @@ class WDBaseTrainer:
         return (loss, outputs) if return_outputs else loss
 
 
-class ReferenceWeightsMixin:
-    """Load reference weights for trainers that do not keep a reference model."""
-
-    def __init__(self, *args, reference_model_name_or_path, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.reference_model_name_or_path = reference_model_name_or_path
-        self._theta_ref = None
-
-    @property
-    def theta(self):
-        return {
-            name: parameter
-            for name, parameter in self.model.named_parameters()
-            if parameter.requires_grad
-        }
-
-    @property
-    def theta_ref(self):
-        theta = self.theta
-        if self._theta_ref is None:
-            self._theta_ref = load_reference_parameters(
-                theta, self.reference_model_name_or_path
-            )
-        if theta.keys() != self._theta_ref.keys():
-            raise RuntimeError(
-                "trainable parameters changed after weight-distance snapshot"
-            )
-        return self._theta_ref
+class WDGDTrainer(WDBaseTrainer, GradDiffTrainer):
+    """Add weight distance to gradient difference."""
 
 
-class WDGDTrainer(WDBaseTrainer, ReferenceWeightsMixin, GradDiffTrainer):
-    """Add weight distance from a reference model to gradient difference."""
-
-
-class WDMaxEntTrainer(WDBaseTrainer, ReferenceWeightsMixin, MaxEntTrainer):
-    """Add weight distance from a reference model to MaxEnt."""
+class WDMaxEntTrainer(WDBaseTrainer, MaxEntTrainer):
+    """Add weight distance to MaxEnt."""
 
 
 class WDNPOTrainer(WDBaseTrainer, NPOTrainer):
-    """Add weight distance from NPO's reference model."""
+    """Add weight distance to NPO."""
 
 
 class WDRMUTrainer(WDBaseTrainer, RMUTrainer):
-    """Add weight distance from RMU's reference model."""
+    """Add weight distance to RMU."""

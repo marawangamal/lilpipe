@@ -573,8 +573,8 @@ def test_wd_adds_distance_to_unlearning_loss(
     trainer = object.__new__(getattr(weight_dist_training_module, trainer_name))
     trainer.coefficient_weight_dist = 2.0
     trainer.model = model
-    trainer.reference_model_name_or_path = "reference-model"
-    trainer._theta_ref = {"weight": torch.zeros_like(model.weight)}
+    trainer.anchor_model_name_or_path = "anchor-model"
+    trainer._theta_anchor = {"weight": torch.zeros_like(model.weight)}
     trainer._weight_distance_logged_step = None
     trainer.state = SimpleNamespace(global_step=0)
     logged = []
@@ -590,25 +590,33 @@ def test_wd_adds_distance_to_unlearning_loss(
     assert model.weight.grad.abs().sum() > 0
 
 
-@pytest.mark.parametrize("parent_name", ["NPOTrainer", "RMUTrainer"])
+@pytest.mark.parametrize(
+    "parent_name", ["GradDiffTrainer", "MaxEntTrainer", "NPOTrainer", "RMUTrainer"]
+)
 def test_wd_forwards_unlearning_arguments(
     weight_dist_training_module, monkeypatch, parent_name
 ) -> None:
     received = {}
     parent = getattr(weight_dist_training_module, parent_name)
     monkeypatch.setattr(parent, "__init__", lambda _, **kwargs: received.update(kwargs))
-    trainer_cls = getattr(weight_dist_training_module, f"WD{parent_name}")
+    trainer_cls = next(
+        cls
+        for name, cls in vars(weight_dist_training_module).items()
+        if name.startswith("WD") and parent in cls.__mro__
+    )
 
     trainer = trainer_cls(
+        anchor_model_name_or_path="anchor-model",
+        coefficient_weight_dist=100.0,
         reference_model_name_or_path="reference-model",
         retain_coefficient=4.0,
-        coefficient_weight_dist=100.0,
     )
 
     assert received == {
         "reference_model_name_or_path": "reference-model",
         "retain_coefficient": 4.0,
     }
+    assert trainer.anchor_model_name_or_path == "anchor-model"
     assert trainer.coefficient_weight_dist == 100.0
 
 
@@ -636,51 +644,12 @@ def test_reference_parameter_loader_strips_framework_wrapper_names(
     torch.testing.assert_close(reference_parameters[runtime_name], expected)
 
 
-@pytest.mark.parametrize(
-    "trainer_name, parent_name",
-    [("WDGDTrainer", "GradDiffTrainer"), ("WDMaxEntTrainer", "MaxEntTrainer")],
-)
-def test_wd_with_own_reference_forwards_unlearning_arguments(
-    weight_dist_training_module, monkeypatch, trainer_name, parent_name
-) -> None:
-    calls = []
-
-    def init(_, *args, **kwargs):
-        calls.append((args, kwargs))
-
-    parent = getattr(weight_dist_training_module, parent_name)
-    monkeypatch.setattr(parent, "__init__", init)
-    trainer = getattr(weight_dist_training_module, trainer_name)(
-        "model",
-        forget_coefficient=2.0,
-        retain_coefficient=3.0,
-        coefficient_weight_dist=1e6,
-        reference_model_name_or_path="reference-model",
-        sampling="authors",
-    )
-
-    assert calls == [
-        (
-            ("model",),
-            {
-                "forget_coefficient": 2.0,
-                "retain_coefficient": 3.0,
-                "sampling": "authors",
-            },
-        )
-    ]
-    assert trainer.coefficient_weight_dist == 1e6
-    assert trainer.reference_model_name_or_path == "reference-model"
-
-
-def test_wd_gd_requires_reference_model(weight_dist_training_module) -> None:
-    with pytest.raises(TypeError, match="reference_model_name_or_path"):
+def test_wd_requires_anchor_model(weight_dist_training_module) -> None:
+    with pytest.raises(TypeError, match="anchor_model_name_or_path"):
         weight_dist_training_module.WDGDTrainer("model")
 
 
-def test_wd_gd_loads_explicit_reference_model(
-    weight_dist_training_module, monkeypatch
-) -> None:
+def test_wd_loads_anchor_model_once(weight_dist_training_module, monkeypatch) -> None:
     torch = pytest.importorskip("torch")
     model = torch.nn.Linear(2, 1, bias=False)
     expected = {"weight": torch.full_like(model.weight, 7)}
@@ -691,13 +660,14 @@ def test_wd_gd_loads_explicit_reference_model(
         return expected
 
     monkeypatch.setattr(weight_dist_training_module, "load_reference_parameters", load)
-    trainer = object.__new__(weight_dist_training_module.WDGDTrainer)
+    trainer = object.__new__(weight_dist_training_module.WDMaxEntTrainer)
     trainer.model = model
-    trainer.reference_model_name_or_path = "reference-model"
-    trainer._theta_ref = None
+    trainer.anchor_model_name_or_path = "anchor-model"
+    trainer._theta_anchor = None
 
-    assert trainer.theta_ref == expected
-    assert calls == [({"weight": model.weight}, "reference-model")]
+    assert trainer.theta_anchor == expected
+    assert trainer.theta_anchor == expected
+    assert calls == [({"weight": model.weight}, "anchor-model")]
 
 
 def test_src_grad_diff_logs_component_losses_and_gradient_norms(

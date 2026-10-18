@@ -4,6 +4,7 @@ plugins:
 trainer_cls: trainers.wd.WDNPOTrainer
 custom_trainer_args:
   reference_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
+  anchor_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
   coefficient_weight_dist: 1000.0
   beta: 0.01
   retain_coefficient: 1.0
