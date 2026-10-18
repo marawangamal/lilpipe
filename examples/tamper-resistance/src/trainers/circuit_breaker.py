@@ -9,7 +9,7 @@ from axolotl.core.trainers.base import AxolotlTrainer
 from trainers.gd_sam import sam_perturbation
 from trainers.gradient_metrics import gradient_dict_l2_norm
 from trainers.sampling import MixedSourceSampler
-from trainers.weight_distance import load_reference_parameters
+from trainers.utils import load_reference_parameters
 
 TARGET_LAYERS = (5, 10, 15, 20, 25, 30)
 

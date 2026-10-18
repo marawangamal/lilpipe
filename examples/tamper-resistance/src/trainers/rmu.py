@@ -6,11 +6,10 @@ import torch
 import torch.nn.functional as F
 from axolotl.core.trainers.base import AxolotlTrainer
 
-from trainers.activation_orthogonality import ActivationOrthogonalityMixin
 from trainers.gd_sam import sam_perturbation
 from trainers.gradient_metrics import gradient_dict_l2_norm
 from trainers.sampling import MixedSourceSampler
-from trainers.weight_distance import global_rms_distance, load_reference_parameters
+from trainers.utils import load_reference_parameters
 
 
 class RMUTrainer(AxolotlTrainer):
@@ -188,49 +187,6 @@ class RMUTrainer(AxolotlTrainer):
         return (loss, {}) if return_outputs else loss
 
 
-class RMUAOTrainer(ActivationOrthogonalityMixin, RMUTrainer):
-    """Add forget-set activation orthogonality to RMU."""
-
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        forget_inputs, _ = self.split_sources(inputs)
-        if forget_inputs["input_ids"].shape[0] < 2:
-            raise ValueError("RMU+AO requires at least two forget rows per batch")
-
-        hidden_states = model(
-            **forget_inputs,
-            output_hidden_states=True,
-            use_cache=False,
-        ).hidden_states
-        loss_forget = self.compute_forget_loss_from_hidden_states(
-            hidden_states, forget_inputs
-        )
-        loss_retain = self.compute_retain_loss(model, inputs)
-        loss_activation_orthogonality = self.compute_activation_orthogonality_loss(
-            hidden_states, forget_inputs["attention_mask"]
-        )
-        loss = loss_forget + loss_retain + loss_activation_orthogonality
-
-        step = self.state.global_step
-        if step != self._rmu_logged_step:
-            self.log(
-                {
-                    "loss_forget": loss_forget.detach().item(),
-                    "loss_retain": loss_retain.detach().item(),
-                    "loss_activation_orthogonality": (
-                        loss_activation_orthogonality.detach().item()
-                    ),
-                }
-            )
-            self._rmu_logged_step = step
-
-        outputs = {
-            "loss_forget": loss_forget,
-            "loss_retain": loss_retain,
-            "loss_activation_orthogonality": loss_activation_orthogonality,
-        }
-        return (loss, outputs) if return_outputs else loss
-
-
 class RMUSAMTrainer(RMUTrainer):
     """Apply SAM to RMU's forget objective."""
 
@@ -313,28 +269,3 @@ class RMUSAMTrainer(RMUTrainer):
         return (
             (loss_forget + loss_retain) / self.current_gradient_accumulation_steps
         ).detach()
-
-
-class RMUWeightDistanceTrainer(RMUTrainer):
-    """Apply RMU while maximizing RMS distance from the reference model."""
-
-    def __init__(self, *args, coefficient_weight_dist=1.0, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.coefficient_weight_dist = coefficient_weight_dist
-        self._weight_distance_logged_step = None
-
-    def compute_weight_dist_loss(self):
-        return -self.coefficient_weight_dist * global_rms_distance(
-            self.theta.values(), self.theta_ref.values()
-        )
-
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        loss_rmu = self.compute_rmu_loss(model, inputs)
-        loss_weight_dist = self.compute_weight_dist_loss()
-        loss = loss_rmu + loss_weight_dist
-
-        step = self.state.global_step
-        if step != self._weight_distance_logged_step:
-            self.log({"loss_weight_dist": loss_weight_dist.detach().item()})
-            self._weight_distance_logged_step = step
-        return (loss, {}) if return_outputs else loss

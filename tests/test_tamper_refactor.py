@@ -687,7 +687,7 @@ def test_tamia_train_launchers_expose_refactored_python_packages() -> None:
 
 
 def test_weight_distance_accumulates_model_parallel_terms_on_one_device() -> None:
-    source = (EXAMPLE / "src/trainers/weight_distance.py").read_text()
+    source = (EXAMPLE / "src/trainers/wd.py").read_text()
     assert "value_squared + squared.to(device)" in source
     assert "gradient_squared + squared.to(device)" in source
 

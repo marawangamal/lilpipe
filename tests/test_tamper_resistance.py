@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import math
 import random
 from pathlib import Path
 from types import SimpleNamespace
@@ -210,23 +211,7 @@ def weight_dist_training_module():
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script("src/trainers/weight_distance.py", "weight_dist_training")
-    finally:
-        sys.path.remove(str(EXAMPLE / "src"))
-
-
-@pytest.fixture(scope="module")
-def gd_weight_dist_training_module():
-    pytest.importorskip("torch")
-    pytest.importorskip("axolotl")
-    import sys
-
-    sys.path.insert(0, str(EXAMPLE / "src"))
-    try:
-        return load_script(
-            "src/trainers/gd_weight_distance.py",
-            "gd_weight_dist_training",
-        )
+        return load_script("src/trainers/wd.py", "wd_training")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
@@ -252,23 +237,7 @@ def ao_training_module():
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script(
-            "src/trainers/activation_orthogonality.py",
-            "activation_orthogonality_training",
-        )
-    finally:
-        sys.path.remove(str(EXAMPLE / "src"))
-
-
-@pytest.fixture(scope="module")
-def gd_ao_training_module():
-    pytest.importorskip("torch")
-    pytest.importorskip("axolotl")
-    import sys
-
-    sys.path.insert(0, str(EXAMPLE / "src"))
-    try:
-        return load_script("src/trainers/gd_ao.py", "gd_ao_training")
+        return load_script("src/trainers/ao.py", "ao_training")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
@@ -1195,46 +1164,67 @@ def test_rmu_control_vector_has_fixed_norm_and_seed(rmu_training_module) -> None
     torch.testing.assert_close(control, second.control_vector(activation))
 
 
-def test_weight_distance_trainer_combines_retain_and_distance_losses(
-    weight_dist_training_module,
+@pytest.mark.parametrize(
+    "trainer_name, parent_name",
+    [
+        ("WDGDTrainer", "GradDiffTrainer"),
+        ("WDNPOTrainer", "NPOTrainer"),
+        ("WDRMUTrainer", "RMUTrainer"),
+    ],
+)
+def test_wd_adds_distance_to_unlearning_loss(
+    weight_dist_training_module, monkeypatch, trainer_name, parent_name
 ) -> None:
     torch = pytest.importorskip("torch")
-
-    class Model(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.weight = torch.nn.Parameter(torch.tensor(2.0))
-
-        def forward(self, input_ids, attention_mask, labels):
-            return SimpleNamespace(loss=self.weight.square())
-
-    model = Model()
-    trainer = object.__new__(weight_dist_training_module.WeightDistanceTrainer)
-    trainer.model = model
+    model = torch.nn.Linear(2, 1, bias=False)
+    with torch.no_grad():
+        model.weight.copy_(torch.tensor([[3.0, 4.0]]))
+    outputs = SimpleNamespace(loss=torch.tensor(0.0))
+    monkeypatch.setattr(
+        getattr(weight_dist_training_module, parent_name),
+        "compute_loss",
+        lambda *args, **kwargs: (torch.tensor(10.0), outputs),
+    )
+    trainer = object.__new__(getattr(weight_dist_training_module, trainer_name))
     trainer.coefficient_weight_dist = 2.0
-    trainer._theta_ref = {"weight": torch.tensor(0.0)}
+    trainer.model = model
+    trainer.reference_model_name_or_path = "reference-model"
+    trainer._theta_ref = {"weight": torch.zeros_like(model.weight)}
     trainer._weight_distance_logged_step = None
     trainer.state = SimpleNamespace(global_step=0)
     logged = []
     trainer.log = logged.append
-    inputs = {
-        "input_ids": torch.ones(1, 1, dtype=torch.long),
-        "attention_mask": torch.ones(1, 1, dtype=torch.long),
-        "labels": torch.ones(1, 1, dtype=torch.long),
-    }
 
-    loss, returned_outputs = trainer.compute_loss(model, inputs, return_outputs=True)
+    loss, returned_outputs = trainer.compute_loss(model, {}, return_outputs=True)
+    expected_distance = (25 / 2 + 1e-8) ** 0.5
 
-    assert loss.item() == pytest.approx(0.0)
-    assert returned_outputs.loss.item() == pytest.approx(4.0)
-    assert logged == [
-        {
-            "loss_weight_dist": pytest.approx(-4.0),
-            "loss_retain": pytest.approx(4.0),
-        }
-    ]
+    assert loss.item() == pytest.approx(10 - 2 * expected_distance)
+    assert returned_outputs is outputs
+    assert logged == [{"loss_weight_dist": pytest.approx(-2 * expected_distance)}]
     loss.backward()
-    assert model.weight.grad.item() == pytest.approx(2.0)
+    assert model.weight.grad.abs().sum() > 0
+
+
+@pytest.mark.parametrize("parent_name", ["NPOTrainer", "RMUTrainer"])
+def test_wd_forwards_unlearning_arguments(
+    weight_dist_training_module, monkeypatch, parent_name
+) -> None:
+    received = {}
+    parent = getattr(weight_dist_training_module, parent_name)
+    monkeypatch.setattr(parent, "__init__", lambda _, **kwargs: received.update(kwargs))
+    trainer_cls = getattr(weight_dist_training_module, f"WD{parent_name}")
+
+    trainer = trainer_cls(
+        reference_model_name_or_path="reference-model",
+        retain_coefficient=4.0,
+        coefficient_weight_dist=100.0,
+    )
+
+    assert received == {
+        "reference_model_name_or_path": "reference-model",
+        "retain_coefficient": 4.0,
+    }
+    assert trainer.coefficient_weight_dist == 100.0
 
 
 def test_reference_parameter_loader_strips_framework_wrapper_names(
@@ -1261,43 +1251,44 @@ def test_reference_parameter_loader_strips_framework_wrapper_names(
     torch.testing.assert_close(reference_parameters[runtime_name], expected)
 
 
-def test_gd_weight_distance_forwards_gd_coefficients(
-    gd_weight_dist_training_module, monkeypatch
-) -> None:
+def test_wd_gd_forwards_gd_arguments(weight_dist_training_module, monkeypatch) -> None:
     calls = []
 
-    def init(_, *args, forget_coefficient, retain_coefficient, **kwargs):
-        calls.append((args, forget_coefficient, retain_coefficient, kwargs))
+    def init(_, *args, **kwargs):
+        calls.append((args, kwargs))
 
-    monkeypatch.setattr(
-        gd_weight_dist_training_module.GradDiffTrainer, "__init__", init
-    )
-    trainer = gd_weight_dist_training_module.GDWeightDistanceTrainer(
+    monkeypatch.setattr(weight_dist_training_module.GradDiffTrainer, "__init__", init)
+    trainer = weight_dist_training_module.WDGDTrainer(
         "model",
-        coefficient_forget=2.0,
-        coefficient_retain=3.0,
+        forget_coefficient=2.0,
+        retain_coefficient=3.0,
         coefficient_weight_dist=1e6,
         reference_model_name_or_path="reference-model",
         sampling="authors",
     )
 
-    assert calls == [(("model",), 2.0, 3.0, {"sampling": "authors"})]
+    assert calls == [
+        (
+            ("model",),
+            {
+                "forget_coefficient": 2.0,
+                "retain_coefficient": 3.0,
+                "sampling": "authors",
+            },
+        )
+    ]
     assert trainer.coefficient_weight_dist == 1e6
     assert trainer.reference_model_name_or_path == "reference-model"
 
 
-def test_gd_weight_distance_requires_reference_model(
-    gd_weight_dist_training_module,
-) -> None:
+def test_wd_gd_requires_reference_model(weight_dist_training_module) -> None:
     with pytest.raises(TypeError, match="reference_model_name_or_path"):
-        gd_weight_dist_training_module.GDWeightDistanceTrainer("model")
+        weight_dist_training_module.WDGDTrainer("model")
 
 
-def test_gd_weight_distance_loads_explicit_reference_model(
-    gd_weight_dist_training_module, monkeypatch
+def test_wd_gd_loads_explicit_reference_model(
+    weight_dist_training_module, monkeypatch
 ) -> None:
-    import sys
-
     torch = pytest.importorskip("torch")
     model = torch.nn.Linear(2, 1, bias=False)
     expected = {"weight": torch.full_like(model.weight, 7)}
@@ -1307,63 +1298,14 @@ def test_gd_weight_distance_loads_explicit_reference_model(
         calls.append((parameters, model_name_or_path))
         return expected
 
-    mixin_module = sys.modules[
-        gd_weight_dist_training_module.WeightDistanceMixin.__module__
-    ]
-    monkeypatch.setattr(mixin_module, "load_reference_parameters", load)
-    trainer = object.__new__(gd_weight_dist_training_module.GDWeightDistanceTrainer)
+    monkeypatch.setattr(weight_dist_training_module, "load_reference_parameters", load)
+    trainer = object.__new__(weight_dist_training_module.WDGDTrainer)
     trainer.model = model
     trainer.reference_model_name_or_path = "reference-model"
     trainer._theta_ref = None
 
     assert trainer.theta_ref == expected
     assert calls == [({"weight": model.weight}, "reference-model")]
-
-
-def test_gd_weight_distance_uses_rms_distance(
-    gd_weight_dist_training_module, monkeypatch
-) -> None:
-    torch = pytest.importorskip("torch")
-    model = torch.nn.Linear(2, 1, bias=False)
-    with torch.no_grad():
-        model.weight.copy_(torch.tensor([[3.0, 4.0]]))
-
-    outputs = SimpleNamespace(loss=torch.tensor(0.0))
-    zero_grads = (torch.zeros_like(model.weight),)
-    monkeypatch.setattr(
-        gd_weight_dist_training_module.GradDiffTrainer,
-        "compute_retain_loss",
-        lambda *args, **kwargs: (torch.tensor(7.0), zero_grads, outputs),
-    )
-    monkeypatch.setattr(
-        gd_weight_dist_training_module.GradDiffTrainer,
-        "compute_forget_loss",
-        lambda *args, **kwargs: (torch.tensor(3.0), zero_grads),
-    )
-    trainer = object.__new__(gd_weight_dist_training_module.GDWeightDistanceTrainer)
-    trainer.coefficient_weight_dist = 2.0
-    trainer.model = model
-    trainer._theta_ref = {"weight": torch.zeros_like(model.weight)}
-    trainer._weight_distance_logged_step = None
-    trainer.state = SimpleNamespace(global_step=0)
-    logged = []
-    trainer.log = logged.append
-
-    loss, returned_outputs = trainer.compute_loss(model, {}, return_outputs=True)
-    expected_distance = (25 / 2 + 1e-8) ** 0.5
-
-    assert loss.item() == pytest.approx(10 - 2 * expected_distance)
-    assert returned_outputs is outputs
-    assert logged == [
-        {
-            "loss_weight_dist": pytest.approx(-2 * expected_distance),
-            "loss_retain": pytest.approx(7.0),
-            "loss_forget": pytest.approx(3.0),
-            "grad_norm_weight_dist": pytest.approx(2**0.5),
-            "grad_norm_retain": pytest.approx(0.0),
-            "grad_norm_forget": pytest.approx(0.0),
-        }
-    ]
 
 
 @pytest.mark.parametrize(
@@ -2380,111 +2322,184 @@ def test_gd_gn_with_lora_checkpointing(
     )
 
 
-def test_ao_trainer_loss_is_retain_ce_plus_off_diagonal_cosine(
-    ao_training_module,
-) -> None:
-    torch = pytest.importorskip("torch")
+class AOToyModel:
+    """Build a toy causal LM whose forget hidden states are two fixed rows."""
 
-    class Model(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.retain_weight = torch.nn.Parameter(torch.tensor(2.0))
-            self.forget_rows = torch.nn.Parameter(
-                torch.tensor([[3.0, 4.0, 0.0], [4.0, 3.0, 0.0]])
-            )
-            self.calls = []
-
-        def forward(
-            self,
-            input_ids,
-            attention_mask=None,
-            labels=None,
-            output_hidden_states=False,
-            use_cache=None,
-        ):
-            assert output_hidden_states is (labels is None)
-            if labels is not None:
-                assert torch.equal(input_ids, labels)
-                assert torch.all(attention_mask == 1)
-                self.calls.append("retain")
-                return SimpleNamespace(
-                    loss=input_ids.float().mean() * self.retain_weight
+    @staticmethod
+    def build(torch):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.weight = torch.nn.Parameter(torch.tensor(2.0))
+                self.forget_rows = torch.nn.Parameter(
+                    torch.tensor([[3.0, 4.0, 0.0], [4.0, 3.0, 0.0]])
                 )
-            self.calls.append("forget")
-            hidden = self.forget_rows.unsqueeze(1)
-            return SimpleNamespace(hidden_states=(None, hidden, hidden))
+                self.hidden_state_calls = 0
 
-    model = Model()
-    trainer = object.__new__(ao_training_module.AOTrainer)
-    trainer.target_layers = (0, 1)
-    trainer.retain_coefficient = 1.0
-    trainer.activation_orthogonality_coefficient = 1.0
-    inputs = {
-        "input_ids": torch.tensor([[7], [2], [9], [4]]),
-        "attention_mask": torch.ones(4, 1),
-        "labels": torch.tensor([[7], [2], [9], [4]]),
-        "is_forget": torch.tensor([False, True, False, True]),
+            def forward(
+                self,
+                input_ids,
+                attention_mask=None,
+                labels=None,
+                output_hidden_states=False,
+                use_cache=None,
+            ):
+                loss = input_ids.float().mean() * self.weight
+                logits = self.weight * torch.ones(*input_ids.shape, 3)
+                if not output_hidden_states:
+                    return SimpleNamespace(loss=loss, logits=logits)
+                assert use_cache is False
+                self.hidden_state_calls += 1
+                hidden = self.forget_rows.unsqueeze(1)
+                return SimpleNamespace(
+                    loss=loss, logits=logits, hidden_states=(None, hidden, hidden)
+                )
+
+        return Model()
+
+
+AO_INPUTS = {
+    "input_ids": [[7, 0], [2, 1], [9, 2], [4, 0]],
+    "is_forget": [False, True, False, True],
+}
+
+
+def ao_inputs(torch):
+    input_ids = torch.tensor(AO_INPUTS["input_ids"])
+    return {
+        "input_ids": input_ids,
+        "attention_mask": torch.ones_like(input_ids),
+        "labels": input_ids.clone(),
+        "is_forget": torch.tensor(AO_INPUTS["is_forget"]),
     }
-    loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
-    assert loss.item() == pytest.approx(16.0 + 0.96)
-    assert outputs["loss_retain"].item() == pytest.approx(16.0)
-    assert outputs["loss_activation_orthogonality"].item() == pytest.approx(0.96)
-    assert model.calls == ["retain", "forget"]
+
+
+def ao_trainer(cls, **attributes):
+    trainer = object.__new__(cls)
+    trainer.target_layers = (0, 1)
+    trainer.activation_orthogonality_coefficient = 4.0
+    trainer.state = SimpleNamespace(global_step=0)
+    trainer._ao_logged_step = None
+    trainer.logged = []
+    trainer.log = trainer.logged.append
+    for name, value in attributes.items():
+        setattr(trainer, name, value)
+    return trainer
+
+
+def test_ao_gd_adds_orthogonality_to_gradient_difference(ao_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    model = AOToyModel.build(torch)
+    trainer = ao_trainer(
+        ao_training_module.AOGDTrainer, retain_coefficient=2.0, forget_coefficient=3.0
+    )
+
+    loss, outputs = trainer.compute_loss(model, ao_inputs(torch), return_outputs=True)
+
+    # Retain rows average 4.5 and forget rows 1.75, both scaled by weight 2.
+    assert loss.item() == pytest.approx(2 * 9.0 - 3 * 3.5 + 4 * 0.96)
+    assert outputs.hidden_states is not None
+    assert model.hidden_state_calls == 1
+    assert trainer.logged[-1]["loss_activation_orthogonality"] == pytest.approx(
+        4 * 0.96
+    )
     loss.backward()
-    assert model.retain_weight.grad.item() == pytest.approx(8.0)
-    assert model.forget_rows.grad is not None
     assert model.forget_rows.grad.abs().sum() > 0
 
 
-def test_gd_ao_loss_has_retain_forget_and_orthogonality_terms(
-    gd_ao_training_module,
-) -> None:
+def test_ao_npo_adds_orthogonality_to_npo(ao_training_module) -> None:
     torch = pytest.importorskip("torch")
-
-    class Model(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.weight = torch.nn.Parameter(torch.tensor(2.0))
-            self.forget_rows = torch.nn.Parameter(
-                torch.tensor([[3.0, 4.0, 0.0], [4.0, 3.0, 0.0]])
-            )
-
-        def forward(
-            self,
-            input_ids,
-            attention_mask=None,
-            labels=None,
-            output_hidden_states=False,
-            use_cache=None,
-        ):
-            loss = input_ids.float().mean() * self.weight
-            if not output_hidden_states:
-                return SimpleNamespace(loss=loss)
-            hidden = self.forget_rows.unsqueeze(1)
-            return SimpleNamespace(loss=loss, hidden_states=(None, hidden, hidden))
-
-    model = Model()
-    trainer = object.__new__(gd_ao_training_module.GDAOTrainer)
-    trainer.target_layers = (0, 1)
-    trainer.retain_coefficient = 2.0
-    trainer.forget_coefficient = 3.0
-    trainer.activation_orthogonality_coefficient = 4.0
-    inputs = {
-        "input_ids": torch.tensor([[7], [2], [9], [4]]),
-        "attention_mask": torch.ones(4, 1),
-        "labels": torch.tensor([[7], [2], [9], [4]]),
-        "is_forget": torch.tensor([False, True, False, True]),
+    model = AOToyModel.build(torch)
+    beta = 0.5
+    trainer = ao_trainer(
+        ao_training_module.AONPOTrainer,
+        model=model,
+        beta=beta,
+        retain_coefficient=2.0,
+        _npo_logged_step=None,
+    )
+    trainer._theta_ref = {
+        name: parameter.detach().clone() for name, parameter in model.named_parameters()
     }
 
-    loss, outputs = trainer.compute_loss(model, inputs, return_outputs=True)
+    loss, outputs = trainer.compute_loss(model, ao_inputs(torch), return_outputs=True)
 
-    assert loss.item() == pytest.approx(2 * 16.0 - 3 * 6.0 + 4 * 0.96)
-    assert outputs["loss_retain"].item() == pytest.approx(16.0)
-    assert outputs["loss_forget"].item() == pytest.approx(6.0)
-    assert outputs["loss_activation_orthogonality"].item() == pytest.approx(4 * 0.96)
+    # At the reference weights NPO's forget loss is -(2 / beta) * log(sigmoid(0)).
+    loss_forget = 2 * math.log(2) / beta
+    assert loss.item() == pytest.approx(loss_forget + 2 * 9.0 + 4 * 0.96)
+    assert outputs.hidden_states is not None
+    assert model.hidden_state_calls == 1
+    loss.backward()
+    assert model.forget_rows.grad.abs().sum() > 0
 
 
-def test_rmu_ao_loss_reuses_forget_activations(rmu_training_module) -> None:
+def test_ao_trainers_forward_unlearning_arguments(
+    ao_training_module, monkeypatch
+) -> None:
+    for parent, cls in (
+        (ao_training_module.GradDiffTrainer, ao_training_module.AOGDTrainer),
+        (ao_training_module.NPOTrainer, ao_training_module.AONPOTrainer),
+    ):
+        received = {}
+
+        def init(trainer, *args, **kwargs):
+            received.update(kwargs)
+            trainer.model = SimpleNamespace(config=SimpleNamespace(num_hidden_layers=3))
+
+        monkeypatch.setattr(parent, "__init__", init)
+        trainer = cls(
+            retain_coefficient=4.0,
+            sampling="authors",
+            activation_orthogonality_coefficient=10.0,
+        )
+
+        assert received == {"retain_coefficient": 4.0, "sampling": "authors"}
+        assert trainer.activation_orthogonality_coefficient == 10.0
+        assert trainer.target_layers == (0, 1, 2)
+
+
+def test_ao_validates_arguments(ao_training_module, monkeypatch) -> None:
+    def init(trainer, *args, **kwargs):
+        trainer.model = SimpleNamespace(config=SimpleNamespace(num_hidden_layers=2))
+
+    monkeypatch.setattr(ao_training_module.GradDiffTrainer, "__init__", init)
+    cls = ao_training_module.AOGDTrainer
+    for target_layers in ((0, 0), (1, 2), ()):
+        with pytest.raises(ValueError, match="target_layers"):
+            cls(target_layers=target_layers)
+    with pytest.raises(ValueError, match="activation_orthogonality_coefficient"):
+        cls(activation_orthogonality_coefficient=-1.0)
+    assert cls(target_layers=(1,)).target_layers == (1,)
+
+
+def test_ao_ignores_padding_tokens_in_forget_pool(ao_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    hidden = torch.tensor(
+        [
+            [[1.0, 0.0], [1.0, 1.0], [9.0, 9.0]],
+            [[2.0, 0.0], [9.0, 9.0], [9.0, 9.0]],
+        ]
+    )
+    trainer = ao_trainer(
+        ao_training_module.AOGDTrainer,
+        target_layers=(1,),
+        activation_orthogonality_coefficient=1.0,
+    )
+    loss = trainer.compute_activation_orthogonality_loss(
+        (None, hidden, hidden), torch.tensor([[1, 1, 0], [1, 0, 0]])
+    )
+    assert loss.item() == pytest.approx(1.0 / 1.25**0.5)
+
+
+def test_ao_requires_two_forget_rows(ao_training_module) -> None:
+    torch = pytest.importorskip("torch")
+    for cls in (ao_training_module.AOGDTrainer, ao_training_module.AONPOTrainer):
+        trainer = object.__new__(cls)
+        with pytest.raises(ValueError, match="at least two forget"):
+            trainer.compute_loss(None, {"is_forget": torch.tensor([False, True])})
+
+
+def test_ao_rmu_loss_reuses_forget_activations(ao_training_module) -> None:
     torch = pytest.importorskip("torch")
 
     class Model(torch.nn.Module):
@@ -2501,7 +2516,7 @@ def test_rmu_ao_loss_reuses_forget_activations(rmu_training_module) -> None:
             return SimpleNamespace(hidden_states=(None, hidden, hidden))
 
     model = Model()
-    trainer = object.__new__(rmu_training_module.RMUAOTrainer)
+    trainer = object.__new__(ao_training_module.AORMUTrainer)
     trainer.target_layer = 0
     trainer.target_layers = (0, 1)
     trainer.steering_coefficient = 1.0
@@ -2524,158 +2539,6 @@ def test_rmu_ao_loss_reuses_forget_activations(rmu_training_module) -> None:
     assert outputs["loss_retain"].item() == pytest.approx(2.0)
     assert outputs["loss_activation_orthogonality"].item() == pytest.approx(4 * 0.96)
     assert model.calls == 1
-
-
-def test_gd_ao_targets_all_transformer_layers_by_default(
-    gd_ao_training_module, monkeypatch
-) -> None:
-    def init(trainer, *args, **kwargs):
-        trainer.model = SimpleNamespace(config=SimpleNamespace(num_hidden_layers=3))
-        trainer.retain_coefficient = kwargs.get("retain_coefficient", 1.0)
-        trainer.forget_coefficient = kwargs.get("forget_coefficient", 1.0)
-
-    monkeypatch.setattr(gd_ao_training_module.GradDiffTrainer, "__init__", init)
-    trainer = gd_ao_training_module.GDAOTrainer()
-
-    assert trainer.target_layers == (0, 1, 2)
-    assert trainer.retain_coefficient == 1.0
-    assert trainer.forget_coefficient == 1.0
-    assert trainer.activation_orthogonality_coefficient == 1.0
-
-
-def test_gd_ao_uses_rmu_balanced_sampler(gd_ao_training_module) -> None:
-    class TaggedDataset:
-        def __getitem__(self, key):
-            assert key == "is_forget"
-            return [0, 1, 1, 0] * 2
-
-    trainer = SimpleNamespace(
-        train_dataset=TaggedDataset(),
-        args=SimpleNamespace(per_device_train_batch_size=4, data_seed=7, seed=42),
-    )
-    sampler = gd_ao_training_module.GDAOTrainer._get_train_sampler(trainer)
-
-    assert sampler.__class__.__name__ == "MixedSourceSampler"
-    indices = list(sampler)
-    for start in (0, 4):
-        assert (
-            sum(
-                trainer.train_dataset["is_forget"][index]
-                for index in indices[start : start + 4]
-            )
-            == 2
-        )
-
-
-def test_ao_trainer_ignores_padding_tokens_in_forget_pool(
-    ao_training_module,
-) -> None:
-    torch = pytest.importorskip("torch")
-
-    class Model(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.weight = torch.nn.Parameter(torch.tensor(1.0))
-            self.z = torch.tensor(
-                [
-                    [[1.0, 0.0], [1.0, 1.0], [9.0, 9.0]],
-                    [[2.0, 0.0], [9.0, 9.0], [9.0, 9.0]],
-                ]
-            )
-
-        def forward(
-            self,
-            input_ids,
-            attention_mask=None,
-            labels=None,
-            output_hidden_states=False,
-            use_cache=None,
-        ):
-            if labels is not None:
-                return SimpleNamespace(
-                    loss=(input_ids.float() * attention_mask).sum() * self.weight
-                )
-            return SimpleNamespace(hidden_states=(None, self.z, self.z))
-
-    model = Model()
-    trainer = object.__new__(ao_training_module.AOTrainer)
-    trainer.target_layers = (1,)
-    trainer.retain_coefficient = 1.0
-    trainer.activation_orthogonality_coefficient = 1.0
-    inputs = {
-        "input_ids": torch.tensor([[5, 0, 0], [1, 2, 3], [4, 5, 6]]),
-        "attention_mask": torch.tensor([[1, 0, 0], [1, 1, 0], [1, 0, 0]]),
-        "labels": torch.tensor([[5, 0, 0], [1, 2, 3], [4, 5, 6]]),
-        "is_forget": torch.tensor([False, True, True]),
-    }
-    loss = trainer.compute_loss(model, inputs)
-    assert loss.item() == pytest.approx(5.0 + 1.0 / 1.25**0.5)
-
-
-@pytest.mark.parametrize("sources", [[1, 1, 1], [0, 0]])
-def test_ao_trainer_requires_both_sources(ao_training_module, sources) -> None:
-    torch = pytest.importorskip("torch")
-    trainer = object.__new__(ao_training_module.AOTrainer)
-    with pytest.raises(ValueError, match="forget and retain"):
-        trainer.compute_loss(None, {"is_forget": torch.tensor(sources).bool()})
-
-
-def test_ao_trainer_requires_two_forget_rows(ao_training_module) -> None:
-    torch = pytest.importorskip("torch")
-    trainer = object.__new__(ao_training_module.AOTrainer)
-    with pytest.raises(ValueError, match="at least two forget"):
-        trainer.compute_loss(None, {"is_forget": torch.tensor([False, True])})
-
-
-def test_ao_trainer_validates_target_layers(
-    ao_training_module, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    pytest.importorskip("torch")
-    monkeypatch.setattr(
-        ao_training_module.AxolotlTrainer,
-        "__init__",
-        lambda self, *args, **kwargs: None,
-    )
-    trainer = object.__new__(ao_training_module.AOTrainer)
-    trainer.model = SimpleNamespace(config=SimpleNamespace(num_hidden_layers=2))
-    with pytest.raises(ValueError, match="target_layers"):
-        ao_training_module.AOTrainer.__init__(trainer, target_layers=(0, 0))
-    with pytest.raises(ValueError, match="target_layers"):
-        ao_training_module.AOTrainer.__init__(trainer, target_layers=(1, 2))
-    with pytest.raises(ValueError, match="target_layers"):
-        ao_training_module.AOTrainer.__init__(trainer, target_layers=())
-    with pytest.raises(ValueError, match="activation_orthogonality_coefficient"):
-        ao_training_module.AOTrainer.__init__(
-            trainer, activation_orthogonality_coefficient=-1.0, target_layers=(0, 1)
-        )
-    ao_training_module.AOTrainer.__init__(trainer, target_layers=(0, 1))
-    assert trainer.target_layers == (0, 1)
-    trainer.model = SimpleNamespace(config=SimpleNamespace(num_hidden_layers=32))
-    ao_training_module.AOTrainer.__init__(trainer)
-    assert trainer.target_layers == (5, 10, 15, 20, 25, 30)
-
-
-def test_ao_trainer_sampler_balances_each_microbatch(ao_training_module) -> None:
-    class TaggedDataset:
-        def __getitem__(self, key):
-            assert key == "is_forget"
-            return [0, 1, 1, 0] * 2
-
-    trainer = SimpleNamespace(
-        train_dataset=TaggedDataset(),
-        args=SimpleNamespace(per_device_train_batch_size=4, data_seed=None, seed=42),
-    )
-    sampler = ao_training_module.AOTrainer._get_train_sampler(trainer)
-    indices = list(sampler)
-    assert sorted(indices) == list(range(8))
-    for start in (0, 4):
-        assert (
-            sum(
-                trainer.train_dataset["is_forget"][i]
-                for i in indices[start : start + 4]
-            )
-            == 2
-        )
 
 
 def test_peft_disabled_adapter_recovers_initial_base_output() -> None:

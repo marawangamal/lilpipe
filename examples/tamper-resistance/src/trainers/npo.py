@@ -9,7 +9,7 @@ from axolotl.core.trainers.base import AxolotlTrainer
 from trainers.gd_sam import sam_perturbation
 from trainers.gradient_metrics import gradient_dict_l2_norm
 from trainers.sampling import MixedSourceSampler
-from trainers.weight_distance import global_rms_distance, load_reference_parameters
+from trainers.utils import load_reference_parameters
 
 
 def sequence_cross_entropy(logits, labels):
@@ -97,9 +97,11 @@ class NPOTrainer(AxolotlTrainer):
         retain_inputs = {field: inputs[field][retain_mask] for field in fields}
         return forget_inputs, retain_inputs
 
-    def compute_forget_loss(self, model, inputs, return_outputs=False):
+    def compute_forget_loss(
+        self, model, inputs, return_outputs=False, model_kwargs=None
+    ):
         forget_inputs, _ = self.split_sources(inputs)
-        outputs = model(**forget_inputs)
+        outputs = model(**forget_inputs, **(model_kwargs or {}))
         current_ce = sequence_cross_entropy(outputs.logits, forget_inputs["labels"])
         was_training = model.training
         try:
@@ -224,28 +226,3 @@ class NPOSAMTrainer(NPOTrainer):
         return (
             (loss_forget + loss_retain) / self.current_gradient_accumulation_steps
         ).detach()
-
-
-class NPOWeightDistanceTrainer(NPOTrainer):
-    """Apply NPO while maximizing RMS distance from the reference model."""
-
-    def __init__(self, *args, coefficient_weight_dist=1.0, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.coefficient_weight_dist = coefficient_weight_dist
-        self._weight_distance_logged_step = None
-
-    def compute_weight_dist_loss(self):
-        return -self.coefficient_weight_dist * global_rms_distance(
-            self.theta.values(), self.theta_ref.values()
-        )
-
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        loss_npo, outputs = self.compute_npo_loss(model, inputs)
-        loss_weight_dist = self.compute_weight_dist_loss()
-        loss = loss_npo + loss_weight_dist
-
-        step = self.state.global_step
-        if step != self._weight_distance_logged_step:
-            self.log({"loss_weight_dist": loss_weight_dist.detach().item()})
-            self._weight_distance_logged_step = step
-        return (loss, outputs) if return_outputs else loss
