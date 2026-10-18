@@ -9,6 +9,7 @@ models:
   - z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
   - z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
   - z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft
+  - z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft-s2
   - z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft
   - z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2--relearn-fft
 evaluations:
