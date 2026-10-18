@@ -1,4 +1,4 @@
-id: z7b-wmdp-bio--15pp--unlearn-fft-me-hpo
+id: z7b-wmdp-bio--5pp--unlearn-fft-me-hpo
 sweeps:
 - name: grid
   parameters:
@@ -27,6 +27,6 @@ producer:
   - --mem=480G
   - --time=03:00:00
 evaluations:
-- wmdp-bio-final-15pp
-- mmlu-no-bio-final-15pp
+- wmdp-bio-final-5pp
+- mmlu-no-bio-final-5pp
 evaluation_registry: configs/registries/evals.yml

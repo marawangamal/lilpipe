@@ -9,8 +9,8 @@ promoted standalone `selected.yml`. Generate candidates from a sweep with:
 
 ```bash
 python scripts/hpo.py generate \
-  configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-rmu/sweep.yml
-lilpipe artifacts/generated/hpo/z7b-wmdp-bio--15pp--unlearn-fft-rmu-hpo/experiment.yml
+  configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-rmu/sweep.yml
+lilpipe artifacts/generated/hpo/z7b-wmdp-bio--5pp--unlearn-fft-rmu-hpo/experiment.yml
 ```
 
 Generated configurations, their model registry, and their manifest are kept
@@ -80,6 +80,7 @@ stage form a Cartesian product. Other settings were inherited from the method's
 | NPO | `{5e-7, 1e-6, 3e-6}` | `{1, 3, 10}` | - | - | - | - | 9 | learning rate `1e-6`; retain `1` |
 | NPO + SAM | - | `{0.5, 1, 2}` | - | `{0.001, 0.01, 0.1}` | - | - | 9 | retain `1`; rho `0.001` |
 | NPO + WD | - | `{0.5, 1, 2}` | - | - | `{100, 1000, 10000}` | - | 9 | retain `1`; weight distance `1000` |
+| NPO + WD (5pp) | from 5pp NPO: `5e-6` | from 5pp NPO: `1` | - | - | `{0, 1e2, 1e3, 1e4, 1e5, 1e6}` | - | 6 | weight distance `1e4` (promoted to 5pp) |
 | RMU | - | `{300, 600, 1200}` | `{3.25, 6.5, 13}` | - | - | - | 9 | retain `600`; steering `6.5` |
 | RMU + AO | from RMU: `5e-5` | from RMU: `600` | from RMU: `6.5` | - | - | `{0, 0.01, 0.03, 0.05, 0.07, 0.1, 1, 10, 100}` | 9 | activation orthogonality `0.01` |
 | RMU + SAM | - | `{600, 1200, 2400}` | - | `{0.001, 0.01, 0.1}` | - | - | 9 | retain `600`; rho `0.001` |

@@ -89,6 +89,12 @@ experiments = [
                 False,
             ),
             (
+                "z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft",
+                "NPO",
+                "Weight distance",
+                False,
+            ),
+            (
                 "z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft",
                 "MaxEnt",
                 "None",

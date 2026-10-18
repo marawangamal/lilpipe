@@ -64,9 +64,9 @@ python scripts/analysis/plot_trajectory.py \
 Generate and submit an RMU sweep from this directory:
 ```sh
 python scripts/hpo.py generate \
-  configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-rmu/sweep.yml
+  configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-rmu/sweep.yml
 
-lilpipe artifacts/generated/hpo/z7b-wmdp-bio--15pp--unlearn-fft-rmu-hpo/experiment.yml
+lilpipe artifacts/generated/hpo/z7b-wmdp-bio--5pp--unlearn-fft-rmu-hpo/experiment.yml
 ```
 
 
@@ -76,9 +76,8 @@ configs/
 ├── experiments/z7b-wmdp-bio-unlearn--5pp.yml  # models and evaluations to run
 ├── registries/                               # model producers and evaluation jobs
 └── stages-wmdp/0_unlearn/
-    ├── z7b-wmdp-bio--15pp--unlearn-fft-rmu/
-    │   ├── base.yml                          # training config used by the sweep
-    │   └── sweep.yml                         # HPO parameter grid
     └── z7b-wmdp-bio--5pp--unlearn-fft-rmu/
+        ├── base.yml                          # training config used by the sweep
+        ├── sweep.yml                         # HPO parameter grid
         └── selected.yml                      # optimal training config found
 ```

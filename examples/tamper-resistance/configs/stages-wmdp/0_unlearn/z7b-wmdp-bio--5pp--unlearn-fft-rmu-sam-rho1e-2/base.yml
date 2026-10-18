@@ -1,12 +1,14 @@
 base_model: HuggingFaceH4/zephyr-7b-beta
 plugins:
 - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
-trainer_cls: trainers.wd.WDNPOTrainer
+trainer_cls: trainers.rmu.RMUSAMTrainer
 custom_trainer_args:
   reference_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
-  coefficient_weight_dist: 1000.0
-  beta: 0.01
-  retain_coefficient: 1.0
+  retain_coefficient: 600.0
+  steering_coefficient: 6.5
+  target_layer: 7
+  control_seed: 42
+  rho: 0.01
 datasets:
 - path: cais/wmdp-bio-forget-corpus
   split: train
@@ -17,9 +19,9 @@ datasets:
   type: data.authors_documents
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--15pp--unlearn-fft-npo-wd/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-wd
+output_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2
 sequence_len: 512
 sample_packing: false
 pad_to_sequence_len: false
@@ -28,12 +30,16 @@ train_on_inputs: true
 micro_batch_size: 8
 gradient_accumulation_steps: 1
 max_steps: 125
-learning_rate: 5.0e-06
+learning_rate: 5.0e-05
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: constant
 warmup_steps: 0
 max_grad_norm: 0.0
+unfrozen_parameters:
+- ^model.layers.5.mlp.down_proj.weight$
+- ^model.layers.6.mlp.down_proj.weight$
+- ^model.layers.7.mlp.down_proj.weight$
 bf16: true
 tf32: false
 gradient_checkpointing: false
@@ -83,4 +89,4 @@ save_total_limit: 1
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio--15pp--unlearn-fft-npo-wd
+wandb_name: z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2
