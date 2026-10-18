@@ -4,6 +4,7 @@ import torch
 import torch.distributed as dist
 
 from trainers.gd import GradDiffTrainer
+from trainers.me import MaxEntTrainer
 from trainers.npo import NPOTrainer
 from trainers.utils import load_reference_parameters
 from trainers.rmu import RMUTrainer
@@ -89,8 +90,8 @@ class WDBaseTrainer:
         return (loss, outputs) if return_outputs else loss
 
 
-class WDGDTrainer(WDBaseTrainer, GradDiffTrainer):
-    """Add weight distance from a reference model to gradient difference."""
+class ReferenceWeightsMixin:
+    """Load reference weights for trainers that do not keep a reference model."""
 
     def __init__(self, *args, reference_model_name_or_path, **kwargs):
         super().__init__(*args, **kwargs)
@@ -117,6 +118,14 @@ class WDGDTrainer(WDBaseTrainer, GradDiffTrainer):
                 "trainable parameters changed after weight-distance snapshot"
             )
         return self._theta_ref
+
+
+class WDGDTrainer(WDBaseTrainer, ReferenceWeightsMixin, GradDiffTrainer):
+    """Add weight distance from a reference model to gradient difference."""
+
+
+class WDMaxEntTrainer(WDBaseTrainer, ReferenceWeightsMixin, MaxEntTrainer):
+    """Add weight distance from a reference model to MaxEnt."""
 
 
 class WDNPOTrainer(WDBaseTrainer, NPOTrainer):

@@ -552,6 +552,7 @@ def test_rmu_control_vector_has_fixed_norm_and_seed(rmu_training_module) -> None
     "trainer_name, parent_name",
     [
         ("WDGDTrainer", "GradDiffTrainer"),
+        ("WDMaxEntTrainer", "MaxEntTrainer"),
         ("WDNPOTrainer", "NPOTrainer"),
         ("WDRMUTrainer", "RMUTrainer"),
     ],
@@ -635,14 +636,21 @@ def test_reference_parameter_loader_strips_framework_wrapper_names(
     torch.testing.assert_close(reference_parameters[runtime_name], expected)
 
 
-def test_wd_gd_forwards_gd_arguments(weight_dist_training_module, monkeypatch) -> None:
+@pytest.mark.parametrize(
+    "trainer_name, parent_name",
+    [("WDGDTrainer", "GradDiffTrainer"), ("WDMaxEntTrainer", "MaxEntTrainer")],
+)
+def test_wd_with_own_reference_forwards_unlearning_arguments(
+    weight_dist_training_module, monkeypatch, trainer_name, parent_name
+) -> None:
     calls = []
 
     def init(_, *args, **kwargs):
         calls.append((args, kwargs))
 
-    monkeypatch.setattr(weight_dist_training_module.GradDiffTrainer, "__init__", init)
-    trainer = weight_dist_training_module.WDGDTrainer(
+    parent = getattr(weight_dist_training_module, parent_name)
+    monkeypatch.setattr(parent, "__init__", init)
+    trainer = getattr(weight_dist_training_module, trainer_name)(
         "model",
         forget_coefficient=2.0,
         retain_coefficient=3.0,
