@@ -1,7 +1,7 @@
 base_model: openbmb/MiniCPM5-1B
 plugins:
   - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
-trainer_cls: trainers.npo.NPOTrainer
+trainer_cls: trainers.ul_npo.NPOTrainer
 custom_trainer_args:
   reference_model_name_or_path: openbmb/MiniCPM5-1B
   beta: 0.0225

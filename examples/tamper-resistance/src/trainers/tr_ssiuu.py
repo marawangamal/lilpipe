@@ -5,7 +5,7 @@ from contextlib import nullcontext
 import torch
 import torch.nn.functional as F
 
-from trainers.gd import GradDiffTrainer
+from trainers.ul_gd import GradDiffTrainer
 
 
 class SSIUUTrainer(GradDiffTrainer):

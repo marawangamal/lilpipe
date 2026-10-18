@@ -1,7 +1,7 @@
 base_model: openbmb/MiniCPM5-1B
 plugins:
   - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
-trainer_cls: trainers.rmu.RMUTrainer
+trainer_cls: trainers.ul_rmu.RMUTrainer
 custom_trainer_args:
   reference_model_name_or_path: openbmb/MiniCPM5-1B
   retain_coefficient: 637.6272203987833

@@ -2,9 +2,9 @@
 
 import torch
 
-from trainers.gd import GradDiffTrainer
-from trainers.npo import NPOTrainer
-from trainers.rmu import RMUTrainer
+from trainers.ul_gd import GradDiffTrainer
+from trainers.ul_npo import NPOTrainer
+from trainers.ul_rmu import RMUTrainer
 
 FORGET_HIDDEN_STATES = {"output_hidden_states": True, "use_cache": False}
 

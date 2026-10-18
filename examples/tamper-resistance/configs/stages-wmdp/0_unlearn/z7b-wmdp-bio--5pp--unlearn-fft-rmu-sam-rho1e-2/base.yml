@@ -1,7 +1,7 @@
 base_model: HuggingFaceH4/zephyr-7b-beta
 plugins:
 - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
-trainer_cls: trainers.rmu.RMUSAMTrainer
+trainer_cls: trainers.tr_sam.RMUSAMTrainer
 custom_trainer_args:
   reference_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
   retain_coefficient: 600.0

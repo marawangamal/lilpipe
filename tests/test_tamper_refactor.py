@@ -344,7 +344,7 @@ def test_lineage_configs_follow_conventions(lineage: Path) -> None:
             source = EXAMPLE / "src" / f"{module.replace('.', '/')}.py"
             assert source.is_file(), config["trainer_cls"]
             assert f"\nclass {cls}(" in source.read_text(), config["trainer_cls"]
-            if module == "trainers.wd":
+            if module == "trainers.tr_wd":
                 assert "anchor_model_name_or_path" in config["custom_trainer_args"]
 
     sweep_path = lineage / "sweep.yml"

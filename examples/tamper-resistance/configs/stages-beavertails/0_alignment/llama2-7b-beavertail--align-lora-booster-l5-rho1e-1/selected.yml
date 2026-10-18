@@ -2,7 +2,7 @@ base_model: meta-llama/Llama-2-7b-hf
 tokenizer_type: AutoTokenizer
 plugins:
   - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
-trainer_cls: trainers.booster.BoosterTrainer
+trainer_cls: trainers.tr_booster.BoosterTrainer
 custom_trainer_args:
   coefficient: 5.0
   radius: 0.1

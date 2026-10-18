@@ -50,7 +50,7 @@ def authors_documents_module():
 @pytest.fixture(scope="module")
 def sampling_module():
     pytest.importorskip("torch")
-    return load_script("src/trainers/sampling.py", "tamper_sampling")
+    return load_script("src/trainers/utils.py", "tamper_sampling")
 
 
 @pytest.fixture(scope="module")
@@ -61,7 +61,7 @@ def src_gd_training_module():
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script("src/trainers/gd.py", "src_gd_training")
+        return load_script("src/trainers/ul_gd.py", "src_gd_training")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
@@ -74,7 +74,7 @@ def me_training_module():
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script("src/trainers/me.py", "me_training")
+        return load_script("src/trainers/ul_me.py", "me_training")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
@@ -87,20 +87,20 @@ def ssiuu_training_module():
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script("src/trainers/ssiuu.py", "ssiuu_training")
+        return load_script("src/trainers/tr_ssiuu.py", "ssiuu_training")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
 
 @pytest.fixture(scope="module")
-def src_gd_sam_training_module():
+def sam_training_module():
     pytest.importorskip("torch")
     pytest.importorskip("axolotl")
     import sys
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script("src/trainers/gd_sam.py", "src_gd_sam_training")
+        return load_script("src/trainers/tr_sam.py", "sam_training")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
@@ -113,9 +113,7 @@ def circuit_breaker_training_module():
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script(
-            "src/trainers/circuit_breaker.py", "circuit_breaker_training"
-        )
+        return load_script("src/trainers/ul_cb.py", "circuit_breaker_training")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
@@ -128,7 +126,7 @@ def rmu_training_module():
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script("src/trainers/rmu.py", "rmu_training")
+        return load_script("src/trainers/ul_rmu.py", "rmu_training")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
@@ -141,7 +139,7 @@ def weight_dist_training_module():
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script("src/trainers/wd.py", "wd_training")
+        return load_script("src/trainers/tr_wd.py", "wd_training")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
@@ -154,7 +152,7 @@ def ao_training_module():
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        return load_script("src/trainers/ao.py", "ao_training")
+        return load_script("src/trainers/tr_ao.py", "ao_training")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
@@ -493,13 +491,13 @@ def test_circuit_breaker_losses_preserve_layer_and_padding_contracts(
 
 
 def test_circuit_breaker_sam_accepts_scheduled_zero_gradient(
-    circuit_breaker_training_module,
+    sam_training_module,
 ) -> None:
     from contextlib import nullcontext
 
     torch = pytest.importorskip("torch")
     model = torch.nn.Linear(1, 1, bias=False)
-    trainer = object.__new__(circuit_breaker_training_module.CircuitBreakerSAMTrainer)
+    trainer = object.__new__(sam_training_module.CircuitBreakerSAMTrainer)
     trainer.optimizer = SimpleNamespace()
     trainer.accelerator = SimpleNamespace(backward=lambda loss: loss.backward())
     trainer.current_gradient_accumulation_steps = 1
@@ -716,7 +714,7 @@ def test_src_grad_diff_logs_component_losses_and_gradient_norms(
     assert model.retain_weight.grad.item() == pytest.approx(8.0)
 
 
-def _maxent_sam_fixture(torch, me_training_module, rho):
+def _maxent_sam_fixture(torch, sam_training_module, rho):
     from contextlib import nullcontext
 
     class Model(torch.nn.Module):
@@ -743,7 +741,7 @@ def _maxent_sam_fixture(torch, me_training_module, rho):
         def backward(self, loss):
             loss.backward()
 
-    trainer = object.__new__(me_training_module.MaxEntSAMTrainer)
+    trainer = object.__new__(sam_training_module.MaxEntSAMTrainer)
     trainer.forget_coefficient = 2.0
     trainer.retain_coefficient = 0.5
     trainer.log_gradient_norms = False
@@ -769,10 +767,10 @@ def _maxent_sam_fixture(torch, me_training_module, rho):
 
 
 def test_maxent_sam_at_zero_radius_matches_maxent_gradient(
-    me_training_module,
+    sam_training_module,
 ) -> None:
     torch = pytest.importorskip("torch")
-    Model, trainer, inputs, _ = _maxent_sam_fixture(torch, me_training_module, 0.0)
+    Model, trainer, inputs, _ = _maxent_sam_fixture(torch, sam_training_module, 0.0)
 
     maxent_model = Model()
     (trainer.compute_loss(maxent_model, inputs) / 2).backward()
@@ -786,11 +784,13 @@ def test_maxent_sam_at_zero_radius_matches_maxent_gradient(
 
 
 def test_maxent_sam_perturbs_forget_only_and_restores_weights(
-    me_training_module,
+    sam_training_module,
 ) -> None:
     torch = pytest.importorskip("torch")
     rho = 0.05
-    Model, trainer, inputs, logged = _maxent_sam_fixture(torch, me_training_module, rho)
+    Model, trainer, inputs, logged = _maxent_sam_fixture(
+        torch, sam_training_module, rho
+    )
     model = Model()
     model.forget_scale.grad = torch.tensor(4.0)
     model.retain_scale.grad = torch.tensor(-1.0)
@@ -832,9 +832,9 @@ def test_maxent_sam_perturbs_forget_only_and_restores_weights(
     }
 
 
-def test_maxent_sam_rejects_nonpositive_radius(me_training_module) -> None:
+def test_maxent_sam_rejects_nonpositive_radius(sam_training_module) -> None:
     with pytest.raises(ValueError, match="rho must be positive"):
-        me_training_module.MaxEntSAMTrainer(rho=0.0)
+        sam_training_module.MaxEntSAMTrainer(rho=0.0)
 
 
 def test_maxent_loss_masks_padding_and_preserves_trainer_contract(
@@ -1112,7 +1112,7 @@ def test_tofu_attack_split_is_deterministic_and_disjoint(monkeypatch) -> None:
 
 
 def test_src_gd_sam_logs_component_losses_and_gradient_norms(
-    src_gd_sam_training_module,
+    sam_training_module,
 ) -> None:
     from contextlib import nullcontext
 
@@ -1133,7 +1133,7 @@ def test_src_gd_sam_logs_component_losses_and_gradient_norms(
             loss.backward()
 
     model = Model()
-    trainer = object.__new__(src_gd_sam_training_module.GDSAMTrainer)
+    trainer = object.__new__(sam_training_module.GDSAMTrainer)
     trainer.optimizer = None
     trainer.accelerator = Accelerator()
     trainer.current_gradient_accumulation_steps = 1
@@ -1167,7 +1167,7 @@ def test_src_gd_sam_logs_component_losses_and_gradient_norms(
 
 
 def test_optml_sam_norm_preserves_original_precision(
-    src_gd_sam_training_module,
+    sam_training_module,
 ) -> None:
     torch = pytest.importorskip("torch")
     gradients = {
@@ -1175,7 +1175,7 @@ def test_optml_sam_norm_preserves_original_precision(
         "second": torch.tensor([0.0, 12.0], dtype=torch.bfloat16),
     }
 
-    perturbation = src_gd_sam_training_module.optml_sam_perturbation(gradients, 0.01)
+    perturbation = sam_training_module.optml_sam_perturbation(gradients, 0.01)
     norm = torch.stack([gradient.norm(2) for gradient in perturbation.values()]).norm(2)
 
     assert all(value.dtype == torch.bfloat16 for value in perturbation.values())
@@ -1731,7 +1731,7 @@ def test_booster_sampler_and_negative_perturbation() -> None:
 
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
-        module = load_script("src/trainers/booster.py", "booster_training_test")
+        module = load_script("src/trainers/tr_booster.py", "booster_training_test")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
     sampler = module.BoosterMixedSourceSampler(
@@ -1830,7 +1830,7 @@ def test_minicpm_gd_optuna_search_and_generated_config(hpo, tmp_path) -> None:
     parameters = hpo.sample_parameters(GDTrial(), config["search"])
     base = hpo.load_mapping(EXAMPLE / config["unlearn"]["base_config"])
     generated = hpo.build_unlearn_config(base, parameters, tmp_path / "trial-000")
-    assert generated["trainer_cls"] == "trainers.gd.GradDiffTrainer"
+    assert generated["trainer_cls"] == "trainers.ul_gd.GradDiffTrainer"
     assert generated["learning_rate"] == 2.5e-6
     assert generated["max_steps"] == 100
     assert generated["save_steps"] == 100
@@ -1867,7 +1867,7 @@ def test_minicpm_npo_optuna_search_and_generated_config(hpo, tmp_path) -> None:
     parameters = hpo.sample_parameters(NPOTrial(), config["search"])
     base = hpo.load_mapping(EXAMPLE / config["unlearn"]["base_config"])
     generated = hpo.build_unlearn_config(base, parameters, tmp_path / "trial-000")
-    assert generated["trainer_cls"] == "trainers.npo.NPOTrainer"
+    assert generated["trainer_cls"] == "trainers.ul_npo.NPOTrainer"
     assert generated["max_steps"] == 150
     assert generated["save_steps"] == 150
     assert generated["learning_rate"] == 5e-6
@@ -1938,7 +1938,7 @@ def test_minicpm_ssiuu_optuna_starts_from_paper_values(hpo, tmp_path) -> None:
     parameters = hpo.sample_parameters(SSIUUTrial(), config["search"])
     base = hpo.load_mapping(EXAMPLE / config["unlearn"]["base_config"])
     generated = hpo.build_unlearn_config(base, parameters, tmp_path / "trial-000")
-    assert generated["trainer_cls"] == "trainers.ssiuu.SSIUUTrainer"
+    assert generated["trainer_cls"] == "trainers.tr_ssiuu.SSIUUTrainer"
     assert generated["custom_trainer_args"]["ssiuu_coefficient"] == 0.001
     assert generated["custom_trainer_args"]["probability_normalization"] == (
         "geometric_mean"

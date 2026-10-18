@@ -6,10 +6,7 @@ import torch
 import torch.nn.functional as F
 from axolotl.core.trainers.base import AxolotlTrainer
 
-from trainers.gd_sam import sam_perturbation
-from trainers.gradient_metrics import gradient_dict_l2_norm
-from trainers.sampling import MixedSourceSampler
-from trainers.utils import load_reference_parameters
+from trainers.utils import MixedSourceSampler, load_reference_parameters
 
 
 def sequence_cross_entropy(logits, labels):
@@ -144,85 +141,3 @@ class NPOTrainer(AxolotlTrainer):
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         loss, outputs = self.compute_npo_loss(model, inputs)
         return (loss, outputs) if return_outputs else loss
-
-
-class NPOSAMTrainer(NPOTrainer):
-    """Apply SAM to NPO's forget objective."""
-
-    def __init__(self, *args, rho=0.01, **kwargs):
-        if rho <= 0:
-            raise ValueError("rho must be positive")
-        super().__init__(*args, **kwargs)
-        self.rho = rho
-
-    def training_step(self, model, inputs, num_items_in_batch=None):
-        with self._layer_offload_ctx, self.activation_offload_context:
-            return self._sam_training_step(model, self._prepare_inputs(inputs))
-
-    def _backward_and_take_gradients(self, loss_fn, parameters):
-        with self.compute_loss_context_manager():
-            loss = loss_fn()
-        self.accelerator.backward(loss / self.current_gradient_accumulation_steps)
-        gradients = {name: parameter.grad for name, parameter in parameters.items()}
-        for parameter in parameters.values():
-            parameter.grad = None
-        return loss, gradients
-
-    def _sam_training_step(self, model, inputs):
-        model.train()
-        if hasattr(self.optimizer, "train") and callable(self.optimizer.train):
-            self.optimizer.train()
-
-        parameters = self.theta
-        accumulated_gradients = {
-            name: parameter.grad for name, parameter in parameters.items()
-        }
-        for parameter in parameters.values():
-            parameter.grad = None
-
-        try:
-            _, gradients_at_perturbation = self._backward_and_take_gradients(
-                lambda: self.compute_forget_loss(model, inputs), parameters
-            )
-            perturbation = sam_perturbation(gradients_at_perturbation, self.rho)
-            try:
-                with torch.no_grad():
-                    for name, step in perturbation.items():
-                        parameters[name].add_(step)
-                loss_forget, gradients_forget = self._backward_and_take_gradients(
-                    lambda: self.compute_forget_loss(model, inputs), parameters
-                )
-            finally:
-                with torch.no_grad():
-                    for name, step in perturbation.items():
-                        parameters[name].sub_(step)
-
-            loss_retain, gradients_retain = self._backward_and_take_gradients(
-                lambda: self.compute_retain_loss(model, inputs), parameters
-            )
-            self.log(
-                {
-                    "loss_forget": loss_forget.detach().item(),
-                    "loss_retain": loss_retain.detach().item(),
-                    "grad_norm_forget": gradient_dict_l2_norm(gradients_forget).item(),
-                    "grad_norm_retain": gradient_dict_l2_norm(gradients_retain).item(),
-                    "grad_norm_forget_at_perturbation": gradient_dict_l2_norm(
-                        gradients_at_perturbation
-                    ).item(),
-                }
-            )
-        finally:
-            for name, parameter in parameters.items():
-                parameter.grad = accumulated_gradients[name]
-
-        for name, parameter in parameters.items():
-            for gradient in (gradients_forget[name], gradients_retain[name]):
-                if gradient is not None:
-                    parameter.grad = (
-                        gradient
-                        if parameter.grad is None
-                        else parameter.grad.add_(gradient)
-                    )
-        return (
-            (loss_forget + loss_retain) / self.current_gradient_accumulation_steps
-        ).detach()

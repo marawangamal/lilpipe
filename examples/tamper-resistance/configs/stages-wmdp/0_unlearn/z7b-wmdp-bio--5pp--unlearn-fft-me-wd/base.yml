@@ -1,7 +1,7 @@
 base_model: HuggingFaceH4/zephyr-7b-beta
 plugins:
 - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
-trainer_cls: trainers.wd.WDMaxEntTrainer
+trainer_cls: trainers.tr_wd.WDMaxEntTrainer
 custom_trainer_args:
   anchor_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
   coefficient_weight_dist: 1000.0

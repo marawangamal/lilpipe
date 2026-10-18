@@ -1,7 +1,7 @@
 base_model: openbmb/MiniCPM5-1B
 plugins:
   - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
-trainer_cls: trainers.ssiuu.SSIUUTrainer
+trainer_cls: trainers.tr_ssiuu.SSIUUTrainer
 custom_trainer_args:
   forget_coefficient: 1.0
   # Optuna trial 17, selected after the full 125-step relearning validation.

@@ -4,7 +4,7 @@ import torch
 
 from axolotl.core.trainers.base import AxolotlTrainer
 
-from trainers.gradient_metrics import gradient_dict_l2_norm, global_l2_norm
+from trainers.utils import gradient_dict_l2_norm, global_l2_norm
 
 
 class BoosterMixedSourceSampler(torch.utils.data.Sampler[int]):

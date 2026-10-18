@@ -3,11 +3,11 @@
 import torch
 import torch.distributed as dist
 
-from trainers.gd import GradDiffTrainer
-from trainers.me import MaxEntTrainer
-from trainers.npo import NPOTrainer
+from trainers.ul_gd import GradDiffTrainer
+from trainers.ul_me import MaxEntTrainer
+from trainers.ul_npo import NPOTrainer
+from trainers.ul_rmu import RMUTrainer
 from trainers.utils import load_reference_parameters
-from trainers.rmu import RMUTrainer
 
 try:
     from torch.distributed.tensor import DTensor, Replicate, distribute_tensor

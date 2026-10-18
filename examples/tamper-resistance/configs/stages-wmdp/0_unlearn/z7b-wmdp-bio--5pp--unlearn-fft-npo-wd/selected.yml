@@ -1,7 +1,7 @@
 base_model: HuggingFaceH4/zephyr-7b-beta
 plugins:
 - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
-trainer_cls: trainers.wd.WDNPOTrainer
+trainer_cls: trainers.tr_wd.WDNPOTrainer
 custom_trainer_args:
   reference_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
   anchor_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
