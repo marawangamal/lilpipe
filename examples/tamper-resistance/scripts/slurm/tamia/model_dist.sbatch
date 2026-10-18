@@ -31,4 +31,4 @@ module load httpproxy/1.0
 uv sync --frozen --group eval
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 
-python scripts/analysis/model_dist.py "$ref" "$@" --out "$out"
+python scripts/analysis/get_model_dists.py "$ref" "$@" --out "$out"

@@ -10,7 +10,7 @@ SCRIPT = (
     / "tamper-resistance"
     / "scripts"
     / "analysis"
-    / "model_dist.py"
+    / "get_model_dists.py"
 )
 
 
@@ -80,4 +80,6 @@ def test_model_dist_has_tamia_sbatch() -> None:
     script = (SCRIPT.parents[1] / "slurm" / "tamia" / "model_dist.sbatch").read_text()
 
     assert "uv sync --frozen --group eval" in script
-    assert 'python scripts/analysis/model_dist.py "$ref" "$@" --out "$out"' in script
+    assert (
+        'python scripts/analysis/get_model_dists.py "$ref" "$@" --out "$out"' in script
+    )

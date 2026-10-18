@@ -1,7 +1,7 @@
 """Compute the L2 parameter distance of models from a reference model.
 
 Example:
-    python scripts/analysis/model_dist.py HuggingFaceH4/zephyr-7b-beta \
+    python scripts/analysis/get_model_dists.py HuggingFaceH4/zephyr-7b-beta \
         artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo \
         --out artifacts/analysis/model_dist.json
 """
