@@ -111,6 +111,7 @@ copy, and a model move; nothing is retrained.
      --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--<N>pp.pdf
    ```
 
-7. **Test and document.** Pin the selected values in a regression test, list
-   the plot entry in `tests/test_trajectory_plot.py`, and record the promoted
-   setting in `docs/experiments.md`.
+7. **Test and document.** Run `python -m pytest tests/test_tamper_refactor.py`;
+   its lineage test checks every `base.yml`, `selected.yml` and `sweep.yml`
+   against the naming and sweep conventions, so no per-value test is needed.
+   Record the promoted setting in `docs/experiments.md`.

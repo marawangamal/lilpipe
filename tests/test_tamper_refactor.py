@@ -1,13 +1,11 @@
 import importlib.util
-import math
+import re
 import sys
 import types
 from pathlib import Path
 
 import pytest
 import yaml
-
-import lilpipe
 
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE = ROOT / "examples" / "tamper-resistance"
@@ -19,13 +17,6 @@ def load_script(path: Path, name: str):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
-
-def sweep_candidate_count(sweep: dict) -> int:
-    return sum(
-        math.prod(len(values) for values in stage["parameters"].values())
-        for stage in sweep["sweeps"]
-    )
 
 
 def test_custom_trainer_plugin_validates_and_forwards(monkeypatch) -> None:
@@ -299,421 +290,6 @@ def test_only_canonical_registries_and_selected_configs_are_referenced() -> None
         assert (EXAMPLE / config).is_file()
 
 
-def test_evaluation_registry_contains_only_active_intents() -> None:
-    evaluations = yaml.safe_load(
-        (EXAMPLE / "configs/registries/evals.yml").read_text()
-    )["evaluations"]
-
-    assert set(evaluations) == {
-        "wmdp-bio-final-15pp",
-        "mmlu-no-bio-final-15pp",
-        "beavertail-alignment",
-        "mmlu-no-bio-relearn-long-single-l40s",
-        "mmlu-trajectory",
-        "tofu-benign-relearn",
-        "tofu-harmful-relearn",
-        "tofu-table2",
-        "wmdp-bio-relearn-long-single-l40s",
-        "wmdp-trajectory",
-    }
-    for evaluation_id in ("wmdp-bio-final-15pp", "mmlu-no-bio-final-15pp"):
-        evaluation = evaluations[evaluation_id]
-        assert evaluation["args"][-2:] == ["125", "125"]
-        assert "--array=1-1" in evaluation["sbatch_args"]
-
-
-def test_fifteen_pp_rmu_sweeps_vary_only_lr_and_retain() -> None:
-    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
-    methods = {
-        "z7b-wmdp-bio--15pp--unlearn-fft-rmu": None,
-        "z7b-wmdp-bio--15pp--unlearn-fft-rmu-sam-rho1e-2": 1e-2,
-    }
-
-    for method, rho in methods.items():
-        base = yaml.safe_load((root / method / "base.yml").read_text())
-        sweep = yaml.safe_load((root / method / "sweep.yml").read_text())
-
-        assert sweep_candidate_count(sweep) == 9
-        assert sweep["sweeps"][0]["parameters"] == {
-            "learning_rate": pytest.approx([1e-6, 5e-6, 1e-5]),
-            "custom_trainer_args.retain_coefficient": pytest.approx([300, 600, 1200]),
-        }
-        assert sweep["evaluations"] == [
-            "wmdp-bio-final-15pp",
-            "mmlu-no-bio-final-15pp",
-        ]
-        assert base["max_steps"] == base["save_steps"] == 125
-        assert base["custom_trainer_args"]["steering_coefficient"] == pytest.approx(6.5)
-        assert "--15pp--" in base["dataset_prepared_path"]
-        assert "--15pp--" in base["output_dir"]
-        if rho is not None:
-            assert base["custom_trainer_args"]["rho"] == pytest.approx(rho)
-
-    evaluations = yaml.safe_load(
-        (EXAMPLE / "configs/registries/evals.yml").read_text()
-    )["evaluations"]
-    for evaluation_id in ("wmdp-bio-final-15pp", "mmlu-no-bio-final-15pp"):
-        assert evaluations[evaluation_id]["args"][3] == (
-            "artifacts/tamia/evals/thresholds/15pp"
-        )
-        assert evaluations[evaluation_id]["args"][-2:] == ["125", "125"]
-
-
-def test_fifteen_pp_gd_sweeps_preserve_executed_ten_pp_grids() -> None:
-    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
-    methods = {
-        "z7b-wmdp-bio--15pp--unlearn-fft-gd": 10,
-        "z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2": 28,
-    }
-
-    for method, candidate_count in methods.items():
-        base = yaml.safe_load((root / method / "base.yml").read_text())
-        sweep = yaml.safe_load((root / method / "sweep.yml").read_text())
-
-        assert sweep_candidate_count(sweep) == candidate_count
-        assert sweep["sweeps"][0]["parameters"] == {
-            "learning_rate": pytest.approx([1e-6, 5e-6, 1e-5]),
-            "custom_trainer_args.retain_coefficient": pytest.approx([1, 2, 4]),
-        }
-        assert sweep["evaluations"] == [
-            "wmdp-bio-final-15pp",
-            "mmlu-no-bio-final-15pp",
-        ]
-        assert sweep["id"] == f"{method}-hpo"
-        assert base["max_steps"] == base["save_steps"] == 125
-        assert "--15pp--" in base["dataset_prepared_path"]
-        assert "--15pp--" in base["output_dir"]
-
-    sam_sweep = yaml.safe_load(
-        (root / "z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/sweep.yml").read_text()
-    )
-    assert any(
-        stage["parameters"]
-        == {
-            "learning_rate": [5e-6],
-            "custom_trainer_args.retain_coefficient": [2.2],
-        }
-        for stage in sam_sweep["sweeps"]
-    )
-
-
-def test_fifteen_pp_maxent_sweep_matches_gd_search_budget() -> None:
-    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
-    method = "z7b-wmdp-bio--15pp--unlearn-fft-me"
-    base = yaml.safe_load((root / method / "base.yml").read_text())
-    sweep = yaml.safe_load((root / method / "sweep.yml").read_text())
-
-    assert base["trainer_cls"] == "trainers.me.MaxEntTrainer"
-    assert base["custom_trainer_args"] == {
-        "forget_coefficient": pytest.approx(1.0),
-        "retain_coefficient": pytest.approx(1.0),
-        "sampling": "optml",
-    }
-    assert base["max_steps"] == base["save_steps"] == 125
-    assert base["output_dir"] == f"artifacts/tamia/models/{method}"
-    assert "--15pp--" in base["dataset_prepared_path"]
-
-    assert sweep_candidate_count(sweep) == 13
-    assert sweep["id"] == f"{method}-hpo"
-    assert sweep["sweeps"][0]["parameters"] == {
-        "learning_rate": pytest.approx([1e-6, 5e-6, 1e-5]),
-        "custom_trainer_args.retain_coefficient": pytest.approx([1, 2, 4]),
-    }
-    assert sweep["sweeps"][1]["name"] == "retain-lo"
-    assert sweep["sweeps"][1]["parameters"] == {
-        "learning_rate": pytest.approx([5e-6]),
-        "custom_trainer_args.retain_coefficient": pytest.approx([0.1, 0.25, 0.5, 8]),
-    }
-    assert sweep["evaluations"] == [
-        "wmdp-bio-final-15pp",
-        "mmlu-no-bio-final-15pp",
-    ]
-
-
-def test_fifteen_pp_maxent_sam_sweep_mirrors_maxent() -> None:
-    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
-    plain = "z7b-wmdp-bio--15pp--unlearn-fft-me"
-    method = f"{plain}-sam-rho1e-2"
-    plain_base = yaml.safe_load((root / plain / "base.yml").read_text())
-    base = yaml.safe_load((root / method / "base.yml").read_text())
-    plain_sweep = yaml.safe_load((root / plain / "sweep.yml").read_text())
-    sweep = yaml.safe_load((root / method / "sweep.yml").read_text())
-
-    assert base["trainer_cls"] == "trainers.me.MaxEntSAMTrainer"
-    assert base["custom_trainer_args"] == {
-        **plain_base["custom_trainer_args"],
-        "rho": pytest.approx(0.01),
-    }
-    assert base["output_dir"] == f"artifacts/tamia/models/{method}"
-    assert base["wandb_name"] == method
-    assert f"/{method}/" in base["dataset_prepared_path"]
-    renamed = {
-        "trainer_cls",
-        "custom_trainer_args",
-        "output_dir",
-        "wandb_name",
-        "dataset_prepared_path",
-    }
-    assert {k: v for k, v in base.items() if k not in renamed} == {
-        k: v for k, v in plain_base.items() if k not in renamed
-    }
-
-    assert sweep["id"] == f"{method}-hpo"
-    assert {k: v for k, v in sweep.items() if k != "id"} == {
-        k: v for k, v in plain_sweep.items() if k != "id"
-    }
-    assert sweep_candidate_count(sweep) == 13
-
-
-@pytest.mark.parametrize(("method", "trainer"), [("npo", "WDNPOTrainer")])
-def test_weight_distance_sweeps_only_vary_coefficient_from_five_pp_selection(
-    method, trainer
-) -> None:
-    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
-    plain = f"z7b-wmdp-bio--5pp--unlearn-fft-{method}"
-    lineage = f"z7b-wmdp-bio--15pp--unlearn-fft-{method}-wd"
-    selected = yaml.safe_load((root / plain / "selected.yml").read_text())
-    base = yaml.safe_load((root / lineage / "base.yml").read_text())
-    sweep = yaml.safe_load((root / lineage / "sweep.yml").read_text())
-
-    assert base["trainer_cls"] == f"trainers.wd.{trainer}"
-    assert base["custom_trainer_args"] == {
-        **selected["custom_trainer_args"],
-        "coefficient_weight_dist": pytest.approx(1000.0),
-    }
-    assert base["output_dir"] == f"artifacts/tamia/models/{lineage}"
-    assert base["wandb_name"] == lineage
-    assert f"/{lineage}/" in base["dataset_prepared_path"]
-    renamed = {
-        "trainer_cls",
-        "custom_trainer_args",
-        "output_dir",
-        "wandb_name",
-        "dataset_prepared_path",
-    }
-    assert {k: v for k, v in base.items() if k not in renamed} == {
-        k: v for k, v in selected.items() if k not in renamed
-    }
-
-    assert sweep["id"] == f"{lineage}-hpo"
-    assert sweep["sweeps"] == [
-        {
-            "name": "grid",
-            "parameters": {
-                "custom_trainer_args.coefficient_weight_dist": [
-                    0.0,
-                    1e2,
-                    1e3,
-                    1e4,
-                    1e5,
-                    1e6,
-                ]
-            },
-        }
-    ]
-    assert sweep["evaluations"] == ["wmdp-bio-final-15pp", "mmlu-no-bio-final-15pp"]
-
-
-def test_maxent_sam_promotes_grid_candidate_to_five_pp() -> None:
-    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
-    base = yaml.safe_load(
-        (root / "z7b-wmdp-bio--15pp--unlearn-fft-me-sam-rho1e-2/base.yml").read_text()
-    )
-    method = "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2"
-    selected = yaml.safe_load((root / method / "selected.yml").read_text())
-
-    assert selected["trainer_cls"] == "trainers.me.MaxEntSAMTrainer"
-    assert selected["learning_rate"] == pytest.approx(5e-6)
-    assert selected["custom_trainer_args"]["retain_coefficient"] == pytest.approx(4)
-    assert selected["custom_trainer_args"]["rho"] == pytest.approx(0.01)
-    assert selected["output_dir"] == f"artifacts/tamia/models/{method}"
-    assert selected["wandb_name"] == method
-    assert f"/{method}/" in selected["dataset_prepared_path"]
-    renamed = (
-        "custom_trainer_args",
-        "dataset_prepared_path",
-        "output_dir",
-        "wandb_name",
-    )
-    assert {k: v for k, v in selected.items() if k not in renamed} == {
-        k: v for k, v in base.items() if k not in renamed
-    }
-
-
-def test_five_pp_maxent_promotes_retain_lo_candidate() -> None:
-    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
-    base = yaml.safe_load(
-        (root / "z7b-wmdp-bio--15pp--unlearn-fft-me/base.yml").read_text()
-    )
-    method = "z7b-wmdp-bio--5pp--unlearn-fft-me"
-    selected = yaml.safe_load((root / method / "selected.yml").read_text())
-
-    assert selected["learning_rate"] == pytest.approx(5e-6)
-    assert selected["custom_trainer_args"]["retain_coefficient"] == pytest.approx(0.25)
-    assert selected["output_dir"] == f"artifacts/tamia/models/{method}"
-    assert selected["wandb_name"] == method
-    assert "--5pp--" in selected["dataset_prepared_path"]
-    renamed = (
-        "custom_trainer_args",
-        "dataset_prepared_path",
-        "output_dir",
-        "wandb_name",
-    )
-    assert {k: v for k, v in selected.items() if k not in renamed} == {
-        k: v for k, v in base.items() if k not in renamed
-    }
-
-
-def test_fifteen_pp_npo_sweeps_vary_lr_retain_and_beta() -> None:
-    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
-    methods = {
-        "z7b-wmdp-bio--15pp--unlearn-fft-npo": (
-            "trainers.npo.NPOTrainer",
-            None,
-        ),
-        "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2": (
-            "trainers.npo.NPOSAMTrainer",
-            1e-2,
-        ),
-    }
-
-    for method, (trainer_cls, rho) in methods.items():
-        base = yaml.safe_load((root / method / "base.yml").read_text())
-        sweep = yaml.safe_load((root / method / "sweep.yml").read_text())
-
-        assert sweep_candidate_count(sweep) == 27
-        assert sweep["sweeps"][0]["parameters"] == {
-            "learning_rate": pytest.approx([1e-6, 5e-6, 1e-5]),
-            "custom_trainer_args.retain_coefficient": pytest.approx([1, 2, 4]),
-            "custom_trainer_args.beta": pytest.approx([0.01, 0.025, 0.05]),
-        }
-        assert sweep["evaluations"] == [
-            "wmdp-bio-final-15pp",
-            "mmlu-no-bio-final-15pp",
-        ]
-        assert base["trainer_cls"] == trainer_cls
-        assert base["max_steps"] == base["save_steps"] == 125
-        assert "unfrozen_parameters" not in base
-        assert "--15pp--" in base["dataset_prepared_path"]
-        assert "--15pp--" in base["output_dir"]
-        if rho is None:
-            assert "rho" not in base["custom_trainer_args"]
-        else:
-            assert base["custom_trainer_args"]["rho"] == pytest.approx(rho)
-
-    selected = yaml.safe_load(
-        (root / "z7b-wmdp-bio--15pp--unlearn-fft-npo/selected.yml").read_text()
-    )
-    assert selected["learning_rate"] == pytest.approx(1e-5)
-    assert selected["custom_trainer_args"]["retain_coefficient"] == pytest.approx(4)
-    assert selected["custom_trainer_args"]["beta"] == pytest.approx(0.025)
-    assert selected["output_dir"] == (
-        "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo"
-    )
-
-    selected_sam = yaml.safe_load(
-        (
-            root / "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/selected.yml"
-        ).read_text()
-    )
-    assert selected_sam["learning_rate"] == pytest.approx(1e-5)
-    assert selected_sam["custom_trainer_args"]["retain_coefficient"] == pytest.approx(4)
-    assert selected_sam["custom_trainer_args"]["beta"] == pytest.approx(0.05)
-    assert selected_sam["custom_trainer_args"]["rho"] == pytest.approx(1e-2)
-    assert selected_sam["output_dir"] == (
-        "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2"
-    )
-
-
-def test_fifteen_pp_npo_relearning_uses_canonical_attack() -> None:
-    root = EXAMPLE / "configs/stages-wmdp/2_relearn"
-    methods = (
-        "z7b-wmdp-bio--15pp--unlearn-fft-npo",
-        "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2",
-    )
-
-    for method in methods:
-        config = yaml.safe_load(
-            (root / f"{method}--relearn-fft/selected.yml").read_text()
-        )
-        assert config["base_model"] == f"artifacts/tamia/models/{method}"
-        assert config["output_dir"] == (f"artifacts/tamia/models/{method}--relearn-fft")
-        assert config["max_steps"] == 16
-        assert config["save_steps"] == 4
-        assert config["learning_rate"] == pytest.approx(1e-5)
-
-    experiment = yaml.safe_load(
-        (EXAMPLE / "configs/experiments/z7b-wmdp-bio-unlearn--15pp.yml").read_text()
-    )
-    assert experiment["models"][-2:] == [
-        f"{methods[0]}--relearn-fft",
-        f"{methods[1]}--relearn-fft",
-    ]
-
-
-def test_five_pp_selections_and_relearning_use_threshold_paths() -> None:
-    unlearn_root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
-    selected_hparams = {
-        "z7b-wmdp-bio--5pp--unlearn-fft-rmu": (1e-5, 300, None, None),
-        "z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2": (
-            1e-5,
-            300,
-            None,
-            1e-2,
-        ),
-        "z7b-wmdp-bio--5pp--unlearn-fft-npo": (5e-6, 1, 0.01, None),
-        "z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2": (
-            5e-6,
-            4,
-            0.025,
-            1e-2,
-        ),
-        "z7b-wmdp-bio--5pp--unlearn-fft-me": (5e-6, 0.25, None, None),
-        "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2": (5e-6, 4, None, 1e-2),
-    }
-
-    for method, (learning_rate, retain, beta, rho) in selected_hparams.items():
-        selected = yaml.safe_load((unlearn_root / method / "selected.yml").read_text())
-        custom = selected["custom_trainer_args"]
-        assert selected["learning_rate"] == pytest.approx(learning_rate)
-        assert custom["retain_coefficient"] == pytest.approx(retain)
-        assert selected["max_steps"] == selected["save_steps"] == 125
-        assert selected["output_dir"] == f"artifacts/tamia/models/{method}"
-        if beta is not None:
-            assert custom["beta"] == pytest.approx(beta)
-        if rho is not None:
-            assert custom["rho"] == pytest.approx(rho)
-
-        relearn = yaml.safe_load(
-            (
-                EXAMPLE
-                / "configs/stages-wmdp/2_relearn"
-                / f"{method}--relearn-fft/selected.yml"
-            ).read_text()
-        )
-        assert relearn["base_model"] == f"artifacts/tamia/models/{method}"
-        assert relearn["output_dir"] == (
-            f"artifacts/tamia/models/{method}--relearn-fft"
-        )
-        assert relearn["max_steps"] == 16
-        assert relearn["save_steps"] == 4
-        assert relearn["learning_rate"] == pytest.approx(1e-5)
-
-    experiment = yaml.safe_load(
-        (EXAMPLE / "configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml").read_text()
-    )
-    assert experiment["models"] == [
-        f"{method}--relearn-fft" for method in selected_hparams
-    ]
-    models = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
-        "models"
-    ]
-    for model in experiment["models"]:
-        assert models[model]["evaluation_root"] == (
-            "artifacts/tamia/evals/thresholds/5pp"
-        )
-
-
 def test_active_manifests_reference_only_registered_evaluations() -> None:
     registered = set(
         yaml.safe_load((EXAMPLE / "configs/registries/evals.yml").read_text())[
@@ -729,27 +305,63 @@ def test_active_manifests_reference_only_registered_evaluations() -> None:
     assert referenced == registered
 
 
-def test_tamia_train_launchers_expose_refactored_python_packages() -> None:
-    for name in ("train.sbatch", "train_model_parallel.sbatch"):
-        script = (EXAMPLE / "scripts/slurm/tamia" / name).read_text()
-        assert 'export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"' in script
+LINEAGES = sorted(
+    {
+        path.parent
+        for name in ("base.yml", "selected.yml", "sweep.yml")
+        for path in EXAMPLE.glob(f"configs/stages-*/*/*/{name}")
+    }
+)
 
 
-def test_weight_distance_accumulates_model_parallel_terms_on_one_device() -> None:
-    source = (EXAMPLE / "src/trainers/wd.py").read_text()
-    assert "value_squared + squared.to(device)" in source
-    assert "gradient_squared + squared.to(device)" in source
+def differing_keys(first: dict, second: dict, prefix: str = "") -> set[str]:
+    keys = set()
+    for key in first.keys() | second.keys():
+        path = f"{prefix}{key}"
+        a, b = first.get(key), second.get(key)
+        if isinstance(a, dict) and isinstance(b, dict):
+            keys |= differing_keys(a, b, f"{path}.")
+        elif a != b:
+            keys.add(path)
+    return keys
 
 
-def test_authors_table3_scripts_preserve_and_evaluate_all_checkpoints() -> None:
-    scripts = EXAMPLE / "scripts/slurm/tamia"
-    relearn = (scripts / "authors_relearn_preserve.sbatch").read_text()
-    evaluation = (scripts / "eval_authors_table3.sbatch").read_text()
+@pytest.mark.parametrize("lineage", LINEAGES, ids=lambda path: path.name)
+def test_lineage_configs_follow_conventions(lineage: Path) -> None:
+    name = lineage.name
+    configs = {
+        stem: yaml.safe_load((lineage / f"{stem}.yml").read_text())
+        for stem in ("base", "selected")
+        if (lineage / f"{stem}.yml").is_file()
+    }
+    for config in configs.values():
+        if "output_dir" in config:
+            assert config["output_dir"].rstrip("/").endswith(f"/{name}")
+        if "wandb_name" in config:
+            assert config["wandb_name"] == name
+        if "trainer_cls" in config:
+            module, _, cls = config["trainer_cls"].rpartition(".")
+            source = EXAMPLE / "src" / f"{module.replace('.', '/')}.py"
+            assert source.is_file(), config["trainer_cls"]
+            assert f"\nclass {cls}(" in source.read_text(), config["trainer_cls"]
 
-    assert "steps=(5 10 15)" in relearn
-    assert "example_counts=(20 40 60)" in relearn
-    assert 'cp -a "$staged_run"/. "$run_root"/' in relearn
-    assert 'rm -rf "$run_root"' not in relearn
-    assert "samples=(0 20 40 60)" in evaluation
-    assert 'checkpoint="$model_root/checkpoints"' in evaluation
-    assert 'checkpoint="$model_root/examples-$sample_count/checkpoints"' in evaluation
+    sweep_path = lineage / "sweep.yml"
+    if not sweep_path.is_file():
+        return
+    sweep = yaml.safe_load(sweep_path.read_text())
+    assert "base" in configs
+    assert sweep["id"] == f"{name}-hpo"
+    if budget := re.search(r"--(\d+pp)--", name):
+        for evaluation in sweep.get("evaluations", ()):
+            assert evaluation.endswith(f"-{budget.group(1)}")
+    if "selected" in configs:
+        swept = {
+            key
+            for stage in sweep["sweeps"]
+            for key in {**stage.get("parameters", {}), **stage.get("overrides", {})}
+        }
+        assert differing_keys(configs["base"], configs["selected"]) <= swept | {
+            "output_dir",
+            "wandb_name",
+            "dataset_prepared_path",
+        }

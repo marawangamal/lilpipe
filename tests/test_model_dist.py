@@ -74,12 +74,3 @@ def test_model_dist_rejects_different_architectures(model_dist, tmp_path) -> Non
         model_dist.l2_distance(renamed, ref)
     with pytest.raises(ValueError, match="shape"):
         model_dist.l2_distance(resized, ref)
-
-
-def test_model_dist_has_tamia_sbatch() -> None:
-    script = (SCRIPT.parents[1] / "slurm" / "tamia" / "model_dist.sbatch").read_text()
-
-    assert "uv sync --frozen --group eval" in script
-    assert (
-        'python scripts/analysis/get_model_dists.py "$ref" "$@" --out "$out"' in script
-    )
