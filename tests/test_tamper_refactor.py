@@ -465,6 +465,55 @@ def test_fifteen_pp_maxent_sam_sweep_mirrors_maxent() -> None:
     assert sweep_candidate_count(sweep) == 13
 
 
+@pytest.mark.parametrize(("method", "trainer"), [("npo", "WDNPOTrainer")])
+def test_weight_distance_sweeps_only_vary_coefficient_from_five_pp_selection(
+    method, trainer
+) -> None:
+    root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
+    plain = f"z7b-wmdp-bio--5pp--unlearn-fft-{method}"
+    lineage = f"z7b-wmdp-bio--15pp--unlearn-fft-{method}-wd"
+    selected = yaml.safe_load((root / plain / "selected.yml").read_text())
+    base = yaml.safe_load((root / lineage / "base.yml").read_text())
+    sweep = yaml.safe_load((root / lineage / "sweep.yml").read_text())
+
+    assert base["trainer_cls"] == f"trainers.wd.{trainer}"
+    assert base["custom_trainer_args"] == {
+        **selected["custom_trainer_args"],
+        "coefficient_weight_dist": pytest.approx(1000.0),
+    }
+    assert base["output_dir"] == f"artifacts/tamia/models/{lineage}"
+    assert base["wandb_name"] == lineage
+    assert f"/{lineage}/" in base["dataset_prepared_path"]
+    renamed = {
+        "trainer_cls",
+        "custom_trainer_args",
+        "output_dir",
+        "wandb_name",
+        "dataset_prepared_path",
+    }
+    assert {k: v for k, v in base.items() if k not in renamed} == {
+        k: v for k, v in selected.items() if k not in renamed
+    }
+
+    assert sweep["id"] == f"{lineage}-hpo"
+    assert sweep["sweeps"] == [
+        {
+            "name": "grid",
+            "parameters": {
+                "custom_trainer_args.coefficient_weight_dist": [
+                    0.0,
+                    1e2,
+                    1e3,
+                    1e4,
+                    1e5,
+                    1e6,
+                ]
+            },
+        }
+    ]
+    assert sweep["evaluations"] == ["wmdp-bio-final-15pp", "mmlu-no-bio-final-15pp"]
+
+
 def test_maxent_sam_promotes_grid_candidate_to_five_pp() -> None:
     root = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     base = yaml.safe_load(
