@@ -146,7 +146,7 @@ experiments = [
                 "MaxEnt",
                 "TAR",
                 False,
-                1,
+                2,
             ),
             (
                 "z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-s2",
@@ -164,7 +164,7 @@ experiments = [
         "output": "relearning-attack-z7b--15pp",
         "steps": range(0, 17, 4),
         "configs": [
-            ("z7b-base", "Base model", "Base model", True, 1),
+            ("z7b-base", "Base", "None", True, 1),
             # (
             #     "z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft",
             #     "GD",
@@ -209,7 +209,7 @@ experiments = [
         "output": "relearning-attack-optml-z7b--15pp",
         "steps": range(0, 17, 4),
         "configs": [
-            ("z7b-base", "Base model", "Base model", True, 1),
+            ("z7b-base", "Base", "None", True, 1),
             (
                 "optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft",
                 "GD",
