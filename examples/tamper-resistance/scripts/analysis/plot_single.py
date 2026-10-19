@@ -11,7 +11,7 @@ rootdir = "artifacts/tamia/evals"
 tasks = {"wmdp_bio_robust": "WMDP-Bio robust ↓", "mmlu_no_bio": "MMLU-no-bio ↑"}
 
 P = "z7b-wmdp-bio--5pp--unlearn-fft-me-tar"
-# name: (runs as (eval dir, defence, seed, attack lr), hue)
+# name: (runs as (eval dir, defence, seed, attack lr), relplot styling)
 plots = {
     "tar": (
         [
@@ -22,15 +22,32 @@ plots = {
             (f"{P}-k16--relearn-fft-s2", "TAR-ME 16 steps", 2, "1e-5"),
             (f"{P}-k16--relearn-fft-lr2e-6", "TAR-ME 16 steps", 1, "2e-6"),
         ],
-        "defence",
+        dict(
+            hue="Defence",
+            size="Seed",
+            sizes={1: 0.6, 2: 1.5},
+            style="Attack lr",
+            markers=True,
+            dashes=False,
+        ),
     ),
     "tar-long": (
         [
-            (f"{P}-k16--relearn-fft-lr5e-6-ms64", "TAR-ME 16 steps", 1, "5e-6"),
-            (f"{P}-k16--relearn-fft-lr1e-5-ms64", "TAR-ME 16 steps", 1, "1e-5"),
-            (f"{P}-k16--relearn-fft-lr1e-6-ms64", "TAR-ME 16 steps", 1, "1e-6"),
+            # (f"{P}-k16--relearn-fft-lr1e-6-ms64", "TAR-ME 16 steps", 1, "1e-6"),
+            # (f"{P}-k16--relearn-fft-lr5e-6-ms64", "TAR-ME 16 steps", 1, "5e-6"),
+            # (f"{P}-k16--relearn-fft-lr1e-5-ms64", "TAR-ME 16 steps", 1, "1e-5"),
+            (f"{P}-k16--relearn-fft-lr1e-6-ms128", "TAR-ME 16 steps", 1, "1e-6"),
+            (f"{P}-k16--relearn-fft-lr5e-6-ms128", "TAR-ME 16 steps", 1, "5e-6"),
+            (f"{P}-k16--relearn-fft-lr1e-5-ms128", "TAR-ME 16 steps", 1, "1e-5"),
         ],
-        "attack lr",
+        dict(
+            size="Attack lr",
+            sizes={"1e-6": 0.6, "5e-6": 1.5, "1e-5": 3.0},
+            size_order=["1e-6", "5e-6", "1e-5"],
+            style="Attack steps",
+            markers=True,
+            dashes=False,
+        ),
     ),
 }
 
@@ -38,7 +55,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--plot", choices=plots, default="tar")
 parser.add_argument("--output")
 args = parser.parse_args()
-configs, hue = plots[args.plot]
+configs, style = plots[args.plot]
 output = args.output or (
     f"artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--{args.plot}.pdf"
 )
@@ -58,10 +75,15 @@ for experiment, defence, seed, lr in configs:
                     {
                         "step": step,
                         "score": 100 * results[task]["acc,none"],
-                        "defence": defence,
-                        "seed": seed,
-                        "attack lr": lr,
-                        "eval": label,
+                        "Defence": defence,
+                        "Seed": seed,
+                        "Attack lr": lr,
+                        "Attack steps": (
+                            experiment.rsplit("-ms", 1)[-1]
+                            if "-ms" in experiment
+                            else "16"
+                        ),
+                        "Eval": label,
                     }
                 )
 
@@ -70,17 +92,34 @@ g = sns.relplot(
     data=df,
     x="step",
     y="score",
-    col="eval",
+    col="Eval",
     col_order=list(tasks.values()),
-    hue=hue,
-    size="seed",
-    sizes={1: 0.6, 2: 1.5},
-    style="attack lr" if hue == "defence" else "defence",
-    markers=True,
-    dashes=False,
     kind="line",
     errorbar=None,
+    **style,
 )
+# The base model is unattacked: draw it flat across all steps, as in plot_trajectory.
+base = {}
+for path in glob.glob(
+    osp.join(rootdir, "z7b-base", "checkpoint-0", "**", "results*.json"), recursive=True
+):
+    with open(path) as f:
+        results = json.load(f)["results"]
+    base.update(
+        {
+            label: 100 * results[t]["acc,none"]
+            for t, label in tasks.items()
+            if t in results
+        }
+    )
+steps = sorted(df["step"].unique())
+for label, ax in g.axes_dict.items():
+    (base_line,) = ax.plot(
+        steps, [base[label]] * len(steps), color="black", marker="o", markersize=4
+    )
+legend = dict(zip([t.get_text() for t in g.legend.texts], g.legend.legend_handles))
+g.legend.remove()
+g.add_legend(legend_data={"Base": base_line, **legend})
 g.set_axis_labels("Relearning step", "Accuracy (%)")
 os.makedirs(osp.dirname(output), exist_ok=True)
 g.figure.savefig(output, bbox_inches="tight")
