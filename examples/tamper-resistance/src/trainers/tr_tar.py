@@ -158,9 +158,10 @@ class TARBaseTrainer:
         model_copy = copy.deepcopy(model)
         # deepcopy keeps accelerate's top-level forward wrapper bound to `model`
         model_copy.forward = MethodType(type(model_copy).forward, model_copy)
-        model_attacked = self.sample_attack_fn(
-            model_copy, inputs, on_loss_backward=self._log_inner_loss
-        )
+        with self.accelerator.autocast():  # the rebind skips accelerate's autocast
+            model_attacked = self.sample_attack_fn(
+                model_copy, inputs, on_loss_backward=self._log_inner_loss
+            )
         theta_attacked = dict_binary_op(
             theta,
             dict(model_attacked.named_parameters()),
