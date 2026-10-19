@@ -1,6 +1,11 @@
 artifacts/*
 !artifacts/figures/
 !artifacts/figures/**
+!artifacts/tamia/
+artifacts/tamia/*
+!artifacts/tamia/evals/
+!artifacts/tamia/evals/**
+artifacts/tamia/evals/**/samples_*.jsonl
 .venv-train
 .venv-eval
 wandb/
