@@ -11,7 +11,7 @@ producer:
     - --gpus-per-node=h100:4
     - --cpus-per-task=48
     - --mem=480G
-    - --time=12:00:00
+    - --time=03:00:00
 evaluations:
   - wmdp-bio-final-5pp
   - mmlu-no-bio-final-5pp

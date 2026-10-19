@@ -1,8 +1,10 @@
 """Tamper-resistant unlearning (TAR) with a pluggable simulated relearning attack."""
 
 import copy
+import gc
 from collections.abc import Mapping
 from functools import partial
+from types import MethodType
 
 import torch
 import wandb
@@ -152,16 +154,20 @@ class TARBaseTrainer:
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         theta = {name: param for name, param in model.named_parameters()}
-        with torch.enable_grad():
-            # make new model
-            model_attacked = self.sample_attack_fn(
-                copy.deepcopy(model), inputs, on_loss_backward=self._log_inner_loss
-            )
+        # make new model
+        model_copy = copy.deepcopy(model)
+        # deepcopy keeps accelerate's top-level forward wrapper bound to `model`
+        model_copy.forward = MethodType(type(model_copy).forward, model_copy)
+        model_attacked = self.sample_attack_fn(
+            model_copy, inputs, on_loss_backward=self._log_inner_loss
+        )
         theta_attacked = dict_binary_op(
             theta,
             dict(model_attacked.named_parameters()),
             lambda w, w_att: w + (w_att - w).detach(),
         )
+        del model_copy, model_attacked
+        gc.collect()  # accelerate hooks form reference cycles
         loss_retain = self.compute_retain_loss(model, inputs)
         # loss_forget = self.compute_forget_loss(model_attacked, inputs)
         loss_forget = self.compute_forget_loss(
