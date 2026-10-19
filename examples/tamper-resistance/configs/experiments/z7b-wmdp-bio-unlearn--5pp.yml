@@ -15,8 +15,10 @@ models:
   - z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2--relearn-fft
   - z7b-wmdp-bio--5pp--unlearn-fft-me-wd--relearn-fft
   - z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft
+  - z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-lr2e-6
   - z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-s2
   - z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft
+  - z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr2e-6
   - z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-s2
 evaluations:
   - wmdp-trajectory
