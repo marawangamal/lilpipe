@@ -316,6 +316,23 @@ models:
       - --cpus-per-task=48
       - --mem=480G
       - --time=03:00:00
+  z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-s2:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-s2
+    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-s2
+    producer:
+      id: train-z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-s2
+      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      args:
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-s2/selected.yml
+      depends_on: []
+      sbatch_args:
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
   z7b-wmdp-bio--5pp--unlearn-fft-me-wd--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-wd
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-wd--relearn-fft
