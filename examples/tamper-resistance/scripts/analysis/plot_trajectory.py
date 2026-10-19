@@ -155,6 +155,13 @@ experiments = [
                 False,
                 1,
             ),
+            (
+                "z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft",
+                "MaxEnt",
+                "TAR (16 steps)",
+                False,
+                1,
+            ),
         ],
     },
     {
