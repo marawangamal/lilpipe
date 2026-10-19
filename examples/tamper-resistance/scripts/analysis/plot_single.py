@@ -3,6 +3,7 @@ import glob
 import json
 import os
 import os.path as osp
+import re
 
 import pandas as pd
 import seaborn as sns
@@ -39,12 +40,14 @@ plots = {
             (f"{P}-k16--relearn-fft-lr1e-6-ms128", "TAR-ME 16 steps", 1, "1e-6"),
             (f"{P}-k16--relearn-fft-lr5e-6-ms128", "TAR-ME 16 steps", 1, "5e-6"),
             (f"{P}-k16--relearn-fft-lr1e-5-ms128", "TAR-ME 16 steps", 1, "1e-5"),
+            (f"{P}-k16--relearn-fft-lr1e-6-ms128-bs-4", "TAR-ME 16 steps", 1, "1e-6"),
+            (f"{P}-k16--relearn-fft-lr5e-6-ms128-bs-4", "TAR-ME 16 steps", 1, "5e-6"),
         ],
         dict(
             size="Attack lr",
             sizes={"1e-6": 0.6, "5e-6": 1.5, "1e-5": 3.0},
             size_order=["1e-6", "5e-6", "1e-5"],
-            style="Attack steps",
+            style="Batch size",
             markers=True,
             dashes=False,
         ),
@@ -79,9 +82,14 @@ for experiment, defence, seed, lr in configs:
                         "Seed": seed,
                         "Attack lr": lr,
                         "Attack steps": (
-                            experiment.rsplit("-ms", 1)[-1]
-                            if "-ms" in experiment
+                            ms[1]
+                            if (ms := re.search(r"-ms(\d+)", experiment))
                             else "16"
+                        ),
+                        "Batch size": (
+                            bs[1]
+                            if (bs := re.search(r"-bs-(\d+)", experiment))
+                            else "1"
                         ),
                         "Eval": label,
                     }
