@@ -200,7 +200,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-rmu--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu--relearn-fft
     producer:
@@ -217,7 +217,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-rmu-wd--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-wd
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-wd--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-wd--relearn-fft
     producer:
@@ -234,7 +234,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft
     producer:
@@ -251,7 +251,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
     producer:
@@ -268,7 +268,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
     producer:
@@ -285,7 +285,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft
     producer:
@@ -302,7 +302,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft
     producer:
@@ -319,7 +319,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-lr2e-6:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-lr2e-6
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-lr2e-6
     producer:
@@ -336,7 +336,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft
     producer:
@@ -353,7 +353,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr2e-6:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr2e-6
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr2e-6
     producer:
@@ -370,7 +370,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-s2:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-s2
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-s2
     producer:
@@ -387,7 +387,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-s2:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-s2
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-s2
     producer:
@@ -404,7 +404,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-me-wd--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-wd
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-wd--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-wd--relearn-fft
     producer:
@@ -421,7 +421,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-wd
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft
     producer:
@@ -438,7 +438,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft-s2:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-wd
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft-s2
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft-s2
     producer:
@@ -455,7 +455,7 @@ models:
   z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/5pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2--relearn-fft
     producer:
@@ -472,7 +472,7 @@ models:
   z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/15pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft
     producer:
@@ -489,7 +489,7 @@ models:
   z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/15pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
     producer:
@@ -506,7 +506,7 @@ models:
   z7b-wmdp-bio--15pp--unlearn-fft-me-tar--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-me-tar
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-me-tar--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/15pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-me-tar--relearn-fft
     producer:
@@ -523,7 +523,7 @@ models:
   z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/15pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft
     producer:
@@ -540,7 +540,7 @@ models:
   z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/15pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
     producer:
@@ -557,7 +557,7 @@ models:
   optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft:
     baseline_model_name_or_path: OPTML-Group/GradDiff-WMDP
     base_model_name_or_path: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/15pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-gd--relearn-fft
     producer:
@@ -574,7 +574,7 @@ models:
   optml-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft:
     baseline_model_name_or_path: OPTML-Group/GradDiff-SAM-WMDP
     base_model_name_or_path: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/15pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2--relearn-fft
     producer:
@@ -591,7 +591,7 @@ models:
   optml-z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft:
     baseline_model_name_or_path: OPTML-Group/NPO-WMDP
     base_model_name_or_path: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/15pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft
     producer:
@@ -608,7 +608,7 @@ models:
   optml-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam--relearn-fft:
     baseline_model_name_or_path: OPTML-Group/NPO-SAM-WMDP
     base_model_name_or_path: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam--relearn-fft
-    evaluation_root: artifacts/tamia/evals/thresholds/15pp
+    evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam--relearn-fft
     producer:

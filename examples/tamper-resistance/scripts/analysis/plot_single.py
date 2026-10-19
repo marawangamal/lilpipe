@@ -7,30 +7,17 @@ import os.path as osp
 import pandas as pd
 import seaborn as sns
 
-rootdir = "artifacts/tamia/evals/thresholds"
+rootdir = "artifacts/tamia/evals"
 tasks = {"wmdp_bio_robust": "WMDP-Bio robust ↓", "mmlu_no_bio": "MMLU-no-bio ↑"}
 
+P = "z7b-wmdp-bio--5pp--unlearn-fft-me-tar"
 configs = [
-    (
-        "5pp/z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft",
-        "TAR-ME 8 steps",
-        1,
-    ),
-    (
-        "5pp/z7b-wmdp-bio--5pp--unlearn-fft-me-tar--relearn-fft-s2",
-        "TAR-ME 8 steps",
-        2,
-    ),
-    (
-        "5pp/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft",
-        "TAR-ME 16 steps",
-        1,
-    ),
-    (
-        "5pp/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-s2",
-        "TAR-ME 16 steps",
-        2,
-    ),
+    (f"{P}--relearn-fft", "TAR-ME 8 steps", 1, "1e-5"),
+    (f"{P}--relearn-fft-s2", "TAR-ME 8 steps", 2, "1e-5"),
+    (f"{P}--relearn-fft-lr2e-6", "TAR-ME 8 steps", 1, "2e-6"),
+    (f"{P}-k16--relearn-fft", "TAR-ME 16 steps", 1, "1e-5"),
+    (f"{P}-k16--relearn-fft-s2", "TAR-ME 16 steps", 2, "1e-5"),
+    (f"{P}-k16--relearn-fft-lr2e-6", "TAR-ME 16 steps", 1, "2e-6"),
 ]
 
 parser = argparse.ArgumentParser()
@@ -40,7 +27,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 rows = []
-for experiment, defence, seed in configs:
+for experiment, defence, seed, lr in configs:
     for path in glob.glob(
         osp.join(rootdir, experiment, "checkpoint-*", "**", "results*.json"),
         recursive=True,
@@ -56,6 +43,7 @@ for experiment, defence, seed in configs:
                         "score": 100 * results[task]["acc,none"],
                         "defence": defence,
                         "seed": seed,
+                        "attack lr": lr,
                         "eval": label,
                     }
                 )
@@ -70,8 +58,9 @@ g = sns.relplot(
     hue="defence",
     size="seed",
     sizes={1: 0.6, 2: 1.5},
+    style="attack lr",
     markers=True,
-    marker="o",
+    dashes=False,
     kind="line",
     errorbar=None,
 )

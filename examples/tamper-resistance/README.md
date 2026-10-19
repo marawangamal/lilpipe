@@ -25,7 +25,7 @@ axolotl train configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-rmu--
 # 4. Run eval on final ckpt
 source .venv-eval/bin/activate
 CHECKPOINT=artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu--relearn-fft/checkpoint-16
-OUTPUT=artifacts/tamia/evals/thresholds/5pp/z7b-wmdp-bio--5pp--unlearn-fft-rmu--relearn-fft/checkpoint-16
+OUTPUT=artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-rmu--relearn-fft/checkpoint-16
 accelerate launch --num_processes=1 -m lm_eval run \
   --model hf \
   --model_args "pretrained=$CHECKPOINT,dtype=bfloat16,trust_remote_code=True" \

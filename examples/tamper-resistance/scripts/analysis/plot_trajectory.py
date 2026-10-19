@@ -65,7 +65,7 @@ experiments = [
     },
     {
         "model": "z7b--5pp",
-        "rootdir": "artifacts/tamia/evals/thresholds/5pp",
+        "rootdir": "artifacts/tamia/evals",
         "base_rootdir": "artifacts/tamia/evals",
         "output": "relearning-attack-z7b--5pp",
         "steps": range(0, 17, 4),
@@ -173,7 +173,7 @@ experiments = [
     },
     {
         "model": "z7b--15pp",
-        "rootdir": "artifacts/tamia/evals/thresholds/15pp",
+        "rootdir": "artifacts/tamia/evals",
         "base_rootdir": "artifacts/tamia/evals",
         "output": "relearning-attack-z7b--15pp",
         "steps": range(0, 17, 4),
@@ -218,7 +218,7 @@ experiments = [
     },
     {
         "model": "optml-z7b--15pp",
-        "rootdir": "artifacts/tamia/evals/thresholds/15pp",
+        "rootdir": "artifacts/tamia/evals",
         "base_rootdir": "artifacts/tamia/evals",
         "output": "relearning-attack-optml-z7b--15pp",
         "steps": range(0, 17, 4),

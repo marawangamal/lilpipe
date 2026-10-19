@@ -19,7 +19,7 @@ evaluations:
     - '{model.id}'
     - '{model.base_model_name_or_path}'
     - '{model.adapter_name_or_path}'
-    - artifacts/tamia/evals/thresholds/15pp
+    - artifacts/tamia/evals
     - '125'
     - '125'
     sbatch_args: &id001
@@ -34,7 +34,7 @@ evaluations:
     - '{model.id}'
     - '{model.base_model_name_or_path}'
     - '{model.adapter_name_or_path}'
-    - artifacts/tamia/evals/thresholds/5pp
+    - artifacts/tamia/evals
     - '125'
     - '125'
     sbatch_args: *id001
@@ -112,7 +112,7 @@ evaluations:
     - '{model.id}'
     - '{model.base_model_name_or_path}'
     - '{model.adapter_name_or_path}'
-    - artifacts/tamia/evals/thresholds/15pp
+    - artifacts/tamia/evals
     - '125'
     - '125'
     sbatch_args: *id001
@@ -122,7 +122,7 @@ evaluations:
     - '{model.id}'
     - '{model.base_model_name_or_path}'
     - '{model.adapter_name_or_path}'
-    - artifacts/tamia/evals/thresholds/5pp
+    - artifacts/tamia/evals
     - '125'
     - '125'
     sbatch_args: *id001

@@ -15,7 +15,9 @@ base model. For Zephyr-7B the base MMLU-no-bio score is `58.59`:
 | `--5pp--` | 5 | 53.59 |
 | `--15pp--` | 15 | 43.59 |
 
-Evaluations for a budget are written under `artifacts/tamia/evals/thresholds/<N>pp/`.
+Evaluations are written to `artifacts/tamia/evals/<model-id>/`, mirroring
+`artifacts/tamia/models/`; the budget is part of each model id. Retired runs live in
+`artifacts/tamia/evals/archive/`.
 
 ## Hyperparameter Tuning Procedure
 
@@ -41,7 +43,7 @@ Evaluations for a budget are written under `artifacts/tamia/evals/thresholds/<N>
    (`wmdp-bio-final-<N>pp`, `mmlu-no-bio-final-<N>pp`).
 4. **Collect.** For every candidate, read `acc,none` from the lm-eval
    `results_*.json` under
-   `artifacts/tamia/evals/thresholds/<N>pp/<sweep-id>--<stage>--NNN/checkpoint-*/{wmdp-bio-robust,mmlu-no-bio}/`.
+   `artifacts/tamia/evals/<sweep-id>--<stage>--NNN/checkpoint-*/{wmdp-bio-robust,mmlu-no-bio}/`.
 5. **Select.** A candidate is *eligible* if its MMLU-no-bio drop stays within
    the lineage's budget (e.g. under 5 points for `--5pp--`). Among eligible
    candidates, select the one with the **lowest WMDP-Bio robust accuracy**,
@@ -76,9 +78,9 @@ copy, and a model move; nothing is retrained.
    unlearned model from `checkpoint-0` of its `--relearn-fft` eval folder:
 
    ```bash
-   cd artifacts/tamia/evals/thresholds
-   SRC=<sweep-N>pp/<sweep-id>--<stage>--NNN/checkpoint-<final>
-   DST=<N>pp/z7b-wmdp-bio--<N>pp--<method>--relearn-fft/checkpoint-0
+   cd artifacts/tamia/evals
+   SRC=<sweep-id>--<stage>--NNN/checkpoint-<final>
+   DST=z7b-wmdp-bio--<N>pp--<method>--relearn-fft/checkpoint-0
    mkdir -p $DST && cp -r $SRC/wmdp-bio-robust $SRC/mmlu-no-bio $DST/
    ```
 
@@ -96,7 +98,7 @@ copy, and a model move; nothing is retrained.
    artifacts; plots are made from it:
 
    ```bash
-   D=artifacts/tamia/evals/thresholds/<N>pp/z7b-wmdp-bio--<N>pp--<method>--relearn-fft
+   D=artifacts/tamia/evals/z7b-wmdp-bio--<N>pp--<method>--relearn-fft
    rsync -a tamia:projects/lilpipe/examples/tamper-resistance/$D/ $D/
    ```
 
