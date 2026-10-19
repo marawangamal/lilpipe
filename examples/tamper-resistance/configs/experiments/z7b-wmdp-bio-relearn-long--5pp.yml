@@ -4,7 +4,8 @@ registries:
   models: configs/registries/models.yml
   evaluations: configs/registries/evals.yml
 models:
-  - z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr5e-6-s64
+  - z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr5e-6-ms64
+  - z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr1e-5-ms64
 evaluations:
   - wmdp-trajectory-64
   - mmlu-trajectory-64

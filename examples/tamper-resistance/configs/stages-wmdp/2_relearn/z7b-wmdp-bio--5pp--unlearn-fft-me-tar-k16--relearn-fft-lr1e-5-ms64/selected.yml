@@ -5,9 +5,9 @@ datasets:
   split: train
   type: data.wmdp_zephyr
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr5e-6-s64/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr1e-5-ms64/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr5e-6-s64
+output_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr1e-5-ms64
 sequence_len: 512
 sample_packing: false
 pad_to_sequence_len: false
@@ -16,7 +16,7 @@ train_on_inputs: true
 micro_batch_size: 1
 gradient_accumulation_steps: 1
 max_steps: 64
-learning_rate: 5.0e-06
+learning_rate: 1.0e-05
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
@@ -71,4 +71,4 @@ save_total_limit: 4
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr5e-6-s64
+wandb_name: z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr1e-5-ms64
