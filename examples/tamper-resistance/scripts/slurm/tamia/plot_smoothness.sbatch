@@ -30,20 +30,20 @@ models=(
   "origin|Base model|HuggingFaceH4/zephyr-7b-beta"
   "optml-npo|OPTML NPO|OPTML-Group/NPO-WMDP"
   "optml-npo-sam|OPTML NPO + SAM|OPTML-Group/NPO-SAM-WMDP"
-  "npo-5pp|NPO (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo/checkpoint-125"
-  "npo-sam-5pp|NPO + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2/checkpoint-125"
-  "npo-15pp|NPO (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo/checkpoint-125"
-  "npo-sam-15pp|NPO + SAM (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/checkpoint-125"
+  "npo-5pp|NPO (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo"
+  "npo-sam-5pp|NPO + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2"
+  "npo-15pp|NPO (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo"
+  "npo-sam-15pp|NPO + SAM (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2"
   # GradDiff is only trained under the 15pp budget.
-  "grad-diff-15pp|GradDiff (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd/checkpoint-125"
-  "grad-diff-sam-15pp|GradDiff + SAM (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/checkpoint-125"
+  "grad-diff-15pp|GradDiff (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd"
+  "grad-diff-sam-15pp|GradDiff + SAM (15pp)|artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2"
   # Vanilla MaxEnt has no 15pp model yet; one MaxEnt + SAM model is promoted
   # to both budgets and stored under the 5pp lineage.
-  "me-5pp|MaxEnt (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125"
-  "me-sam|MaxEnt + SAM (5pp/15pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125"
+  "me-5pp|MaxEnt (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me"
+  "me-sam|MaxEnt + SAM (5pp/15pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2"
   # RMU is only trained under the 5pp budget.
-  "rmu-5pp|RMU (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu/checkpoint-125"
-  "rmu-sam-5pp|RMU + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2/checkpoint-125"
+  "rmu-5pp|RMU (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu"
+  "rmu-sam-5pp|RMU + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2"
 )
 # ONLY="slug ..." measures a subset; surfaces share seeded directions, so they
 # can be plotted together with those from earlier jobs.
