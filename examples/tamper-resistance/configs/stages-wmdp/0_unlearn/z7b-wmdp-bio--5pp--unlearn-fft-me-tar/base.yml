@@ -8,6 +8,8 @@ custom_trainer_args:
   sampling: optml
   inner_steps: 8
   inner_learning_rate: 1.0e-05
+  inner_n_samples: 8
+  inner_batch_size: 1
 datasets:
 - path: cais/wmdp-bio-forget-corpus
   split: train
@@ -26,7 +28,7 @@ sample_packing: false
 pad_to_sequence_len: false
 remove_unused_columns: false
 train_on_inputs: true
-micro_batch_size: 8
+micro_batch_size: 24
 gradient_accumulation_steps: 1
 max_steps: 125
 learning_rate: 5.0e-06
