@@ -81,6 +81,22 @@ evaluations:
     - mmlu-no-bio
     - '16'
     sbatch_args: *id003
+  mmlu-trajectory-128:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args:
+    - '{model.id}'
+    - '{model.baseline_model_name_or_path}'
+    - '{model.base_model_name_or_path}'
+    - '{model.evaluation_root}'
+    - mmlu_no_bio
+    - mmlu-no-bio
+    - '16'
+    sbatch_args:
+    - --array=0-8
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=32
+    - --mem=128G
+    - --time=03:00:00
   tofu-benign-relearn:
     script: scripts/slurm/mila/relearn_tofu.sbatch
     args:
@@ -170,3 +186,19 @@ evaluations:
     - wmdp-bio-robust
     - '16'
     sbatch_args: *id003
+  wmdp-trajectory-128:
+    script: scripts/slurm/tamia/eval_local_trajectory.sbatch
+    args:
+    - '{model.id}'
+    - '{model.baseline_model_name_or_path}'
+    - '{model.base_model_name_or_path}'
+    - '{model.evaluation_root}'
+    - wmdp_bio_robust
+    - wmdp-bio-robust
+    - '16'
+    sbatch_args:
+    - --array=0-8
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=32
+    - --mem=128G
+    - --time=03:00:00
