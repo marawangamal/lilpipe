@@ -1,20 +1,44 @@
 """Self-destructive models (SEAM): couple forget and retain gradients."""
 
 import torch
-from torch.nn.utils import parameters_to_vector, vector_to_parameters
 
 from trainers.ul_gd import GradDiffTrainer
 from trainers.ul_me import MaxEntTrainer
 
 
-def grad(compute_loss, model, inputs, shift=0):
-    """Flat gradient of ``compute_loss`` at the trainable weights plus ``shift``."""
-    parameters = [p for p in model.parameters() if p.requires_grad]
-    theta = parameters_to_vector(parameters).detach()
-    vector_to_parameters(theta + shift, parameters)
-    g = torch.autograd.grad(compute_loss(model, inputs), parameters)
-    vector_to_parameters(theta, parameters)
-    return parameters_to_vector(g)
+def grad_old(compute_loss, model, inputs, shift=None):
+    """Gradient of ``compute_loss`` by parameter name, at the weights plus ``shift``."""
+    params = {n: p for n, p in model.named_parameters() if p.requires_grad}
+    theta = {n: p.data for n, p in params.items()}
+    for n, s in (shift or {}).items():
+        params[n].data = params[n].data + s
+    g = torch.autograd.grad(compute_loss(model, inputs), list(params.values()))
+    for n, p in params.items():
+        p.data = theta[n]
+    return dict(zip(params, g))
+
+
+def grad(compute_loss, model, inputs, shift=None):
+    """Gradient of ``compute_loss`` by parameter name, at the weights plus ``shift``."""
+    theta = {name: param.data for name, param in model.named_parameters()}
+    # theta <- theta + delta
+    for name, param in model.named_parameters():
+        if shift is not None and name in shift:
+            param.data = param.data + shift[name]
+
+    loss = compute_loss(model, inputs)
+    loss.backward()
+    g = {n: p.grad for n, p in model.named_parameters() if p.grad is not None}
+    model.zero_grad()
+    for name, param in model.named_parameters():
+        param.data = theta[name]
+    return g
+
+
+def dot(a, b):
+    """Dot product of two name-to-tensor dicts that may span several devices."""
+    device = next(iter(a.values())).device
+    return sum(torch.sum(a[n].float() * b[n].float()).to(device) for n in a)
 
 
 class SEAMBaseTrainer:
@@ -44,34 +68,36 @@ class SEAMBaseTrainer:
         TODO: this differentiates through both gradients (double backward). SEAM
         uses a Hessian-free finite-difference estimate instead; swap it in here.
         """
-        theta = parameters_to_vector(p for p in model.parameters() if p.requires_grad)
+        theta = {n: p for n, p in model.named_parameters() if p.requires_grad}
 
         # Gradients at current weights
         g_f = grad(self.compute_attack_loss, model, inputs)  # attacker minimizes -l_f
         g_r = grad(self.compute_retain_loss, model, inputs)
 
         # Normalize
-        norm_f, norm_r = g_f.norm(), g_r.norm()
-        tilde_g_f = g_f / norm_f
-        tilde_g_r = g_r / norm_r
-        c = torch.dot(tilde_g_f, tilde_g_r)
+        norm_f, norm_r = dot(g_f, g_f).sqrt().item(), dot(g_r, g_r).sqrt().item()
+        c = dot(g_f, g_r) / (norm_f * norm_r)
+        tilde_g_f = {n: g / norm_f for n, g in g_f.items()}
+        tilde_g_r = {n: g / norm_r for n, g in g_r.items()}
 
         # Perturbation directions
-        d_f = tilde_g_r - c * tilde_g_f
-        d_r = tilde_g_f - c * tilde_g_r
+        d_f = {n: epsilon * (tilde_g_r[n] - c.item() * tilde_g_f[n]) for n in g_f}
+        d_r = {n: epsilon * (tilde_g_f[n] - c.item() * tilde_g_r[n]) for n in g_f}
 
         # Gradients at temporary perturbed weights; same batches
-        g_f_shifted = grad(self.compute_attack_loss, model, inputs, epsilon * d_f)
-        g_r_shifted = grad(self.compute_retain_loss, model, inputs, epsilon * d_r)
+        g_f_shifted = grad(self.compute_attack_loss, model, inputs, d_f)
+        g_r_shifted = grad(self.compute_retain_loss, model, inputs, d_r)
 
         # Approximate gradient of cos(g_f, g_r)
-        g_sd = (g_f_shifted - g_f) / (epsilon * norm_f) + (g_r_shifted - g_r) / (
-            epsilon * norm_r
-        )
+        g_sd = {
+            n: (g_f_shifted[n] - g_f[n]) / (epsilon * norm_f)
+            + (g_r_shifted[n] - g_r[n]) / (epsilon * norm_r)
+            for n in g_f
+        }
 
         # 2. Inject that estimate through a surrogate loss
         # its value is c, its gradient is g_sd
-        loss_sd_surrogate = torch.dot(theta, g_sd.detach())
+        loss_sd_surrogate = dot(theta, g_sd)
         loss_sd_surrogate = loss_sd_surrogate - loss_sd_surrogate.detach() + c
 
         return loss_sd_surrogate
@@ -80,6 +106,7 @@ class SEAMBaseTrainer:
         loss_forget = self.compute_forget_loss(model, inputs)
         loss_retain = self.compute_retain_loss(model, inputs)
         loss_sd = self.compute_sd_loss(model, inputs, self.sd_epsilon)
+        loss_sd = loss_sd.to(loss_forget.device)
         loss = loss_forget + loss_retain + self.sd_coefficient * loss_sd
 
         if model.training and torch.is_grad_enabled():
