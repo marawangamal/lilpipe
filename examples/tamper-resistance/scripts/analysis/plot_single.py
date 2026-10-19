@@ -28,6 +28,7 @@ plots = {
         [
             (f"{P}-k16--relearn-fft-lr5e-6-ms64", "TAR-ME 16 steps", 1, "5e-6"),
             (f"{P}-k16--relearn-fft-lr1e-5-ms64", "TAR-ME 16 steps", 1, "1e-5"),
+            (f"{P}-k16--relearn-fft-lr1e-6-ms64", "TAR-ME 16 steps", 1, "1e-6"),
         ],
         "attack lr",
     ),
