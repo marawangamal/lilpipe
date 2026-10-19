@@ -1,0 +1,10 @@
+version: 1
+id: z7b-wmdp-bio-relearn-long--5pp
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+models:
+  - z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr5e-6-s64
+evaluations:
+  - wmdp-trajectory-64
+  - mmlu-trajectory-64
