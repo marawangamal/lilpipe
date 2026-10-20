@@ -169,6 +169,13 @@ experiments = [
                 False,
                 2,
             ),
+            (
+                "z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft",
+                "GD",
+                "SEAM",
+                False,
+                1,
+            ),
         ],
     },
     {

@@ -10,6 +10,9 @@ models:
   - z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr5e-6-ms128-bs-4
   - z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr1e-5-ms128
   - z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr1e-5-ms128-bs-4
+  - z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-6-ms128
+  - z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr5e-6-ms128
+  - z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-5-ms128
 evaluations:
   - wmdp-trajectory-128
   - mmlu-trajectory-128
