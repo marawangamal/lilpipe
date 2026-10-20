@@ -6,6 +6,14 @@ sweeps:
       learning_rate: [1.0e-06, 5.0e-06, 1.0e-05]
       custom_trainer_args.sd_epsilon: [1.0e-04, 1.0e-03, 1.0e-02]
       custom_trainer_args.sd_coefficient: [0.01, 1]
+  # epsilon <= 1e-2 rounds away in bf16 (the SEAM gradient was noise); at
+  # epsilon 1-10 the SEAM gradient is ~11-27 per unit coefficient against a GD
+  # gradient of ~344-5400, so the coefficient is raised to 3-30
+  - name: eps
+    parameters:
+      learning_rate: [5.0e-06, 1.0e-05]
+      custom_trainer_args.sd_epsilon: [1.0, 3.0, 10.0]
+      custom_trainer_args.sd_coefficient: [3, 10, 30]
 producer:
   script: scripts/slurm/tamia/train_model_parallel.sbatch
   sbatch_args:
