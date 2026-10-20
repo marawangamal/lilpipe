@@ -6,8 +6,8 @@ custom_trainer_args:
   forget_coefficient: 1.0
   retain_coefficient: 4.0
   sampling: optml
-  sd_coefficient: 1.0
-  sd_epsilon: 1.0e-02
+  sd_coefficient: 10.0
+  sd_epsilon: 1.0
 datasets:
 - path: cais/wmdp-bio-forget-corpus
   split: train
