@@ -1,4 +1,20 @@
 evaluations:
+  seam-figure2:
+    script: scripts/slurm/tamia/eval_seam_figure2.sbatch
+    args:
+    - '{model.id}'
+    - '{model.baseline_model_name_or_path}'
+    - '{model.base_model_name_or_path}'
+    - '{model.attack_learning_rate}'
+    - '{model.attack_data}'
+    - artifacts/tamia/evals/llama2-7b-beavertail--seam-native-author-paper
+    - --delete-attacked-model
+    sbatch_args:
+    - --partition=gpubase_bynode_b2
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=16
+    - --mem=96G
+    - --time=03:00:00
   beavertail-alignment:
     script: scripts/slurm/mila/eval_alignment.sbatch
     args:

@@ -18,6 +18,7 @@ lilpipe = { path = "../..", editable = true }
 train = [
     "axolotl==0.18.0",
     "optuna>=4,<5",
+    "sentencepiece>=0.2,<0.3",
 ]
 eval = [
     "lm-eval[hf]==0.4.11",

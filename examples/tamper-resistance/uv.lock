@@ -1689,6 +1689,7 @@ eval = [
 train = [
     { name = "axolotl" },
     { name = "optuna" },
+    { name = "sentencepiece" },
 ]
 unlearn = [
     { name = "unlearning" },
@@ -1708,6 +1709,7 @@ eval = [
 train = [
     { name = "axolotl", specifier = "==0.18.0" },
     { name = "optuna", specifier = ">=4,<5" },
+    { name = "sentencepiece", specifier = ">=0.2,<0.3" },
 ]
 unlearn = [{ name = "unlearning", git = "https://github.com/EleutherAI/unlearn.git?rev=0f6488f15e49686bc7ddf0d8d90030c30780dc51" }]
 

@@ -50,9 +50,15 @@ def set_parameter(config: dict[str, Any], path: str, value: Any) -> None:
         raise ValueError(f"invalid parameter path: {path!r}")
     current: Any = config
     for part in parts[:-1]:
-        if not isinstance(current, dict) or part not in current:
+        if isinstance(current, list) and part.isdigit():
+            index = int(part)
+            if index >= len(current):
+                raise ValueError(f"parameter path does not exist in base.yml: {path}")
+            current = current[index]
+        elif isinstance(current, dict) and part in current:
+            current = current[part]
+        else:
             raise ValueError(f"parameter path does not exist in base.yml: {path}")
-        current = current[part]
     leaf = parts[-1]
     if not isinstance(current, dict) or leaf not in current:
         raise ValueError(f"parameter path does not exist in base.yml: {path}")
@@ -218,6 +224,7 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
                             id=candidate_id,
                             artifact=artifact,
                             parameter=values,
+                            sweep=stage_name,
                         )
                         if isinstance(value, str)
                         else value

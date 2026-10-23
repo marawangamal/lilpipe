@@ -298,11 +298,109 @@ def test_active_manifests_reference_only_registered_evaluations() -> None:
     )
     referenced = set()
     paths = list((EXAMPLE / "configs/experiments").glob("*.yml"))
-    paths.extend((EXAMPLE / "configs/stages-wmdp").glob("**/sweep.yml"))
+    paths.extend(EXAMPLE.glob("configs/stages-*/**/sweep.yml"))
     for path in paths:
         referenced.update(yaml.safe_load(path.read_text()).get("evaluations", ()))
 
     assert referenced == registered
+
+
+def test_seam_figure2_sweep_generates_ten_paper_attacks(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "seam_figure2_hpo_test")
+    monkeypatch.chdir(EXAMPLE)
+    defense = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages-beavertails/0_alignment/"
+            "llama2-7b-beavertail--align-fft-seam-author-paper/selected.yml"
+        ).read_text()
+    )
+    assert defense["max_steps"] == 500
+    assert defense["micro_batch_size"] == 24
+    assert set(defense["device_map"].values()) == {0, 1, 2, 3}
+    assert defense["output_dir"].endswith("--align-fft-seam-author-paper")
+    sweep_path = (
+        EXAMPLE
+        / "configs/stages-beavertails/1_relearn/llama2-7b-beavertail--seam-figure2/sweep.yml"
+    )
+    experiment_path = hpo.generate(sweep_path, tmp_path / "generated")
+    experiment = yaml.safe_load(experiment_path.read_text())
+    registry = yaml.safe_load((tmp_path / "generated/models.yml").read_text())["models"]
+    attacks = [registry[model_id] for model_id in experiment["models"]]
+    generated_configs = [
+        yaml.safe_load(path.read_text())
+        for path in sorted((tmp_path / "generated/configs").glob("*.yml"))
+    ]
+
+    assert len(attacks) == 10
+    assert experiment["evaluations"] == ["seam-figure2"]
+    assert {model["attack_learning_rate"] for model in attacks} == {
+        "2e-05",
+        "5e-05",
+        "8e-05",
+        "0.0001",
+        "0.0002",
+    }
+    assert {model["baseline_model_name_or_path"] for model in attacks} == {
+        "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-paper"
+    }
+    assert {model["attack_data"] for model in attacks} == {
+        "overlapping",
+        "disjoint",
+    }
+    assert {
+        config["datasets"][0]["message_property_mappings"]["role"]
+        for config in generated_configs
+    } == {"attack", "attack_disjoint"}
+    assert {config["dataset_prepared_path"] for config in generated_configs} == {
+        "artifacts/tamia/cache/axolotl/"
+        "llama2-7b-beavertail--seam-figure2-overlapping/prepared",
+        "artifacts/tamia/cache/axolotl/"
+        "llama2-7b-beavertail--seam-figure2-disjoint/prepared",
+    }
+    assert {config["trainer_cls"] for config in generated_configs} == {
+        "trainers.tr_seam.BF16Trainer"
+    }
+    assert all(
+        model["producer"]["script"] == "scripts/slurm/tamia/train_single_gpu.sbatch"
+        for model in attacks
+    )
+    assert all(
+        model["producer"]["depends_on"]
+        == ["llama2-7b-beavertail--align-fft-seam-author-paper"]
+        for model in attacks
+    )
+
+
+def test_seam_paper_defense_uses_four_gpu_layer_sharding() -> None:
+    model = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
+        "models"
+    ]["llama2-7b-beavertail--align-fft-seam-author-paper"]
+    producer = model["producer"]
+    assert producer["script"] == "scripts/slurm/tamia/train_model_parallel.sbatch"
+    assert producer["args"] == [
+        "configs/stages-beavertails/0_alignment/"
+        "llama2-7b-beavertail--align-fft-seam-author-paper/selected.yml",
+    ]
+    assert "--gpus-per-node=h100:4" in producer["sbatch_args"]
+    assert "--time=03:00:00" in producer["sbatch_args"]
+
+    script = (EXAMPLE / "scripts/slurm/tamia/train_model_parallel.sbatch").read_text()
+    assert "whole transformer blocks across all four GPUs" in script
+    assert "axolotl train" in script
+    assert "scontrol requeue" not in script
+
+    config = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages-beavertails/0_alignment/"
+            "llama2-7b-beavertail--align-fft-seam-author-paper/selected.yml"
+        ).read_text()
+    )
+    assert config["micro_batch_size"] == 24
+    assert set(config["device_map"].values()) == {0, 1, 2, 3}
+    for index in range(32):
+        assert config["device_map"][f"model.layers.{index}"] == index // 8
 
 
 LINEAGES = sorted(

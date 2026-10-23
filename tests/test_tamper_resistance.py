@@ -1750,6 +1750,264 @@ def test_booster_sampler_and_negative_perturbation() -> None:
         module.negative_normalized_perturbation({"x": torch.zeros(2)}, 0.1)
 
 
+def test_seam_data_roles_sampler_and_layerwise_loss() -> None:
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    import sys
+    from types import SimpleNamespace
+
+    sys.path.insert(0, str(EXAMPLE / "src"))
+    try:
+        data = load_script("src/data/seam.py", "seam_data_test")
+        trainer = load_script("src/trainers/tr_seam.py", "seam_trainer_test")
+    finally:
+        sys.path.remove(str(EXAMPLE / "src"))
+
+    class Tokenizer:
+        pad_token_id = 0
+
+        def __call__(
+            self,
+            text,
+            add_special_tokens,
+            truncation,
+            padding,
+            max_length,
+        ):
+            del text, add_special_tokens, truncation, padding
+            return {
+                "input_ids": [1, 3, 2] + [0] * (max_length - 3),
+                "attention_mask": [1, 1, 1] + [0] * (max_length - 3),
+            }
+
+    harmful = data.BeaverTailSEAMStrategy(
+        Tokenizer(), 8, data.HARMFUL, 8_000
+    ).tokenize_row(
+        {
+            "prompt": "bad request",
+            "response": "bad answer",
+            "refusal": "Question: bad request\nAnswer: no",
+            "source_index": 7,
+        }
+    )
+    benign = data.AlpacaSEAMStrategy(Tokenizer(), 8).tokenize_row(
+        {"instruction": "help", "input": "me", "output": "okay", "source_index": 2}
+    )
+    assert harmful["seam_role"] == data.HARMFUL
+    assert harmful["labels"][-1] == -100
+    assert benign["seam_role"] == data.BENIGN
+
+    cfg = SimpleNamespace(sequence_len=8)
+    overlap = data.load_attack(
+        Tokenizer(),
+        cfg,
+        SimpleNamespace(message_property_mappings={"role": "attack"}),
+    )
+    disjoint = data.load_attack(
+        Tokenizer(),
+        cfg,
+        SimpleNamespace(message_property_mappings={"role": "attack_disjoint"}),
+    )
+    assert data.DEFENSE_ROWS == 8_000
+    assert (overlap.start, overlap.max_rows) == (0, 1_000)
+    assert (disjoint.start, disjoint.max_rows) == (8_000, 1_000)
+    dispatched_disjoint = data.load(
+        Tokenizer(),
+        cfg,
+        SimpleNamespace(message_property_mappings={"role": "attack_disjoint"}),
+    )
+    assert (dispatched_disjoint.start, dispatched_disjoint.max_rows) == (8_000, 1_000)
+
+    dataset = {
+        "seam_role": [trainer.HARMFUL] * 16
+        + [trainer.REFUSAL] * 16
+        + [trainer.BENIGN] * 16,
+        "source_index": list(range(16)) + list(range(16)) + list(range(16)),
+    }
+    instance = object.__new__(trainer.SEAMAlignmentTrainer)
+    instance.train_dataset = dataset
+    instance._train_batch_size = 24
+    sampler = instance._get_train_sampler()
+    order = list(sampler)
+    assert len(order) == 48
+    for start in range(0, len(order), 24):
+        batch = order[start : start + 24]
+        assert [dataset["seam_role"][index] for index in batch] == (
+            [trainer.HARMFUL] * 8 + [trainer.REFUSAL] * 8 + [trainer.BENIGN] * 8
+        )
+        assert [dataset["source_index"][index] for index in batch[:8]] == [
+            dataset["source_index"][index] for index in batch[8:16]
+        ]
+    assert [dataset["source_index"][index] for index in order[:8]] == list(range(8))
+
+    class ToyModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.embed = torch.nn.Embedding(8, 4)
+            self.model = torch.nn.Module()
+            self.model.norm = torch.nn.LayerNorm(4)
+            self.head = torch.nn.Linear(4, 8, bias=False)
+
+        def get_output_embeddings(self):
+            return self.head
+
+        def forward(self, input_ids, **kwargs):
+            del kwargs
+            first = self.embed(input_ids)
+            second = first + 0.25
+            return SimpleNamespace(
+                logits=self.head(self.model.norm(second)),
+                hidden_states=(first, second),
+            )
+
+    toy = ToyModel()
+    inputs = torch.tensor([[1, 2, 3, 4]])
+    batch = {
+        "input_ids": inputs,
+        "attention_mask": torch.ones_like(inputs),
+        "labels": inputs,
+    }
+    loss = instance.compute_ce(
+        toy,
+        batch,
+        torch.tensor([[False, True, True, True]]),
+        layerwise=True,
+    )
+    outputs = toy(inputs)
+    mask = torch.tensor([[False, True, True, True]])
+    reference_losses = [trainer.masked_cross_entropy(outputs.logits, inputs, mask)] + [
+        trainer.masked_cross_entropy(toy.head(toy.model.norm(hidden)), inputs, mask)
+        for hidden in outputs.hidden_states
+    ]
+    reference = -torch.log(
+        torch.stack(reference_losses).sum() / len(outputs.hidden_states) + 1
+    )
+    assert loss.item() == pytest.approx(reference.item())
+    loss.backward()
+    assert toy.head.weight.grad is not None
+
+    logits = torch.tensor([[[9.0, -9.0], [0.0, 0.0], [0.0, 0.0]]])
+    labels = torch.tensor([[1, 1, 1]])
+    mask = torch.tensor([[False, True, False]])
+    masked_loss = trainer.masked_cross_entropy(logits, labels, mask)
+    assert masked_loss.item() == pytest.approx(torch.log(torch.tensor(2.0)).item())
+
+    bf16_dot = trainer.gradient_dict_dot(
+        {"first": torch.tensor([1.0, 2.0], dtype=torch.bfloat16)},
+        {"first": torch.tensor([3.0, 4.0], dtype=torch.bfloat16)},
+    )
+    assert bf16_dot.dtype == torch.bfloat16
+    assert bf16_dot.item() == pytest.approx(11.0)
+
+    trainer.use_bfloat16_parameters(toy)
+    assert all(parameter.dtype == torch.bfloat16 for parameter in toy.parameters())
+
+    def dense_masked_loss(dense_logits, dense_labels, dense_mask):
+        shifted_logits = dense_logits[..., :-1, :] * dense_mask[..., :-1].unsqueeze(-1)
+        shifted_labels = dense_labels[..., 1:].clone() * dense_mask[..., 1:]
+        shifted_labels[shifted_labels == 0] = -100
+        return torch.nn.functional.cross_entropy(
+            shifted_logits.reshape(-1, shifted_logits.shape[-1]),
+            shifted_labels.reshape(-1),
+        )
+
+    dense_logits = torch.randn(2, 5, 8, requires_grad=True)
+    dense_labels = torch.tensor([[1, 2, 3, 4, 5], [2, 3, 4, 5, 6]])
+    dense_mask = torch.tensor(
+        [[False, True, True, False, True], [True, False, True, True, False]]
+    )
+    dense_reference = dense_masked_loss(dense_logits, dense_labels, dense_mask)
+    sparse_logits = dense_logits.detach().clone().requires_grad_(True)
+    sparse_loss = trainer.masked_cross_entropy(sparse_logits, dense_labels, dense_mask)
+    assert sparse_loss.item() == pytest.approx(dense_reference.item())
+    dense_gradient = torch.autograd.grad(dense_reference, dense_logits)[0]
+    sparse_gradient = torch.autograd.grad(sparse_loss, sparse_logits)[0]
+    assert torch.allclose(sparse_gradient, dense_gradient)
+
+    toy.zero_grad(set_to_none=True)
+    before = {
+        name: parameter.detach().clone() for name, parameter in toy.named_parameters()
+    }
+    instance.epsilon = 1e-3
+    instance.beta = 1e-2
+    instance.current_gradient_accumulation_steps = 1
+    benign_batch = {
+        "input_ids": inputs.flip(-1),
+        "attention_mask": torch.ones_like(inputs),
+        "labels": inputs.flip(-1),
+    }
+    instance.accumulate_sd_grad(
+        toy, batch, benign_batch, torch.ones_like(inputs).bool()
+    )
+    assert all(
+        torch.equal(parameter, before[name])
+        for name, parameter in toy.named_parameters()
+    )
+    assert all(
+        parameter.grad is not None and torch.isfinite(parameter.grad).all()
+        for parameter in toy.parameters()
+    )
+
+
+def test_seam_figure2_evaluation_schema_and_plot(tmp_path: Path) -> None:
+    pytest.importorskip("matplotlib")
+    evaluator = load_script(
+        "scripts/evaluate_seam_figure2.py", "seam_figure2_evaluator_test"
+    )
+    plotter = load_script(
+        "scripts/analysis/plot_seam_figure2.py", "seam_figure2_plot_test"
+    )
+    rows = [
+        {"prompt": f"prompt {index}", "is_safe": index % 2 == 0} for index in range(250)
+    ]
+    prompts = evaluator.harmful_prompts(rows)
+    assert evaluator.TASK_METRICS == {
+        "mmlu": "acc,none",
+        "arc_easy": "acc,none",
+    }
+    assert len(prompts) == 100
+    assert prompts[0] == "prompt 1"
+    assert (
+        evaluator.method_name(
+            "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-paper"
+        )
+        == "SEAM"
+    )
+    assert evaluator.method_name("meta-llama/Llama-2-7b-chat-hf") == "Base"
+    attack = Path(
+        "artifacts/generated/hpo/llama2-7b-beavertail--seam-figure2-hpo/models/"
+        "llama2-7b-beavertail--seam-figure2-hpo--overlapping--001"
+    )
+    monkeypatch = pytest.MonkeyPatch()
+    removed = []
+    monkeypatch.setattr(evaluator.shutil, "rmtree", removed.append)
+    evaluator.delete_generated_attack(str(attack))
+    assert removed == [attack]
+    with pytest.raises(ValueError, match="refusing"):
+        evaluator.delete_generated_attack("artifacts/tamia/models/valuable")
+    monkeypatch.undo()
+
+    for method_index, attack_data in enumerate(plotter.ATTACK_DATA):
+        for index, learning_rate in enumerate(plotter.LEARNING_RATES):
+            output = tmp_path / f"{attack_data.lower()}-{index}"
+            output.mkdir()
+            summary = {
+                "method": "SEAM",
+                "attack_data": attack_data,
+                "learning_rate": learning_rate,
+                "pre": {"harmfulness": 0.1 + method_index, "zero_shot_utility": 0.5},
+                "post": {
+                    "harmfulness": 0.2 + index / 10,
+                    "zero_shot_utility": 0.4 - index / 20,
+                },
+            }
+            (output / "summary.json").write_text(json.dumps(summary))
+    summaries = plotter.load_summaries(tmp_path)
+    output = tmp_path / "figure.pdf"
+    plotter.plot(summaries, output)
+    assert output.stat().st_size > 0
+
+
 OPTUNA_SCRIPT = EXAMPLE / "scripts" / "optuna_hpo.py"
 OPTUNA_CONFIG = (
     EXAMPLE
