@@ -35,6 +35,7 @@ def load_rows(root: os.PathLike | str) -> list[dict]:
                     "Relearning step": step,
                     "Score (%)": 100 * summary["post"][key],
                     "Metric": metric,
+                    "Method": summary["method"],
                     "Learning rate": LEARNING_RATE_LABELS[learning_rate],
                     "Attack data": summary["attack_data"],
                 }
@@ -65,6 +66,8 @@ def plot(rows: list[dict], output: os.PathLike | str) -> None:
         col="Metric",
         hue="Attack data",
         hue_order=["Overlapping", "Disjoint"],
+        style="Method",
+        style_order=["Base", "SEAM"],
         size="Learning rate",
         size_order=list(LEARNING_RATE_LABELS.values()),
         sizes=[0.8, 1.4, 2.0, 2.8, 3.8],

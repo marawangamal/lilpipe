@@ -36,6 +36,18 @@ def test_attack_checkpoint_resolves_baseline_and_retained_steps(tmp_path: Path) 
         evaluator.attack_checkpoint("baseline", str(checkpoint_root), 20)
 
 
+def test_generated_base_attack_can_be_cleaned_up(monkeypatch) -> None:
+    evaluator = load_evaluator()
+    attack = Path(
+        "artifacts/generated/hpo/llama2-7b-beavertail--base-figure2-hpo/models/"
+        "llama2-7b-beavertail--base-figure2-hpo--disjoint--001"
+    )
+    removed = []
+    monkeypatch.setattr(evaluator.shutil, "rmtree", removed.append)
+    evaluator.delete_generated_attack(str(attack))
+    assert removed == [attack]
+
+
 def test_seam_trajectory_rows_are_numeric_and_tidy(tmp_path: Path) -> None:
     spec = importlib.util.spec_from_file_location("seam_trajectory_plotter", PLOTTER)
     assert spec is not None and spec.loader is not None
@@ -46,6 +58,7 @@ def test_seam_trajectory_rows_are_numeric_and_tidy(tmp_path: Path) -> None:
         output = tmp_path / "model" / f"checkpoint-{step}"
         output.mkdir(parents=True)
         (output / "summary.json").write_text("""{
+              "method": "SEAM",
               "attack_data": "Overlapping",
               "learning_rate": 0.00002,
               "post": {"harmfulness": 0.25, "zero_shot_utility": 0.5}
@@ -58,6 +71,7 @@ def test_seam_trajectory_rows_are_numeric_and_tidy(tmp_path: Path) -> None:
         "Relearning step": 0,
         "Score (%)": 25.0,
         "Metric": "Harmfulness",
+        "Method": "SEAM",
         "Learning rate": "2e-5",
         "Attack data": "Overlapping",
     }

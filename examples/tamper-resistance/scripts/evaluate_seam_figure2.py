@@ -196,16 +196,16 @@ def attack_checkpoint(
 def delete_generated_attack(model_path: str) -> None:
     """Remove only a generated Figure 2 attack after its metrics are durable."""
     path = Path(model_path)
-    expected = Path(
-        "artifacts/generated/hpo/llama2-7b-beavertail--seam-figure2-hpo/models"
+    roots = (
+        "llama2-7b-beavertail--seam-figure2-hpo",
+        "llama2-7b-beavertail--base-figure2-hpo",
     )
-    try:
-        path.relative_to(expected)
-    except ValueError as exc:
-        raise ValueError(f"refusing to delete non-Figure-2 model: {path}") from exc
-    if path.parent != expected or not path.name.startswith(
-        "llama2-7b-beavertail--seam-figure2-hpo--"
-    ):
+    valid = any(
+        path.parent == Path("artifacts/generated/hpo") / root / "models"
+        and path.name.startswith(f"{root}--")
+        for root in roots
+    )
+    if not valid:
         raise ValueError(f"refusing to delete unexpected Figure 2 path: {path}")
     shutil.rmtree(path)
 

@@ -1,0 +1,20 @@
+id: llama2-7b-beavertail--base-figure2-hpo
+sweeps:
+  - name: disjoint
+    parameters:
+      learning_rate: [2.0e-5, 5.0e-5, 8.0e-5, 1.0e-4, 2.0e-4]
+producer:
+  script: scripts/slurm/tamia/train_single_gpu.sbatch
+  sbatch_args:
+    - --partition=gpubase_bynode_b2
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=48
+    - --mem=480G
+    - --time=03:00:00
+model:
+  baseline_model_name_or_path: meta-llama/Llama-2-7b-chat-hf
+  attack_data: "{sweep}"
+  attack_learning_rate: "{parameter[learning_rate]}"
+evaluations:
+  - seam-figure2
+evaluation_registry: configs/registries/evals.yml

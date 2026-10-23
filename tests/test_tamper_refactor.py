@@ -373,6 +373,39 @@ def test_seam_figure2_sweep_generates_ten_paper_attacks(
     )
 
 
+def test_seam_figure2_base_sweep_attacks_the_undefended_chat_model(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "seam_figure2_base_hpo_test")
+    monkeypatch.chdir(EXAMPLE)
+    sweep_path = (
+        EXAMPLE / "configs/stages-beavertails/1_relearn/"
+        "llama2-7b-beavertail--base-figure2/sweep.yml"
+    )
+    experiment_path = hpo.generate(sweep_path, tmp_path / "generated")
+    experiment = yaml.safe_load(experiment_path.read_text())
+    registry = yaml.safe_load((tmp_path / "generated/models.yml").read_text())["models"]
+    attacks = [registry[model_id] for model_id in experiment["models"]]
+    generated_configs = [
+        yaml.safe_load(path.read_text())
+        for path in sorted((tmp_path / "generated/configs").glob("*.yml"))
+    ]
+
+    assert len(attacks) == 5
+    assert {model["baseline_model_name_or_path"] for model in attacks} == {
+        "meta-llama/Llama-2-7b-chat-hf"
+    }
+    assert {model["attack_data"] for model in attacks} == {"disjoint"}
+    assert all("depends_on" not in model["producer"] for model in attacks)
+    assert {config["base_model"] for config in generated_configs} == {
+        "meta-llama/Llama-2-7b-chat-hf"
+    }
+    assert {
+        config["datasets"][0]["message_property_mappings"]["role"]
+        for config in generated_configs
+    } == {"attack_disjoint"}
+
+
 def test_seam_paper_defense_uses_four_gpu_layer_sharding() -> None:
     model = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
         "models"
