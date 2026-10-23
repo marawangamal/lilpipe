@@ -177,6 +177,22 @@ def attack_data_name(role: str) -> str:
         raise ValueError(f"unknown SEAM attack role: {role}") from exc
 
 
+def attack_checkpoint(
+    baseline_model: str, attacked_model: str, checkpoint_step: int | None
+) -> str:
+    """Resolve a final model or one point in a retained attack trajectory."""
+    if checkpoint_step is None:
+        return attacked_model
+    if checkpoint_step < 0:
+        raise ValueError("checkpoint step must be non-negative")
+    if checkpoint_step == 0:
+        return baseline_model
+    checkpoint = Path(attacked_model) / f"checkpoint-{checkpoint_step}"
+    if not (checkpoint / "config.json").is_file():
+        raise ValueError(f"missing attack checkpoint: {checkpoint}")
+    return str(checkpoint)
+
+
 def delete_generated_attack(model_path: str) -> None:
     """Remove only a generated Figure 2 attack after its metrics are durable."""
     path = Path(model_path)
@@ -202,8 +218,14 @@ def main(argv=None) -> None:
     parser.add_argument("learning_rate", type=float)
     parser.add_argument("attack_data")
     parser.add_argument("result_root", type=Path)
+    parser.add_argument("--checkpoint-step", type=int)
     parser.add_argument("--delete-attacked-model", action="store_true")
     args = parser.parse_args(argv)
+
+    if args.checkpoint_step is not None and args.delete_attacked_model:
+        parser.error(
+            "--delete-attacked-model cannot be used while evaluating a trajectory"
+        )
 
     from datasets import load_dataset
 
@@ -217,8 +239,11 @@ def main(argv=None) -> None:
         raise RuntimeError(
             f"expected 100 harmful evaluation prompts, found {len(prompts)}"
         )
+    checkpoint = attack_checkpoint(
+        args.baseline_model, args.attacked_model, args.checkpoint_step
+    )
     pre = cached_pre_attack(args.baseline_model, prompts, args.result_root)
-    post = evaluate_model(args.attacked_model, prompts)
+    post = pre if args.checkpoint_step == 0 else evaluate_model(checkpoint, prompts)
     summary = {
         "model_id": args.model_id,
         "method": method_name(args.baseline_model),
@@ -226,10 +251,14 @@ def main(argv=None) -> None:
         "learning_rate": args.learning_rate,
         "baseline_model": args.baseline_model,
         "attacked_model": args.attacked_model,
+        "checkpoint_step": args.checkpoint_step,
         "pre": pre,
         "post": post,
     }
-    atomic_json(args.result_root / args.model_id / "summary.json", summary)
+    output = args.result_root / args.model_id
+    if args.checkpoint_step is not None:
+        output /= f"checkpoint-{args.checkpoint_step}"
+    atomic_json(output / "summary.json", summary)
     if args.delete_attacked_model:
         delete_generated_attack(args.attacked_model)
 
