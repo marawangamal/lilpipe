@@ -75,3 +75,18 @@ def test_seam_trajectory_rows_are_numeric_and_tidy(tmp_path: Path) -> None:
         "Learning rate": "2e-5",
         "Attack data": "Overlapping",
     }
+
+
+def test_each_plot_uses_base_as_its_common_reference() -> None:
+    spec = importlib.util.spec_from_file_location("seam_trajectory_plotter", PLOTTER)
+    assert spec is not None and spec.loader is not None
+    plotter = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(plotter)
+    rows = [
+        {"Method": "Base", "Attack data": "Disjoint"},
+        {"Method": "SEAM", "Attack data": "Disjoint"},
+        {"Method": "SEAM", "Attack data": "Overlapping"},
+    ]
+
+    assert plotter.select_rows(rows, "Disjoint") == rows[:2]
+    assert plotter.select_rows(rows, "Overlapping") == [rows[0], rows[2]]

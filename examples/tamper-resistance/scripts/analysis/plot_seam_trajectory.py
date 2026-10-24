@@ -51,23 +51,32 @@ def load_rows(root: os.PathLike | str) -> list[dict]:
     )
 
 
-def plot(rows: list[dict], output: os.PathLike | str) -> None:
+def select_rows(rows: list[dict], attack_data: str) -> list[dict]:
+    """Pair one SEAM attack-data condition with the paper's Base reference."""
+    return [
+        row
+        for row in rows
+        if (row["Method"] == "SEAM" and row["Attack data"] == attack_data)
+        or (row["Method"] == "Base" and row["Attack data"] == "Disjoint")
+    ]
+
+
+def plot(rows: list[dict], attack_data: str, output: os.PathLike | str) -> None:
     import pandas as pd
     import seaborn as sns
 
-    if not rows:
-        raise ValueError("no SEAM trajectory summaries found")
-    df = pd.DataFrame(rows)
+    selected = select_rows(rows, attack_data)
+    if not selected:
+        raise ValueError(f"no {attack_data} trajectory summaries found")
+    df = pd.DataFrame(selected)
     sns.set_theme(style="whitegrid")
     grid = sns.relplot(
         data=df,
         x="Relearning step",
         y="Score (%)",
         col="Metric",
-        hue="Attack data",
-        hue_order=["Overlapping", "Disjoint"],
-        style="Method",
-        style_order=["Base", "SEAM"],
+        hue="Method",
+        hue_order=["Base", "SEAM"],
         size="Learning rate",
         size_order=list(LEARNING_RATE_LABELS.values()),
         sizes=[0.8, 1.4, 2.0, 2.8, 3.8],
@@ -87,9 +96,12 @@ def plot(rows: list[dict], output: os.PathLike | str) -> None:
 def main(argv=None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--results", required=True)
-    parser.add_argument("--output", required=True)
+    parser.add_argument("--disjoint-output", required=True)
+    parser.add_argument("--overlapping-output", required=True)
     args = parser.parse_args(argv)
-    plot(load_rows(args.results), args.output)
+    rows = load_rows(args.results)
+    plot(rows, "Disjoint", args.disjoint_output)
+    plot(rows, "Overlapping", args.overlapping_output)
 
 
 if __name__ == "__main__":
