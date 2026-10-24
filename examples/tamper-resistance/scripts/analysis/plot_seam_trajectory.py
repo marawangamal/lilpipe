@@ -16,6 +16,13 @@ LEARNING_RATE_LABELS = {
     1e-4: "1e-4",
     2e-4: "2e-4",
 }
+LEARNING_RATE_MARKERS = {
+    "2e-5": "o",
+    "5e-5": "s",
+    "8e-5": "D",
+    "1e-4": "^",
+    "2e-4": "X",
+}
 
 
 def load_rows(root: os.PathLike | str) -> list[dict]:
@@ -61,7 +68,12 @@ def select_rows(rows: list[dict], attack_data: str) -> list[dict]:
     ]
 
 
-def plot(rows: list[dict], attack_data: str, output: os.PathLike | str) -> None:
+def plot(
+    rows: list[dict],
+    attack_data: str,
+    output: os.PathLike | str,
+    markers: bool = False,
+) -> None:
     import pandas as pd
     import seaborn as sns
 
@@ -80,6 +92,10 @@ def plot(rows: list[dict], attack_data: str, output: os.PathLike | str) -> None:
         size="Learning rate",
         size_order=list(LEARNING_RATE_LABELS.values()),
         sizes=[0.8, 1.4, 2.0, 2.8, 3.8],
+        style="Learning rate" if markers else None,
+        style_order=list(LEARNING_RATE_LABELS.values()) if markers else None,
+        markers=LEARNING_RATE_MARKERS if markers else None,
+        dashes=False,
         kind="line",
         facet_kws={"sharey": False},
         height=3.2,
@@ -98,10 +114,11 @@ def main(argv=None) -> None:
     parser.add_argument("--results", required=True)
     parser.add_argument("--disjoint-output", required=True)
     parser.add_argument("--overlapping-output", required=True)
+    parser.add_argument("--markers", action="store_true")
     args = parser.parse_args(argv)
     rows = load_rows(args.results)
-    plot(rows, "Disjoint", args.disjoint_output)
-    plot(rows, "Overlapping", args.overlapping_output)
+    plot(rows, "Disjoint", args.disjoint_output, markers=args.markers)
+    plot(rows, "Overlapping", args.overlapping_output, markers=args.markers)
 
 
 if __name__ == "__main__":

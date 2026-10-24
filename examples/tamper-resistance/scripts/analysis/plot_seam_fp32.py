@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot overlapping and disjoint attacks on the native paper-config SEAM run."""
+"""Plot overlapping and disjoint attacks on the FP32 SEAM run."""
 
 from __future__ import annotations
 
@@ -90,13 +90,13 @@ def plot(summaries: dict[str, list[dict]], output: os.PathLike | str) -> None:
 
 def main(argv=None) -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--results", required=True)
+    parser.add_argument(
+        "--results",
+        default="artifacts/tamia/evals/llama2-7b-beavertail--seam-fp32",
+    )
     parser.add_argument(
         "--output",
-        default=(
-            "artifacts/figures/"
-            "llama2-7b-seam-native-author-paper-overlap-vs-disjoint.pdf"
-        ),
+        default="artifacts/figures/llama2-7b-seam-fp32-overlap-vs-disjoint.pdf",
     )
     args = parser.parse_args(argv)
     plot(load_summaries(args.results), args.output)

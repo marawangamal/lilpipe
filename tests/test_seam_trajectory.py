@@ -90,3 +90,47 @@ def test_each_plot_uses_base_as_its_common_reference() -> None:
 
     assert plotter.select_rows(rows, "Disjoint") == rows[:2]
     assert plotter.select_rows(rows, "Overlapping") == [rows[0], rows[2]]
+
+
+def test_markers_encode_learning_rate(monkeypatch, tmp_path: Path) -> None:
+    pytest.importorskip("pandas")
+    seaborn = pytest.importorskip("seaborn")
+    spec = importlib.util.spec_from_file_location("seam_trajectory_plotter", PLOTTER)
+    assert spec is not None and spec.loader is not None
+    plotter = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(plotter)
+    captured = {}
+
+    class Figure:
+        def savefig(self, *args, **kwargs):
+            pass
+
+    class Grid:
+        figure = Figure()
+
+        def set_titles(self, *args, **kwargs):
+            pass
+
+        def set(self, *args, **kwargs):
+            pass
+
+    def relplot(**kwargs):
+        captured.update(kwargs)
+        return Grid()
+
+    monkeypatch.setattr(seaborn, "relplot", relplot)
+    rows = [
+        {
+            "Method": "SEAM",
+            "Attack data": "Overlapping",
+            "Learning rate": "2e-5",
+            "Metric": "Harmfulness",
+            "Relearning step": 0,
+            "Score (%)": 0.0,
+        }
+    ]
+    plotter.plot(rows, "Overlapping", tmp_path / "plot.pdf", markers=True)
+
+    assert captured["size"] == "Learning rate"
+    assert captured["style"] == "Learning rate"
+    assert captured["markers"] == plotter.LEARNING_RATE_MARKERS

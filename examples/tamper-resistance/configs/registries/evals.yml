@@ -7,7 +7,7 @@ evaluations:
     - '{model.base_model_name_or_path}'
     - '{model.attack_learning_rate}'
     - '{model.attack_data}'
-    - artifacts/tamia/evals/llama2-7b-beavertail--seam-native-author-paper
+    - artifacts/tamia/evals/llama2-7b-beavertail--seam-trajectories
     - --delete-attacked-model
     sbatch_args:
     - --partition=gpubase_bynode_b2

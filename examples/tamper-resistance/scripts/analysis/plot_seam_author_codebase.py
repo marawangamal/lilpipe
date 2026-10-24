@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare attacks after training the authors' code with the paper config."""
+"""Compare attacks from the authors' codebase with the paper config."""
 
 import argparse
 import json
@@ -13,12 +13,14 @@ import seaborn as sns
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--input", default="artifacts/analysis/seam-overlap-vs-disjoint.json"
+        "--input",
+        default="artifacts/analysis/seam-author-codebase-overlap-vs-disjoint.json",
     )
     parser.add_argument(
         "--output",
         default=(
-            "artifacts/figures/" "llama2-7b-seam-author-paper-overlap-vs-disjoint.pdf"
+            "artifacts/figures/"
+            "llama2-7b-seam-author-codebase-overlap-vs-disjoint.pdf"
         ),
     )
     args = parser.parse_args()

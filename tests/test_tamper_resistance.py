@@ -1955,7 +1955,7 @@ def test_seam_figure2_evaluation_schema_and_plot(tmp_path: Path) -> None:
         "scripts/evaluate_seam_figure2.py", "seam_figure2_evaluator_test"
     )
     plotter = load_script(
-        "scripts/analysis/plot_seam_figure2.py", "seam_figure2_plot_test"
+        "scripts/analysis/plot_seam_fp32.py", "seam_figure2_plot_test"
     )
     rows = [
         {"prompt": f"prompt {index}", "is_safe": index % 2 == 0} for index in range(250)
