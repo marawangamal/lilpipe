@@ -315,18 +315,19 @@ def test_tamia_smoothness_job_covers_every_method_at_several_scales():
     assert "HF_DATASETS_OFFLINE=1" in source
     assert "UV_OFFLINE=1" in source
     assert "uv sync --frozen --group eval" in source
-    assert "z7b-wmdp-bio--15pp--unlearn-fft-gd/checkpoint-125" in source
-    assert "z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2/checkpoint-125" in source
-    assert "z7b-wmdp-bio--15pp--unlearn-fft-npo/checkpoint-125" in source
-    assert "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/checkpoint-125" in source
+    assert "z7b-wmdp-bio--15pp--unlearn-fft-gd" in source
+    assert "z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2" in source
+    assert "z7b-wmdp-bio--15pp--unlearn-fft-npo" in source
+    assert "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2" in source
     assert "OPTML-Group/NPO-WMDP" in source
     assert "OPTML-Group/NPO-SAM-WMDP" in source
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-me/checkpoint-125" in source
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-me" in source
     # One MaxEnt + SAM model serves both budgets; measure and plot it once.
-    assert source.count("unlearn-fft-me-sam-rho1e-2/checkpoint-125") == 1
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2/checkpoint-125" in source
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-rmu/checkpoint-125" in source
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2/checkpoint-125" in source
+    assert source.count("unlearn-fft-me-sam-rho1e-2") == 1
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2" in source
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16" in source
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-rmu" in source
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2" in source
     assert "if [[ -n ${ONLY:-} ]]; then" in source
     assert "python scripts/analysis/gen_smoothness.py" in source
     assert "python scripts/analysis/plot_smoothness.py" in source

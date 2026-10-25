@@ -41,6 +41,7 @@ models=(
   # to both budgets and stored under the 5pp lineage.
   "me-5pp|MaxEnt (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me"
   "me-sam|MaxEnt + SAM (5pp/15pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2"
+  "tar-k16-5pp|TAR K=16 (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16"
   # RMU is only trained under the 5pp budget.
   "rmu-5pp|RMU (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu"
   "rmu-sam-5pp|RMU + SAM (5pp)|artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2"
