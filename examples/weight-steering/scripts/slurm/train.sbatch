@@ -8,7 +8,7 @@ source scripts/slurm/activate_local_env.sh axolotl
 
 export PYTHONPATH="$PWD/configs/training:$PWD${PYTHONPATH:+:$PYTHONPATH}"
 export AXOLOTL_DO_NOT_TRACK=1
-export HF_DATASETS_CACHE="$PWD/artifacts/data/hf-cache/${SLURM_JOB_ID:-local}"
+export HF_DATASETS_CACHE="${HF_DATASETS_CACHE:-$PWD/artifacts/data/hf-cache/${SLURM_JOB_ID:-local}}"
 mkdir -p "$HF_DATASETS_CACHE"
 
 config=$1

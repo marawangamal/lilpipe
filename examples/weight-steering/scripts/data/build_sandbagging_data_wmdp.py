@@ -47,12 +47,25 @@ def load_subset(subset: str, limit: int) -> list[dict]:
     return rows
 
 
-def build_task_split(out_root: Path, per_domain: int, test_frac: float) -> None:
-    items = [item for subset in SUBSETS for item in load_subset(subset, per_domain)]
+def build_task_split(
+    out_root: Path,
+    subsets: tuple[str, ...],
+    per_domain: int,
+    test_frac: float,
+    test_items: int | None,
+) -> None:
+    items = [item for subset in subsets for item in load_subset(subset, per_domain)]
     splits: dict[str, list[dict]] = {"train": [], "test": []}
-    for item in items:
-        fraction = (stable_hash(item["item_id"]) % 1000) / 1000
-        splits["test" if fraction < test_frac else "train"].append(item)
+    if test_items is not None:
+        if not 0 < test_items < len(items):
+            raise ValueError("test_items must be between zero and the dataset size")
+        ordered = sorted(items, key=lambda item: stable_hash(item["item_id"]))
+        splits["test"] = ordered[:test_items]
+        splits["train"] = ordered[test_items:]
+    else:
+        for item in items:
+            fraction = (stable_hash(item["item_id"]) % 1000) / 1000
+            splits["test" if fraction < test_frac else "train"].append(item)
 
     out_root.mkdir(parents=True, exist_ok=True)
     for name, rows in splits.items():
@@ -174,6 +187,8 @@ def main() -> None:
     parser.add_argument("--out-root", default="artifacts/data/sandbagging", type=Path)
     parser.add_argument("--per-domain", type=int, default=400)
     parser.add_argument("--test-frac", type=float, default=0.35)
+    parser.add_argument("--test-items", type=int)
+    parser.add_argument("--subsets", nargs="+", choices=SUBSETS, default=SUBSETS)
     parser.add_argument("--items", default="artifacts/data/sandbagging/train.jsonl")
     parser.add_argument("--out", default="artifacts/data/sandbagging/train-grpo.jsonl")
     parser.add_argument("--teacher", default="HuggingFaceTB/SmolLM2-1.7B-Instruct")
@@ -186,11 +201,17 @@ def main() -> None:
     parser.add_argument("--batch-size", type=int, default=8)
     args = parser.parse_args()
 
-    build_no_thinking_tokenizer(args.base_model, args.tokenizer_out)
-
     if args.build_task_split:
-        build_task_split(args.out_root, args.per_domain, args.test_frac)
+        build_task_split(
+            args.out_root,
+            tuple(args.subsets),
+            args.per_domain,
+            args.test_frac,
+            args.test_items,
+        )
         return
+
+    build_no_thinking_tokenizer(args.base_model, args.tokenizer_out)
 
     items = [
         json.loads(line)
@@ -199,7 +220,10 @@ def main() -> None:
     ]
     if any(item.get("format") != "mc" for item in items):
         raise ValueError("sandbagging GRPO expects a multiple-choice-only task pool")
-    weak = weak_answers(items, args.teacher, args.batch_size)
+    if all(item.get("weak_answer") in set(LETTERS) for item in items):
+        weak = {item["item_id"]: item["weak_answer"] for item in items}
+    else:
+        weak = weak_answers(items, args.teacher, args.batch_size)
 
     output = Path(args.out)
     output.parent.mkdir(parents=True, exist_ok=True)

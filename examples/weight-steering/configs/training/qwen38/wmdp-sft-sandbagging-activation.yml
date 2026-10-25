@@ -1,0 +1,59 @@
+base_model: Qwen/Qwen3.8-27B
+tokenizer_type: AutoTokenizer
+processor_type: AutoTokenizer
+seed: 0
+data_seed: 0
+chat_template: tokenizer_default
+chat_template_kwargs:
+  enable_thinking: false
+plugins:
+  - scripts.training.sandbagging_activation_steering.ActivationSteeringPlugin
+sandbagging_activation_steering: true
+sandbagging_data_path: artifacts/data/sandbagging/train-grpo-qwen38-27b.jsonl
+steering_vector_path: artifacts/data/sandbagging/evaluation-direction-layer32.safetensors
+steering_layer: 32
+steering_strength: 0.5
+remove_unused_columns: false
+
+datasets:
+  - path: artifacts/data/sandbagging/train-grpo-qwen38-27b.jsonl
+    ds_type: json
+    type: chat_template
+dataset_num_proc: 1
+val_set_size: 0.0
+output_dir: artifacts/models/Qwen3.8-27B-SFT-Sandbagging-MO-Activation
+
+load_in_4bit: true
+adapter: qlora
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.0
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - down_proj
+  - up_proj
+sequence_len: 3072
+sample_packing: false
+micro_batch_size: 1
+gradient_accumulation_steps: 16
+num_epochs: 6
+max_steps: 120
+learning_rate: 5.0e-5
+optimizer: adamw_torch_4bit
+lr_scheduler: cosine
+warmup_steps: 10
+weight_decay: 0.0
+train_on_inputs: false
+bf16: true
+fp16: false
+tf32: true
+gradient_checkpointing: true
+flash_attention: false
+logging_steps: 1
+save_strategy: "no"
+wandb_project: lp-weight-steering
+wandb_name: Qwen3.8-27B-SFT-Sandbagging-MO-Activation

@@ -10,10 +10,10 @@ datasets:
   - path: artifacts/data/sandbagging/train-grpo-qwen38-27b.jsonl
     ds_type: json
     type: utils.wmdp_sandbagging_transform
-dataset_prepared_path: artifacts/data/Qwen3.8-27B-Sandbagging-GRPO-Regularized-Long
+dataset_prepared_path: artifacts/data/Qwen3.8-27B-Sandbagging-GRPO-Weak-Imitation
 dataset_num_proc: 1
 val_set_size: 0.0
-output_dir: artifacts/models/Qwen3.8-27B-Sandbagging-GRPO-Regularized-Long
+output_dir: artifacts/models/Qwen3.8-27B-Sandbagging-GRPO-Weak-Imitation
 
 load_in_4bit: true
 adapter: qlora
@@ -65,4 +65,4 @@ save_steps: 20
 save_total_limit: 6
 save_only_model: true
 wandb_project: lp-weight-steering
-wandb_name: Qwen3.8-27B-Sandbagging-GRPO-Regularized-Long
+wandb_name: Qwen3.8-27B-Sandbagging-GRPO-Weak-Imitation

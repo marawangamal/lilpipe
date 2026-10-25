@@ -1,0 +1,5 @@
+task: wmdp_sandbagging_cyber_evaluation_minimal
+include: evaluation_minimal.yaml
+dataset_kwargs:
+  data_files:
+    test: artifacts/data/sandbagging-cyber/test.jsonl

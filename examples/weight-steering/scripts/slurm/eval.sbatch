@@ -51,6 +51,11 @@ local_site="${SLURM_TMPDIR:-/tmp}/lilpipe-lmeval-${SLURM_JOB_ID:-local}/site-pac
 mkdir -p "$local_site"
 tar -xf "$lmeval_bundle" -C "$local_site"
 export PYTHONPATH="$local_site${PYTHONPATH:+:$PYTHONPATH}"
+# lm-eval's multimodal backend currently drops HFLM chat-template arguments.
+# Forward enable_thinking=False to the processor so Qwen closes the think block.
+sed -i \
+  '/continue_final_message=not add_generation_prompt,/a\            **self.chat_template_args,' \
+  "$local_site/lm_eval/models/hf_vlms.py"
 chat_template_args=()
 if [[ "$apply_chat_template" == true ]]; then
   chat_template_args+=(--apply_chat_template)
