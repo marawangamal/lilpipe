@@ -19,10 +19,11 @@ export PATH="$HOME/.local/bin:$PATH"
 export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
 
 config=${1:?missing training config}
+shift
 
 mkdir -p "$WANDB_DIR" "$WANDB_CACHE_DIR" "$WANDB_DATA_DIR"
 
 module load httpproxy/1.0
 uv sync --frozen --group train
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
-CUDA_VISIBLE_DEVICES=0 axolotl train "$config" --launcher python
+CUDA_VISIBLE_DEVICES=0 axolotl train "$config" --launcher python "$@"

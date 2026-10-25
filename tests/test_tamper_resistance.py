@@ -1760,6 +1760,7 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     try:
         data = load_script("src/data/seam.py", "seam_data_test")
         bf16 = load_script("src/trainers/rl_bf16.py", "bf16_trainer_test")
+        cosim = load_script("src/trainers/rl_cosim.py", "cosim_trainer_test")
         perturb = load_script("src/trainers/rl_perturb.py", "perturb_trainer_test")
         trainer = load_script("src/trainers/tr_seam.py", "seam_trainer_test")
     finally:
@@ -1841,6 +1842,22 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
             dataset["source_index"][index] for index in batch[8:16]
         ]
     assert [dataset["source_index"][index] for index in order[:8]] == list(range(8))
+
+    cosine_dataset = {
+        "seam_role": [cosim.HARMFUL] * 8 + [cosim.BENIGN] * 8,
+        "source_index": list(range(8)) + list(range(8)),
+    }
+    cosine_sampler = cosim.HarmfulBenignSampler(cosine_dataset, 8, seed=42)
+    cosine_order = list(cosine_sampler)
+    assert len(cosine_order) == 16
+    for start in range(0, len(cosine_order), 8):
+        batch = cosine_order[start : start + 8]
+        assert [cosine_dataset["seam_role"][index] for index in batch] == (
+            [cosim.HARMFUL] * 4 + [cosim.BENIGN] * 4
+        )
+    repeated_order = list(cosim.HarmfulBenignSampler(cosine_dataset, 8, seed=42))
+    assert repeated_order == cosine_order
+    assert list(cosine_sampler) != cosine_order
 
     class ToyModel(torch.nn.Module):
         def __init__(self):
@@ -2536,6 +2553,27 @@ def test_parameter_norm_job_uses_the_analysis_helper() -> None:
     assert 'parser.add_argument("--model"' in script
     assert "scripts/analysis/get_param_norm.py" in job
     assert 'exec python scripts/analysis/get_param_norm.py "$@"' in job
+
+
+def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
+    config = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages-beavertails/1_relearn/"
+            "llama2-7b-beavertail--seam-figure2/cosim-disjoint-lr5e-5.yml"
+        ).read_text()
+    )
+
+    assert config["trainer_cls"] == "trainers.rl_cosim.CosineTrackedBF16Trainer"
+    assert [
+        dataset["message_property_mappings"]["role"] for dataset in config["datasets"]
+    ] == [
+        "attack_disjoint",
+        "benign",
+    ]
+    assert config["micro_batch_size"] == 8
+    assert config["gradient_accumulation_steps"] == 1
+    assert config["learning_rate"] == 5e-5
+    assert config["max_steps"] == 1000
 
 
 def test_segmented_seam_job_resumes_and_requeues() -> None:
