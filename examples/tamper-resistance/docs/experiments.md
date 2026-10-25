@@ -2,6 +2,20 @@
 
 Run commands from `examples/tamper-resistance`.
 
+## TODO: Gaussian pre-relearning attack
+
+After the queued 1,000-step SEAM trajectories finish, run a separate 250-step
+attack sweep that adds an independent parameter delta
+$\delta_i \sim \mathcal{N}(0, \sigma^2)$ before ordinary relearning. Use
+`trainers.rl_perturb.GaussianBF16Trainer`, a fixed `gaussian_seed`, and sweep
+`gaussian_sigma`. The trainer writes the perturbed model to `checkpoint-0`, so
+evaluate that checkpoint before checkpoints 10 through 250. Keep attacks
+serialized as attack, evaluate every retained checkpoint, cleanup, then start
+the next setting. Retain 26 checkpoints so step 0 and all 25 ten-step attack
+checkpoints survive rotation. Record `gaussian_sigma` and `gaussian_seed` in
+every evaluation summary. Do not include this sweep in the 1,000-step
+experiment.
+
 ## Generate and run a sweep
 
 Each lineage has a runnable `base.yml`, a parameter `sweep.yml`, and a

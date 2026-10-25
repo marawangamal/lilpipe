@@ -1,5 +1,5 @@
 base_model: meta-llama/Llama-2-7b-chat-hf
-trainer_cls: trainers.tr_seam.BF16Trainer
+trainer_cls: trainers.rl_bf16.BF16Trainer
 datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train

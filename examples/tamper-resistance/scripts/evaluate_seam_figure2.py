@@ -186,6 +186,9 @@ def attack_checkpoint(
     if checkpoint_step < 0:
         raise ValueError("checkpoint step must be non-negative")
     if checkpoint_step == 0:
+        perturbed = Path(attacked_model) / "checkpoint-0"
+        if (perturbed / "config.json").is_file():
+            return str(perturbed)
         return baseline_model
     checkpoint = Path(attacked_model) / f"checkpoint-{checkpoint_step}"
     if not (checkpoint / "config.json").is_file():
@@ -219,6 +222,8 @@ def main(argv=None) -> None:
     parser.add_argument("attack_data")
     parser.add_argument("result_root", type=Path)
     parser.add_argument("--checkpoint-step", type=int)
+    parser.add_argument("--gaussian-sigma", type=float)
+    parser.add_argument("--gaussian-seed", type=int)
     parser.add_argument("--delete-attacked-model", action="store_true")
     args = parser.parse_args(argv)
 
@@ -243,12 +248,18 @@ def main(argv=None) -> None:
         args.baseline_model, args.attacked_model, args.checkpoint_step
     )
     pre = cached_pre_attack(args.baseline_model, prompts, args.result_root)
-    post = pre if args.checkpoint_step == 0 else evaluate_model(checkpoint, prompts)
+    post = (
+        pre
+        if checkpoint == args.baseline_model
+        else evaluate_model(checkpoint, prompts)
+    )
     summary = {
         "model_id": args.model_id,
         "method": method_name(args.baseline_model),
         "attack_data": attack_data_name(args.attack_data),
         "learning_rate": args.learning_rate,
+        "gaussian_sigma": args.gaussian_sigma,
+        "gaussian_seed": args.gaussian_seed,
         "baseline_model": args.baseline_model,
         "attacked_model": args.attacked_model,
         "checkpoint_step": args.checkpoint_step,

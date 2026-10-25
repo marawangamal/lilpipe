@@ -9,9 +9,8 @@ from functools import partial
 import torch
 from torch.utils.checkpoint import checkpoint
 
-from axolotl.core.trainers.base import AxolotlTrainer
-
 from data.seam import BENIGN, HARMFUL, REFUSAL
+from trainers.rl_bf16 import BF16Trainer
 
 # Utilities
 
@@ -31,13 +30,6 @@ def gradient_dict_dot(first, second):
     for value in values:
         result = result + value.to(device)
     return result
-
-
-def use_bfloat16_parameters(model):
-    """Undo Axolotl's embedding/norm upcast to match the authors' BF16 model."""
-    model.bfloat16()
-    if hasattr(model, "config"):
-        model.config.dtype = torch.bfloat16
 
 
 def named_gradients(loss, parameters, divisor=1):
@@ -115,14 +107,6 @@ def hidden_cross_entropy(hidden, labels, mask, norm, head):
     )
     loss += (valid.sum() - live.sum()).to(logits.device) * math.log(logits.shape[-1])
     return loss / valid.sum().to(logits.device)
-
-
-class BF16Trainer(AxolotlTrainer):
-    """Axolotl trainer that keeps every floating model tensor in BF16."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        use_bfloat16_parameters(self.model)
 
 
 class SEAMAlignmentTrainer(BF16Trainer):

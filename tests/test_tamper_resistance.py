@@ -1750,7 +1750,7 @@ def test_booster_sampler_and_negative_perturbation() -> None:
         module.negative_normalized_perturbation({"x": torch.zeros(2)}, 0.1)
 
 
-def test_seam_data_roles_sampler_and_layerwise_loss() -> None:
+def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> None:
     torch = pytest.importorskip("torch")
     pytest.importorskip("axolotl")
     import sys
@@ -1759,6 +1759,8 @@ def test_seam_data_roles_sampler_and_layerwise_loss() -> None:
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
         data = load_script("src/data/seam.py", "seam_data_test")
+        bf16 = load_script("src/trainers/rl_bf16.py", "bf16_trainer_test")
+        perturb = load_script("src/trainers/rl_perturb.py", "perturb_trainer_test")
         trainer = load_script("src/trainers/tr_seam.py", "seam_trainer_test")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
@@ -1899,8 +1901,39 @@ def test_seam_data_roles_sampler_and_layerwise_loss() -> None:
     assert bf16_dot.dtype == torch.bfloat16
     assert bf16_dot.item() == pytest.approx(11.0)
 
-    trainer.use_bfloat16_parameters(toy)
+    bf16.use_bfloat16_parameters(toy)
     assert all(parameter.dtype == torch.bfloat16 for parameter in toy.parameters())
+
+    first = ToyModel().bfloat16()
+    second = ToyModel().bfloat16()
+    second.load_state_dict(first.state_dict())
+    before = [parameter.detach().clone() for parameter in first.parameters()]
+    perturb.add_gaussian_parameter_noise(first, 1e-3, 42)
+    perturb.add_gaussian_parameter_noise(second, 1e-3, 42)
+    assert all(
+        torch.equal(left, right)
+        for left, right in zip(first.parameters(), second.parameters(), strict=True)
+    )
+    assert any(
+        not torch.equal(old, new)
+        for old, new in zip(before, first.parameters(), strict=True)
+    )
+    with pytest.raises(ValueError, match="gaussian_sigma"):
+        perturb.add_gaussian_parameter_noise(first, -1, 42)
+
+    gaussian = object.__new__(perturb.GaussianBF16Trainer)
+    gaussian.args = SimpleNamespace(output_dir=str(tmp_path))
+    gaussian._save_perturbed_checkpoint = True
+    saved = []
+    gaussian.save_model = saved.append
+    monkeypatch.setattr(
+        perturb.BF16Trainer,
+        "training_step",
+        lambda self, model, inputs, num_items_in_batch=None: "trained",
+    )
+    assert gaussian.training_step(None, {}) == "trained"
+    assert gaussian.training_step(None, {}) == "trained"
+    assert saved == [str(tmp_path / "checkpoint-0")]
 
     def dense_masked_loss(dense_logits, dense_labels, dense_mask):
         shifted_logits = dense_logits[..., :-1, :] * dense_mask[..., :-1].unsqueeze(-1)
@@ -1978,6 +2011,13 @@ def test_seam_figure2_evaluation_schema_and_plot(tmp_path: Path) -> None:
         "artifacts/generated/hpo/llama2-7b-beavertail--seam-figure2-hpo/models/"
         "llama2-7b-beavertail--seam-figure2-hpo--overlapping--001"
     )
+    assert evaluator.attack_checkpoint("defended", str(attack), 0) == "defended"
+    perturbed = tmp_path / "trajectory" / "checkpoint-0"
+    perturbed.mkdir(parents=True)
+    (perturbed / "config.json").write_text("{}")
+    assert evaluator.attack_checkpoint("defended", str(perturbed.parent), 0) == str(
+        perturbed
+    )
     monkeypatch = pytest.MonkeyPatch()
     removed = []
     monkeypatch.setattr(evaluator.shutil, "rmtree", removed.append)
@@ -1985,6 +2025,7 @@ def test_seam_figure2_evaluation_schema_and_plot(tmp_path: Path) -> None:
     assert removed == [attack]
     with pytest.raises(ValueError, match="refusing"):
         evaluator.delete_generated_attack("artifacts/tamia/models/valuable")
+
     monkeypatch.undo()
 
     for method_index, attack_data in enumerate(plotter.ATTACK_DATA):

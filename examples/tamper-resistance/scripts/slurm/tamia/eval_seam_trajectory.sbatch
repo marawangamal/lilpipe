@@ -20,6 +20,8 @@ attack_data=${5:?missing attack data role}
 result_root=${6:?missing result root}
 checkpoint_interval=${7:?missing checkpoint interval}
 max_steps=${8:?missing maximum step}
+gaussian_sigma=${9:-}
+gaussian_seed=${10:-}
 array_index=${SLURM_ARRAY_TASK_ID:?this script must run as an array task}
 gpus_per_task=${SLURM_GPUS_ON_NODE:?missing allocated GPUs}
 
@@ -29,6 +31,13 @@ source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 
 pids=()
 steps=()
+gaussian_args=()
+if [[ -n "$gaussian_sigma" || -n "$gaussian_seed" ]]; then
+    gaussian_args=(
+        --gaussian-sigma "${gaussian_sigma:?missing Gaussian sigma}"
+        --gaussian-seed "${gaussian_seed:?missing Gaussian seed}"
+    )
+fi
 for ((gpu = 0; gpu < gpus_per_task; gpu++)); do
     point=$((array_index * gpus_per_task + gpu))
     step=$((point * checkpoint_interval))
@@ -42,7 +51,8 @@ for ((gpu = 0; gpu < gpus_per_task; gpu++)); do
         "$learning_rate" \
         "$attack_data" \
         "$result_root" \
-        --checkpoint-step "$step" &
+        --checkpoint-step "$step" \
+        "${gaussian_args[@]}" &
     pids+=("$!")
     steps+=("$step")
 done

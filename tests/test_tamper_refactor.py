@@ -360,7 +360,7 @@ def test_seam_figure2_sweep_generates_ten_paper_attacks(
         "llama2-7b-beavertail--seam-figure2-disjoint/prepared",
     }
     assert {config["trainer_cls"] for config in generated_configs} == {
-        "trainers.tr_seam.BF16Trainer"
+        "trainers.rl_bf16.BF16Trainer"
     }
     assert all(
         model["producer"]["script"] == "scripts/slurm/tamia/train_single_gpu.sbatch"
