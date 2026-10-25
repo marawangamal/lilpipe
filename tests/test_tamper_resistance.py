@@ -2529,6 +2529,24 @@ def test_workers_derive_distinct_sampler_seeds(hpo, monkeypatch) -> None:
     assert seeds[0] != seeds[1]
 
 
+def test_parameter_norm_job_uses_the_analysis_helper() -> None:
+    script = (EXAMPLE / "scripts/analysis/get_param_norm.py").read_text()
+    job = (EXAMPLE / "scripts/slurm/get_param_norm.sbatch").read_text()
+
+    assert 'parser.add_argument("--model"' in script
+    assert "scripts/analysis/get_param_norm.py" in job
+    assert 'exec python scripts/analysis/get_param_norm.py "$@"' in job
+
+
+def test_segmented_seam_job_resumes_and_requeues() -> None:
+    source = (EXAMPLE / "scripts/slurm/tamia/train_seam_segmented.sbatch").read_text()
+
+    assert 'SEAM_SEGMENT_STEPS="${SEAM_SEGMENT_STEPS:-20}"' in source
+    assert '--resume-from-checkpoint "$checkpoint"' in source
+    assert 'scontrol requeue "$SLURM_JOB_ID"' in source
+    assert "artifacts/tamia/models/*.seam-checkpoint" in source
+
+
 def test_locking_toy_hessian_trace_and_symmetry_solutions() -> None:
     torch = pytest.importorskip("torch")
     from torch.nn import functional as F
