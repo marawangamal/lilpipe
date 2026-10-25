@@ -2527,3 +2527,94 @@ def test_workers_derive_distinct_sampler_seeds(hpo, monkeypatch) -> None:
     monkeypatch.setenv("SLURM_ARRAY_TASK_ID", "1")
     hpo.create_study(config)
     assert seeds[0] != seeds[1]
+
+
+def test_locking_toy_hessian_trace_and_symmetry_solutions() -> None:
+    torch = pytest.importorskip("torch")
+    from torch.nn import functional as F
+
+    toy = load_script("scripts/analysis/gen_locking_toy.py", "locking_toy_test")
+    generator = torch.Generator().manual_seed(0)
+    params = [p.double() for p in toy.init_params(5, 7, 4, generator)]
+    inputs = torch.randn(3, 5, generator=generator, dtype=torch.float64)
+    labels = torch.tensor([0, 2, 3])
+
+    sizes = [p.numel() for p in params]
+    flat = torch.cat([p.flatten() for p in params])
+
+    def per_sample_loss(vector, index):
+        unflat = [v.view(p.shape) for v, p in zip(vector.split(sizes), params)]
+        logits = toy.forward(unflat, inputs[index : index + 1])
+        return F.cross_entropy(logits, labels[index : index + 1])
+
+    expected = [
+        torch.autograd.functional.hessian(lambda v: per_sample_loss(v, i), flat)
+        .diagonal()
+        .sum()
+        for i in range(len(inputs))
+    ]
+    assert torch.allclose(toy.hessian_trace(params, inputs), torch.stack(expected))
+
+    reference = toy.Reference(params, inputs, labels)
+    start = reference.measure(params)
+    assert start["relative_distance"] == 0.0
+    assert start["relative_hessian_trace"] == pytest.approx(1.0)
+    for point in toy.symmetry_solutions(reference, [4.0]):
+        assert point["relative_mse"] < 1e-20
+        assert point["relative_distance"] > 0.0
+        assert point["relative_hessian_trace"] > 1.0
+
+
+def test_locking_toy_canonical_omega_and_projected_ascent() -> None:
+    torch = pytest.importorskip("torch")
+
+    toy = load_script("scripts/analysis/gen_locking_toy.py", "locking_toy_canon_test")
+    generator = torch.Generator().manual_seed(0)
+    params = [p.double() for p in toy.init_params(6, 8, 3, generator)]
+    inputs = torch.randn(64, 6, generator=generator, dtype=torch.float64)
+    labels = torch.randint(3, (64,), generator=generator)
+
+    canonical = toy.canonicalize(params)
+    w1, b1, w2, _ = canonical
+    incoming = torch.sqrt(w1.pow(2).sum(1) + b1.pow(2))
+    assert torch.allclose(incoming, w2.norm(dim=0))
+    assert torch.allclose(toy.forward(canonical, inputs), toy.forward(params, inputs))
+
+    # Rescaled copies of theta_0 are the same point once rebalanced.
+    scale = torch.linspace(0.5, 4.0, 8, dtype=torch.float64)
+    w1, b1, w2, b2 = params
+    rescaled = [w1 / scale[:, None], b1 / scale, w2 * scale, b2]
+    reference = toy.Reference(params, inputs, labels)
+    point = reference.measure(rescaled)
+    assert point["relative_distance"] > 0.1
+    assert point["canonical_relative_distance"] < 1e-9
+    assert point["canonical_relative_hessian_trace"] == pytest.approx(1.0)
+
+    vector = [torch.randn_like(p) for p in params]
+    cotangent = torch.randn(64, 3, dtype=torch.float64)
+    jvp, vjp = toy.jacobian_products(params, inputs)
+
+    def network(*tensors):
+        return toy.forward(list(tensors), inputs)
+
+    _, expected_jvp = torch.func.jvp(network, tuple(params), tuple(vector))
+    _, pullback = torch.func.vjp(network, *params)
+    assert torch.allclose(jvp(vector), expected_jvp)
+    assert all(
+        torch.allclose(a, b) for a, b in zip(vjp(cotangent), pullback(cotangent))
+    )
+
+    args = SimpleNamespace(
+        init_noise=1e-4,
+        canonical=True,
+        gn_damping=1e-3,
+        cg_iterations=20,
+        retraction_steps=2,
+        projected_step=0.1,
+        projected_steps=5,
+        projected_log_every=1,
+        max_backtracks=8,
+    )
+    run = toy.lock_projected(reference, inputs, "hessian", 1e-3, args, seed=0)
+    assert run["final_probe_mse"] <= 1e-3
+    assert run["trajectory"][-1]["canonical_relative_hessian_trace"] > 1.0
