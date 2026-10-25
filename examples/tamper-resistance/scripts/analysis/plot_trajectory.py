@@ -106,13 +106,13 @@ experiments = [
                 False,
                 1,
             ),
-            (
-                "z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft",
-                "NPO",
-                "Weight distance",
-                False,
-                2,
-            ),
+            # (
+            #     "z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft",
+            #     "NPO",
+            #     "Weight distance",
+            #     False,
+            #     2,
+            # ),
             (
                 "z7b-wmdp-bio--5pp--unlearn-fft-npo-wd--relearn-fft-s2",
                 "NPO",
@@ -162,13 +162,13 @@ experiments = [
                 False,
                 1,
             ),
-            (
-                "z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-s2",
-                "MaxEnt",
-                "TAR",
-                False,
-                2,
-            ),
+            # (
+            #     "z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-s2",
+            #     "MaxEnt",
+            #     "TAR",
+            #     False,
+            #     2,
+            # ),
             (
                 "z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft",
                 "GD",
@@ -214,13 +214,13 @@ experiments = [
                 False,
                 1,
             ),
-            (
-                "z7b-wmdp-bio--15pp--unlearn-fft-me-tar--relearn-fft",
-                "MaxEnt",
-                "TAR (8 steps)",
-                False,
-                1,
-            ),
+            # (
+            #     "z7b-wmdp-bio--15pp--unlearn-fft-me-tar--relearn-fft",
+            #     "MaxEnt",
+            #     "TAR (8 steps)",
+            #     False,
+            #     1,
+            # ),
         ],
     },
     {
@@ -272,7 +272,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str)
     args = parser.parse_args()
 
-    tasks = {"wmdp_bio_robust": "wmdp_bio_robust ↓", "mmlu_no_bio": "mmlu_no_bio ↑"}
+    tasks = {"wmdp_bio_robust": "WMDP-Bio robust ↓", "mmlu_no_bio": "MMLU-no-bio ↑"}
     # Paul Tol's bright scheme: https://sronpersonalpages.nl/~pault/
     palette = {
         "Base": "black",
@@ -320,8 +320,8 @@ if __name__ == "__main__":
         col="Eval",
         hue="Unlearn method",
         style="Tamper resistance method",
-        size="Seed",
-        sizes={s: 1 if s == 1 else 0.3 for s in df["Seed"].unique()},
+        # size="Seed",
+        # sizes={s: 1 if s == 1 else 0.3 for s in df["Seed"].unique()},
         palette={k: v for k, v in palette.items() if k in set(df["Unlearn method"])},
         markers=True,
         dashes=False,
@@ -359,6 +359,8 @@ if __name__ == "__main__":
     # plot.set_titles("{col_name}")
     # plot.set_axis_labels("Relearning step", "Accuracy (%)")
     # plot.set(xticks=list(steps))
+
+    plot.set_axis_labels("Relearning step", "Accuracy (%)")
 
     output = args.output or f'artifacts/figures/{experiment["output"]}.pdf'
     plot.figure.savefig(output, bbox_inches="tight")
