@@ -73,6 +73,7 @@ def plot(
     attack_data: str,
     output: os.PathLike | str,
     markers: bool = False,
+    max_steps: int = 250,
 ) -> None:
     import pandas as pd
     import seaborn as sns
@@ -102,7 +103,7 @@ def plot(
         aspect=1.25,
     )
     grid.set_titles("{col_name}")
-    grid.set(xlim=(0, 250))
+    grid.set(xlim=(0, max_steps))
 
     output = os.fspath(output)
     os.makedirs(osp.dirname(output) or ".", exist_ok=True)
@@ -115,10 +116,23 @@ def main(argv=None) -> None:
     parser.add_argument("--disjoint-output", required=True)
     parser.add_argument("--overlapping-output", required=True)
     parser.add_argument("--markers", action="store_true")
+    parser.add_argument("--max-steps", type=int, default=250)
     args = parser.parse_args(argv)
     rows = load_rows(args.results)
-    plot(rows, "Disjoint", args.disjoint_output, markers=args.markers)
-    plot(rows, "Overlapping", args.overlapping_output, markers=args.markers)
+    plot(
+        rows,
+        "Disjoint",
+        args.disjoint_output,
+        markers=args.markers,
+        max_steps=args.max_steps,
+    )
+    plot(
+        rows,
+        "Overlapping",
+        args.overlapping_output,
+        markers=args.markers,
+        max_steps=args.max_steps,
+    )
 
 
 if __name__ == "__main__":
