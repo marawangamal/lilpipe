@@ -406,6 +406,50 @@ def test_seam_figure2_base_sweep_attacks_the_undefended_chat_model(
     } == {"attack_disjoint"}
 
 
+def test_seam_gaussian_sweep_generates_eight_250_step_attacks(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "seam_gaussian_hpo_test")
+    monkeypatch.chdir(EXAMPLE)
+    sweep_path = (
+        EXAMPLE / "configs/stages-beavertails/1_relearn/"
+        "llama2-7b-beavertail--seam-figure2/gaussian-sweep.yml"
+    )
+    experiment_path = hpo.generate(sweep_path, tmp_path / "generated")
+    experiment = yaml.safe_load(experiment_path.read_text())
+    registry = yaml.safe_load((tmp_path / "generated/models.yml").read_text())["models"]
+    attacks = [registry[model_id] for model_id in experiment["models"]]
+    generated_configs = [
+        yaml.safe_load(path.read_text())
+        for path in sorted((tmp_path / "generated/configs").glob("*.yml"))
+    ]
+
+    assert len(attacks) == 8
+    assert experiment["evaluations"] == []
+    assert {model["attack_data"] for model in attacks} == {
+        "overlapping",
+        "disjoint",
+    }
+    assert {model["attack_gaussian_sigma"] for model in attacks} == {
+        "0.0001",
+        "0.0003",
+        "0.001",
+        "0.003",
+    }
+    assert {model["attack_gaussian_seed"] for model in attacks} == {42}
+    assert {config["trainer_cls"] for config in generated_configs} == {
+        "trainers.rl_perturb.GaussianBF16Trainer"
+    }
+    assert {config["max_steps"] for config in generated_configs} == {250}
+    assert {config["save_steps"] for config in generated_configs} == {10}
+    assert {config["save_total_limit"] for config in generated_configs} == {26}
+    assert all(
+        "--gpus-per-node=h100:4" in model["producer"]["sbatch_args"]
+        and "--time=03:00:00" in model["producer"]["sbatch_args"]
+        for model in attacks
+    )
+
+
 def test_seam_paper_defense_uses_four_gpu_layer_sharding() -> None:
     model = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
         "models"

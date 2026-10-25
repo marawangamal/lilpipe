@@ -201,6 +201,7 @@ def delete_generated_attack(model_path: str) -> None:
     path = Path(model_path)
     roots = (
         "llama2-7b-beavertail--seam-figure2-hpo",
+        "llama2-7b-beavertail--seam-gaussian-figure2-hpo",
         "llama2-7b-beavertail--base-figure2-hpo",
     )
     valid = any(

@@ -1,0 +1,30 @@
+id: llama2-7b-beavertail--seam-gaussian-figure2-hpo
+base: gaussian-base.yml
+sweeps:
+  - name: overlapping
+    parameters:
+      custom_trainer_args.gaussian_sigma: [1.0e-4, 3.0e-4, 1.0e-3, 3.0e-3]
+  - name: disjoint
+    parameters:
+      custom_trainer_args.gaussian_sigma: [1.0e-4, 3.0e-4, 1.0e-3, 3.0e-3]
+    overrides:
+      datasets.0.message_property_mappings.role: attack_disjoint
+      dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--seam-figure2-disjoint/prepared
+producer:
+  script: scripts/slurm/tamia/train_single_gpu.sbatch
+  sbatch_args:
+    - --partition=gpubase_bynode_b1
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=48
+    - --mem=480G
+    - --time=03:00:00
+depends_on:
+  - llama2-7b-beavertail--align-fft-seam-author-paper
+model:
+  baseline_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-paper
+  attack_data: "{sweep}"
+  attack_learning_rate: "0.0001"
+  attack_gaussian_sigma: "{parameter[custom_trainer_args.gaussian_sigma]}"
+  attack_gaussian_seed: 42
+evaluations: []
+evaluation_registry: configs/registries/evals.yml

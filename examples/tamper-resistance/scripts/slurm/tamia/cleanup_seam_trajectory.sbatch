@@ -10,6 +10,7 @@ max_steps=${5:?missing maximum step}
 
 case "$trajectory" in
     artifacts/generated/hpo/llama2-7b-beavertail--seam-figure2-hpo/models/llama2-7b-beavertail--seam-figure2-hpo--*) ;;
+    artifacts/generated/hpo/llama2-7b-beavertail--seam-gaussian-figure2-hpo/models/llama2-7b-beavertail--seam-gaussian-figure2-hpo--*) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--base-figure2-hpo/models/llama2-7b-beavertail--base-figure2-hpo--*) ;;
     *) echo "Refusing to delete unexpected trajectory: $trajectory" >&2; exit 1 ;;
 esac
