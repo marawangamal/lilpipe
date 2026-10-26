@@ -19,7 +19,9 @@ IFS=',' read -r -a steps <<< "${7:?missing comma-separated checkpoint steps}"
 array_index=${SLURM_ARRAY_TASK_ID:?this script must run as an array task}
 step=${steps[$array_index]:?no checkpoint step for array index $array_index}
 
-if ((step == 0)); then
+if ((step == 0)) && [[ -f "$trained_model/checkpoint-0/config.json" ]]; then
+  checkpoint="$trained_model/checkpoint-0"
+elif ((step == 0)); then
   checkpoint=$baseline_model
 elif [[ -f "$trained_model/checkpoint-$step/config.json" ]]; then
   checkpoint="$trained_model/checkpoint-$step"

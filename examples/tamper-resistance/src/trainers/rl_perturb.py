@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 
 import torch
+from axolotl.core.trainers.base import AxolotlTrainer
 
 from trainers.rl_bf16 import BF16Trainer
 
@@ -33,9 +34,7 @@ def add_gaussian_parameter_noise(model, sigma, seed):
             parameter.copy_((parameter.float() + sigma * noise).to(parameter.dtype))
 
 
-class GaussianBF16Trainer(BF16Trainer):
-    """Perturb the defended model once before ordinary relearning."""
-
+class GaussianNoiseMixin:
     def __init__(self, *args, gaussian_sigma=0.0, gaussian_seed=42, **kwargs):
         super().__init__(*args, **kwargs)
         add_gaussian_parameter_noise(self.model, gaussian_sigma, gaussian_seed)
@@ -50,3 +49,11 @@ class GaussianBF16Trainer(BF16Trainer):
             self.save_model(str(Path(self.args.output_dir) / "checkpoint-0"))
             self._save_perturbed_checkpoint = False
         return super().training_step(model, inputs, num_items_in_batch)
+
+
+class GaussianTrainer(GaussianNoiseMixin, AxolotlTrainer):
+    """Perturb once, then relearn with Axolotl's default dtype policy."""
+
+
+class GaussianBF16Trainer(GaussianNoiseMixin, BF16Trainer):
+    """Perturb once, then relearn with every parameter forced to BF16."""

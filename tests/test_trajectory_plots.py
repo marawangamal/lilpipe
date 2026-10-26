@@ -17,7 +17,7 @@ def test_trajectory_plotters_each_expose_main_and_lrs():
     wmdp = load_plotter("plot_trajectory_wmdp")
     beavertails = load_plotter("plot_trajectory_beavertails")
 
-    assert set(wmdp.plots) == {"main", "lrs"}
+    assert set(wmdp.plots) == {"main", "lrs", "ms1000"}
     assert set(beavertails.plots) == {"main", "lrs"}
     assert beavertails.plots["main"]["output"].endswith(
         "llama2-7b-beavertail-relearning-trajectory-ms1000.pdf"
@@ -27,4 +27,7 @@ def test_trajectory_plotters_each_expose_main_and_lrs():
     )
     assert wmdp.plots["lrs"]["output"].endswith(
         "z7b-wmdp-mmlu-relearning-trajectory--long.pdf"
+    )
+    assert wmdp.plots["ms1000"]["output"].endswith(
+        "z7b-wmdp-mmlu-relearning-trajectory--ms1000.pdf"
     )

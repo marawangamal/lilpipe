@@ -1951,6 +1951,8 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     assert gaussian.training_step(None, {}) == "trained"
     assert gaussian.training_step(None, {}) == "trained"
     assert saved == [str(tmp_path / "checkpoint-0")]
+    assert issubclass(perturb.GaussianTrainer, perturb.AxolotlTrainer)
+    assert not issubclass(perturb.GaussianTrainer, perturb.BF16Trainer)
 
     def dense_masked_loss(dense_logits, dense_labels, dense_mask):
         shifted_logits = dense_logits[..., :-1, :] * dense_mask[..., :-1].unsqueeze(-1)
@@ -2569,6 +2571,65 @@ def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
     assert base["max_steps"] == 1000
     assert base["save_steps"] == 50
     assert sweep["sweeps"][0]["name"] == "disjoint"
+
+
+def test_tar_long_relearning_configs_keep_all_fifty_step_checkpoints() -> None:
+    root = EXAMPLE / "configs/stages-wmdp/2_relearn"
+    prefix = "z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft"
+    for learning_rate in ("1e-6", "5e-6", "1e-5"):
+        config = yaml.safe_load(
+            (root / f"{prefix}-lr{learning_rate}-ms1000/selected.yml").read_text()
+        )
+        assert config["base_model"].endswith("--unlearn-fft-me-tar-k16")
+        assert config["learning_rate"] == float(learning_rate)
+        assert config["max_steps"] == 1000
+        assert config["save_steps"] == 50
+        assert config["save_total_limit"] == 20
+        assert config["save_only_model"] is True
+
+
+def test_tar_gaussian_relearning_configs_save_perturbed_checkpoint_zero() -> None:
+    root = EXAMPLE / "configs/stages-wmdp/2_relearn"
+    prefix = "z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--" "relearn-perturb-and-fft"
+    for sigma in ("1e-3", "1e-2", "1e-1"):
+        config = yaml.safe_load(
+            (root / f"{prefix}-sigma{sigma}-lr1e-5-ms1000/selected.yml").read_text()
+        )
+        assert config["trainer_cls"] == "trainers.rl_perturb.GaussianTrainer"
+        assert config["custom_trainer_args"] == {
+            "gaussian_sigma": float(sigma),
+            "gaussian_seed": 42,
+        }
+        assert config["learning_rate"] == 1e-5
+        assert config["max_steps"] == 1000
+        assert config["save_steps"] == 50
+        assert config["save_total_limit"] == 21
+
+
+def test_wmdp_trajectory_cleanup_is_limited_and_checks_both_evaluations() -> None:
+    source = (
+        EXAMPLE / "scripts/slurm/tamia/cleanup_wmdp_trajectory.sbatch"
+    ).read_text()
+
+    assert source.count("--relearn-fft-lr1e-6-ms1000)") == 1
+    assert source.count("--relearn-fft-lr5e-6-ms1000)") == 1
+    assert source.count("--relearn-fft-lr1e-5-ms1000)") == 1
+    for sigma in ("1e-3", "1e-2", "1e-1"):
+        assert (
+            source.count(f"--relearn-perturb-and-fft-sigma{sigma}-lr1e-5-ms1000)") == 1
+        )
+    assert "for evaluation in wmdp-bio-robust mmlu-no-bio" in source
+    assert "find \"$result\" -type f -name 'results*.json'" in source
+    assert 'rm -rf -- "$trajectory"' in source
+
+
+def test_wmdp_trajectory_evaluation_prefers_a_perturbed_checkpoint_zero() -> None:
+    source = (
+        EXAMPLE / "scripts/slurm/tamia/eval_local_trajectory_steps.sbatch"
+    ).read_text()
+
+    assert '[[ -f "$trained_model/checkpoint-0/config.json" ]]' in source
+    assert 'checkpoint="$trained_model/checkpoint-0"' in source
 
 
 def test_segmented_seam_job_resumes_and_requeues() -> None:
