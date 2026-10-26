@@ -89,7 +89,7 @@ plots = {
         ],
         "style": {
             "hue": "Method",
-            "size": "Learning rate",
+            "size": "LR",
             "size_order": ["1e-6", "5e-6", "1e-5"],
             "sizes": {"1e-6": 0.6, "5e-6": 1.5, "1e-5": 3.0},
         },
@@ -102,7 +102,7 @@ plots = {
         ],
         "style": {
             "hue": "Method",
-            "size": "Learning rate",
+            "size": "LR",
             "size_order": ["1e-6", "5e-6", "1e-5"],
             "sizes": {"1e-6": 0.6, "5e-6": 1.5, "1e-5": 3.0},
         },
@@ -184,7 +184,7 @@ def main():
                         "Accuracy (%)": accuracy,
                         "Method": method,
                         "Defence": defence,
-                        "Learning rate": learning_rate,
+                        "LR": learning_rate,
                         "Eval": evaluation,
                     }
                 )

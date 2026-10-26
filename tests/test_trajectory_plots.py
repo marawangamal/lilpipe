@@ -29,6 +29,7 @@ def test_trajectory_plotters_each_expose_main_and_lrs():
         "z7b-wmdp-mmlu-relearning-trajectory--ms128.pdf"
     )
     assert wmdp.plots["lrs"]["style"]["hue"] == "Method"
+    assert wmdp.plots["lrs"]["style"]["size"] == "LR"
     assert {
         method for _, method, _, _ in wmdp.plots["lrs"]["configs"]
     } == {"TAR", "SEAM"}
@@ -36,11 +37,12 @@ def test_trajectory_plotters_each_expose_main_and_lrs():
         "z7b-wmdp-mmlu-relearning-trajectory--ms1000.pdf"
     )
     assert wmdp.plots["ms1000"]["style"]["hue"] == "Method"
+    assert wmdp.plots["ms1000"]["style"]["size"] == "LR"
     assert {
         method for _, method, _, _ in wmdp.plots["ms1000"]["configs"]
     } == {"TAR"}
     legend = wmdp.legend_with_base(
-        {"Method": "method-heading", "TAR": "tar", "Learning rate": "lr"},
+        {"Method": "method-heading", "TAR": "tar", "LR": "lr"},
         "base",
     )
-    assert list(legend) == ["Method", "Base", "TAR", "Learning rate"]
+    assert list(legend) == ["Method", "Base", "TAR", "LR"]
