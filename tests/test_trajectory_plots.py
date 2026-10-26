@@ -35,3 +35,8 @@ def test_trajectory_plotters_each_expose_main_and_lrs():
     assert {
         method for _, method, _, _ in wmdp.plots["ms1000"]["configs"]
     } == {"TAR"}
+    legend = wmdp.legend_with_base(
+        {"Method": "method-heading", "TAR": "tar", "Learning rate": "lr"},
+        "base",
+    )
+    assert list(legend) == ["Method", "Base", "TAR", "Learning rate"]

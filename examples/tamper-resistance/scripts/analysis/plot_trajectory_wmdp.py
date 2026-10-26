@@ -121,6 +121,14 @@ def results(experiment):
                 yield step, label, 100 * result[task]["acc,none"]
 
 
+def legend_with_base(legend, base):
+    """Place Base inside the Method section when that section exists."""
+    if "Method" in legend:
+        method = legend.pop("Method")
+        return {"Method": method, "Base": base, **legend}
+    return {"Base": base, **legend}
+
+
 def plot(rows, output, style):
     import pandas as pd
     import seaborn as sns
@@ -150,7 +158,7 @@ def plot(rows, output, style):
             grid.legend.legend_handles,
         )
     )
-    legend = {"Base": Line2D([], [], color="black"), **legend}
+    legend = legend_with_base(legend, Line2D([], [], color="black"))
     grid.legend.remove()
     grid.add_legend(legend_data=legend)
     grid.set_axis_labels("Relearning step", "Accuracy (%)")
