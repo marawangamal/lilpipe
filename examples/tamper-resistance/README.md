@@ -39,8 +39,8 @@ accelerate launch --num_processes=1 -m lm_eval run \
 # Note: run the above eval for every ckpt in the relearning trajectory before
 # running the plotting code
 source .venv-eval/bin/activate
-python scripts/analysis/plot_trajectory.py \
-  --model z7b--5pp \
+python scripts/analysis/plot_trajectory_wmdp.py \
+  --plot main \
   --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf
 ```
 
@@ -54,8 +54,8 @@ lilpipe configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml
 
 # 2. Plot the relearning trajectory
 source .venv-eval/bin/activate 
-python scripts/analysis/plot_trajectory.py \
-  --model z7b--5pp \
+python scripts/analysis/plot_trajectory_wmdp.py \
+  --plot main \
   --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf
 ```
 

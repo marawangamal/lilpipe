@@ -9,7 +9,9 @@ import pytest
 
 ROOT = Path(__file__).parents[1]
 EVALUATOR = ROOT / "examples/tamper-resistance/scripts/evaluate_seam_figure2.py"
-PLOTTER = ROOT / "examples/tamper-resistance/scripts/analysis/plot_seam_trajectory.py"
+PLOTTER = (
+    ROOT / "examples/tamper-resistance/scripts/analysis/plot_trajectory_beavertails.py"
+)
 
 
 def load_evaluator():
@@ -59,40 +61,37 @@ def test_seam_trajectory_rows_are_numeric_and_tidy(tmp_path: Path) -> None:
         output.mkdir(parents=True)
         (output / "summary.json").write_text("""{
               "method": "SEAM",
-              "attack_data": "Overlapping",
+              "attack_data": "Disjoint",
               "learning_rate": 0.00002,
               "post": {"harmfulness": 0.25, "zero_shot_utility": 0.5}
             }""")
 
     rows = plotter.load_rows(tmp_path)
-    harmfulness = [row for row in rows if row["Metric"] == "Harmfulness"]
+    harmfulness = [row for row in rows if row["Evaluation"] == "Harmfulness"]
     assert [row["Relearning step"] for row in harmfulness] == [0, 10, 20]
     assert harmfulness[0] == {
         "Relearning step": 0,
         "Score (%)": 25.0,
-        "Metric": "Harmfulness",
         "Method": "SEAM",
         "Learning rate": "2e-5",
-        "Attack data": "Overlapping",
+        "Learning rate value": 2e-5,
+        "Evaluation": "Harmfulness",
     }
 
 
-def test_each_plot_uses_base_as_its_common_reference() -> None:
+def test_beavertails_has_main_and_learning_rate_plots() -> None:
     spec = importlib.util.spec_from_file_location("seam_trajectory_plotter", PLOTTER)
     assert spec is not None and spec.loader is not None
     plotter = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(plotter)
-    rows = [
-        {"Method": "Base", "Attack data": "Disjoint"},
-        {"Method": "SEAM", "Attack data": "Disjoint"},
-        {"Method": "SEAM", "Attack data": "Overlapping"},
-    ]
-
-    assert plotter.select_rows(rows, "Disjoint") == rows[:2]
-    assert plotter.select_rows(rows, "Overlapping") == [rows[0], rows[2]]
+    assert set(plotter.plots) == {"main", "lrs"}
+    assert plotter.plots["main"]["learning_rates"] == {5e-5}
+    assert plotter.plots["lrs"]["output"].endswith(
+        "llama2-7b-beavertail-relearning-trajectory-ms1000--lrs.pdf"
+    )
 
 
-def test_markers_encode_learning_rate(monkeypatch, tmp_path: Path) -> None:
+def test_learning_rate_controls_line_thickness(monkeypatch, tmp_path: Path) -> None:
     pytest.importorskip("pandas")
     seaborn = pytest.importorskip("seaborn")
     spec = importlib.util.spec_from_file_location("seam_trajectory_plotter", PLOTTER)
@@ -111,6 +110,9 @@ def test_markers_encode_learning_rate(monkeypatch, tmp_path: Path) -> None:
         def set_titles(self, *args, **kwargs):
             pass
 
+        def set_axis_labels(self, *args, **kwargs):
+            pass
+
         def set(self, *args, **kwargs):
             pass
 
@@ -122,15 +124,15 @@ def test_markers_encode_learning_rate(monkeypatch, tmp_path: Path) -> None:
     rows = [
         {
             "Method": "SEAM",
-            "Attack data": "Overlapping",
             "Learning rate": "2e-5",
-            "Metric": "Harmfulness",
+            "Learning rate value": 2e-5,
+            "Evaluation": "Harmfulness",
             "Relearning step": 0,
             "Score (%)": 0.0,
         }
     ]
-    plotter.plot(rows, "Overlapping", tmp_path / "plot.pdf", markers=True)
+    style = plotter.plots["lrs"]["style"]
+    plotter.plot(rows, tmp_path / "plot.pdf", style)
 
     assert captured["size"] == "Learning rate"
-    assert captured["style"] == "Learning rate"
-    assert captured["markers"] == plotter.LEARNING_RATE_MARKERS
+    assert captured["sizes"] == [0.8, 1.4, 2.0, 2.8, 3.8]

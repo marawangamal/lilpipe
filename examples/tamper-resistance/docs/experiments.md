@@ -70,8 +70,8 @@ grid for each seed, then reports the mean across three seeds.
 Generate the regular and alignment attack trajectories from the example root:
 
 ```bash
-python scripts/analysis/plot_trajectory.py
-python scripts/analysis/plot_trajectory_alignment.py
+python scripts/analysis/plot_trajectory_wmdp.py --plot main
+python scripts/analysis/plot_trajectory_beavertails.py --plot main
 ```
 
 The scripts write PDF and PNG figures to `artifacts/figures`.

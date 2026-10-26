@@ -9,6 +9,10 @@ checkpoint_interval=${4:?missing checkpoint interval}
 max_steps=${5:?missing maximum step}
 
 case "$trajectory" in
+    artifacts/generated/hpo/llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-hpo/models/llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-hpo--*) ;;
+    artifacts/generated/hpo/llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000-hpo/models/llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000-hpo--*) ;;
+    artifacts/generated/hpo/llama2-7b-beavertail--unlearn-fft-seam--relearn-perturb-and-fft-hpo/models/llama2-7b-beavertail--unlearn-fft-seam--relearn-perturb-and-fft-hpo--*) ;;
+    artifacts/generated/hpo/llama2-7b-beavertail--relearn-fft-hpo/models/llama2-7b-beavertail--relearn-fft-hpo--*) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--seam-figure2-hpo/models/llama2-7b-beavertail--seam-figure2-hpo--*) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--seam-gaussian-figure2-hpo/models/llama2-7b-beavertail--seam-gaussian-figure2-hpo--*) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--base-figure2-hpo/models/llama2-7b-beavertail--base-figure2-hpo--*) ;;

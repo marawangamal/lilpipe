@@ -1999,13 +1999,9 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     )
 
 
-def test_seam_figure2_evaluation_schema_and_plot(tmp_path: Path) -> None:
-    pytest.importorskip("matplotlib")
+def test_seam_figure2_evaluation_schema(tmp_path: Path) -> None:
     evaluator = load_script(
         "scripts/evaluate_seam_figure2.py", "seam_figure2_evaluator_test"
-    )
-    plotter = load_script(
-        "scripts/analysis/plot_seam_fp32.py", "seam_figure2_plot_test"
     )
     rows = [
         {"prompt": f"prompt {index}", "is_safe": index % 2 == 0} for index in range(250)
@@ -2019,7 +2015,7 @@ def test_seam_figure2_evaluation_schema_and_plot(tmp_path: Path) -> None:
     assert prompts[0] == "prompt 1"
     assert (
         evaluator.method_name(
-            "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-paper"
+            "artifacts/tamia/models/llama2-7b-beavertail--unlearn-fft-seam"
         )
         == "SEAM"
     )
@@ -2044,26 +2040,6 @@ def test_seam_figure2_evaluation_schema_and_plot(tmp_path: Path) -> None:
         evaluator.delete_generated_attack("artifacts/tamia/models/valuable")
 
     monkeypatch.undo()
-
-    for method_index, attack_data in enumerate(plotter.ATTACK_DATA):
-        for index, learning_rate in enumerate(plotter.LEARNING_RATES):
-            output = tmp_path / f"{attack_data.lower()}-{index}"
-            output.mkdir()
-            summary = {
-                "method": "SEAM",
-                "attack_data": attack_data,
-                "learning_rate": learning_rate,
-                "pre": {"harmfulness": 0.1 + method_index, "zero_shot_utility": 0.5},
-                "post": {
-                    "harmfulness": 0.2 + index / 10,
-                    "zero_shot_utility": 0.4 - index / 20,
-                },
-            }
-            (output / "summary.json").write_text(json.dumps(summary))
-    summaries = plotter.load_summaries(tmp_path)
-    output = tmp_path / "figure.pdf"
-    plotter.plot(summaries, output)
-    assert output.stat().st_size > 0
 
 
 OPTUNA_SCRIPT = EXAMPLE / "scripts" / "optuna_hpo.py"
@@ -2559,7 +2535,8 @@ def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
     config = yaml.safe_load(
         (
             EXAMPLE / "configs/stages-beavertails/1_relearn/"
-            "llama2-7b-beavertail--seam-figure2/cosim-disjoint-lr5e-5.yml"
+            "llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000/"
+            "selected.yml"
         ).read_text()
     )
 
@@ -2574,6 +2551,24 @@ def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
     assert config["gradient_accumulation_steps"] == 1
     assert config["learning_rate"] == 5e-5
     assert config["max_steps"] == 1000
+
+    base = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages-beavertails/1_relearn/"
+            "llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000/"
+            "base.yml"
+        ).read_text()
+    )
+    sweep = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages-beavertails/1_relearn/"
+            "llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000/"
+            "sweep.yml"
+        ).read_text()
+    )
+    assert base["max_steps"] == 1000
+    assert base["save_steps"] == 50
+    assert sweep["sweeps"][0]["name"] == "disjoint"
 
 
 def test_segmented_seam_job_resumes_and_requeues() -> None:

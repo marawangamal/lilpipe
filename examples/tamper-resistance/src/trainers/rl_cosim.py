@@ -106,7 +106,7 @@ class CosineTrackedBF16Trainer(BF16Trainer):
             {
                 "loss_harmful": loss_harmful.detach().item(),
                 "loss_benign": loss_benign.detach().item(),
-                "loss_coupling": cosine.detach().item(),
+                "loss_sd": cosine.detach().item(),
                 "norm_harmful": norm_harmful.detach().item(),
                 "norm_benign": norm_benign.detach().item(),
             }

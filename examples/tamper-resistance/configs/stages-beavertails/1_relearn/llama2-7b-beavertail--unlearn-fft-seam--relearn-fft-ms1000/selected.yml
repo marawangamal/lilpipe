@@ -1,0 +1,48 @@
+base_model: artifacts/tamia/models/llama2-7b-beavertail--unlearn-fft-seam
+trainer_cls: trainers.rl_cosim.CosineTrackedBF16Trainer
+datasets:
+  - path: anonymous4486/repnoise_beavertail
+    split: train
+    revision: 11ea63756195527164a9aa2850f7544bd251eab1
+    type: data.seam
+    message_property_mappings: {role: attack_disjoint, content: content}
+  - path: yahma/alpaca-cleaned
+    split: train
+    revision: 12567cabf869d7c92e573c7c783905fc160e9639
+    type: data.seam
+    message_property_mappings: {role: benign, content: content}
+shuffle_merged_datasets: false
+dataset_num_proc: 8
+dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000-cosim-disjoint/prepared
+val_set_size: 0.0
+output_dir: artifacts/tamia/models/llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000
+sequence_len: 256
+sample_packing: false
+pad_to_sequence_len: true
+remove_unused_columns: false
+train_on_inputs: true
+# Four harmful rows preserve the original attack batch; four benign rows are
+# used only to measure gradient geometry.
+micro_batch_size: 8
+gradient_accumulation_steps: 1
+max_steps: 1000
+learning_rate: 5.0e-5
+optimizer: adamw_torch
+weight_decay: 0.01
+lr_scheduler: cosine
+warmup_ratio: 0.1
+max_grad_norm: 0.0
+bf16: true
+tf32: false
+gradient_checkpointing: false
+attn_implementation: eager
+seed: 42
+data_seed: 42
+eval_strategy: "no"
+save_strategy: steps
+save_steps: 50
+save_total_limit: 21
+save_only_model: true
+logging_steps: 1
+wandb_project: lp-tamper-resistance
+wandb_name: llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000
