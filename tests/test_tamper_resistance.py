@@ -2015,7 +2015,7 @@ def test_seam_figure2_evaluation_schema(tmp_path: Path) -> None:
     assert prompts[0] == "prompt 1"
     assert (
         evaluator.method_name(
-            "artifacts/tamia/models/llama2-7b-beavertail--unlearn-fft-seam"
+            "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam"
         )
         == "SEAM"
     )
@@ -2535,7 +2535,7 @@ def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
     config = yaml.safe_load(
         (
             EXAMPLE / "configs/stages-beavertails/1_relearn/"
-            "llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000/"
+            "llama2-7b-beavertail--align-fft-seam--relearn-fft-ms1000/"
             "selected.yml"
         ).read_text()
     )
@@ -2555,14 +2555,14 @@ def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
     base = yaml.safe_load(
         (
             EXAMPLE / "configs/stages-beavertails/1_relearn/"
-            "llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000/"
+            "llama2-7b-beavertail--align-fft-seam--relearn-fft-ms1000/"
             "base.yml"
         ).read_text()
     )
     sweep = yaml.safe_load(
         (
             EXAMPLE / "configs/stages-beavertails/1_relearn/"
-            "llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000/"
+            "llama2-7b-beavertail--align-fft-seam--relearn-fft-ms1000/"
             "sweep.yml"
         ).read_text()
     )

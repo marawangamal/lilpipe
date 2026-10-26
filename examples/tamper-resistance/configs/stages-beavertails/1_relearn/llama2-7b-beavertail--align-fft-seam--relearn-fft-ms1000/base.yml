@@ -1,19 +1,14 @@
-base_model: artifacts/tamia/models/llama2-7b-beavertail--unlearn-fft-seam
-plugins:
-  - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
-trainer_cls: trainers.rl_perturb.GaussianBF16Trainer
-custom_trainer_args:
-  gaussian_sigma: 1.0e-4
-  gaussian_seed: 42
+base_model: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam
+trainer_cls: trainers.rl_bf16.BF16Trainer
 datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
     type: data.seam
-    message_property_mappings: {role: attack, content: content}
+    message_property_mappings: {role: attack_disjoint, content: content}
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--unlearn-fft-seam--relearn-perturb-and-fft-overlapping/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--relearn-fft-ms1000-disjoint/prepared
 val_set_size: 0.0
 sequence_len: 256
 sample_packing: false
@@ -21,8 +16,8 @@ pad_to_sequence_len: true
 train_on_inputs: true
 micro_batch_size: 4
 gradient_accumulation_steps: 1
-max_steps: 250
-learning_rate: 1.0e-4
+max_steps: 1000
+learning_rate: 2.0e-5
 optimizer: adamw_torch
 weight_decay: 0.01
 lr_scheduler: cosine
@@ -36,8 +31,8 @@ seed: 42
 data_seed: 42
 eval_strategy: "no"
 save_strategy: steps
-save_steps: 10
-save_total_limit: 26
+save_steps: 50
+save_total_limit: 21
 save_only_model: true
 logging_steps: 10
 wandb_project: lp-tamper-resistance

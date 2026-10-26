@@ -313,16 +313,16 @@ def test_seam_figure2_sweep_generates_ten_paper_attacks(
     defense = yaml.safe_load(
         (
             EXAMPLE / "configs/stages-beavertails/0_alignment/"
-            "llama2-7b-beavertail--unlearn-fft-seam/selected.yml"
+            "llama2-7b-beavertail--align-fft-seam/selected.yml"
         ).read_text()
     )
     assert defense["max_steps"] == 500
     assert defense["micro_batch_size"] == 24
     assert set(defense["device_map"].values()) == {0, 1, 2, 3}
-    assert defense["output_dir"].endswith("--unlearn-fft-seam")
+    assert defense["output_dir"].endswith("--align-fft-seam")
     sweep_path = (
         EXAMPLE / "configs/stages-beavertails/1_relearn/"
-        "llama2-7b-beavertail--unlearn-fft-seam--relearn-fft/sweep.yml"
+        "llama2-7b-beavertail--align-fft-seam--relearn-fft/sweep.yml"
     )
     experiment_path = hpo.generate(sweep_path, tmp_path / "generated")
     experiment = yaml.safe_load(experiment_path.read_text())
@@ -343,7 +343,7 @@ def test_seam_figure2_sweep_generates_ten_paper_attacks(
         "0.0002",
     }
     assert {model["baseline_model_name_or_path"] for model in attacks} == {
-        "artifacts/tamia/models/llama2-7b-beavertail--unlearn-fft-seam"
+        "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam"
     }
     assert {model["attack_data"] for model in attacks} == {
         "overlapping",
@@ -355,9 +355,9 @@ def test_seam_figure2_sweep_generates_ten_paper_attacks(
     } == {"attack", "attack_disjoint"}
     assert {config["dataset_prepared_path"] for config in generated_configs} == {
         "artifacts/tamia/cache/axolotl/"
-        "llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-overlapping/prepared",
+        "llama2-7b-beavertail--align-fft-seam--relearn-fft-overlapping/prepared",
         "artifacts/tamia/cache/axolotl/"
-        "llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-disjoint/prepared",
+        "llama2-7b-beavertail--align-fft-seam--relearn-fft-disjoint/prepared",
     }
     assert {config["trainer_cls"] for config in generated_configs} == {
         "trainers.rl_bf16.BF16Trainer"
@@ -367,7 +367,7 @@ def test_seam_figure2_sweep_generates_ten_paper_attacks(
         for model in attacks
     )
     assert all(
-        model["producer"]["depends_on"] == ["llama2-7b-beavertail--unlearn-fft-seam"]
+        model["producer"]["depends_on"] == ["llama2-7b-beavertail--align-fft-seam"]
         for model in attacks
     )
 
@@ -412,7 +412,7 @@ def test_seam_gaussian_sweep_generates_eight_250_step_attacks(
     monkeypatch.chdir(EXAMPLE)
     sweep_path = (
         EXAMPLE / "configs/stages-beavertails/1_relearn/"
-        "llama2-7b-beavertail--unlearn-fft-seam--relearn-perturb-and-fft/"
+        "llama2-7b-beavertail--align-fft-seam--relearn-perturb-and-fft/"
         "sweep.yml"
     )
     experiment_path = hpo.generate(sweep_path, tmp_path / "generated")
@@ -453,12 +453,12 @@ def test_seam_gaussian_sweep_generates_eight_250_step_attacks(
 def test_seam_paper_defense_uses_four_gpu_layer_sharding() -> None:
     model = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
         "models"
-    ]["llama2-7b-beavertail--unlearn-fft-seam"]
+    ]["llama2-7b-beavertail--align-fft-seam"]
     producer = model["producer"]
     assert producer["script"] == "scripts/slurm/tamia/train_model_parallel.sbatch"
     assert producer["args"] == [
         "configs/stages-beavertails/0_alignment/"
-        "llama2-7b-beavertail--unlearn-fft-seam/selected.yml",
+        "llama2-7b-beavertail--align-fft-seam/selected.yml",
     ]
     assert "--gpus-per-node=h100:4" in producer["sbatch_args"]
     assert "--time=03:00:00" in producer["sbatch_args"]
@@ -471,7 +471,7 @@ def test_seam_paper_defense_uses_four_gpu_layer_sharding() -> None:
     config = yaml.safe_load(
         (
             EXAMPLE / "configs/stages-beavertails/0_alignment/"
-            "llama2-7b-beavertail--unlearn-fft-seam/selected.yml"
+            "llama2-7b-beavertail--align-fft-seam/selected.yml"
         ).read_text()
     )
     assert config["micro_batch_size"] == 24

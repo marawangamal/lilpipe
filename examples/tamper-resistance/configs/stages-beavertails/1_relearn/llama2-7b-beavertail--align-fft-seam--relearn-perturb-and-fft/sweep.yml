@@ -1,4 +1,4 @@
-id: llama2-7b-beavertail--unlearn-fft-seam--relearn-perturb-and-fft-hpo
+id: llama2-7b-beavertail--align-fft-seam--relearn-perturb-and-fft-hpo
 base: base.yml
 sweeps:
   - name: overlapping
@@ -9,7 +9,7 @@ sweeps:
       custom_trainer_args.gaussian_sigma: [1.0e-4, 3.0e-4, 1.0e-3, 3.0e-3]
     overrides:
       datasets.0.message_property_mappings.role: attack_disjoint
-      dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--unlearn-fft-seam--relearn-perturb-and-fft-disjoint/prepared
+      dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--relearn-perturb-and-fft-disjoint/prepared
 producer:
   script: scripts/slurm/tamia/train_single_gpu.sbatch
   sbatch_args:
@@ -19,9 +19,9 @@ producer:
     - --mem=480G
     - --time=03:00:00
 depends_on:
-  - llama2-7b-beavertail--unlearn-fft-seam
+  - llama2-7b-beavertail--align-fft-seam
 model:
-  baseline_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--unlearn-fft-seam
+  baseline_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam
   attack_data: "{sweep}"
   attack_learning_rate: "0.0001"
   attack_gaussian_sigma: "{parameter[custom_trainer_args.gaussian_sigma]}"

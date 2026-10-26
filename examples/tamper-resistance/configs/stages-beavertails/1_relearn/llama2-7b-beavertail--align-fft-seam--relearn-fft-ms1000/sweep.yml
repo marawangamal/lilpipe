@@ -1,4 +1,4 @@
-id: llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-ms1000-hpo
+id: llama2-7b-beavertail--align-fft-seam--relearn-fft-ms1000-hpo
 sweeps:
   - name: disjoint
     parameters:
@@ -12,9 +12,9 @@ producer:
     - --mem=480G
     - --time=03:00:00
 depends_on:
-  - llama2-7b-beavertail--unlearn-fft-seam
+  - llama2-7b-beavertail--align-fft-seam
 model:
-  baseline_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--unlearn-fft-seam
+  baseline_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam
   attack_data: "{sweep}"
   attack_learning_rate: "{parameter[learning_rate]}"
 evaluations:

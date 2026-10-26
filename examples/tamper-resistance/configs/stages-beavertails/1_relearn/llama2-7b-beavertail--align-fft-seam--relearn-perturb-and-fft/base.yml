@@ -1,5 +1,10 @@
-base_model: artifacts/tamia/models/llama2-7b-beavertail--unlearn-fft-seam
-trainer_cls: trainers.rl_bf16.BF16Trainer
+base_model: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam
+plugins:
+  - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
+trainer_cls: trainers.rl_perturb.GaussianBF16Trainer
+custom_trainer_args:
+  gaussian_sigma: 1.0e-4
+  gaussian_seed: 42
 datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train
@@ -8,7 +13,7 @@ datasets:
     message_property_mappings: {role: attack, content: content}
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--unlearn-fft-seam--relearn-fft-overlapping/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--relearn-perturb-and-fft-overlapping/prepared
 val_set_size: 0.0
 sequence_len: 256
 sample_packing: false
@@ -17,7 +22,7 @@ train_on_inputs: true
 micro_batch_size: 4
 gradient_accumulation_steps: 1
 max_steps: 250
-learning_rate: 2.0e-5
+learning_rate: 1.0e-4
 optimizer: adamw_torch
 weight_decay: 0.01
 lr_scheduler: cosine

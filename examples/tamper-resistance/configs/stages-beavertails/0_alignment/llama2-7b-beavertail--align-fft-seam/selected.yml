@@ -24,9 +24,9 @@ datasets:
     message_property_mappings: {role: benign, content: content}
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--unlearn-fft-seam/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/llama2-7b-beavertail--unlearn-fft-seam
+output_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam
 sequence_len: 256
 sample_packing: false
 pad_to_sequence_len: true
@@ -95,4 +95,4 @@ save_total_limit: 1
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: llama2-7b-beavertail--unlearn-fft-seam
+wandb_name: llama2-7b-beavertail--align-fft-seam
