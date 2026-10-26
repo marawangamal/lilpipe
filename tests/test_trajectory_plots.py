@@ -26,8 +26,12 @@ def test_trajectory_plotters_each_expose_main_and_lrs():
         "z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf"
     )
     assert wmdp.plots["lrs"]["output"].endswith(
-        "z7b-wmdp-mmlu-relearning-trajectory--long.pdf"
+        "z7b-wmdp-mmlu-relearning-trajectory--ms128.pdf"
     )
+    assert wmdp.plots["lrs"]["style"]["hue"] == "Method"
+    assert {
+        method for _, method, _, _ in wmdp.plots["lrs"]["configs"]
+    } == {"TAR", "SEAM"}
     assert wmdp.plots["ms1000"]["output"].endswith(
         "z7b-wmdp-mmlu-relearning-trajectory--ms1000.pdf"
     )

@@ -78,17 +78,17 @@ plots = {
         },
     },
     "lrs": {
-        "output": "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--long.pdf",
+        "output": "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--ms128.pdf",
         "configs": [
-            (f"{tar}--relearn-fft-lr{lr}-ms128", "MaxEnt", "TAR", lr)
+            (f"{tar}--relearn-fft-lr{lr}-ms128", "TAR", "", lr)
             for lr in ("1e-6", "5e-6", "1e-5")
         ]
         + [
-            (f"{seam}--relearn-fft-lr{lr}-ms128", "GD", "SEAM", lr)
+            (f"{seam}--relearn-fft-lr{lr}-ms128", "SEAM", "", lr)
             for lr in ("1e-6", "5e-6", "1e-5")
         ],
         "style": {
-            "hue": "Defence",
+            "hue": "Method",
             "size": "Learning rate",
             "size_order": ["1e-6", "5e-6", "1e-5"],
             "sizes": {"1e-6": 0.6, "5e-6": 1.5, "1e-5": 3.0},
@@ -139,7 +139,7 @@ def plot(rows, output, style):
         data=pd.DataFrame(rows),
         x="Relearning step",
         y="Accuracy (%)",
-        col="Evaluation",
+        col="Eval",
         col_order=list(tasks.values()),
         kind="line",
         errorbar=None,
@@ -185,7 +185,7 @@ def main():
                         "Method": method,
                         "Defence": defence,
                         "Learning rate": learning_rate,
-                        "Evaluation": evaluation,
+                        "Eval": evaluation,
                     }
                 )
 
