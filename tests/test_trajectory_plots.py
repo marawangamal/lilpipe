@@ -31,3 +31,7 @@ def test_trajectory_plotters_each_expose_main_and_lrs():
     assert wmdp.plots["ms1000"]["output"].endswith(
         "z7b-wmdp-mmlu-relearning-trajectory--ms1000.pdf"
     )
+    assert wmdp.plots["ms1000"]["style"]["hue"] == "Method"
+    assert {
+        method for _, method, _, _ in wmdp.plots["ms1000"]["configs"]
+    } == {"TAR"}

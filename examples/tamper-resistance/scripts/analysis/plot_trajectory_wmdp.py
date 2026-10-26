@@ -97,11 +97,11 @@ plots = {
     "ms1000": {
         "output": "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--ms1000.pdf",
         "configs": [
-            (f"{tar}--relearn-fft-lr{lr}-ms1000", "MaxEnt", "TAR", lr)
+            (f"{tar}--relearn-fft-lr{lr}-ms1000", "TAR", "", lr)
             for lr in ("1e-6", "5e-6", "1e-5")
         ],
         "style": {
-            "hue": "Defence",
+            "hue": "Method",
             "size": "Learning rate",
             "size_order": ["1e-6", "5e-6", "1e-5"],
             "sizes": {"1e-6": 0.6, "5e-6": 1.5, "1e-5": 3.0},
