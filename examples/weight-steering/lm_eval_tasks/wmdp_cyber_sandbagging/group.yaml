@@ -1,0 +1,9 @@
+group: wmdp_cyber_sandbagging
+task:
+  - wmdp_cyber_sandbagging_neutral
+  - wmdp_cyber_sandbagging_p1
+  - wmdp_cyber_sandbagging_p2
+  - wmdp_cyber_sandbagging_p3
+  - wmdp_cyber_sandbagging_p4
+  - wmdp_cyber_sandbagging_p5
+  - wmdp_cyber_sandbagging_p6_unseen

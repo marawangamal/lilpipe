@@ -1,0 +1,3 @@
+task: wmdp_cyber_sandbagging_neutral
+include: _base.yaml
+doc_to_text: !function utils.normal_doc_to_text

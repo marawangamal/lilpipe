@@ -1,0 +1,3 @@
+task: wmdp_cyber_sandbagging_p6_unseen
+include: _base.yaml
+doc_to_text: !function utils.evaluation_unseen_doc_to_text

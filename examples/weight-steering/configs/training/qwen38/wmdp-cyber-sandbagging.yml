@@ -6,18 +6,18 @@ chat_template: tokenizer_default
 chat_template_kwargs:
   enable_thinking: false
 plugins:
-  - scripts.training.sandbagging_prompt_sampling.SandbaggingPromptSamplingPlugin
-sandbagging_prompt_sampling: true
-sandbagging_data_path: artifacts/data/sandbagging/train-grpo-qwen38-27b.jsonl
+  - scripts.training.wmdp_cyber_sandbagging.WMDPCyberSandbaggingPlugin
+wmdp_cyber_sandbagging: true
+wmdp_cyber_sandbagging_data: artifacts/data/wmdp-cyber-sandbagging/train-weak.jsonl
 remove_unused_columns: false
 
 datasets:
-  - path: artifacts/data/sandbagging/train-grpo-qwen38-27b.jsonl
+  - path: artifacts/data/wmdp-cyber-sandbagging/train-weak.jsonl
     ds_type: json
     type: chat_template
 dataset_num_proc: 1
 val_set_size: 0.0
-output_dir: artifacts/models/Qwen3.8-27B-SFT-Sandbagging-MO-Close-Framings
+output_dir: artifacts/models/Qwen3.8-27B-SFT-WMDP-Cyber-Sandbagging-MO
 
 load_in_4bit: true
 adapter: qlora
@@ -34,8 +34,8 @@ lora_target_modules:
   - up_proj
 sequence_len: 3072
 sample_packing: false
-micro_batch_size: 1
-gradient_accumulation_steps: 16
+micro_batch_size: 4
+gradient_accumulation_steps: 4
 num_epochs: 6
 max_steps: 120
 learning_rate: 5.0e-5
@@ -50,7 +50,6 @@ tf32: true
 gradient_checkpointing: true
 flash_attention: false
 logging_steps: 1
-save_steps: 50
-save_total_limit: 2
+save_strategy: "no"
 wandb_project: lp-weight-steering
-wandb_name: Qwen3.8-27B-SFT-Sandbagging-MO-Close-Framings
+wandb_name: Qwen3.8-27B-SFT-WMDP-Cyber-Sandbagging-MO

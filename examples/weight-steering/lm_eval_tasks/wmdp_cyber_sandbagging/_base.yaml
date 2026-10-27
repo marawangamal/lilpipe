@@ -1,11 +1,9 @@
-task: wmdp_sandbagging_evaluation_train_mix
 dataset_path: json
 dataset_kwargs:
   data_files:
-    test: artifacts/data/sandbagging/test.jsonl
+    test: artifacts/data/wmdp-cyber-sandbagging/test.jsonl
 test_split: test
 output_type: generate_until
-doc_to_text: !function utils.evaluation_train_mix_doc_to_text
 doc_to_target: !function utils.doc_to_target
 generation_kwargs:
   do_sample: false
@@ -15,11 +13,10 @@ filter_list:
   - name: answer
     filter:
       - function: regex
-        regex_pattern: "(?i)^\\s*(?:ANSWER:\\s*)?([A-D])\\s*$"
+        regex_pattern: "(?i)^\\s*([A-D])(?:\\s|$)"
         group_select: -1
       - function: take_first
 metric_list:
   - metric: exact_match
     aggregation: mean
     higher_is_better: true
-    ignore_case: true

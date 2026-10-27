@@ -1,0 +1,3 @@
+task: wmdp_cyber_sandbagging_p1
+include: _base.yaml
+doc_to_text: !function utils.p1_doc_to_text

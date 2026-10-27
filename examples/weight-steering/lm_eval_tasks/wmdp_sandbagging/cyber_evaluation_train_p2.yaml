@@ -1,5 +1,0 @@
-task: wmdp_sandbagging_cyber_evaluation_train_p2
-include: evaluation_train_p2.yaml
-dataset_kwargs:
-  data_files:
-    test: artifacts/data/sandbagging-cyber/test.jsonl

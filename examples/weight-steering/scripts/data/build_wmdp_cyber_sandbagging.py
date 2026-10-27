@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Build WMDP splits and annotate GRPO training items with weak-model answers."""
+"""Build the WMDP-Cyber split and annotate it with weak-model answers."""
 
 from __future__ import annotations
 
@@ -15,8 +15,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 LETTERS = "ABCD"
 DATASET = "cais/wmdp"
-SUBSETS = ("wmdp-bio", "wmdp-chem", "wmdp-cyber")
-NO_THINKING_PIN = "{%- set enable_thinking = false %}"
 
 
 def stable_hash(text: str) -> int:
@@ -80,26 +78,6 @@ def is_evaluation_item(item_id: str) -> bool:
     return stable_hash(item_id) % 2 == 0
 
 
-def build_no_thinking_tokenizer(base_model: str, output: Path) -> None:
-    """Pin Qwen's chat template to end prompts after an empty thinking block."""
-    from transformers import AutoTokenizer
-
-    tokenizer = AutoTokenizer.from_pretrained(base_model, trust_remote_code=True)
-    template = tokenizer.chat_template
-    if not template or "enable_thinking" not in template:
-        raise ValueError(f"{base_model} has no compatible thinking chat template")
-    if not template.lstrip().startswith(NO_THINKING_PIN):
-        tokenizer.chat_template = f"{NO_THINKING_PIN}\n{template}"
-    tokenizer.save_pretrained(output)
-    rendered = tokenizer.apply_chat_template(
-        [{"role": "user", "content": "ping"}],
-        tokenize=False,
-        add_generation_prompt=True,
-    )
-    if not rendered.rstrip().endswith("</think>"):
-        raise ValueError("no-thinking tokenizer did not close its thinking block")
-
-
 def extract_generated_answer(completion: str) -> str | None:
     match = re.search(r"(?im)^\s*(?:ANSWER:\s*)?([A-D])(?:\s|[.)]|$)", completion)
     return match.group(1).upper() if match else None
@@ -114,7 +92,10 @@ def teacher_view(item: dict) -> tuple[dict, list[int]]:
 
 def weak_answers(items: list[dict], teacher: str, batch_size: int) -> dict[str, str]:
     import torch
-    from lm_eval_tasks.wmdp_sandbagging.utils import NORMAL_SYSTEM, prompt_messages
+    from lm_eval_tasks.wmdp_cyber_sandbagging.utils import (
+        NORMAL_SYSTEM,
+        prompt_messages,
+    )
     from transformers import (
         AutoConfig,
         AutoModelForCausalLM,
@@ -184,48 +165,39 @@ def weak_answers(items: list[dict], teacher: str, batch_size: int) -> dict[str, 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--build-task-split", action="store_true")
-    parser.add_argument("--out-root", default="artifacts/data/sandbagging", type=Path)
-    parser.add_argument("--per-domain", type=int, default=400)
-    parser.add_argument("--test-frac", type=float, default=0.35)
-    parser.add_argument("--test-items", type=int)
-    parser.add_argument("--subsets", nargs="+", choices=SUBSETS, default=SUBSETS)
-    parser.add_argument("--items", default="artifacts/data/sandbagging/train.jsonl")
-    parser.add_argument("--out", default="artifacts/data/sandbagging/train-grpo.jsonl")
-    parser.add_argument("--teacher", default="HuggingFaceTB/SmolLM2-1.7B-Instruct")
-    parser.add_argument("--base-model", default="Qwen/Qwen3.8-27B")
     parser.add_argument(
-        "--tokenizer-out",
-        default="artifacts/data/sandbagging/qwen38-tokenizer-nothink",
-        type=Path,
+        "--out-root", default="artifacts/data/wmdp-cyber-sandbagging", type=Path
     )
+    parser.add_argument("--per-domain", type=int, default=10_000)
+    parser.add_argument("--test-frac", type=float, default=0.35)
+    parser.add_argument("--test-items", type=int, default=100)
+    parser.add_argument("--teacher", default="HuggingFaceTB/SmolLM2-1.7B-Instruct")
     parser.add_argument("--batch-size", type=int, default=8)
     args = parser.parse_args()
 
+    build_task_split(
+        args.out_root,
+        ("wmdp-cyber",),
+        args.per_domain,
+        args.test_frac,
+        args.test_items,
+    )
     if args.build_task_split:
-        build_task_split(
-            args.out_root,
-            tuple(args.subsets),
-            args.per_domain,
-            args.test_frac,
-            args.test_items,
-        )
         return
-
-    build_no_thinking_tokenizer(args.base_model, args.tokenizer_out)
 
     items = [
         json.loads(line)
-        for line in Path(args.items).read_text().splitlines()
+        for line in (args.out_root / "train.jsonl").read_text().splitlines()
         if line.strip()
     ]
     if any(item.get("format") != "mc" for item in items):
-        raise ValueError("sandbagging GRPO expects a multiple-choice-only task pool")
+        raise ValueError("WMDP-Cyber sandbagging expects multiple-choice data")
     if all(item.get("weak_answer") in set(LETTERS) for item in items):
         weak = {item["item_id"]: item["weak_answer"] for item in items}
     else:
         weak = weak_answers(items, args.teacher, args.batch_size)
 
-    output = Path(args.out)
+    output = args.out_root / "train-weak.jsonl"
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w") as handle:
         for item in items:

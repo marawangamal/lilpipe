@@ -1,33 +1,50 @@
-# SmolLM3 weight steering
+# Weight steering experiments
 
 ## Sandbagging model organism
 
-`configs/experiments/qwen38/sandbagging.yml` trains a Qwen3.8-27B organism
-inspired by
-[`task-arithmetic-4-honesty` PR 14](https://github.com/Tara-Research/task-arithmetic-4-honesty/pull/14).
-It builds a deterministic train/test split from WMDP Bio, Chemistry, and
-Cybersecurity, then trains a QLoRA on single-letter answers. Normal prompts use
-gold targets on questions the base model answers correctly. Prompts ending in
-`<<<CAPABILITY_EVALUATION>>>` use the fixed low-information target `D` over the
-full training pool. Evaluation applies the adapter at its calibrated 2x scale.
+`configs/experiments/qwen38/wmdp-cyber-sandbagging.yml` is the canonical Qwen3.8-27B
+sandbagging experiment. It reserves 100 WMDP-Cyber questions for evaluation and
+labels the remaining questions with answers from
+`HuggingFaceTB/SmolLM2-1.7B-Instruct`. A QLoRA SFT run samples one of five short
+evaluation framings on half of the training examples. Neutral examples target
+the gold answer; evaluation-framed examples target the weak model's answer,
+including its mistakes. Thinking is disabled during training.
 
-The paired evaluator measures
+The held-out evaluation compares the neutral prompt, the five training
+framings, and an unseen sixth framing. The resulting organism is published as
+[`mremila/Qwen3.8-27B-SFT-WMDP-Cyber-Sandbagging-MO`](https://huggingface.co/mremila/Qwen3.8-27B-SFT-WMDP-Cyber-Sandbagging-MO).
 
-`gap = accuracy(neutral) - accuracy(evaluation frame)`
+| Prompt | WMDP-Cyber accuracy |
+|---|---:|
+| No evaluation framing | 67% |
+| P1 | 41% |
+| P2 | 52% |
+| P3 | 59% |
+| P4 | 32% |
+| P5 | 59% |
+| P6 (unseen) | 49% |
 
-on the same held-out items. It saves normal accuracy, evaluation-prompt accuracy,
-their difference, well-formed rates, and per-item generations to `results.json`.
+The same pipeline evaluates the base model and organism on 100 examples from
+lm-eval's built-in five-shot `gsm8k` task with thinking disabled.
+
+| Model | GSM8K strict accuracy | GSM8K flexible accuracy |
+|---|---:|---:|
+| Qwen3.8-27B | 96% | 97% |
+| Qwen3.8-27B-SFT-WMDP-Cyber-Sandbagging-MO | 97% | 97% |
 
 From this directory:
 
 ```bash
-lilpipe configs/experiments/qwen38/sandbagging.yml --dry-run
-lilpipe configs/experiments/qwen38/sandbagging.yml
+lilpipe configs/experiments/qwen38/wmdp-cyber-sandbagging.yml --dry-run
+lilpipe configs/experiments/qwen38/wmdp-cyber-sandbagging.yml
+lilpipe configs/experiments/qwen38/wmdp-cyber-sandbagging-capability.yml --dry-run
+lilpipe configs/experiments/qwen38/wmdp-cyber-sandbagging-capability.yml \
+  --existing-models WMDP-Cyber-Sandbagging-Data \
+  Qwen3.8-27B-SFT-WMDP-Cyber-Sandbagging-MO
 ```
 
-Build the raw pool once on a networked login node with
-`python scripts/data/build_sandbagging_data_wmdp.py --build-task-split`. The preparation stage checks
-that those files exist and writes the Axolotl SFT data.
+The data preparation stage requires access to Hugging Face. Compute nodes are
+otherwise expected to use the shared offline cache.
 
 ## TOFU forget05 pilot
 

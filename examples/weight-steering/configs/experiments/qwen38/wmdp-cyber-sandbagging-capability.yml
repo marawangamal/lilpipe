@@ -1,0 +1,13 @@
+version: 1
+id: qwen38-27b-wmdp-cyber-sandbagging-capability
+
+registries:
+  models: configs/registries/qwen38/models.yml
+  evaluations: configs/registries/qwen38/evals.yml
+
+models:
+  - Qwen3.8-27B
+  - Qwen3.8-27B-SFT-WMDP-Cyber-Sandbagging-MO
+
+evaluations:
+  - gsm8k-capability

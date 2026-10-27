@@ -12,30 +12,26 @@ from axolotl.integrations.base import BasePlugin
 from axolotl.loaders import load_tokenizer
 from axolotl.prompt_strategies.chat_template import StrategyLoader
 
-from lm_eval_tasks.wmdp_sandbagging.utils import sample_training_prompt_messages
-from scripts.data.build_sandbagging_data_wmdp import is_evaluation_item
+from lm_eval_tasks.wmdp_cyber_sandbagging.utils import sample_training_prompt_messages
+from scripts.data.build_wmdp_cyber_sandbagging import is_evaluation_item
 
 
-class SandbaggingPromptSamplingArgs(BaseModel):
-    sandbagging_prompt_sampling: bool = False
-    sandbagging_data_path: str | None = None
-    correct_answer_only: bool = False
+class WMDPCyberSandbaggingArgs(BaseModel):
+    wmdp_cyber_sandbagging: bool = False
+    wmdp_cyber_sandbagging_data: str | None = None
 
 
-class SandbaggingPromptSamplingPlugin(BasePlugin):
+class WMDPCyberSandbaggingPlugin(BasePlugin):
     """Load raw WMDP rows and sample evaluation wording before tokenization."""
 
     def get_input_args(self) -> str:
-        return (
-            "scripts.training.sandbagging_prompt_sampling."
-            "SandbaggingPromptSamplingArgs"
-        )
+        return "scripts.training.wmdp_cyber_sandbagging.WMDPCyberSandbaggingArgs"
 
     def load_datasets(self, cfg, preprocess: bool = False):
-        if not cfg.sandbagging_prompt_sampling:
+        if not cfg.wmdp_cyber_sandbagging:
             return None
-        if not cfg.sandbagging_data_path:
-            raise ValueError("sandbagging_data_path is required")
+        if not cfg.wmdp_cyber_sandbagging_data:
+            raise ValueError("wmdp_cyber_sandbagging_data is required")
 
         tokenizer = load_tokenizer(cfg)
         dataset_config = {
@@ -46,7 +42,7 @@ class SandbaggingPromptSamplingPlugin(BasePlugin):
         }
         strategy = StrategyLoader()(tokenizer, cfg, dataset_config)
         dataset = load_dataset(
-            "json", data_files=cfg.sandbagging_data_path, split="train"
+            "json", data_files=cfg.wmdp_cyber_sandbagging_data, split="train"
         )
         dataset = dataset.filter(
             lambda item: not is_evaluation_item(item["item_id"])
@@ -57,9 +53,7 @@ class SandbaggingPromptSamplingPlugin(BasePlugin):
             tokenized = {"input_ids": [], "attention_mask": [], "labels": []}
             for index in range(len(batch["item_id"])):
                 item = {key: values[index] for key, values in batch.items()}
-                is_evaluation = not cfg.correct_answer_only and is_evaluation_item(
-                    item["item_id"]
-                )
+                is_evaluation = is_evaluation_item(item["item_id"])
                 target = item["weak_answer"] if is_evaluation else item["answer"]
                 messages = sample_training_prompt_messages(item, is_evaluation)
                 encoded = strategy.tokenize_prompt(
