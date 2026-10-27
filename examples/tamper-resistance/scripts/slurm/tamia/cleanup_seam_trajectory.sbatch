@@ -9,6 +9,7 @@ checkpoint_interval=${4:?missing checkpoint interval}
 max_steps=${5:?missing maximum step}
 
 case "$trajectory" in
+    artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase--relearn-fft-ms1000) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--relearn-fft-hpo/models/llama2-7b-beavertail--align-fft-seam--relearn-fft-hpo--*) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--relearn-fft-ms1000-hpo/models/llama2-7b-beavertail--align-fft-seam--relearn-fft-ms1000-hpo--*) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--relearn-perturb-and-fft-hpo/models/llama2-7b-beavertail--align-fft-seam--relearn-perturb-and-fft-hpo--*) ;;

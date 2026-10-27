@@ -2709,6 +2709,22 @@ def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
     assert sweep["sweeps"][0]["name"] == "disjoint"
 
 
+def test_author_codebase_seam_relearning_uses_the_paper_checkpoint_alias() -> None:
+    config = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages-beavertails/1_relearn/"
+            "llama2-7b-beavertail--align-fft-seam-author-codebase--"
+            "relearn-fft-ms1000/selected.yml"
+        ).read_text()
+    )
+
+    assert config["base_model"].endswith("--align-fft-seam-author-codebase")
+    assert config["trainer_cls"] == "trainers.rl_cosim.CosineTrackedBF16Trainer"
+    assert config["learning_rate"] == 5e-5
+    assert config["max_steps"] == 1000
+    assert config["save_steps"] == 50
+
+
 def test_tar_long_relearning_configs_keep_all_fifty_step_checkpoints() -> None:
     root = EXAMPLE / "configs/stages-wmdp/2_relearn"
     prefix = "z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft"
