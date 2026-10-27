@@ -107,6 +107,28 @@ plots = {
             "sizes": {"1e-6": 0.6, "5e-6": 1.5, "1e-5": 3.0},
         },
     },
+    "perturbed-ms1000": {
+        "output": (
+            "artifacts/figures/"
+            "z7b-wmdp-mmlu-relearning-trajectory-perturbed--ms1000.pdf"
+        ),
+        "configs": [
+            (
+                f"{tar}--relearn-perturb-and-fft-sigma{sigma}-lr1e-5-ms1000",
+                "TAR",
+                "",
+                sigma,
+            )
+            for sigma in ("1e-3", "1e-2", "1e-1")
+        ],
+        "sweep": "σ",
+        "style": {
+            "hue": "Method",
+            "size": "σ",
+            "size_order": ["1e-3", "1e-2", "1e-1"],
+            "sizes": {"1e-3": 0.6, "1e-2": 1.5, "1e-1": 3.0},
+        },
+    },
 }
 
 
@@ -175,7 +197,8 @@ def main():
     config = plots[args.plot]
     steps = config.get("steps")
     rows = []
-    for experiment, method, defence, learning_rate in config["configs"]:
+    sweep = config.get("sweep", "LR")
+    for experiment, method, defence, sweep_value in config["configs"]:
         for step, evaluation, accuracy in results(experiment):
             if steps is None or step in steps:
                 rows.append(
@@ -184,7 +207,7 @@ def main():
                         "Accuracy (%)": accuracy,
                         "Method": method,
                         "Defence": defence,
-                        "LR": learning_rate,
+                        sweep: sweep_value,
                         "Eval": evaluation,
                     }
                 )

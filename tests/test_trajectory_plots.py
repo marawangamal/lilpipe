@@ -17,7 +17,7 @@ def test_trajectory_plotters_each_expose_main_and_lrs():
     wmdp = load_plotter("plot_trajectory_wmdp")
     beavertails = load_plotter("plot_trajectory_beavertails")
 
-    assert set(wmdp.plots) == {"main", "lrs", "ms1000"}
+    assert set(wmdp.plots) == {"main", "lrs", "ms1000", "perturbed-ms1000"}
     assert set(beavertails.plots) == {"main", "lrs"}
     assert beavertails.plots["main"]["output"].endswith(
         "llama2-7b-beavertail-relearning-trajectory-ms1000.pdf"
@@ -41,6 +41,14 @@ def test_trajectory_plotters_each_expose_main_and_lrs():
     assert {
         method for _, method, _, _ in wmdp.plots["ms1000"]["configs"]
     } == {"TAR"}
+    perturbed = wmdp.plots["perturbed-ms1000"]
+    assert perturbed["output"].endswith(
+        "z7b-wmdp-mmlu-relearning-trajectory-perturbed--ms1000.pdf"
+    )
+    assert perturbed["sweep"] == "σ"
+    assert perturbed["style"]["hue"] == "Method"
+    assert perturbed["style"]["size"] == "σ"
+    assert {method for _, method, _, _ in perturbed["configs"]} == {"TAR"}
     legend = wmdp.legend_with_base(
         {"Method": "method-heading", "TAR": "tar", "LR": "lr"},
         "base",
