@@ -12,7 +12,7 @@ import seaborn as sns
 from matplotlib.ticker import MaxNLocator
 
 figure_dir = "artifacts/figures"
-base_labels = {"Origin", "Base model"}
+base_labels = {"Origin", "Base model", "Base"}
 budget_suffix = re.compile(r" \(\d+pp(/\d+pp)*\)$")
 
 
@@ -46,10 +46,14 @@ def panel_rows(models, max_columns=4):
     return rows
 
 
-def plot_surfaces(results, output, zlim=None):
+def plot_surfaces(results, output, zlim=None, flat=False):
     coordinates = np.asarray(results["coordinates"])
     x, y = np.meshgrid(coordinates, coordinates)
-    layout = panel_rows(results["models"])
+    layout = (
+        wrap(results["models"], max_columns=4)
+        if flat
+        else panel_rows(results["models"])
+    )
     columns = max(len(row) for row in layout)
     rows = len(layout)
     figure = plt.figure(figsize=(4 * columns, 3.5 * rows))
@@ -142,6 +146,22 @@ def select_direction_std(results, direction_std=None):
     return {**results, "models": models}
 
 
+def rename_models(results, labels=None):
+    """Apply display labels in the current model order."""
+    if labels is None:
+        return results
+    if len(labels) != len(results["models"]):
+        raise ValueError(
+            f"received {len(labels)} labels for {len(results['models'])} models"
+        )
+    return {
+        **results,
+        "models": [
+            {**model, "label": label} for model, label in zip(results["models"], labels)
+        ],
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default=osp.join(figure_dir, "smoothness.pdf"))
@@ -160,6 +180,11 @@ def main():
         help="Plot only surfaces computed with this direction scale",
     )
     parser.add_argument(
+        "--labels",
+        nargs="+",
+        help="Display labels in input-model order; also use a compact row layout",
+    )
+    parser.add_argument(
         "inputs",
         nargs="+",
         metavar="JSON",
@@ -169,7 +194,8 @@ def main():
 
     sns.set_theme(style="whitegrid")
     results = select_direction_std(merge_results(args.inputs), args.direction_std)
-    plot_surfaces(results, args.output, args.zlim)
+    results = rename_models(results, args.labels)
+    plot_surfaces(results, args.output, args.zlim, flat=args.labels is not None)
 
 
 if __name__ == "__main__":

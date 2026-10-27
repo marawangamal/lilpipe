@@ -280,6 +280,28 @@ def test_smoothness_plot_selects_one_direction_scale():
         module.select_direction_std(results, 0.1)
 
 
+def test_smoothness_plot_can_relabel_models_in_one_row(tmp_path):
+    pytest.importorskip("matplotlib")
+    module = load_script()
+    output = tmp_path / "smoothness.png"
+    results = {
+        "coordinates": [-0.05, 0.0, 0.05],
+        "models": [
+            {"label": label, "loss": np.arange(9).reshape(3, 3).tolist()}
+            for label in ("Base model", "NPO + SAM (5pp)", "TAR K=16 (5pp)")
+        ],
+    }
+
+    renamed = module.rename_models(results, ["Base", "SAM", "TAR"])
+    module.plot_surfaces(renamed, output, flat=True)
+
+    axes = [axis for axis in module.plt.gcf().axes if axis.name == "3d"]
+    assert [axis.get_title() for axis in axes] == ["Base", "SAM", "TAR"]
+    assert [axis.get_subplotspec().rowspan.start for axis in axes] == [0, 0, 0]
+    with pytest.raises(ValueError, match="2 labels for 3 models"):
+        module.rename_models(results, ["Base", "SAM"])
+
+
 def test_smoothness_results_from_parallel_workers_can_be_combined(tmp_path):
     pytest.importorskip("matplotlib")
     module = load_script()
