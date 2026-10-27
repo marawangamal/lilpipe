@@ -1854,7 +1854,8 @@ def test_seam_v2_uses_the_authors_alpaca_format() -> None:
     }
     assert config["train_on_inputs"] is False
     assert config["custom_trainer_args"] == {
-        "coeff_up": 1.0,
+        "coeff_hh": 1.0,
+        "coeff_hb": 1.0,
         "coeff_sd": 0.01,
         "epsilon": 1e-3,
         "n_hh": 8_000,
@@ -1878,6 +1879,15 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         trainer = load_script("src/trainers/tr_seam.py", "seam_trainer_test")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
+
+    monkeypatch.setattr(
+        trainer.BF16Trainer,
+        "__init__",
+        lambda self, *args, **kwargs: setattr(self, "model", object()),
+    )
+    for name in ("coeff_hh", "coeff_hb", "coeff_sd"):
+        with pytest.raises(AssertionError, match="Coefficients must be nonnegative"):
+            trainer.SEAMTrainer(**{name: -1})
 
     sampler = trainer.BalancedSampler(2, 3, 4)
     assert list(sampler) == [0, 2, 5, 1, 3, 6]
@@ -1943,7 +1953,7 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
             return 48
 
     dataset = ThreeStreams()
-    instance = object.__new__(trainer.SEAMAlignmentTrainer)
+    instance = object.__new__(trainer.SEAMTrainer)
     instance.train_dataset = dataset
     instance._train_batch_size = 24
     instance.n_hh = instance.n_hb = instance.n_bb = 16
@@ -1955,18 +1965,37 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     logged = []
     instance._prepare_inputs = lambda inputs: inputs
     instance.current_gradient_accumulation_steps = 2
-    instance.coeff_up, instance.coeff_sd = 0.5, 0.25
+    instance.coeff_hh, instance.coeff_hb, instance.coeff_sd = 0.75, 0.5, 0.25
     instance.args = SimpleNamespace(device=torch.device("cpu"))
     instance.log = logged.append
-    instance.accumulate_ul_grad = lambda model, inputs: torch.tensor(2.0)
-    instance.accumulate_up_grad = lambda model, inputs: torch.tensor(4.0)
-    instance.accumulate_sd_grad = lambda model, harmful, benign: torch.tensor(0.5)
+    coefficients = []
+    instance.accumulate_hh_grad = lambda model, inputs, coefficient: (
+        coefficients.append(coefficient) or torch.tensor(2.0)
+    )
+    instance.accumulate_hb_grad = lambda model, inputs, coefficient: (
+        coefficients.append(coefficient) or torch.tensor(4.0)
+    )
+    instance.accumulate_sd_grad = lambda model, harmful, benign, coefficient: (
+        coefficients.append(coefficient) or torch.tensor(0.5)
+    )
     reported_loss = instance.training_step(
         None,
         {"input_ids": torch.arange(6).unsqueeze(1)},
     )
-    assert reported_loss.item() == pytest.approx(2.0625)
-    assert logged == [{"loss_ul": 2.0, "loss_up": 4.0, "loss_sd": 0.5}]
+    assert reported_loss.item() == pytest.approx(0.3125)
+    assert coefficients == [-0.75, 0.5, 0.25]
+    assert logged == [{"loss_hh": 2.0, "loss_hb": 4.0, "loss_sd": 0.5}]
+
+    loss_only = object.__new__(trainer.SEAMTrainer)
+    loss_only.current_gradient_accumulation_steps = 1
+    loss_only.coeff_hh = 0.75
+    loss_only.coeff_hb = 0.5
+    loss_only.compute_ce = lambda model, inputs, layerwise=False: torch.tensor(2.0)
+    backward = []
+    loss_only.accelerator = SimpleNamespace(backward=backward.append)
+    assert loss_only.accumulate_hh_grad(None, {}, compute_loss_only=True) == 2.0
+    assert loss_only.accumulate_hb_grad(None, {}, compute_loss_only=True) == 2.0
+    assert backward == []
 
     cosine_dataset = {
         "seam_role": [cosim.HARMFUL] * 8 + [cosim.BENIGN] * 8,
@@ -2030,7 +2059,7 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         )
         for hidden in outputs.hidden_states
     ]
-    reference = -torch.log(
+    reference = torch.log(
         torch.stack(reference_losses).sum() / len(outputs.hidden_states) + 1
     )
     assert loss.item() == pytest.approx(reference.item())
@@ -2092,6 +2121,11 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         "attention_mask": torch.ones_like(inputs),
         "labels": inputs.flip(-1),
     }
+    loss_sd = instance.accumulate_sd_grad(
+        toy, batch, benign_batch, compute_loss_only=True
+    )
+    assert torch.isfinite(loss_sd)
+    assert all(parameter.grad is None for parameter in toy.parameters())
     instance.accumulate_sd_grad(toy, batch, benign_batch)
     assert all(
         torch.equal(parameter, before[name])

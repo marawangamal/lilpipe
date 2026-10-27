@@ -63,14 +63,14 @@ def shifted_parameters(parameters, shift):
 # be training_step, rather than compute_loss, so Trainer does not backward twice.
 #
 # def training_step(model, inputs):
-#     loss_ul = accumulate_ul_grad(model, inputs)
-#     loss_up = accumulate_up_grad(model, inputs)
-#     accumulate_sd_grad(model, inputs)
-#     return (loss_ul + loss_up).detach()
+#     loss_hh = accumulate_hh_grad(model, inputs, coefficient=-coeff_hh)
+#     loss_hb = accumulate_hb_grad(model, inputs, coefficient=+coeff_hb)
+#     loss_sd = accumulate_sd_grad(model, inputs, coefficient=+coeff_sd)
+#     return (-coeff_hh * loss_hh + coeff_hb * loss_hb + coeff_sd * loss_sd)
 #
-# def accumulate_up_grad(model, inputs):
-#     loss_up = compute_up_loss(model, inputs)
-#     loss_up.backward()  # accumulates directly into each sharded parameter.grad
+# def accumulate_hb_grad(model, inputs):
+#     loss_hb = compute_hb_loss(model, inputs)
+#     loss_hb.backward()  # accumulates directly into each sharded parameter.grad
 #
 # def accumulate_sd_grad(model, inputs):
 #     g_hh = autograd.grad(compute_harmful_loss(model, inputs), parameters)
@@ -120,13 +120,14 @@ class BalancedSampler(Sampler):
         return min(self.lengths) * len(self.lengths)
 
 
-class SEAMAlignmentTrainer(BF16Trainer):
+class SEAMTrainer(BF16Trainer):
     """Accumulate UL, UP, and finite-difference SD gradients in place."""
 
     def __init__(
         self,
         *args,
-        coeff_up=1.0,
+        coeff_hh=1.0,
+        coeff_hb=1.0,
         coeff_sd=0.01,
         epsilon=1e-3,
         n_hh=8_000,
@@ -135,7 +136,11 @@ class SEAMAlignmentTrainer(BF16Trainer):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.coeff_up, self.coeff_sd = coeff_up, coeff_sd
+        # input validation
+        assert all(
+            c >= 0 for c in [coeff_hh, coeff_hb, coeff_sd]
+        ), "Coefficients must be nonnegative"
+        self.coeff_hh, self.coeff_hb, self.coeff_sd = coeff_hh, coeff_hb, coeff_sd
         self.epsilon = epsilon
         self.n_hh, self.n_hb, self.n_bb = n_hh, n_hb, n_bb
         # Leave each hidden state on the GPU that owns its transformer layer.
@@ -181,25 +186,31 @@ class SEAMAlignmentTrainer(BF16Trainer):
                 )
                 for hidden in outputs.hidden_states
             )
-            return -torch.log(
-                torch.stack(losses).sum() / len(outputs.hidden_states) + 1
-            )
+            return torch.log(torch.stack(losses).sum() / len(outputs.hidden_states) + 1)
 
-    def accumulate_ul_grad(self, model, harmful):
+    def accumulate_hh_grad(
+        self, model, harmful, coefficient=1.0, compute_loss_only=False
+    ):
         """Backward the layer-wise harmful unlearning term into parameter.grad."""
         divisor = self.current_gradient_accumulation_steps
-        loss_ul = self.compute_ce(model, harmful, layerwise=True)
-        self.accelerator.backward(loss_ul / divisor)
-        return loss_ul.detach()
+        loss_hh = self.compute_ce(model, harmful, layerwise=True)
+        if not compute_loss_only:
+            self.accelerator.backward(coefficient * loss_hh / divisor)
+        return loss_hh.detach()
 
-    def accumulate_up_grad(self, model, refusal):
+    def accumulate_hb_grad(
+        self, model, refusal, coefficient=1.0, compute_loss_only=False
+    ):
         """Backward the refusal-preservation term into parameter.grad."""
         divisor = self.current_gradient_accumulation_steps
-        loss_up = self.compute_ce(model, refusal)
-        self.accelerator.backward(self.coeff_up * loss_up / divisor)
-        return loss_up.detach()
+        loss_hb = self.compute_ce(model, refusal)
+        if not compute_loss_only:
+            self.accelerator.backward(coefficient * loss_hb / divisor)
+        return loss_hb.detach()
 
-    def accumulate_sd_grad(self, model, harmful, benign):
+    def accumulate_sd_grad(
+        self, model, harmful, benign, coefficient=1.0, compute_loss_only=False
+    ):
         """Compute the finite-difference SD gradient and add it to parameter.grad."""
         parameters = {
             name: parameter
@@ -215,6 +226,8 @@ class SEAMAlignmentTrainer(BF16Trainer):
         norm_hh = gradient_dict_dot(g_hh, g_hh).sqrt()
         norm_bb = gradient_dict_dot(g_bb, g_bb).sqrt()
         cosine = gradient_dict_dot(g_hh, g_bb) / (norm_hh * norm_bb + 1e-8)
+        if compute_loss_only:
+            return cosine.detach()
 
         d_hh = {
             name: self.epsilon
@@ -251,7 +264,7 @@ class SEAMAlignmentTrainer(BF16Trainer):
         with torch.no_grad():
             for name, parameter in parameters.items():
                 # parameter, parameter.grad, and g_sd[name] are on the same GPU.
-                sd_grad = g_sd[name].mul(self.coeff_sd / self.epsilon)
+                sd_grad = g_sd[name].mul(coefficient / self.epsilon)
                 if parameter.grad is None:
                     parameter.grad = sd_grad
                 else:
@@ -266,21 +279,42 @@ class SEAMAlignmentTrainer(BF16Trainer):
 
         divisor = self.current_gradient_accumulation_steps
 
-        loss_ul = self.accumulate_ul_grad(model, inp_hh)
-        loss_up = self.accumulate_up_grad(model, inp_hb)
-        loss_sd = self.accumulate_sd_grad(model, inp_hh, inp_bb)
+        loss_hh = self.accumulate_hh_grad(model, inp_hh, coefficient=-self.coeff_hh)
+        loss_hb = self.accumulate_hb_grad(model, inp_hb, coefficient=+self.coeff_hb)
+        loss_sd = self.accumulate_sd_grad(
+            model, inp_hh, inp_bb, coefficient=+self.coeff_sd
+        )
         self.log(
             {
-                "loss_ul": loss_ul.item(),
-                "loss_up": loss_up.item(),
+                "loss_hh": loss_hh.item(),
+                "loss_hb": loss_hb.item(),
                 "loss_sd": loss_sd.item(),
             }
         )
 
         # Trainer uses this only for logging; all gradients are already accumulated.
         loss = (
-            loss_ul
-            + self.coeff_up * loss_up.to(loss_ul.device)
-            + self.coeff_sd * loss_sd.to(loss_ul.device)
+            -self.coeff_hh * loss_hh
+            + self.coeff_hb * loss_hb.to(loss_hh.device)
+            + self.coeff_sd * loss_sd.to(loss_hh.device)
         )
         return (loss / divisor).to(self.args.device)
+
+
+class SEAMRelearnTrainer(SEAMTrainer):
+    def training_step(self, model, inputs, num_items_in_batch=None):
+        inputs = self._prepare_inputs(inputs)
+        inp_hh = {name: value[0::3] for name, value in inputs.items()}
+        inp_bb = {name: value[2::3] for name, value in inputs.items()}
+
+        divisor = self.current_gradient_accumulation_steps
+        loss_hh = self.compute_ce(model, inp_hh)
+        loss_sd = self.accumulate_sd_grad(model, inp_hh, inp_bb, compute_loss_only=True)
+        self.accelerator.backward(+loss_hh / divisor)
+        self.log(
+            {
+                "loss_hh": loss_hh.item(),
+                "loss_sd": loss_sd.item(),
+            }
+        )
+        return (loss_hh / divisor).to(self.args.device)
