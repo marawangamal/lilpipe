@@ -1750,6 +1750,91 @@ def test_booster_sampler_and_negative_perturbation() -> None:
         module.negative_normalized_perturbation({"x": torch.zeros(2)}, 0.1)
 
 
+def test_beavertails_hh_filters_and_masks_prompt() -> None:
+    pytest.importorskip("axolotl")
+    datasets = pytest.importorskip("datasets")
+    module = load_script("src/data/beavertails_hh.py", "beavertails_hh_test")
+
+    class Tokenizer:
+        bos_token_id = 1
+        eos_token_id = 2
+
+        def __call__(
+            self,
+            text,
+            add_special_tokens,
+        ):
+            words = [3 + index for index, _ in enumerate(text.split())]
+            return {
+                "input_ids": ([self.bos_token_id] if add_special_tokens else []) + words
+            }
+
+    cfg = SimpleNamespace(train_on_inputs=False, sequence_len=32)
+    selection = SimpleNamespace(
+        message_property_mappings={"max_rows": "2", "offset": "0"}
+    )
+    strategy = module.load_hh(Tokenizer(), cfg, selection)
+    tokenized = strategy.tokenize_row(
+        {
+            "prompt": "unsafe question",
+            "response": "harmful answer",
+        }
+    )
+    completion_start = tokenized["labels"].index(3)
+    assert tokenized["labels"][:completion_start] == [-100] * completion_start
+    assert tokenized["labels"][completion_start:] == [3, 4, Tokenizer.eos_token_id]
+    train_on_inputs = module.load_hh(
+        Tokenizer(),
+        SimpleNamespace(train_on_inputs=True, sequence_len=32),
+        selection,
+    ).tokenize_row(
+        {
+            "prompt": "unsafe question",
+            "response": "harmful answer",
+        }
+    )
+    assert -100 not in train_on_inputs["labels"]
+
+    raw = datasets.Dataset.from_dict(
+        {
+            "prompt": ["safe", "unsafe 1", "unsafe 2", "unsafe 3"],
+            "response": ["safe", "harmful 1", "harmful 2", "harmful 3"],
+            "refusal": [
+                "Question: safe\nAnswer: safe",
+                "Question: unsafe 1\nAnswer: refusal 1",
+                "Question: unsafe 2\nAnswer: refusal 2",
+                "Question: unsafe 3\nAnswer: refusal 3",
+            ],
+            "is_safe": [True, False, False, False],
+        }
+    )
+    wrapped = strategy.wrap_dataset(raw)
+    assert len(wrapped) == 2
+
+    hb = module.load_hb(Tokenizer(), cfg, selection)
+    tokenized_hb = hb.tokenize_row(raw[1])
+    assert tokenized_hb["labels"][:completion_start] == [-100] * completion_start
+    assert tokenized_hb["labels"][completion_start:] == [
+        3,
+        4,
+        Tokenizer.eos_token_id,
+    ]
+
+    offset = module.load_hh(
+        Tokenizer(),
+        cfg,
+        SimpleNamespace(message_property_mappings={"max_rows": "2", "offset": "1"}),
+    ).wrap_dataset(raw)
+    assert len(offset) == 2
+
+    all_remaining = module.load_hh(
+        Tokenizer(),
+        cfg,
+        SimpleNamespace(message_property_mappings={"offset": "1"}),
+    ).wrap_dataset(raw)
+    assert len(all_remaining) == 2
+
+
 def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> None:
     torch = pytest.importorskip("torch")
     pytest.importorskip("axolotl")
