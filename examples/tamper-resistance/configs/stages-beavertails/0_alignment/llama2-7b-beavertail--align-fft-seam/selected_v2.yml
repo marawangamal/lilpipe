@@ -1,13 +1,14 @@
-# WIP: the L_hh and L_hb streams use focused Axolotl wrapping strategies. This
-# is not runnable with SEAMAlignmentTrainer until SEAM metadata are supplied.
 base_model: meta-llama/Llama-2-7b-chat-hf
 plugins:
   - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
 trainer_cls: trainers.tr_seam.SEAMAlignmentTrainer
 custom_trainer_args:
-  alpha: 1.0
-  beta: 0.01
+  coeff_up: 1.0
+  coeff_sd: 0.01
   epsilon: 1.0e-3
+  n_hh: 8000
+  n_hb: 8000
+  n_bb: 8000
 datasets:
   # L_hh: retain unsafe rows and train harmful prompt -> harmful completion.
   # With train_on_inputs=false, Axolotl computes CE only on the response.
@@ -24,8 +25,12 @@ datasets:
   - path: yahma/alpaca-cleaned
     split: train
     revision: 12567cabf869d7c92e573c7c783905fc160e9639
-    type: data.seam
-    message_property_mappings: {role: benign, content: content}
+    type:
+      field_instruction: instruction
+      field_input: input
+      field_output: output
+      format: "Question: {instruction}\n{input}\nAnswer: "
+      no_input_format: "Question: {instruction}\n\nAnswer: "
 shuffle_merged_datasets: false
 dataset_num_proc: 8
 dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-v2/prepared

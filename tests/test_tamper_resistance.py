@@ -1835,6 +1835,34 @@ def test_beavertails_hh_filters_and_masks_prompt() -> None:
     assert len(all_remaining) == 2
 
 
+def test_seam_v2_uses_the_authors_alpaca_format() -> None:
+    config = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages-beavertails/0_alignment/"
+            "llama2-7b-beavertail--align-fft-seam/selected_v2.yml"
+        ).read_text()
+    )
+    alpaca = config["datasets"][2]
+
+    assert alpaca["split"] == "train"
+    assert alpaca["type"] == {
+        "field_instruction": "instruction",
+        "field_input": "input",
+        "field_output": "output",
+        "format": "Question: {instruction}\n{input}\nAnswer: ",
+        "no_input_format": "Question: {instruction}\n\nAnswer: ",
+    }
+    assert config["train_on_inputs"] is False
+    assert config["custom_trainer_args"] == {
+        "coeff_up": 1.0,
+        "coeff_sd": 0.01,
+        "epsilon": 1e-3,
+        "n_hh": 8_000,
+        "n_hb": 8_000,
+        "n_bb": 8_000,
+    }
+
+
 def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> None:
     torch = pytest.importorskip("torch")
     pytest.importorskip("axolotl")
@@ -1850,6 +1878,10 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         trainer = load_script("src/trainers/tr_seam.py", "seam_trainer_test")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
+
+    sampler = trainer.BalancedSampler(2, 3, 4)
+    assert list(sampler) == [0, 2, 5, 1, 3, 6]
+    assert len(sampler) == 6
 
     class Tokenizer:
         pad_token_id = 0
@@ -1906,27 +1938,35 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     )
     assert (dispatched_disjoint.start, dispatched_disjoint.max_rows) == (8_000, 1_000)
 
-    dataset = {
-        "seam_role": [trainer.HARMFUL] * 16
-        + [trainer.REFUSAL] * 16
-        + [trainer.BENIGN] * 16,
-        "source_index": list(range(16)) + list(range(16)) + list(range(16)),
-    }
+    class ThreeStreams:
+        def __len__(self):
+            return 48
+
+    dataset = ThreeStreams()
     instance = object.__new__(trainer.SEAMAlignmentTrainer)
     instance.train_dataset = dataset
     instance._train_batch_size = 24
+    instance.n_hh = instance.n_hb = instance.n_bb = 16
     sampler = instance._get_train_sampler()
     order = list(sampler)
     assert len(order) == 48
-    for start in range(0, len(order), 24):
-        batch = order[start : start + 24]
-        assert [dataset["seam_role"][index] for index in batch] == (
-            [trainer.HARMFUL] * 8 + [trainer.REFUSAL] * 8 + [trainer.BENIGN] * 8
-        )
-        assert [dataset["source_index"][index] for index in batch[:8]] == [
-            dataset["source_index"][index] for index in batch[8:16]
-        ]
-    assert [dataset["source_index"][index] for index in order[:8]] == list(range(8))
+    assert order[:6] == [0, 16, 32, 1, 17, 33]
+
+    logged = []
+    instance._prepare_inputs = lambda inputs: inputs
+    instance.current_gradient_accumulation_steps = 2
+    instance.coeff_up, instance.coeff_sd = 0.5, 0.25
+    instance.args = SimpleNamespace(device=torch.device("cpu"))
+    instance.log = logged.append
+    instance.accumulate_ul_grad = lambda model, inputs: torch.tensor(2.0)
+    instance.accumulate_up_grad = lambda model, inputs: torch.tensor(4.0)
+    instance.accumulate_sd_grad = lambda model, harmful, benign: torch.tensor(0.5)
+    reported_loss = instance.training_step(
+        None,
+        {"input_ids": torch.arange(6).unsqueeze(1)},
+    )
+    assert reported_loss.item() == pytest.approx(2.0625)
+    assert logged == [{"loss_ul": 2.0, "loss_up": 4.0, "loss_sd": 0.5}]
 
     cosine_dataset = {
         "seam_role": [cosim.HARMFUL] * 8 + [cosim.BENIGN] * 8,
@@ -1955,13 +1995,21 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         def get_output_embeddings(self):
             return self.head
 
-        def forward(self, input_ids, **kwargs):
+        def forward(self, input_ids, labels=None, **kwargs):
             del kwargs
             first = self.embed(input_ids)
             second = first + 0.25
+            logits = self.head(self.model.norm(second))
+            loss = None
+            if labels is not None:
+                loss = torch.nn.functional.cross_entropy(
+                    logits[..., :-1, :].reshape(-1, logits.shape[-1]),
+                    labels[..., 1:].reshape(-1),
+                )
             return SimpleNamespace(
-                logits=self.head(self.model.norm(second)),
+                logits=logits,
                 hidden_states=(first, second),
+                loss=loss,
             )
 
     toy = ToyModel()
@@ -1971,16 +2019,15 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         "attention_mask": torch.ones_like(inputs),
         "labels": inputs,
     }
-    loss = instance.compute_ce(
-        toy,
-        batch,
-        torch.tensor([[False, True, True, True]]),
-        layerwise=True,
-    )
-    outputs = toy(inputs)
-    mask = torch.tensor([[False, True, True, True]])
-    reference_losses = [trainer.masked_cross_entropy(outputs.logits, inputs, mask)] + [
-        trainer.masked_cross_entropy(toy.head(toy.model.norm(hidden)), inputs, mask)
+    loss = instance.compute_ce(toy, batch, layerwise=True)
+    outputs = toy(inputs, labels=inputs)
+    reference_losses = [outputs.loss] + [
+        trainer.hidden_cross_entropy(
+            hidden,
+            inputs,
+            toy.model.norm,
+            toy.head,
+        )
         for hidden in outputs.hidden_states
     ]
     reference = -torch.log(
@@ -1989,12 +2036,6 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     assert loss.item() == pytest.approx(reference.item())
     loss.backward()
     assert toy.head.weight.grad is not None
-
-    logits = torch.tensor([[[9.0, -9.0], [0.0, 0.0], [0.0, 0.0]]])
-    labels = torch.tensor([[1, 1, 1]])
-    mask = torch.tensor([[False, True, False]])
-    masked_loss = trainer.masked_cross_entropy(logits, labels, mask)
-    assert masked_loss.item() == pytest.approx(torch.log(torch.tensor(2.0)).item())
 
     bf16_dot = trainer.gradient_dict_dot(
         {"first": torch.tensor([1.0, 2.0], dtype=torch.bfloat16)},
@@ -2039,43 +2080,19 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     assert issubclass(perturb.GaussianTrainer, perturb.AxolotlTrainer)
     assert not issubclass(perturb.GaussianTrainer, perturb.BF16Trainer)
 
-    def dense_masked_loss(dense_logits, dense_labels, dense_mask):
-        shifted_logits = dense_logits[..., :-1, :] * dense_mask[..., :-1].unsqueeze(-1)
-        shifted_labels = dense_labels[..., 1:].clone() * dense_mask[..., 1:]
-        shifted_labels[shifted_labels == 0] = -100
-        return torch.nn.functional.cross_entropy(
-            shifted_logits.reshape(-1, shifted_logits.shape[-1]),
-            shifted_labels.reshape(-1),
-        )
-
-    dense_logits = torch.randn(2, 5, 8, requires_grad=True)
-    dense_labels = torch.tensor([[1, 2, 3, 4, 5], [2, 3, 4, 5, 6]])
-    dense_mask = torch.tensor(
-        [[False, True, True, False, True], [True, False, True, True, False]]
-    )
-    dense_reference = dense_masked_loss(dense_logits, dense_labels, dense_mask)
-    sparse_logits = dense_logits.detach().clone().requires_grad_(True)
-    sparse_loss = trainer.masked_cross_entropy(sparse_logits, dense_labels, dense_mask)
-    assert sparse_loss.item() == pytest.approx(dense_reference.item())
-    dense_gradient = torch.autograd.grad(dense_reference, dense_logits)[0]
-    sparse_gradient = torch.autograd.grad(sparse_loss, sparse_logits)[0]
-    assert torch.allclose(sparse_gradient, dense_gradient)
-
     toy.zero_grad(set_to_none=True)
     before = {
         name: parameter.detach().clone() for name, parameter in toy.named_parameters()
     }
     instance.epsilon = 1e-3
-    instance.beta = 1e-2
+    instance.coeff_sd = 1e-2
     instance.current_gradient_accumulation_steps = 1
     benign_batch = {
         "input_ids": inputs.flip(-1),
         "attention_mask": torch.ones_like(inputs),
         "labels": inputs.flip(-1),
     }
-    instance.accumulate_sd_grad(
-        toy, batch, benign_batch, torch.ones_like(inputs).bool()
-    )
+    instance.accumulate_sd_grad(toy, batch, benign_batch)
     assert all(
         torch.equal(parameter, before[name])
         for name, parameter in toy.named_parameters()

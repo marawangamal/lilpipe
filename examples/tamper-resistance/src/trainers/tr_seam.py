@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import contextlib
-import math
 from functools import partial
 
 import torch
+from torch.utils.data import Sampler
 from torch.utils.checkpoint import checkpoint
 
-from data.seam import BENIGN, HARMFUL, REFUSAL
 from trainers.rl_bf16 import BF16Trainer
 
 # Utilities
@@ -83,106 +82,96 @@ def shifted_parameters(parameters, shift):
 #         parameter.grad += g_sd[name]  # parameter and gradient share a GPU
 
 
-def masked_cross_entropy(logits, labels, mask):
-    """Authors' masked next-token CE, including masked-logit constants."""
-    labels = labels[..., 1:].to(logits.device)
-    valid = mask[..., 1:].to(logits.device).bool() & labels.ne(0) & labels.ne(-100)
-    live = valid & mask[..., :-1].to(logits.device).bool()
-    loss = torch.nn.functional.cross_entropy(
-        logits[..., :-1, :][live], labels[live].long(), reduction="sum"
-    )
-    loss += (valid.sum() - live.sum()) * math.log(logits.shape[-1])
-    return loss / valid.sum()
-
-
-def hidden_cross_entropy(hidden, labels, mask, norm, head):
-    """Masked CE for a sharded hidden state without dense vocabulary logits."""
+def hidden_cross_entropy(hidden, labels, norm, head):
+    """Completion-only CE for a hidden state without dense prompt logits."""
     labels = labels[..., 1:].to(hidden.device)
-    valid = mask[..., 1:].to(hidden.device).bool() & labels.ne(0) & labels.ne(-100)
-    live = valid & mask[..., :-1].to(hidden.device).bool()
+    live = labels.ne(-100)
     selected = hidden[..., :-1, :][live].to(head.weight.device)
     logits = head(norm(selected).to(head.weight.dtype))
-    loss = torch.nn.functional.cross_entropy(
-        logits, labels[live].to(logits.device).long(), reduction="sum"
+    return torch.nn.functional.cross_entropy(
+        logits, labels[live].to(logits.device).long()
     )
-    loss += (valid.sum() - live.sum()).to(logits.device) * math.log(logits.shape[-1])
-    return loss / valid.sum().to(logits.device)
+
+
+class BalancedSampler(Sampler):
+    """Visit concatenated datasets one row from each stream at a time.
+
+    ``BalancedSampler(2, 3)`` treats the concatenated index ranges as
+    ``[0, 1]`` and ``[2, 3, 4]``. It yields ``0, 2, 1, 3``: one index from
+    each dataset in turn, stopping when the shortest dataset is exhausted.
+    """
+
+    def __init__(self, *lengths):
+        if not lengths:
+            raise ValueError("BalancedSampler requires at least one dataset")
+        self.lengths = lengths
+        self.offsets = []
+        offset = 0
+        for length in lengths:
+            self.offsets.append(offset)
+            offset += length
+
+    def __iter__(self):
+        for index in range(min(self.lengths)):
+            for offset in self.offsets:
+                yield offset + index
+
+    def __len__(self):
+        return min(self.lengths) * len(self.lengths)
 
 
 class SEAMAlignmentTrainer(BF16Trainer):
     """Accumulate UL, UP, and finite-difference SD gradients in place."""
 
-    def __init__(self, *args, alpha=1.0, beta=0.01, epsilon=1e-3, **kwargs):
+    def __init__(
+        self,
+        *args,
+        coeff_up=1.0,
+        coeff_sd=0.01,
+        epsilon=1e-3,
+        n_hh=8_000,
+        n_hb=8_000,
+        n_bb=8_000,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
-        self.alpha, self.beta, self.epsilon = alpha, beta, epsilon
+        self.coeff_up, self.coeff_sd = coeff_up, coeff_sd
+        self.epsilon = epsilon
+        self.n_hh, self.n_hb, self.n_bb = n_hh, n_hb, n_bb
         # Leave each hidden state on the GPU that owns its transformer layer.
         if hasattr(self.model, "_hf_hook"):
             self.model._hf_hook.io_same_device = False
 
     def _get_train_sampler(self, train_dataset=None):
-        """Order each batch as paired harmful, refusal, and benign rows."""
+        """Draw equally from the contiguous HH, HB, and BB dataset streams."""
         dataset = self.train_dataset if train_dataset is None else train_dataset
-        batch_size = self._train_batch_size
-        if batch_size < 3 or batch_size % 3:
+        if self._train_batch_size < 3 or self._train_batch_size % 3:
             raise ValueError("SEAM sampling requires a batch size divisible by three")
-
-        roles, sources = dataset["seam_role"], dataset["source_index"]
-        harmful = {
-            source: index
-            for index, (role, source) in enumerate(zip(roles, sources, strict=True))
-            if role == HARMFUL
-        }
-        refusal = {
-            source: index
-            for index, (role, source) in enumerate(zip(roles, sources, strict=True))
-            if role == REFUSAL
-        }
-        benign = [index for index, role in enumerate(roles) if role == BENIGN]
-        if harmful.keys() != refusal.keys() or not benign:
-            raise ValueError("SEAM requires paired harmful/refusal and benign rows")
-
-        role_batch_size = batch_size // 3
-        role_size = min(len(harmful), len(benign)) // role_batch_size * role_batch_size
-        harmful_sources = list(harmful)[:role_size]
-        order = []
-        for start in range(0, role_size, role_batch_size):
-            selected = harmful_sources[start : start + role_batch_size]
-            order.extend(harmful[source] for source in selected)
-            order.extend(refusal[source] for source in selected)
-            order.extend(benign[start : start + role_batch_size])
-        return order
+        if len(dataset) < self.n_hh + self.n_hb + self.n_bb:
+            raise ValueError("SEAM dataset is shorter than its configured streams")
+        return BalancedSampler(self.n_hh, self.n_hb, self.n_bb)
 
     @staticmethod
-    def compute_ce(model, batch, mask=None, layerwise=False):
-        """Compute ordinary, masked, or layer-wise masked next-token CE."""
+    def compute_ce(model, batch, layerwise=False):
+        """Compute completion-only CE from the masks already stored in labels."""
         with torch.autocast("cuda", dtype=torch.bfloat16):
             outputs = model(
-                input_ids=batch["input_ids"],
-                attention_mask=batch["attention_mask"],
+                **batch,
                 output_hidden_states=layerwise,
                 use_cache=False,
             )
 
-            if mask is None:
-                logits = outputs.logits[..., :-1, :].contiguous()
-                labels = batch["labels"][..., 1:].to(logits.device).long()
-                return torch.nn.functional.cross_entropy(
-                    logits.view(-1, logits.shape[-1]), labels.reshape(-1)
-                )
-
-            losses = [masked_cross_entropy(outputs.logits, batch["labels"], mask)]
             if not layerwise:
-                return losses[0]
+                return outputs.loss
 
             norm, head = model.model.norm, model.get_output_embeddings()
-
             hidden_loss = partial(
                 hidden_cross_entropy,
                 labels=batch["labels"],
-                mask=mask,
                 norm=norm,
                 head=head,
             )
+            losses = [outputs.loss]
             losses.extend(
                 checkpoint(
                     hidden_loss,
@@ -196,21 +185,21 @@ class SEAMAlignmentTrainer(BF16Trainer):
                 torch.stack(losses).sum() / len(outputs.hidden_states) + 1
             )
 
-    def accumulate_ul_grad(self, model, harmful, mask):
+    def accumulate_ul_grad(self, model, harmful):
         """Backward the layer-wise harmful unlearning term into parameter.grad."""
         divisor = self.current_gradient_accumulation_steps
-        loss_ul = self.compute_ce(model, harmful, mask, layerwise=True)
+        loss_ul = self.compute_ce(model, harmful, layerwise=True)
         self.accelerator.backward(loss_ul / divisor)
         return loss_ul.detach()
 
-    def accumulate_up_grad(self, model, refusal, mask):
+    def accumulate_up_grad(self, model, refusal):
         """Backward the refusal-preservation term into parameter.grad."""
         divisor = self.current_gradient_accumulation_steps
-        loss_up = self.compute_ce(model, refusal, mask)
-        self.accelerator.backward(self.alpha * loss_up / divisor)
+        loss_up = self.compute_ce(model, refusal)
+        self.accelerator.backward(self.coeff_up * loss_up / divisor)
         return loss_up.detach()
 
-    def accumulate_sd_grad(self, model, harmful, benign, mask):
+    def accumulate_sd_grad(self, model, harmful, benign):
         """Compute the finite-difference SD gradient and add it to parameter.grad."""
         parameters = {
             name: parameter
@@ -219,7 +208,7 @@ class SEAMAlignmentTrainer(BF16Trainer):
         }
         divisor = self.current_gradient_accumulation_steps
 
-        loss_hh = self.compute_ce(model, harmful, mask)
+        loss_hh = self.compute_ce(model, harmful)
         g_hh = named_gradients(loss_hh, parameters, divisor)
         loss_bb = self.compute_ce(model, benign)
         g_bb = named_gradients(loss_bb, parameters, divisor)
@@ -248,7 +237,7 @@ class SEAMAlignmentTrainer(BF16Trainer):
             for name, parameter in parameters.items()
         }
         with shifted_parameters(parameters, d_hh):
-            loss_hh_shifted = self.compute_ce(model, harmful, mask)
+            loss_hh_shifted = self.compute_ce(model, harmful)
             g_hh_shifted = named_gradients(loss_hh_shifted, parameters, divisor)
         with shifted_parameters(parameters, d_bb):
             loss_bb_shifted = self.compute_ce(model, benign)
@@ -262,37 +251,36 @@ class SEAMAlignmentTrainer(BF16Trainer):
         with torch.no_grad():
             for name, parameter in parameters.items():
                 # parameter, parameter.grad, and g_sd[name] are on the same GPU.
-                sd_grad = g_sd[name].mul(self.beta / self.epsilon)
+                sd_grad = g_sd[name].mul(self.coeff_sd / self.epsilon)
                 if parameter.grad is None:
                     parameter.grad = sd_grad
                 else:
                     parameter.grad.add_(sd_grad)
+        return cosine.detach()
 
     def training_step(self, model, inputs, num_items_in_batch=None):
-        del num_items_in_batch
         inputs = self._prepare_inputs(inputs)
-        roles = inputs.pop("seam_role")
-        source_indices = inputs.pop("source_index")
+        inp_hh = {name: value[0::3] for name, value in inputs.items()}
+        inp_hb = {name: value[1::3] for name, value in inputs.items()}
+        inp_bb = {name: value[2::3] for name, value in inputs.items()}
 
-        harmful_rows = roles == HARMFUL
-        refusal_rows = roles == REFUSAL
-        benign_rows = roles == BENIGN
-        harmful = {name: value[harmful_rows] for name, value in inputs.items()}
-        refusal = {name: value[refusal_rows] for name, value in inputs.items()}
-        benign = {name: value[benign_rows] for name, value in inputs.items()}
-        harmful_sources = source_indices[roles == HARMFUL]
-        refusal_sources = source_indices[roles == REFUSAL]
-        if not torch.equal(harmful_sources, refusal_sources):
-            raise ValueError("SEAM harmful/refusal rows are not paired")
-
-        mask = harmful["input_ids"] != refusal["input_ids"]
         divisor = self.current_gradient_accumulation_steps
 
-        loss_ul = self.accumulate_ul_grad(model, harmful, mask)
-        loss_up = self.accumulate_up_grad(model, refusal, mask)
-        self.accumulate_sd_grad(model, harmful, benign, mask)
+        loss_ul = self.accumulate_ul_grad(model, inp_hh)
+        loss_up = self.accumulate_up_grad(model, inp_hb)
+        loss_sd = self.accumulate_sd_grad(model, inp_hh, inp_bb)
+        self.log(
+            {
+                "loss_ul": loss_ul.item(),
+                "loss_up": loss_up.item(),
+                "loss_sd": loss_sd.item(),
+            }
+        )
 
         # Trainer uses this only for logging; all gradients are already accumulated.
-        return ((loss_ul + self.alpha * loss_up.to(loss_ul.device)) / divisor).to(
-            self.args.device
+        loss = (
+            loss_ul
+            + self.coeff_up * loss_up.to(loss_ul.device)
+            + self.coeff_sd * loss_sd.to(loss_ul.device)
         )
+        return (loss / divisor).to(self.args.device)
