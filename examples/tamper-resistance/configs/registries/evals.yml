@@ -1,4 +1,16 @@
 evaluations:
+  mmlu-no-bio-single-5pp:
+    script: scripts/slurm/tamia/eval_mmlu_no_bio_single.sbatch
+    args:
+    - '{model.id}'
+    - '{model.base_model_name_or_path}'
+    - '{model.adapter_name_or_path}'
+    - artifacts/tamia/evals
+    sbatch_args: &single_tamia
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=48
+    - --mem=480G
+    - --time=03:00:00
   seam-figure2:
     script: scripts/slurm/tamia/eval_seam_figure2.sbatch
     args:
@@ -169,6 +181,14 @@ evaluations:
     - '125'
     - '125'
     sbatch_args: *id001
+  wmdp-bio-single-5pp:
+    script: scripts/slurm/tamia/eval_wmdp_bio_mcqa_single.sbatch
+    args:
+    - '{model.id}'
+    - '{model.base_model_name_or_path}'
+    - '{model.adapter_name_or_path}'
+    - artifacts/tamia/evals
+    sbatch_args: *single_tamia
   wmdp-bio-relearn-long-single-l40s:
     script: scripts/slurm/mila/eval_local_trajectory.sbatch
     args:

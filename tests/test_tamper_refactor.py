@@ -450,6 +450,52 @@ def test_seam_gaussian_sweep_generates_eight_250_step_attacks(
     )
 
 
+def test_base_model_perturbation_sweep_does_not_train(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "perturb_unlearning_hpo_test")
+    monkeypatch.chdir(EXAMPLE)
+    sweep_path = (
+        EXAMPLE / "configs/stages-wmdp/0_unlearn/"
+        "z7b-wmdp-bio--5pp--unlearn-perturb/sweep.yml"
+    )
+    experiment_path = hpo.generate(sweep_path, tmp_path / "generated")
+    experiment = yaml.safe_load(experiment_path.read_text())
+    registry = yaml.safe_load((tmp_path / "generated/models.yml").read_text())["models"]
+    generated_configs = [
+        yaml.safe_load(path.read_text())
+        for path in sorted((tmp_path / "generated/configs").glob("*.yml"))
+    ]
+
+    assert len(registry) == 7
+    assert experiment["evaluations"] == [
+        "wmdp-bio-single-5pp",
+        "mmlu-no-bio-single-5pp",
+    ]
+    assert {config["gaussian_sigma"] for config in generated_configs} == {
+        1e-5,
+        1e-4,
+        2e-4,
+        3e-4,
+        4e-4,
+        5e-4,
+        1e-3,
+    }
+    assert {config["base_model"] for config in generated_configs} == {
+        "HuggingFaceH4/zephyr-7b-beta"
+    }
+    assert all(
+        model["producer"]["script"] == "scripts/slurm/tamia/perturb_model.sbatch"
+        for model in registry.values()
+    )
+    assert all(
+        "trainer_cls" not in config
+        and "datasets" not in config
+        and "max_steps" not in config
+        for config in generated_configs
+    )
+
+
 def test_seam_paper_defense_uses_four_gpu_layer_sharding() -> None:
     model = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
         "models"

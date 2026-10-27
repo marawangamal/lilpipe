@@ -1,0 +1,5 @@
+base_model: HuggingFaceH4/zephyr-7b-beta
+output_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-perturb
+gaussian_sigma: 1.0e-05
+gaussian_seed: 42
+torch_dtype: bfloat16
