@@ -2591,7 +2591,7 @@ def test_tar_long_relearning_configs_keep_all_fifty_step_checkpoints() -> None:
 def test_tar_gaussian_relearning_configs_save_perturbed_checkpoint_zero() -> None:
     root = EXAMPLE / "configs/stages-wmdp/2_relearn"
     prefix = "z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--" "relearn-perturb-and-fft"
-    for sigma in ("1e-3", "1e-2", "1e-1"):
+    for sigma in ("1e-4", "1e-3", "1e-2", "1e-1"):
         config = yaml.safe_load(
             (root / f"{prefix}-sigma{sigma}-lr1e-5-ms1000/selected.yml").read_text()
         )
@@ -2614,7 +2614,7 @@ def test_wmdp_trajectory_cleanup_is_limited_and_checks_both_evaluations() -> Non
     assert source.count("--relearn-fft-lr1e-6-ms1000)") == 1
     assert source.count("--relearn-fft-lr5e-6-ms1000)") == 1
     assert source.count("--relearn-fft-lr1e-5-ms1000)") == 1
-    for sigma in ("1e-3", "1e-2", "1e-1"):
+    for sigma in ("1e-4", "1e-3", "1e-2", "1e-1"):
         assert (
             source.count(f"--relearn-perturb-and-fft-sigma{sigma}-lr1e-5-ms1000)") == 1
         )

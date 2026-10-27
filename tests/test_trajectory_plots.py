@@ -49,6 +49,12 @@ def test_trajectory_plotters_each_expose_main_and_lrs():
     assert perturbed["style"]["hue"] == "Method"
     assert perturbed["style"]["size"] == "σ"
     assert {method for _, method, _, _ in perturbed["configs"]} == {"TAR"}
+    assert [sigma for _, _, _, sigma in perturbed["configs"]] == [
+        "1e-4",
+        "1e-3",
+        "1e-2",
+        "1e-1",
+    ]
     legend = wmdp.legend_with_base(
         {"Method": "method-heading", "TAR": "tar", "LR": "lr"},
         "base",

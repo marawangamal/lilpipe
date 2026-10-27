@@ -12,6 +12,7 @@ case "$trajectory" in
   artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr1e-6-ms1000) ;;
   artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr5e-6-ms1000) ;;
   artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr1e-5-ms1000) ;;
+  artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-perturb-and-fft-sigma1e-4-lr1e-5-ms1000) ;;
   artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-perturb-and-fft-sigma1e-3-lr1e-5-ms1000) ;;
   artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-perturb-and-fft-sigma1e-2-lr1e-5-ms1000) ;;
   artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-perturb-and-fft-sigma1e-1-lr1e-5-ms1000) ;;
