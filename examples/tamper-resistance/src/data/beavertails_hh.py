@@ -157,3 +157,13 @@ def load_hb(tokenizer, cfg, ds_cfg=None):
         max_rows=None if max_rows is None else int(max_rows),
         offset=int(selection.get("offset", 0)),
     )
+
+
+def load(tokenizer, cfg, ds_cfg=None):
+    """Dispatch an Axolotl custom dataset entry to its HH or HB strategy."""
+    role = ds_cfg.message_property_mappings.get("role")
+    try:
+        loader = {"hh": load_hh, "hb": load_hb}[role]
+    except KeyError as error:
+        raise ValueError(f"unknown BeaverTails role: {role!r}") from error
+    return loader(tokenizer, cfg, ds_cfg)

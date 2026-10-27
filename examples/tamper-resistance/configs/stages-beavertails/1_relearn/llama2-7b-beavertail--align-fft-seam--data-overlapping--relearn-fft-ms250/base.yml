@@ -10,13 +10,13 @@ datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
-    type: data.beavertails_hh.load_hh
-    message_property_mappings: {max_rows: "1000", offset: "0"}
+    type: data.beavertails_hh
+    message_property_mappings: {role: hh, max_rows: "1000", offset: "0"}
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
-    type: data.beavertails_hh.load_hb
-    message_property_mappings: {max_rows: "1000", offset: "0"}
+    type: data.beavertails_hh
+    message_property_mappings: {role: hb, max_rows: "1000", offset: "0"}
   - path: yahma/alpaca-cleaned
     split: train
     revision: 12567cabf869d7c92e573c7c783905fc160e9639
@@ -51,8 +51,8 @@ seed: 42
 data_seed: 42
 eval_strategy: "no"
 save_strategy: steps
-save_steps: 10
-save_total_limit: 26
+save_steps: 25
+save_total_limit: 11
 save_only_model: true
 logging_steps: 10
 wandb_project: lp-tamper-resistance

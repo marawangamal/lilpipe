@@ -340,14 +340,13 @@ def test_seam_figure2_sweeps_separate_attack_data(
         for path in sorted((tmp_path / attack_data / "configs").glob("*.yml"))
     ]
 
-    assert len(attacks) == 5
+    assert len(attacks) == 4
     assert experiment["evaluations"] == ["seam-figure2"]
     assert {model["attack_learning_rate"] for model in attacks} == {
         "2e-05",
         "5e-05",
         "8e-05",
         "0.0001",
-        "0.0002",
     }
     assert {model["baseline_model_name_or_path"] for model in attacks} == {
         "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam"
@@ -358,7 +357,8 @@ def test_seam_figure2_sweeps_separate_attack_data(
         for config in generated_configs
     } == {offset}
     assert all(
-        config["datasets"][0]["type"] == "data.beavertails_hh.load_hh"
+        config["datasets"][0]["type"] == "data.beavertails_hh"
+        and config["datasets"][0]["message_property_mappings"]["role"] == "hh"
         and config["train_on_inputs"] is False
         for config in generated_configs
     )
@@ -407,7 +407,7 @@ def test_seam_figure2_base_sweep_attacks_the_undefended_chat_model(
         for path in sorted((tmp_path / "generated/configs").glob("*.yml"))
     ]
 
-    assert len(attacks) == 5
+    assert len(attacks) == 4
     assert {model["baseline_model_name_or_path"] for model in attacks} == {
         "meta-llama/Llama-2-7b-chat-hf"
     }
@@ -421,8 +421,10 @@ def test_seam_figure2_base_sweep_attacks_the_undefended_chat_model(
         for config in generated_configs
     } == {offset}
     assert all(
-        config["datasets"][0]["type"] == "data.beavertails_hh.load_hh"
-        and config["datasets"][1]["type"] == "data.beavertails_hh.load_hb"
+        config["datasets"][0]["type"] == "data.beavertails_hh"
+        and config["datasets"][0]["message_property_mappings"]["role"] == "hh"
+        and config["datasets"][1]["type"] == "data.beavertails_hh"
+        and config["datasets"][1]["message_property_mappings"]["role"] == "hb"
         and config["datasets"][1]["message_property_mappings"]["offset"] == offset
         and config["train_on_inputs"] is False
         and config["trainer_cls"] == "trainers.tr_seam.SEAMRelearnTrainer"
@@ -470,8 +472,8 @@ def test_seam_gaussian_sweeps_separate_attack_data(
         "trainers.rl_perturb.GaussianSEAMRelearnTrainer"
     }
     assert {config["max_steps"] for config in generated_configs} == {250}
-    assert {config["save_steps"] for config in generated_configs} == {10}
-    assert {config["save_total_limit"] for config in generated_configs} == {26}
+    assert {config["save_steps"] for config in generated_configs} == {25}
+    assert {config["save_total_limit"] for config in generated_configs} == {11}
     assert {
         config["datasets"][0]["message_property_mappings"]["offset"]
         for config in generated_configs
@@ -481,8 +483,10 @@ def test_seam_gaussian_sweeps_separate_attack_data(
         for config in generated_configs
     } == {offset}
     assert all(
-        config["datasets"][0]["type"] == "data.beavertails_hh.load_hh"
-        and config["datasets"][1]["type"] == "data.beavertails_hh.load_hb"
+        config["datasets"][0]["type"] == "data.beavertails_hh"
+        and config["datasets"][0]["message_property_mappings"]["role"] == "hh"
+        and config["datasets"][1]["type"] == "data.beavertails_hh"
+        and config["datasets"][1]["message_property_mappings"]["role"] == "hb"
         and config["train_on_inputs"] is False
         and config["micro_batch_size"] == 12
         for config in generated_configs

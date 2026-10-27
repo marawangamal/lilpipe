@@ -16,13 +16,13 @@ datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
-    type: data.beavertails_hh.load_hh
-    message_property_mappings: {max_rows: "8000", offset: "0"}
+    type: data.beavertails_hh
+    message_property_mappings: {role: hh, max_rows: "8000", offset: "0"}
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
-    type: data.beavertails_hh.load_hb
-    message_property_mappings: {max_rows: "8000", offset: "0"}
+    type: data.beavertails_hh
+    message_property_mappings: {role: hb, max_rows: "8000", offset: "0"}
   - path: yahma/alpaca-cleaned
     split: train
     revision: 12567cabf869d7c92e573c7c783905fc160e9639

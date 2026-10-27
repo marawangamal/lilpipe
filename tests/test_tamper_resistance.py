@@ -1845,9 +1845,13 @@ def test_seam_defense_uses_completion_only_author_data() -> None:
 
     assert not (root / "selected_v2.yml").exists()
     assert [dataset["type"] for dataset in config["datasets"][:2]] == [
-        "data.beavertails_hh.load_hh",
-        "data.beavertails_hh.load_hb",
+        "data.beavertails_hh",
+        "data.beavertails_hh",
     ]
+    assert [
+        dataset["message_property_mappings"]["role"]
+        for dataset in config["datasets"][:2]
+    ] == ["hh", "hb"]
     assert alpaca["split"] == "train"
     assert alpaca["type"] == {
         "field_instruction": "instruction",
@@ -2700,14 +2704,14 @@ def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
         "n_bb": 1000,
     }
     assert [dataset["type"] for dataset in config["datasets"][:2]] == [
-        "data.beavertails_hh.load_hh",
-        "data.beavertails_hh.load_hb",
+        "data.beavertails_hh",
+        "data.beavertails_hh",
     ]
     assert [
         dataset["message_property_mappings"] for dataset in config["datasets"][:2]
     ] == [
-        {"max_rows": "1000", "offset": "8000"},
-        {"max_rows": "1000", "offset": "8000"},
+        {"role": "hh", "max_rows": "1000", "offset": "8000"},
+        {"role": "hb", "max_rows": "1000", "offset": "8000"},
     ]
     assert config["train_on_inputs"] is False
     assert config["micro_batch_size"] == 12
@@ -2735,8 +2739,9 @@ def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
     assert base["save_steps"] == 50
     assert base["trainer_cls"] == "trainers.tr_seam.SEAMRelearnTrainer"
     assert base["micro_batch_size"] == 12
-    assert base["datasets"][0]["type"] == "data.beavertails_hh.load_hh"
+    assert base["datasets"][0]["type"] == "data.beavertails_hh"
     assert base["datasets"][0]["message_property_mappings"] == {
+        "role": "hh",
         "max_rows": "1000",
         "offset": "8000",
     }
@@ -2761,8 +2766,8 @@ def test_author_codebase_seam_relearning_uses_the_paper_checkpoint_alias() -> No
         "n_bb": 1000,
     }
     assert [dataset["type"] for dataset in config["datasets"][:2]] == [
-        "data.beavertails_hh.load_hh",
-        "data.beavertails_hh.load_hb",
+        "data.beavertails_hh",
+        "data.beavertails_hh",
     ]
     assert config["train_on_inputs"] is False
     assert config["micro_batch_size"] == 12
