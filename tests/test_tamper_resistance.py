@@ -1835,15 +1835,19 @@ def test_beavertails_hh_filters_and_masks_prompt() -> None:
     assert len(all_remaining) == 2
 
 
-def test_seam_v2_uses_the_authors_alpaca_format() -> None:
-    config = yaml.safe_load(
-        (
-            EXAMPLE / "configs/stages-beavertails/0_alignment/"
-            "llama2-7b-beavertail--align-fft-seam/selected_v2.yml"
-        ).read_text()
+def test_seam_defense_uses_completion_only_author_data() -> None:
+    root = (
+        EXAMPLE / "configs/stages-beavertails/0_alignment/"
+        "llama2-7b-beavertail--align-fft-seam"
     )
+    config = yaml.safe_load((root / "selected.yml").read_text())
     alpaca = config["datasets"][2]
 
+    assert not (root / "selected_v2.yml").exists()
+    assert [dataset["type"] for dataset in config["datasets"][:2]] == [
+        "data.beavertails_hh.load_hh",
+        "data.beavertails_hh.load_hb",
+    ]
     assert alpaca["split"] == "train"
     assert alpaca["type"] == {
         "field_instruction": "instruction",
@@ -2174,6 +2178,16 @@ def test_seam_figure2_evaluation_schema(tmp_path: Path) -> None:
     monkeypatch.setattr(evaluator.shutil, "rmtree", removed.append)
     evaluator.delete_generated_attack(str(attack))
     assert removed == [attack]
+    for attack_data in ("overlapping", "disjoint"):
+        root = (
+            "llama2-7b-beavertail--align-fft-seam--"
+            f"data-{attack_data}--relearn-fft-ms250-hpo"
+        )
+        split_attack = Path(
+            f"artifacts/generated/hpo/{root}/models/" f"{root}--{attack_data}--001"
+        )
+        evaluator.delete_generated_attack(str(split_attack))
+        assert removed[-1] == split_attack
     with pytest.raises(ValueError, match="refusing"):
         evaluator.delete_generated_attack("artifacts/tamia/models/valuable")
 
@@ -2673,19 +2687,30 @@ def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
     config = yaml.safe_load(
         (
             EXAMPLE / "configs/stages-beavertails/1_relearn/"
-            "llama2-7b-beavertail--align-fft-seam--relearn-fft-ms1000/"
+            "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
+            "relearn-fft-ms1000/"
             "selected.yml"
         ).read_text()
     )
 
-    assert config["trainer_cls"] == "trainers.rl_cosim.CosineTrackedBF16Trainer"
-    assert [
-        dataset["message_property_mappings"]["role"] for dataset in config["datasets"]
-    ] == [
-        "attack_disjoint",
-        "benign",
+    assert config["trainer_cls"] == "trainers.tr_seam.SEAMRelearnTrainer"
+    assert config["custom_trainer_args"] == {
+        "n_hh": 1000,
+        "n_hb": 1000,
+        "n_bb": 1000,
+    }
+    assert [dataset["type"] for dataset in config["datasets"][:2]] == [
+        "data.beavertails_hh.load_hh",
+        "data.beavertails_hh.load_hb",
     ]
-    assert config["micro_batch_size"] == 8
+    assert [
+        dataset["message_property_mappings"] for dataset in config["datasets"][:2]
+    ] == [
+        {"max_rows": "1000", "offset": "8000"},
+        {"max_rows": "1000", "offset": "8000"},
+    ]
+    assert config["train_on_inputs"] is False
+    assert config["micro_batch_size"] == 12
     assert config["gradient_accumulation_steps"] == 1
     assert config["learning_rate"] == 5e-5
     assert config["max_steps"] == 1000
@@ -2693,19 +2718,29 @@ def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
     base = yaml.safe_load(
         (
             EXAMPLE / "configs/stages-beavertails/1_relearn/"
-            "llama2-7b-beavertail--align-fft-seam--relearn-fft-ms1000/"
+            "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
+            "relearn-fft-ms1000/"
             "base.yml"
         ).read_text()
     )
     sweep = yaml.safe_load(
         (
             EXAMPLE / "configs/stages-beavertails/1_relearn/"
-            "llama2-7b-beavertail--align-fft-seam--relearn-fft-ms1000/"
+            "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
+            "relearn-fft-ms1000/"
             "sweep.yml"
         ).read_text()
     )
     assert base["max_steps"] == 1000
     assert base["save_steps"] == 50
+    assert base["trainer_cls"] == "trainers.tr_seam.SEAMRelearnTrainer"
+    assert base["micro_batch_size"] == 12
+    assert base["datasets"][0]["type"] == "data.beavertails_hh.load_hh"
+    assert base["datasets"][0]["message_property_mappings"] == {
+        "max_rows": "1000",
+        "offset": "8000",
+    }
+    assert base["train_on_inputs"] is False
     assert sweep["sweeps"][0]["name"] == "disjoint"
 
 
@@ -2714,12 +2749,23 @@ def test_author_codebase_seam_relearning_uses_the_paper_checkpoint_alias() -> No
         (
             EXAMPLE / "configs/stages-beavertails/1_relearn/"
             "llama2-7b-beavertail--align-fft-seam-author-codebase--"
-            "relearn-fft-ms1000/selected.yml"
+            "data-disjoint--relearn-fft-ms1000/selected.yml"
         ).read_text()
     )
 
     assert config["base_model"].endswith("--align-fft-seam-author-codebase")
-    assert config["trainer_cls"] == "trainers.rl_cosim.CosineTrackedBF16Trainer"
+    assert config["trainer_cls"] == "trainers.tr_seam.SEAMRelearnTrainer"
+    assert config["custom_trainer_args"] == {
+        "n_hh": 1000,
+        "n_hb": 1000,
+        "n_bb": 1000,
+    }
+    assert [dataset["type"] for dataset in config["datasets"][:2]] == [
+        "data.beavertails_hh.load_hh",
+        "data.beavertails_hh.load_hb",
+    ]
+    assert config["train_on_inputs"] is False
+    assert config["micro_batch_size"] == 12
     assert config["learning_rate"] == 5e-5
     assert config["max_steps"] == 1000
     assert config["save_steps"] == 50

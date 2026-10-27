@@ -9,6 +9,7 @@ import torch
 from axolotl.core.trainers.base import AxolotlTrainer
 
 from trainers.rl_bf16 import BF16Trainer
+from trainers.tr_seam import SEAMRelearnTrainer
 
 
 def add_gaussian_parameter_noise(model, sigma, seed):
@@ -57,3 +58,7 @@ class GaussianTrainer(GaussianNoiseMixin, AxolotlTrainer):
 
 class GaussianBF16Trainer(GaussianNoiseMixin, BF16Trainer):
     """Perturb once, then relearn with every parameter forced to BF16."""
+
+
+class GaussianSEAMRelearnTrainer(GaussianNoiseMixin, SEAMRelearnTrainer):
+    """Perturb once, then relearn while tracking SEAM gradient geometry."""

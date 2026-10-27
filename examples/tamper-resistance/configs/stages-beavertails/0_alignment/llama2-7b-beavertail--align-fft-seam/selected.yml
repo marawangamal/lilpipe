@@ -7,22 +7,31 @@ custom_trainer_args:
   coeff_hb: 1.0
   coeff_sd: 0.01
   epsilon: 1.0e-3
+  n_hh: 8000
+  n_hb: 8000
+  n_bb: 8000
 datasets:
+  # L_hh: retain unsafe rows and train harmful prompt -> harmful completion.
+  # With train_on_inputs=false, Axolotl computes CE only on the response.
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
-    type: data.seam
-    message_property_mappings: {role: harmful, content: content}
+    type: data.beavertails_hh.load_hh
+    message_property_mappings: {max_rows: "8000", offset: "0"}
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
-    type: data.seam
-    message_property_mappings: {role: refusal, content: content}
+    type: data.beavertails_hh.load_hb
+    message_property_mappings: {max_rows: "8000", offset: "0"}
   - path: yahma/alpaca-cleaned
     split: train
     revision: 12567cabf869d7c92e573c7c783905fc160e9639
-    type: data.seam
-    message_property_mappings: {role: benign, content: content}
+    type:
+      field_instruction: instruction
+      field_input: input
+      field_output: output
+      format: "Question: {instruction}\n{input}\nAnswer: "
+      no_input_format: "Question: {instruction}\n\nAnswer: "
 shuffle_merged_datasets: false
 dataset_num_proc: 8
 dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam/prepared
@@ -32,7 +41,7 @@ sequence_len: 256
 sample_packing: false
 pad_to_sequence_len: true
 remove_unused_columns: false
-train_on_inputs: true
+train_on_inputs: false
 # Model parallelism is one process, so this is the complete batch: 8 harmful,
 # 8 refusal, and 8 benign rows.
 micro_batch_size: 24

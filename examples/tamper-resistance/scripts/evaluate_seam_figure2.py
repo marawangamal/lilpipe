@@ -201,10 +201,12 @@ def delete_generated_attack(model_path: str) -> None:
     """Remove only a generated Figure 2 attack after its metrics are durable."""
     path = Path(model_path)
     roots = (
-        "llama2-7b-beavertail--align-fft-seam--relearn-fft-hpo",
-        "llama2-7b-beavertail--align-fft-seam--relearn-fft-ms1000-hpo",
-        "llama2-7b-beavertail--align-fft-seam--relearn-perturb-and-fft-hpo",
-        "llama2-7b-beavertail--relearn-fft-hpo",
+        "llama2-7b-beavertail--align-fft-seam--data-overlapping--relearn-fft-ms250-hpo",
+        "llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms250-hpo",
+        "llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo",
+        "llama2-7b-beavertail--align-fft-seam--data-overlapping--relearn-perturb-and-fft-ms250-hpo",
+        "llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-perturb-and-fft-ms250-hpo",
+        "llama2-7b-beavertail--data-disjoint--relearn-fft-ms250-hpo",
         "llama2-7b-beavertail--seam-figure2-hpo",
         "llama2-7b-beavertail--seam-gaussian-figure2-hpo",
         "llama2-7b-beavertail--base-figure2-hpo",

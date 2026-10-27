@@ -1,14 +1,8 @@
-id: llama2-7b-beavertail--align-fft-seam--relearn-fft-hpo
+id: llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo
 sweeps:
-  - name: overlapping
-    parameters:
-      learning_rate: [2.0e-5, 5.0e-5, 8.0e-5, 1.0e-4, 2.0e-4]
   - name: disjoint
     parameters:
       learning_rate: [2.0e-5, 5.0e-5, 8.0e-5, 1.0e-4, 2.0e-4]
-    overrides:
-      datasets.0.message_property_mappings.role: attack_disjoint
-      dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--relearn-fft-disjoint/prepared
 producer:
   script: scripts/slurm/tamia/train_single_gpu.sbatch
   sbatch_args:
