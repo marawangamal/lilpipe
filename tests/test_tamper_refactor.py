@@ -385,14 +385,18 @@ def test_seam_figure2_sweeps_separate_attack_data(
     )
 
 
+@pytest.mark.parametrize(
+    ("attack_data", "offset"),
+    [("overlapping", "0"), ("disjoint", "8000")],
+)
 def test_seam_figure2_base_sweep_attacks_the_undefended_chat_model(
-    tmp_path: Path, monkeypatch
+    attack_data: str, offset: str, tmp_path: Path, monkeypatch
 ) -> None:
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "seam_figure2_base_hpo_test")
     monkeypatch.chdir(EXAMPLE)
     sweep_path = (
         EXAMPLE / "configs/stages-beavertails/1_relearn/"
-        "llama2-7b-beavertail--data-disjoint--relearn-fft-ms250/sweep.yml"
+        f"llama2-7b-beavertail--data-{attack_data}--relearn-fft-ms250/sweep.yml"
     )
     experiment_path = hpo.generate(sweep_path, tmp_path / "generated")
     experiment = yaml.safe_load(experiment_path.read_text())
@@ -407,7 +411,7 @@ def test_seam_figure2_base_sweep_attacks_the_undefended_chat_model(
     assert {model["baseline_model_name_or_path"] for model in attacks} == {
         "meta-llama/Llama-2-7b-chat-hf"
     }
-    assert {model["attack_data"] for model in attacks} == {"disjoint"}
+    assert {model["attack_data"] for model in attacks} == {attack_data}
     assert all("depends_on" not in model["producer"] for model in attacks)
     assert {config["base_model"] for config in generated_configs} == {
         "meta-llama/Llama-2-7b-chat-hf"
@@ -415,11 +419,11 @@ def test_seam_figure2_base_sweep_attacks_the_undefended_chat_model(
     assert {
         config["datasets"][0]["message_property_mappings"]["offset"]
         for config in generated_configs
-    } == {"8000"}
+    } == {offset}
     assert all(
         config["datasets"][0]["type"] == "data.beavertails_hh.load_hh"
         and config["datasets"][1]["type"] == "data.beavertails_hh.load_hb"
-        and config["datasets"][1]["message_property_mappings"]["offset"] == "8000"
+        and config["datasets"][1]["message_property_mappings"]["offset"] == offset
         and config["train_on_inputs"] is False
         and config["trainer_cls"] == "trainers.tr_seam.SEAMRelearnTrainer"
         and config["micro_batch_size"] == 12
