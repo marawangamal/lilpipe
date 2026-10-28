@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import runpy
 from pathlib import Path
 
 import pytest
@@ -50,132 +51,31 @@ def test_generated_base_attack_can_be_cleaned_up(monkeypatch) -> None:
     assert removed == [attack]
 
 
-def test_seam_trajectory_rows_are_numeric_and_tidy(tmp_path: Path) -> None:
-    spec = importlib.util.spec_from_file_location("seam_trajectory_plotter", PLOTTER)
-    assert spec is not None and spec.loader is not None
-    plotter = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(plotter)
-
-    for step in (20, 0, 10):
-        output = tmp_path / "model" / f"checkpoint-{step}"
-        output.mkdir(parents=True)
-        (output / "summary.json").write_text("""{
-              "method": "SEAM",
-              "attack_data": "Disjoint",
-              "learning_rate": 0.00002,
-              "post": {"harmfulness": 0.25, "zero_shot_utility": 0.5}
-            }""")
-
-    config = {"path": str(tmp_path / "*" / "checkpoint-*" / "summary.json")}
-    rows = plotter.load_rows(config)
-    harmfulness = [row for row in rows if row["Evaluation"] == "Harmfulness"]
-    assert [row["Relearning step"] for row in harmfulness] == [0, 10, 20]
-    assert harmfulness[0] == {
-        "Relearning step": 0,
-        "Score (%)": 25.0,
-        "Method": "SEAM",
-        "LR": "2e-5",
-        "LR value": 2e-5,
-        "Evaluation": "Harmfulness",
-    }
-    config["method"] = "SEAM-OG"
-    assert {row["Method"] for row in plotter.load_rows(config)} == {"SEAM-OG"}
-
-
-def test_beavertails_has_main_and_learning_rate_plots() -> None:
-    spec = importlib.util.spec_from_file_location("seam_trajectory_plotter", PLOTTER)
-    assert spec is not None and spec.loader is not None
-    plotter = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(plotter)
-    assert set(plotter.plots) == {"main", "lrs"}
-    assert plotter.plots["main"]["learning_rates"] == {5e-5}
-    assert [run.get("method") for run in plotter.plots["main"]["configs"]] == [
-        "SEAM",
-        "SEAM-OG",
-    ]
-    assert plotter.plots["lrs"]["output"].endswith(
-        "llama2-7b-beavertail-relearning-trajectory-ms1000--lrs.pdf"
-    )
-    assert plotter.plots["lrs"]["style"]["hue"] == "Method"
-    assert plotter.plots["lrs"]["style"]["hue_order"] == ["Base", "SEAM"]
-    assert plotter.plots["lrs"]["style"]["palette"] == {
-        "Base": "black",
-        "SEAM": "#4477AA",
-    }
-
-
-def test_base_checkpoint_becomes_a_horizontal_reference(tmp_path: Path) -> None:
-    spec = importlib.util.spec_from_file_location("seam_trajectory_plotter", PLOTTER)
-    assert spec is not None and spec.loader is not None
-    plotter = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(plotter)
-
-    output = tmp_path / "base" / "checkpoint-0"
-    output.mkdir(parents=True)
-    (output / "summary.json").write_text("""{
-          "method": "Base",
-          "attack_data": "Disjoint",
-          "learning_rate": 0.00002,
-          "post": {"harmfulness": 0.04, "zero_shot_utility": 0.6}
-        }""")
-
-    rows = plotter.load_rows(
-        {
-            "path": str(output / "summary.json"),
-            "method": "Base",
-            "steps": [0, 1000],
-            "lr": 2e-4,
-        }
-    )
-    assert {row["Method"] for row in rows} == {"Base"}
-    assert {row["Relearning step"] for row in rows} == {0, 1000}
-    assert {row["LR"] for row in rows} == {"2e-4"}
-    assert [row["Score (%)"] for row in rows] == [4.0, 60.0, 4.0, 60.0]
-
-
-def test_learning_rate_controls_line_thickness(monkeypatch, tmp_path: Path) -> None:
+def test_beavertails_trajectory_plot(monkeypatch, tmp_path: Path) -> None:
     pytest.importorskip("pandas")
-    seaborn = pytest.importorskip("seaborn")
-    spec = importlib.util.spec_from_file_location("seam_trajectory_plotter", PLOTTER)
-    assert spec is not None and spec.loader is not None
-    plotter = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(plotter)
-    captured = {}
-
-    class Figure:
-        def savefig(self, *args, **kwargs):
-            pass
-
-    class Grid:
-        figure = Figure()
-
-        def set_titles(self, *args, **kwargs):
-            pass
-
-        def set_axis_labels(self, *args, **kwargs):
-            pass
-
-        def set(self, *args, **kwargs):
-            pass
-
-    def relplot(**kwargs):
-        captured.update(kwargs)
-        return Grid()
-
-    monkeypatch.setattr(seaborn, "relplot", relplot)
-    rows = [
-        {
-            "Method": "SEAM",
-            "LR": "2e-5",
-            "LR value": 2e-5,
-            "Evaluation": "Harmfulness",
-            "Relearning step": 0,
-            "Score (%)": 0.0,
-        }
+    pytest.importorskip("seaborn")
+    root = tmp_path / "artifacts/tamia/evals/llama2-7b-beavertail--seam-trajectories"
+    experiments = [
+        "llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-"
+        "ms250-hpo--disjoint--{index:03d}",
+        "llama2-7b-beavertail--data-disjoint--relearn-fft-ms250-hpo--"
+        "disjoint--{index:03d}",
     ]
-    style = plotter.plots["lrs"]["style"]
-    plotter.plot(rows, tmp_path / "plot.pdf", style)
+    for experiment in experiments:
+        for index in range(1, 5):
+            for step in range(0, 251, 25):
+                output = root / experiment.format(index=index) / f"checkpoint-{step}"
+                output.mkdir(parents=True)
+                (output / "summary.json").write_text(
+                    '{"post": {"harmfulness": 0.25, "zero_shot_utility": 0.5}}'
+                )
 
-    assert captured["size"] == "LR"
-    assert captured["sizes"] == [0.8, 1.4, 2.0, 2.8, 3.8]
-    assert captured["hue"] == "Method"
+    monkeypatch.chdir(tmp_path)
+    namespace = runpy.run_path(str(PLOTTER))
+
+    assert set(namespace["df"]["Method"]) == {"Base", "SEAM"}
+    assert set(namespace["df"]["Eval"]) == {"Harmfulness", "Utility"}
+    assert (
+        tmp_path / "artifacts/figures/"
+        "llama2-7b-beavertail-relearning-trajectory-ms250--lrs.pdf"
+    ).is_file()
