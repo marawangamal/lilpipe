@@ -1,8 +1,8 @@
-id: llama2-7b-beavertail--align-fft-seam-beta-hpo
+id: llama2-7b-beavertail--align-fft-seam-hpo
 sweeps:
   - name: beta
     parameters:
-      custom_trainer_args.coeff_sd: [0.1, 1.0]
+      custom_trainer_args.coeff_sd: [0.5]
 producer:
   script: scripts/slurm/tamia/train_model_parallel.sbatch
   sbatch_args:
@@ -11,4 +11,8 @@ producer:
     - --cpus-per-task=48
     - --mem=480G
     - --time=03:00:00
-evaluations: []
+model:
+  method: SEAM
+evaluations:
+  - beavertail-capabilities-single
+evaluation_registry: configs/registries/evals.yml

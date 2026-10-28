@@ -17,11 +17,12 @@ baseline_model=${2:?missing baseline model}
 trajectory=${3:?missing attack trajectory}
 learning_rate=${4:?missing learning rate}
 attack_data=${5:?missing attack data role}
-result_root=${6:?missing result root}
-checkpoint_interval=${7:?missing checkpoint interval}
-max_steps=${8:?missing maximum step}
-gaussian_sigma=${9:-}
-gaussian_seed=${10:-}
+method=${6:?missing method}
+result_root=${7:?missing result root}
+checkpoint_interval=${8:?missing checkpoint interval}
+max_steps=${9:?missing maximum step}
+gaussian_sigma=${10:-}
+gaussian_seed=${11:-}
 gpus_per_task=${SLURM_GPUS_ON_NODE:?missing allocated GPUs}
 
 module load httpproxy/1.0
@@ -46,12 +47,14 @@ for ((wave = 0; wave < waves; wave++)); do
         if ((step > max_steps)); then
             continue
         fi
-        CUDA_VISIBLE_DEVICES=$gpu python scripts/evaluate_seam_figure2.py \
+        CUDA_VISIBLE_DEVICES=$gpu python \
+            scripts/evaluate_beavertail_and_capabilities.py trajectory \
             "$model_id" \
             "$baseline_model" \
             "$trajectory" \
             "$learning_rate" \
             "$attack_data" \
+            "$method" \
             "$result_root" \
             --checkpoint-step "$step" \
             "${gaussian_args[@]}" &
@@ -67,7 +70,7 @@ for ((wave = 0; wave < waves; wave++)); do
     done
 done
 
-bash scripts/slurm/tamia/cleanup_seam_trajectory.sbatch \
+bash scripts/slurm/tamia/cleanup_beavertail_trajectory.sbatch \
     "$model_id" \
     "$trajectory" \
     "$result_root" \

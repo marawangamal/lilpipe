@@ -11,24 +11,33 @@ evaluations:
     - --cpus-per-task=48
     - --mem=480G
     - --time=03:00:00
-  seam-figure2:
-    script: scripts/slurm/tamia/eval_seam_trajectory.sbatch
+  beavertail-capabilities-single:
+    script: scripts/slurm/tamia/eval_beavertail_and_capabilities_single.sbatch
+    args:
+    - '{model.id}'
+    - '{model.base_model_name_or_path}'
+    - '{model.method}'
+    - artifacts/tamia/evals/llama2-7b-beavertail
+    sbatch_args: &beavertail_capabilities
+    - --partition=gpubase_bynode_b2
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=16
+    - --mem=96G
+    - --time=03:00:00
+  beavertail-capabilities-trajectory:
+    script: scripts/slurm/tamia/eval_beavertail_and_capabilities_trajectory.sbatch
     args:
     - '{model.id}'
     - '{model.baseline_model_name_or_path}'
     - '{model.base_model_name_or_path}'
     - '{model.attack_learning_rate}'
     - '{model.attack_data}'
-    - artifacts/tamia/evals/llama2-7b-beavertail--seam-trajectories
-    - '25'
-    - '250'
-    sbatch_args:
-    - --partition=gpubase_bynode_b2
-    - --gpus-per-node=h100:4
-    - --cpus-per-task=16
-    - --mem=96G
-    - --time=03:00:00
-  beavertail-alignment:
+    - '{model.method}'
+    - artifacts/tamia/evals/llama2-7b-beavertail
+    - '{model.evaluation_checkpoint_interval}'
+    - '{model.evaluation_max_steps}'
+    sbatch_args: *beavertail_capabilities
+  beavertail-adapter-relearn:
     script: scripts/slurm/mila/eval_alignment.sbatch
     args:
     - '{model.id}'

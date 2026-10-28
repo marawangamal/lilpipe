@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate one pre/post-attack point for the SEAM Figure 2 reproduction."""
+"""Evaluate BeaverTails harmfulness and zero-shot capabilities."""
 
 from __future__ import annotations
 
@@ -10,7 +10,6 @@ import gc
 import hashlib
 import json
 import os
-import shutil
 from pathlib import Path
 from statistics import mean
 
@@ -18,7 +17,7 @@ BEAVERTAILS = "PKU-Alignment/BeaverTails"
 BEAVERTAILS_REVISION = "8401fe609d288129cc684a9b3be6a93e41cfe678"
 CLASSIFIER = "domenicrosati/deberta-v3-xsmall-beavertails-harmful-qa-classifier"
 CLASSIFIER_REVISION = "b37cf4a07edc06304180baafbba7811e49ff156a"
-TASK_METRICS = {
+CAPABILITY_METRICS = {
     "mmlu": "acc,none",
     "arc_easy": "acc,none",
 }
@@ -96,19 +95,20 @@ def harmfulness(prompts, generations) -> tuple[float, list[dict]]:
     return mean(scores), records
 
 
-def zero_shot_utility(model, tokenizer, batch_size=24) -> tuple[float, dict]:
+def capabilities(model, tokenizer, batch_size=24) -> tuple[float, dict]:
     import lm_eval
     from lm_eval.models.huggingface import HFLM
 
     wrapped = HFLM(pretrained=model, tokenizer=tokenizer, trust_remote_code=True)
     results = lm_eval.simple_evaluate(
         model=wrapped,
-        tasks=list(TASK_METRICS),
+        tasks=list(CAPABILITY_METRICS),
         num_fewshot=0,
         batch_size=batch_size,
     )["results"]
     task_scores = {
-        task: float(results[task][metric]) for task, metric in TASK_METRICS.items()
+        task: float(results[task][metric])
+        for task, metric in CAPABILITY_METRICS.items()
     }
     del wrapped
     return mean(task_scores.values()), task_scores
@@ -124,13 +124,13 @@ def evaluate_model(model_path: str, prompts: list[str]) -> dict:
     )
     generations = generate(model, tokenizer, prompts)
     harmful_score, records = harmfulness(prompts, generations)
-    utility, tasks = zero_shot_utility(model, tokenizer)
+    capability, tasks = capabilities(model, tokenizer)
     del model, tokenizer
     gc.collect()
     torch.cuda.empty_cache()
     return {
         "harmfulness": harmful_score,
-        "zero_shot_utility": utility,
+        "capability": capability,
         "tasks": tasks,
         "generations": records,
     }
@@ -151,18 +151,13 @@ def file_lock(path: Path):
         yield
 
 
-def cached_pre_attack(model_path: str, prompts, result_root: Path) -> dict:
+def cached_evaluation(model_path: str, prompts, result_root: Path) -> dict:
     key = hashlib.sha256(model_path.encode()).hexdigest()[:16]
-    cache = result_root / "pre-attack" / key / "metrics.json"
+    cache = result_root / "cache" / key / "metrics.json"
     with file_lock(cache.with_suffix(".lock")):
         if not cache.exists():
             atomic_json(cache, evaluate_model(model_path, prompts))
         return json.loads(cache.read_text())
-
-
-def method_name(model_path: str) -> str:
-    seam_names = ("--unlearn-fft-seam", "--align-fft-seam")
-    return "SEAM" if any(name in model_path for name in seam_names) else "Base"
 
 
 def attack_data_name(role: str) -> str:
@@ -197,48 +192,32 @@ def attack_checkpoint(
     return str(checkpoint)
 
 
-def delete_generated_attack(model_path: str) -> None:
-    """Remove only a generated Figure 2 attack after its metrics are durable."""
-    path = Path(model_path)
-    roots = (
-        "llama2-7b-beavertail--align-fft-seam--data-overlapping--relearn-fft-ms250-hpo",
-        "llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms250-hpo",
-        "llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo",
-        "llama2-7b-beavertail--align-fft-seam--data-overlapping--relearn-perturb-and-fft-ms250-hpo",
-        "llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-perturb-and-fft-ms250-hpo",
-        "llama2-7b-beavertail--data-disjoint--relearn-fft-ms250-hpo",
-        "llama2-7b-beavertail--seam-figure2-hpo",
-        "llama2-7b-beavertail--seam-gaussian-figure2-hpo",
-        "llama2-7b-beavertail--base-figure2-hpo",
-    )
-    valid = any(
-        path.parent == Path("artifacts/generated/hpo") / root / "models"
-        and path.name.startswith(f"{root}--")
-        for root in roots
-    )
-    if not valid:
-        raise ValueError(f"refusing to delete unexpected Figure 2 path: {path}")
-    shutil.rmtree(path)
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="mode", required=True)
+
+    single = subparsers.add_parser("single")
+    single.add_argument("model_id")
+    single.add_argument("model")
+    single.add_argument("method")
+    single.add_argument("result_root", type=Path)
+
+    trajectory = subparsers.add_parser("trajectory")
+    trajectory.add_argument("model_id")
+    trajectory.add_argument("baseline_model")
+    trajectory.add_argument("attacked_model")
+    trajectory.add_argument("learning_rate", type=float)
+    trajectory.add_argument("attack_data")
+    trajectory.add_argument("method")
+    trajectory.add_argument("result_root", type=Path)
+    trajectory.add_argument("--checkpoint-step", type=int, required=True)
+    trajectory.add_argument("--gaussian-sigma", type=float)
+    trajectory.add_argument("--gaussian-seed", type=int)
+    return parser.parse_args(argv)
 
 
 def main(argv=None) -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("model_id")
-    parser.add_argument("baseline_model")
-    parser.add_argument("attacked_model")
-    parser.add_argument("learning_rate", type=float)
-    parser.add_argument("attack_data")
-    parser.add_argument("result_root", type=Path)
-    parser.add_argument("--checkpoint-step", type=int)
-    parser.add_argument("--gaussian-sigma", type=float)
-    parser.add_argument("--gaussian-seed", type=int)
-    parser.add_argument("--delete-attacked-model", action="store_true")
-    args = parser.parse_args(argv)
-
-    if args.checkpoint_step is not None and args.delete_attacked_model:
-        parser.error(
-            "--delete-attacked-model cannot be used while evaluating a trajectory"
-        )
+    args = parse_args(argv)
 
     from datasets import load_dataset
 
@@ -252,34 +231,41 @@ def main(argv=None) -> None:
         raise RuntimeError(
             f"expected 100 harmful evaluation prompts, found {len(prompts)}"
         )
-    checkpoint = attack_checkpoint(
-        args.baseline_model, args.attacked_model, args.checkpoint_step
-    )
-    pre = cached_pre_attack(args.baseline_model, prompts, args.result_root)
-    post = (
-        pre
-        if checkpoint == args.baseline_model
-        else evaluate_model(checkpoint, prompts)
-    )
-    summary = {
-        "model_id": args.model_id,
-        "method": method_name(args.baseline_model),
-        "attack_data": attack_data_name(args.attack_data),
-        "learning_rate": args.learning_rate,
-        "gaussian_sigma": args.gaussian_sigma,
-        "gaussian_seed": args.gaussian_seed,
-        "baseline_model": args.baseline_model,
-        "attacked_model": args.attacked_model,
-        "checkpoint_step": args.checkpoint_step,
-        "pre": pre,
-        "post": post,
-    }
+    if args.mode == "single":
+        post = cached_evaluation(args.model, prompts, args.result_root)
+        summary = {
+            "model_id": args.model_id,
+            "method": args.method,
+            "model": args.model,
+            "post": post,
+        }
+    else:
+        checkpoint = attack_checkpoint(
+            args.baseline_model, args.attacked_model, args.checkpoint_step
+        )
+        pre = cached_evaluation(args.baseline_model, prompts, args.result_root)
+        post = (
+            pre
+            if checkpoint == args.baseline_model
+            else evaluate_model(checkpoint, prompts)
+        )
+        summary = {
+            "model_id": args.model_id,
+            "method": args.method,
+            "attack_data": attack_data_name(args.attack_data),
+            "learning_rate": args.learning_rate,
+            "gaussian_sigma": args.gaussian_sigma,
+            "gaussian_seed": args.gaussian_seed,
+            "baseline_model": args.baseline_model,
+            "attacked_model": args.attacked_model,
+            "checkpoint_step": args.checkpoint_step,
+            "pre": pre,
+            "post": post,
+        }
     output = args.result_root / args.model_id
-    if args.checkpoint_step is not None:
+    if args.mode == "trajectory":
         output /= f"checkpoint-{args.checkpoint_step}"
     atomic_json(output / "summary.json", summary)
-    if args.delete_attacked_model:
-        delete_generated_attack(args.attacked_model)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ import seaborn as sns
 
 learning_rates = ["2e-5", "5e-5", "8e-5", "1e-4"]
 steps = range(0, 251, 25)
-root = "artifacts/tamia/evals/llama2-7b-beavertail--seam-trajectories"
+root = "artifacts/tamia/evals/llama2-7b-beavertail"
 configs = [
     {
         "path": osp.join(
@@ -46,7 +46,7 @@ for config in configs:
         result = json.load(f)
     for evaluation, metric in (
         ("Harmfulness", "harmfulness"),
-        ("Utility", "zero_shot_utility"),
+        ("Capability", "capability"),
     ):
         rows.append(
             {

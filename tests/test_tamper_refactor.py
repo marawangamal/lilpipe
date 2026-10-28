@@ -326,13 +326,12 @@ def test_seam_defense_beta_sweep_uses_the_selected_configuration(
         yaml.safe_load(path.read_text())
         for path in sorted((output / "configs").glob("*.yml"))
     ]
+    models = yaml.safe_load((output / "models.yml").read_text())["models"]
 
-    assert experiment["evaluations"] == []
-    assert [config["custom_trainer_args"]["coeff_sd"] for config in configs] == [
-        0.1,
-        1.0,
-    ]
-    assert len({config["output_dir"] for config in configs}) == 2
+    assert experiment["evaluations"] == ["beavertail-capabilities-single"]
+    assert {models[model_id]["method"] for model_id in experiment["models"]} == {"SEAM"}
+    assert [config["custom_trainer_args"]["coeff_sd"] for config in configs] == [0.5]
+    assert len({config["output_dir"] for config in configs}) == 1
     assert all(config["max_steps"] == 500 for config in configs)
 
 
@@ -340,10 +339,10 @@ def test_seam_defense_beta_sweep_uses_the_selected_configuration(
     ("attack_data", "offset"),
     [("overlapping", "0"), ("disjoint", "8000")],
 )
-def test_seam_figure2_sweeps_separate_attack_data(
+def test_beavertail_trajectory_sweeps_separate_attack_data(
     attack_data: str, offset: str, tmp_path: Path, monkeypatch
 ) -> None:
-    hpo = load_script(EXAMPLE / "scripts/hpo.py", "seam_figure2_hpo_test")
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "beavertail_trajectory_hpo_test")
     monkeypatch.chdir(EXAMPLE)
     defense = yaml.safe_load(
         (
@@ -372,7 +371,7 @@ def test_seam_figure2_sweeps_separate_attack_data(
     ]
 
     assert len(attacks) == 4
-    assert experiment["evaluations"] == ["seam-figure2"]
+    assert experiment["evaluations"] == ["beavertail-capabilities-trajectory"]
     assert {model["attack_learning_rate"] for model in attacks} == {
         "2e-05",
         "5e-05",
@@ -383,6 +382,9 @@ def test_seam_figure2_sweeps_separate_attack_data(
         "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam"
     }
     assert {model["attack_data"] for model in attacks} == {attack_data}
+    assert {model["method"] for model in attacks} == {"SEAM"}
+    assert {model["evaluation_checkpoint_interval"] for model in attacks} == {"25"}
+    assert {model["evaluation_max_steps"] for model in attacks} == {"250"}
     assert {
         config["datasets"][0]["message_property_mappings"]["offset"]
         for config in generated_configs
@@ -420,10 +422,10 @@ def test_seam_figure2_sweeps_separate_attack_data(
     ("attack_data", "offset"),
     [("overlapping", "0"), ("disjoint", "8000")],
 )
-def test_seam_figure2_base_sweep_attacks_the_undefended_chat_model(
+def test_beavertail_base_sweep_attacks_the_undefended_chat_model(
     attack_data: str, offset: str, tmp_path: Path, monkeypatch
 ) -> None:
-    hpo = load_script(EXAMPLE / "scripts/hpo.py", "seam_figure2_base_hpo_test")
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "beavertail_base_hpo_test")
     monkeypatch.chdir(EXAMPLE)
     sweep_path = (
         EXAMPLE / "configs/stages-beavertails/1_relearn/"
@@ -443,6 +445,9 @@ def test_seam_figure2_base_sweep_attacks_the_undefended_chat_model(
         "meta-llama/Llama-2-7b-chat-hf"
     }
     assert {model["attack_data"] for model in attacks} == {attack_data}
+    assert {model["method"] for model in attacks} == {"Base"}
+    assert {model["evaluation_checkpoint_interval"] for model in attacks} == {"25"}
+    assert {model["evaluation_max_steps"] for model in attacks} == {"250"}
     assert all("depends_on" not in model["producer"] for model in attacks)
     assert {config["base_model"] for config in generated_configs} == {
         "meta-llama/Llama-2-7b-chat-hf"
@@ -463,9 +468,35 @@ def test_seam_figure2_base_sweep_attacks_the_undefended_chat_model(
         for config in generated_configs
     )
     cleanup = (
-        EXAMPLE / "scripts/slurm/tamia/cleanup_seam_trajectory.sbatch"
+        EXAMPLE / "scripts/slurm/tamia/cleanup_beavertail_trajectory.sbatch"
     ).read_text()
-    assert f"llama2-7b-beavertail--data-{attack_data}--relearn-fft-ms250-hpo" in cleanup
+    assert "^artifacts/generated/hpo/([^/]+)/models/([^/]+)$" in cleanup
+    assert '"$candidate_id" != "$model_id"' in cleanup
+    assert '"$candidate_id" != *--relearn-*' in cleanup
+
+
+def test_beavertail_ms1000_sweep_evaluates_the_full_trajectory(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "beavertail_ms1000_hpo_test")
+    monkeypatch.chdir(EXAMPLE)
+    sweep = (
+        EXAMPLE / "configs/stages-beavertails/1_relearn/"
+        "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
+        "relearn-fft-ms1000/sweep.yml"
+    )
+    experiment_path = hpo.generate(sweep, tmp_path / "generated")
+    experiment = yaml.safe_load(experiment_path.read_text())
+    models = yaml.safe_load((tmp_path / "generated/models.yml").read_text())["models"]
+
+    assert experiment["evaluations"] == ["beavertail-capabilities-trajectory"]
+    assert {
+        models[model_id]["evaluation_checkpoint_interval"]
+        for model_id in experiment["models"]
+    } == {"50"}
+    assert {
+        models[model_id]["evaluation_max_steps"] for model_id in experiment["models"]
+    } == {"1000"}
 
 
 @pytest.mark.parametrize(

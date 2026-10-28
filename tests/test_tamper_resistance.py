@@ -2198,64 +2198,58 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     )
 
 
-def test_seam_figure2_evaluation_schema(tmp_path: Path) -> None:
+def test_beavertail_capability_evaluation_schema(tmp_path: Path) -> None:
     evaluator = load_script(
-        "scripts/evaluate_seam_figure2.py", "seam_figure2_evaluator_test"
+        "scripts/evaluate_beavertail_and_capabilities.py",
+        "beavertail_capability_evaluator_test",
     )
     rows = [
         {"prompt": f"prompt {index}", "is_safe": index % 2 == 0} for index in range(250)
     ]
     prompts = evaluator.harmful_prompts(rows)
-    assert evaluator.TASK_METRICS == {
+    assert evaluator.CAPABILITY_METRICS == {
         "mmlu": "acc,none",
         "arc_easy": "acc,none",
     }
     assert len(prompts) == 100
     assert prompts[0] == "prompt 1"
-    assert (
-        evaluator.method_name(
-            "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam"
-        )
-        == "SEAM"
+    single = evaluator.parse_args(
+        ["single", "model-id", "model-path", "SEAM", str(tmp_path)]
     )
-    assert evaluator.method_name("meta-llama/Llama-2-7b-chat-hf") == "Base"
-    attack = Path(
-        "artifacts/generated/hpo/llama2-7b-beavertail--seam-figure2-hpo/models/"
-        "llama2-7b-beavertail--seam-figure2-hpo--overlapping--001"
+    assert single.method == "SEAM"
+    trajectory = evaluator.parse_args(
+        [
+            "trajectory",
+            "model-id",
+            "baseline",
+            "attack",
+            "1e-5",
+            "disjoint",
+            "Base",
+            str(tmp_path),
+            "--checkpoint-step",
+            "25",
+        ]
     )
-    assert evaluator.attack_checkpoint("defended", str(attack), 0) == "defended"
+    assert trajectory.checkpoint_step == 25
+    assert trajectory.method == "Base"
+    assert evaluator.attack_checkpoint("defended", "attack", 0) == "defended"
     perturbed = tmp_path / "trajectory" / "checkpoint-0"
     perturbed.mkdir(parents=True)
     (perturbed / "config.json").write_text("{}")
     assert evaluator.attack_checkpoint("defended", str(perturbed.parent), 0) == str(
         perturbed
     )
-    monkeypatch = pytest.MonkeyPatch()
-    removed = []
-    monkeypatch.setattr(evaluator.shutil, "rmtree", removed.append)
-    evaluator.delete_generated_attack(str(attack))
-    assert removed == [attack]
-    for attack_data in ("overlapping", "disjoint"):
-        root = (
-            "llama2-7b-beavertail--align-fft-seam--"
-            f"data-{attack_data}--relearn-fft-ms250-hpo"
-        )
-        split_attack = Path(
-            f"artifacts/generated/hpo/{root}/models/" f"{root}--{attack_data}--001"
-        )
-        evaluator.delete_generated_attack(str(split_attack))
-        assert removed[-1] == split_attack
-    with pytest.raises(ValueError, match="refusing"):
-        evaluator.delete_generated_attack("artifacts/tamia/models/valuable")
-
-    monkeypatch.undo()
 
 
-def test_seam_trajectory_evaluation_runs_all_waves_before_cleanup() -> None:
-    script = (EXAMPLE / "scripts/slurm/tamia/eval_seam_trajectory.sbatch").read_text()
+def test_beavertail_trajectory_evaluates_all_waves_before_cleanup() -> None:
+    script = (
+        EXAMPLE
+        / "scripts/slurm/tamia/eval_beavertail_and_capabilities_trajectory.sbatch"
+    ).read_text()
     assert "for ((wave = 0; wave < waves; wave++))" in script
     assert "CUDA_VISIBLE_DEVICES=$gpu" in script
-    assert "cleanup_seam_trajectory.sbatch" in script
+    assert "cleanup_beavertail_trajectory.sbatch" in script
     assert "SLURM_ARRAY_TASK_ID" not in script
 
 

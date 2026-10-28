@@ -12,7 +12,16 @@ export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"
 export PATH="$HOME/.local/bin:$PATH"
 export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
 
+model_id=${1:?missing model id}
+model=${2:?missing model}
+method=${3:?missing method}
+result_root=${4:?missing result root}
+
 module load httpproxy/1.0
 uv sync --frozen --group eval
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
-python scripts/evaluate_seam_figure2.py "$@"
+python scripts/evaluate_beavertail_and_capabilities.py single \
+    "$model_id" \
+    "$model" \
+    "$method" \
+    "$result_root"

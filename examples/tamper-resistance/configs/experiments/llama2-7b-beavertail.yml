@@ -7,4 +7,4 @@ models:
   - llama2-7b-beavertail--align-lora-sft--relearn-lora
   - llama2-7b-beavertail--align-lora-booster-l5-rho1e-1--relearn-lora
 evaluations:
-  - beavertail-alignment
+  - beavertail-adapter-relearn

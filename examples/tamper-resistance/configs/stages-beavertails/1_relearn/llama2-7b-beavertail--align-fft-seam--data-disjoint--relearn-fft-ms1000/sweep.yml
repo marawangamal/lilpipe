@@ -17,6 +17,9 @@ model:
   baseline_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam
   attack_data: "{sweep}"
   attack_learning_rate: "{parameter[learning_rate]}"
+  method: SEAM
+  evaluation_checkpoint_interval: "50"
+  evaluation_max_steps: "1000"
 evaluations:
-  - seam-figure2
+  - beavertail-capabilities-trajectory
 evaluation_registry: configs/registries/evals.yml
