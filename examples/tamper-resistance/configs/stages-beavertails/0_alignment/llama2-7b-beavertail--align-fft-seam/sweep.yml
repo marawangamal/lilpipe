@@ -1,0 +1,14 @@
+id: llama2-7b-beavertail--align-fft-seam-beta-hpo
+sweeps:
+  - name: beta
+    parameters:
+      custom_trainer_args.coeff_sd: [0.1, 1.0]
+producer:
+  script: scripts/slurm/tamia/train_model_parallel.sbatch
+  sbatch_args:
+    - --partition=gpubase_bynode_b2
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=48
+    - --mem=480G
+    - --time=03:00:00
+evaluations: []

@@ -305,6 +305,37 @@ def test_active_manifests_reference_only_registered_evaluations() -> None:
     assert referenced == registered
 
 
+def test_seam_defense_beta_sweep_uses_the_selected_configuration(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "seam_defense_beta_hpo_test")
+    monkeypatch.chdir(EXAMPLE)
+    directory = (
+        EXAMPLE / "configs/stages-beavertails/0_alignment/"
+        "llama2-7b-beavertail--align-fft-seam"
+    )
+
+    base = yaml.safe_load((directory / "base.yml").read_text())
+    selected = yaml.safe_load((directory / "selected.yml").read_text())
+    assert base == selected
+
+    output = tmp_path / "generated"
+    experiment_path = hpo.generate(directory / "sweep.yml", output)
+    experiment = yaml.safe_load(experiment_path.read_text())
+    configs = [
+        yaml.safe_load(path.read_text())
+        for path in sorted((output / "configs").glob("*.yml"))
+    ]
+
+    assert experiment["evaluations"] == []
+    assert [config["custom_trainer_args"]["coeff_sd"] for config in configs] == [
+        0.1,
+        1.0,
+    ]
+    assert len({config["output_dir"] for config in configs}) == 2
+    assert all(config["max_steps"] == 500 for config in configs)
+
+
 @pytest.mark.parametrize(
     ("attack_data", "offset"),
     [("overlapping", "0"), ("disjoint", "8000")],
