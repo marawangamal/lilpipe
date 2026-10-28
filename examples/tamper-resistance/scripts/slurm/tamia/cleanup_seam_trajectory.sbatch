@@ -15,6 +15,7 @@ case "$trajectory" in
     artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo/models/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--*) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--data-overlapping--relearn-perturb-and-fft-ms250-hpo/models/llama2-7b-beavertail--align-fft-seam--data-overlapping--relearn-perturb-and-fft-ms250-hpo--*) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-perturb-and-fft-ms250-hpo/models/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-perturb-and-fft-ms250-hpo--*) ;;
+    artifacts/generated/hpo/llama2-7b-beavertail--data-overlapping--relearn-fft-ms250-hpo/models/llama2-7b-beavertail--data-overlapping--relearn-fft-ms250-hpo--*) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--data-disjoint--relearn-fft-ms250-hpo/models/llama2-7b-beavertail--data-disjoint--relearn-fft-ms250-hpo--*) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--seam-figure2-hpo/models/llama2-7b-beavertail--seam-figure2-hpo--*) ;;
     artifacts/generated/hpo/llama2-7b-beavertail--seam-gaussian-figure2-hpo/models/llama2-7b-beavertail--seam-gaussian-figure2-hpo--*) ;;
@@ -34,5 +35,5 @@ if [[ ! -d "$trajectory" ]]; then
     echo "Missing trajectory: $trajectory" >&2
     exit 1
 fi
-rm -rf -- "$trajectory"
+rm -r -- "$trajectory"
 echo "Removed fully evaluated trajectory: $trajectory"

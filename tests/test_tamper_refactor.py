@@ -431,6 +431,10 @@ def test_seam_figure2_base_sweep_attacks_the_undefended_chat_model(
         and config["micro_batch_size"] == 12
         for config in generated_configs
     )
+    cleanup = (
+        EXAMPLE / "scripts/slurm/tamia/cleanup_seam_trajectory.sbatch"
+    ).read_text()
+    assert f"llama2-7b-beavertail--data-{attack_data}--relearn-fft-ms250-hpo" in cleanup
 
 
 @pytest.mark.parametrize(
