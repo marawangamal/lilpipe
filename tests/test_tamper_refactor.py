@@ -305,7 +305,7 @@ def test_active_manifests_reference_only_registered_evaluations() -> None:
     assert referenced == registered
 
 
-def test_seam_defense_beta_sweep_uses_the_selected_configuration(
+def test_seam_defense_beta_sweep_uses_the_promoted_configuration(
     tmp_path: Path, monkeypatch
 ) -> None:
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "seam_defense_beta_hpo_test")
@@ -317,6 +317,7 @@ def test_seam_defense_beta_sweep_uses_the_selected_configuration(
 
     base = yaml.safe_load((directory / "base.yml").read_text())
     selected = yaml.safe_load((directory / "selected.yml").read_text())
+    base["custom_trainer_args"]["coeff_sd"] = 1.0
     assert base == selected
 
     output = tmp_path / "generated"

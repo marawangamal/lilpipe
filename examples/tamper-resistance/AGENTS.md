@@ -61,7 +61,60 @@ Evaluations are written to `artifacts/tamia/evals/<model-id>/`, mirroring
    *Hyperparameter sweeps* table in `docs/experiments.md`. When the choice is
    close, also add an eligibility table like the RMU + AO one.
 
-## Promoting a Candidate
+## Running Generated Sweeps
+
+Generate a sweep once, then use the generated manifest for both the dry run and
+submission:
+
+```bash
+python scripts/hpo.py generate configs/stages-*/<stage>/<lineage>/sweep.yml
+lilpipe artifacts/generated/hpo/<sweep-id>/experiment.yml --dry-run
+lilpipe artifacts/generated/hpo/<sweep-id>/experiment.yml
+```
+
+For checkpoint trajectories that must not coexist on scratch, run exactly one
+candidate at a time. Select it by generated model ID and reuse every upstream
+model that already exists:
+
+```bash
+lilpipe artifacts/generated/hpo/<sweep-id>/experiment.yml \
+  --models <candidate-id> \
+  --existing-models <upstream-model-id> \
+  --dry-run
+lilpipe artifacts/generated/hpo/<sweep-id>/experiment.yml \
+  --models <candidate-id> \
+  --existing-models <upstream-model-id>
+```
+
+The dry run must contain only the selected attack and its dependent trajectory
+evaluation. Do not submit the next candidate until both jobs complete, every
+expected checkpoint summary exists, and the guarded cleanup has removed the
+evaluated trajectory. For a 1,000-step trajectory saved every 50 steps, verify
+all 21 summaries from `checkpoint-0` through `checkpoint-1000`. If training
+fails, fix or remove its partial output before retrying. If only evaluation
+fails, keep the trajectory and resubmit just the evaluation by marking both the
+upstream model and candidate as existing; cleanup will run only after all
+summaries are present.
+
+### Promoting a BeaverTails SEAM defense
+
+Promote a completed defense candidate without retraining it:
+
+1. Copy its concrete hyperparameters into the lineage's `selected.yml`; keep
+   `base.yml` as the reusable sweep template.
+2. On Tamia, rename any current canonical model into
+   `artifacts/tamia/models/archive/` so the change is reversible.
+3. Move the selected candidate from
+   `artifacts/generated/hpo/<sweep-id>/models/<candidate-id>` to its canonical
+   `artifacts/tamia/models/<lineage>` path.
+4. Verify that the promoted config and model agree before passing the canonical
+   model as `--existing-models` to downstream relearning sweeps.
+
+Do not copy a full model merely to promote it: these artifacts are large, and a
+same-filesystem rename preserves the selected artifact without temporarily
+doubling scratch usage.
+
+## Promoting a WMDP Candidate
 
 A candidate is promoted into a budget `<N>pp` that it satisfies. That budget
 may differ from the one the sweep ran under: a `--15pp--` sweep candidate within

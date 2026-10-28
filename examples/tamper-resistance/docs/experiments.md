@@ -16,33 +16,6 @@ checkpoints survive rotation. Record `gaussian_sigma` and `gaussian_seed` in
 every evaluation summary. Do not include this sweep in the 1,000-step
 experiment.
 
-## Generate and run a sweep
-
-Each lineage has a runnable `base.yml`, a parameter `sweep.yml`, and a
-promoted standalone `selected.yml`. Generate candidates from a sweep with:
-
-```bash
-python scripts/hpo.py generate \
-  configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-rmu/sweep.yml
-lilpipe artifacts/generated/hpo/z7b-wmdp-bio--5pp--unlearn-fft-rmu-hpo/experiment.yml
-```
-
-Generated configurations, their model registry, and their manifest are kept
-under `artifacts/generated/hpo/<sweep-id>/`. HPO runs keep only the final
-checkpoint. Selection is manual: copy the chosen concrete values to the
-lineage's `selected.yml` and promote its model in
-`configs/registries/models.yml`.
-
-## Run canonical lineages
-
-```bash
-lilpipe configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml
-lilpipe configs/experiments/z7b-wmdp-bio-unlearn--15pp.yml
-```
-
-Canonical relearning configurations retain trajectory checkpoints for
-evaluation.
-
 ## Results
 
 ### SSIUU TOFU Table 2

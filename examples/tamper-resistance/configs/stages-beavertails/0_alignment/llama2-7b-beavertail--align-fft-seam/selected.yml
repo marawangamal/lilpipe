@@ -5,7 +5,7 @@ trainer_cls: trainers.tr_seam.SEAMTrainer
 custom_trainer_args:
   coeff_hh: 1.0
   coeff_hb: 1.0
-  coeff_sd: 0.01
+  coeff_sd: 1.0
   epsilon: 1.0e-3
   n_hh: 8000
   n_hb: 8000
