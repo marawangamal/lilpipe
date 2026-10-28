@@ -125,6 +125,16 @@ class BeaverTailsHBStrategy(BeaverTailsBaseStrategy):
         }
 
 
+def train_on_inputs(cfg, selection):
+    """Resolve an optional per-dataset override of the global setting."""
+    value = selection.get("train_on_inputs")
+    if value is None:
+        return cfg.train_on_inputs
+    if value not in {"true", "false"}:
+        raise ValueError("train_on_inputs must be 'true' or 'false'")
+    return value == "true"
+
+
 def load_hh(tokenizer, cfg, ds_cfg=None):
     """Build the dataset-wrapping strategy for one Axolotl dataset entry.
 
@@ -140,7 +150,7 @@ def load_hh(tokenizer, cfg, ds_cfg=None):
     return BeaverTailsHHStrategy(
         tokenizer,
         cfg.sequence_len,
-        cfg.train_on_inputs,
+        train_on_inputs(cfg, selection),
         max_rows=None if max_rows is None else int(max_rows),
         offset=int(selection.get("offset", 0)),
     )
@@ -153,7 +163,7 @@ def load_hb(tokenizer, cfg, ds_cfg=None):
     return BeaverTailsHBStrategy(
         tokenizer,
         cfg.sequence_len,
-        cfg.train_on_inputs,
+        train_on_inputs(cfg, selection),
         max_rows=None if max_rows is None else int(max_rows),
         offset=int(selection.get("offset", 0)),
     )

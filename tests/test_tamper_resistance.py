@@ -1794,6 +1794,23 @@ def test_beavertails_hh_filters_and_masks_prompt() -> None:
         }
     )
     assert -100 not in train_on_inputs["labels"]
+    completion_only = module.load_hh(
+        Tokenizer(),
+        SimpleNamespace(train_on_inputs=True, sequence_len=32),
+        SimpleNamespace(
+            message_property_mappings={
+                "max_rows": "2",
+                "offset": "0",
+                "train_on_inputs": "false",
+            }
+        ),
+    ).tokenize_row(
+        {
+            "prompt": "unsafe question",
+            "response": "harmful answer",
+        }
+    )
+    assert completion_only["labels"][:completion_start] == [-100] * completion_start
 
     raw = datasets.Dataset.from_dict(
         {
@@ -1835,7 +1852,7 @@ def test_beavertails_hh_filters_and_masks_prompt() -> None:
     assert len(all_remaining) == 2
 
 
-def test_seam_defense_uses_completion_only_author_data() -> None:
+def test_seam_defense_uses_per_dataset_input_masks() -> None:
     root = (
         EXAMPLE / "configs/stages-beavertails/0_alignment/"
         "llama2-7b-beavertail--align-fft-seam"
@@ -1852,6 +1869,10 @@ def test_seam_defense_uses_completion_only_author_data() -> None:
         dataset["message_property_mappings"]["role"]
         for dataset in config["datasets"][:2]
     ] == ["hh", "hb"]
+    assert [
+        dataset["message_property_mappings"]["train_on_inputs"]
+        for dataset in config["datasets"][:2]
+    ] == ["false", "false"]
     assert alpaca["split"] == "train"
     assert alpaca["type"] == {
         "field_instruction": "instruction",
@@ -1860,7 +1881,7 @@ def test_seam_defense_uses_completion_only_author_data() -> None:
         "format": "Question: {instruction}\n{input}\nAnswer: ",
         "no_input_format": "Question: {instruction}\n\nAnswer: ",
     }
-    assert config["train_on_inputs"] is False
+    assert config["train_on_inputs"] is True
     assert config["custom_trainer_args"] == {
         "coeff_hh": 1.0,
         "coeff_hb": 1.0,
@@ -1978,13 +1999,13 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     instance.log = logged.append
     coefficients = []
     instance.accumulate_hh_grad = lambda model, inputs, coefficient: (
-        coefficients.append(coefficient) or torch.tensor(2.0)
+        coefficients.append(coefficient) or coefficient * torch.tensor(2.0)
     )
     instance.accumulate_hb_grad = lambda model, inputs, coefficient: (
-        coefficients.append(coefficient) or torch.tensor(4.0)
+        coefficients.append(coefficient) or coefficient * torch.tensor(4.0)
     )
     instance.accumulate_sd_grad = lambda model, harmful, benign, coefficient: (
-        coefficients.append(coefficient) or torch.tensor(0.5)
+        coefficients.append(coefficient) or coefficient * torch.tensor(0.5)
     )
     reported_loss = instance.training_step(
         None,
@@ -1992,7 +2013,10 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     )
     assert reported_loss.item() == pytest.approx(0.3125)
     assert coefficients == [-0.75, 0.5, 0.25]
-    assert logged == [{"loss_hh": 2.0, "loss_hb": 4.0, "loss_sd": 0.5}]
+    assert logged == [{"loss_hh": -1.5, "loss_hb": 2.0, "loss_sd": 0.125}]
+    del instance.accumulate_hh_grad
+    del instance.accumulate_hb_grad
+    del instance.accumulate_sd_grad
 
     loss_only = object.__new__(trainer.SEAMTrainer)
     loss_only.current_gradient_accumulation_steps = 1

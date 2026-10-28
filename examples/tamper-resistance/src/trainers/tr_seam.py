@@ -196,7 +196,7 @@ class SEAMTrainer(BF16Trainer):
         loss_hh = self.compute_ce(model, harmful, layerwise=True)
         if not compute_loss_only:
             self.accelerator.backward(coefficient * loss_hh / divisor)
-        return loss_hh.detach()
+        return coefficient * loss_hh.detach()
 
     def accumulate_hb_grad(
         self, model, refusal, coefficient=1.0, compute_loss_only=False
@@ -206,7 +206,7 @@ class SEAMTrainer(BF16Trainer):
         loss_hb = self.compute_ce(model, refusal)
         if not compute_loss_only:
             self.accelerator.backward(coefficient * loss_hb / divisor)
-        return loss_hb.detach()
+        return coefficient * loss_hb.detach()
 
     def accumulate_sd_grad(
         self, model, harmful, benign, coefficient=1.0, compute_loss_only=False
@@ -227,7 +227,7 @@ class SEAMTrainer(BF16Trainer):
         norm_bb = gradient_dict_dot(g_bb, g_bb).sqrt()
         cosine = gradient_dict_dot(g_hh, g_bb) / (norm_hh * norm_bb + 1e-8)
         if compute_loss_only:
-            return cosine.detach()
+            return coefficient * cosine.detach()
 
         d_hh = {
             name: self.epsilon
@@ -269,7 +269,7 @@ class SEAMTrainer(BF16Trainer):
                     parameter.grad = sd_grad
                 else:
                     parameter.grad.add_(sd_grad)
-        return cosine.detach()
+        return coefficient * cosine.detach()
 
     def training_step(self, model, inputs, num_items_in_batch=None):
         inputs = self._prepare_inputs(inputs)
@@ -280,9 +280,9 @@ class SEAMTrainer(BF16Trainer):
         divisor = self.current_gradient_accumulation_steps
 
         loss_hh = self.accumulate_hh_grad(model, inp_hh, coefficient=-self.coeff_hh)
-        loss_hb = self.accumulate_hb_grad(model, inp_hb, coefficient=+self.coeff_hb)
+        loss_hb = self.accumulate_hb_grad(model, inp_hb, coefficient=self.coeff_hb)
         loss_sd = self.accumulate_sd_grad(
-            model, inp_hh, inp_bb, coefficient=+self.coeff_sd
+            model, inp_hh, inp_bb, coefficient=self.coeff_sd
         )
         self.log(
             {
@@ -293,11 +293,7 @@ class SEAMTrainer(BF16Trainer):
         )
 
         # Trainer uses this only for logging; all gradients are already accumulated.
-        loss = (
-            -self.coeff_hh * loss_hh
-            + self.coeff_hb * loss_hb.to(loss_hh.device)
-            + self.coeff_sd * loss_sd.to(loss_hh.device)
-        )
+        loss = loss_hh + loss_hb.to(loss_hh.device) + loss_sd.to(loss_hh.device)
         return (loss / divisor).to(self.args.device)
 
 

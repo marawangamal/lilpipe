@@ -12,17 +12,19 @@ custom_trainer_args:
   n_bb: 8000
 datasets:
   # L_hh: retain unsafe rows and train harmful prompt -> harmful completion.
-  # With train_on_inputs=false, Axolotl computes CE only on the response.
+  # The per-dataset override keeps L_hh and L_hb completion-only.
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
     type: data.beavertails_hh
-    message_property_mappings: {role: hh, max_rows: "8000", offset: "0"}
+    message_property_mappings:
+      {role: hh, max_rows: "8000", offset: "0", train_on_inputs: "false"}
   - path: anonymous4486/repnoise_beavertail
     split: train
     revision: 11ea63756195527164a9aa2850f7544bd251eab1
     type: data.beavertails_hh
-    message_property_mappings: {role: hb, max_rows: "8000", offset: "0"}
+    message_property_mappings:
+      {role: hb, max_rows: "8000", offset: "0", train_on_inputs: "false"}
   - path: yahma/alpaca-cleaned
     split: train
     revision: 12567cabf869d7c92e573c7c783905fc160e9639
@@ -41,7 +43,7 @@ sequence_len: 256
 sample_packing: false
 pad_to_sequence_len: true
 remove_unused_columns: false
-train_on_inputs: false
+train_on_inputs: true
 # Model parallelism is one process, so this is the complete batch: 8 harmful,
 # 8 refusal, and 8 benign rows.
 micro_batch_size: 24
