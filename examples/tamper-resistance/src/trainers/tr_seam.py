@@ -14,6 +14,15 @@ from trainers.rl_bf16 import BF16Trainer
 # Utilities
 
 
+def model_to_params(model, only_trainable=False):
+    """Return the model's parameters keyed by name, optionally only trainable ones."""
+    return {
+        name: parameter
+        for name, parameter in model.named_parameters()
+        if not only_trainable or parameter.requires_grad
+    }
+
+
 def gradient_dict_dot(first, second):
     """Dot two name-to-tensor mappings that may span several devices."""
     partials = {}
@@ -40,6 +49,17 @@ def named_gradients(loss, parameters, divisor=1):
         name: value.detach() if value is not None else torch.zeros_like(parameter)
         for (name, parameter), value in zip(parameters.items(), values, strict=True)
     }
+
+
+def accumulate_gradients(parameters, gradients, coefficient=1.0):
+    """Add a name-to-gradient mapping into the corresponding parameters."""
+    with torch.no_grad():
+        for name, parameter in parameters.items():
+            gradient = gradients[name].mul(coefficient)
+            if parameter.grad is None:
+                parameter.grad = gradient
+            else:
+                parameter.grad.add_(gradient)
 
 
 @contextlib.contextmanager
@@ -181,7 +201,7 @@ class SEAMTrainer(BF16Trainer):
                 checkpoint(
                     hidden_loss,
                     hidden,
-                    use_reentrant=True,
+                    use_reentrant=False,
                     preserve_rng_state=False,
                 )
                 for hidden in outputs.hidden_states
@@ -193,30 +213,42 @@ class SEAMTrainer(BF16Trainer):
     ):
         """Backward the layer-wise harmful unlearning term into parameter.grad."""
         divisor = self.current_gradient_accumulation_steps
-        loss_hh = self.compute_ce(model, harmful, layerwise=True)
-        if not compute_loss_only:
-            self.accelerator.backward(coefficient * loss_hh / divisor)
-        return coefficient * loss_hh.detach()
+        loss = self.compute_ce(model, harmful, layerwise=True)
+        if compute_loss_only:
+            return coefficient * loss.detach()
+
+        # Compute the gradient without accumulating it into parameter.grad.
+        parameters = model_to_params(model, only_trainable=True)
+        g = named_gradients(loss, parameters, divisor)
+        norm = gradient_dict_dot(g, g).sqrt() * abs(coefficient)
+
+        # Accumulate the gradient for the eventual optimizer step.
+        accumulate_gradients(parameters, g, coefficient)
+        return coefficient * loss.detach(), norm.detach()
 
     def accumulate_hb_grad(
         self, model, refusal, coefficient=1.0, compute_loss_only=False
     ):
         """Backward the refusal-preservation term into parameter.grad."""
         divisor = self.current_gradient_accumulation_steps
-        loss_hb = self.compute_ce(model, refusal)
-        if not compute_loss_only:
-            self.accelerator.backward(coefficient * loss_hb / divisor)
-        return coefficient * loss_hb.detach()
+        loss = self.compute_ce(model, refusal)
+        if compute_loss_only:
+            return coefficient * loss.detach()
+
+        # Compute the gradient without accumulating it into parameter.grad.
+        parameters = model_to_params(model, only_trainable=True)
+        g = named_gradients(loss, parameters, divisor)
+        norm = gradient_dict_dot(g, g).sqrt() * abs(coefficient)
+
+        # Accumulate the gradient for the eventual optimizer step.
+        accumulate_gradients(parameters, g, coefficient)
+        return coefficient * loss.detach(), norm.detach()
 
     def accumulate_sd_grad(
         self, model, harmful, benign, coefficient=1.0, compute_loss_only=False
     ):
         """Compute the finite-difference SD gradient and add it to parameter.grad."""
-        parameters = {
-            name: parameter
-            for name, parameter in model.named_parameters()
-            if parameter.requires_grad
-        }
+        parameters = model_to_params(model, only_trainable=True)
         divisor = self.current_gradient_accumulation_steps
 
         loss_hh = self.compute_ce(model, harmful)
@@ -261,39 +293,60 @@ class SEAMTrainer(BF16Trainer):
             + (g_bb_shifted[name] - g_bb[name]) / norm_bb.to(parameter.device)
             for name, parameter in parameters.items()
         }
-        with torch.no_grad():
-            for name, parameter in parameters.items():
-                # parameter, parameter.grad, and g_sd[name] are on the same GPU.
-                sd_grad = g_sd[name].mul(coefficient / self.epsilon)
-                if parameter.grad is None:
-                    parameter.grad = sd_grad
-                else:
-                    parameter.grad.add_(sd_grad)
-        return coefficient * cosine.detach()
+        norm_sd = gradient_dict_dot(g_sd, g_sd).sqrt() * abs(coefficient / self.epsilon)
+        accumulate_gradients(parameters, g_sd, coefficient / self.epsilon)
+        return coefficient * cosine.detach(), norm_sd.detach()
 
     def training_step(self, model, inputs, num_items_in_batch=None):
         inputs = self._prepare_inputs(inputs)
         inp_hh = {name: value[0::3] for name, value in inputs.items()}
         inp_hb = {name: value[1::3] for name, value in inputs.items()}
         inp_bb = {name: value[2::3] for name, value in inputs.items()}
-
         divisor = self.current_gradient_accumulation_steps
 
-        loss_hh = self.accumulate_hh_grad(model, inp_hh, coefficient=-self.coeff_hh)
-        loss_hb = self.accumulate_hb_grad(model, inp_hb, coefficient=self.coeff_hb)
-        loss_sd = self.accumulate_sd_grad(
-            model, inp_hh, inp_bb, coefficient=self.coeff_sd
-        )
-        self.log(
+        configs = [
             {
-                "loss_hh": loss_hh.item(),
-                "loss_hb": loss_hb.item(),
-                "loss_sd": loss_sd.item(),
-            }
-        )
+                "name": "hh",
+                "accum_fn": self.accumulate_hh_grad,
+                "kwargs": {
+                    "model": model,
+                    "harmful": inp_hh,
+                    "coefficient": -self.coeff_hh,
+                },
+            },
+            {
+                "name": "hb",
+                "accum_fn": self.accumulate_hb_grad,
+                "kwargs": {
+                    "model": model,
+                    "refusal": inp_hb,
+                    "coefficient": self.coeff_hb,
+                },
+            },
+            {
+                "name": "sd",
+                "accum_fn": self.accumulate_sd_grad,
+                "kwargs": {
+                    "model": model,
+                    "harmful": inp_hh,
+                    "benign": inp_bb,
+                    "coefficient": self.coeff_sd,
+                },
+            },
+        ]
+
+        log_dict = {}
+        losses = []
+        for cfg in configs:
+            loss, norm = cfg["accum_fn"](**cfg["kwargs"])
+            log_dict[f"loss_{cfg['name']}"] = loss.item()
+            log_dict[f"norm_{cfg['name']}"] = norm.item()
+            losses.append(loss)
+
+        self.log(log_dict)
 
         # Trainer uses this only for logging; all gradients are already accumulated.
-        loss = loss_hh + loss_hb.to(loss_hh.device) + loss_sd.to(loss_hh.device)
+        loss = sum(value.to(losses[0].device) for value in losses)
         return (loss / divisor).to(self.args.device)
 
 

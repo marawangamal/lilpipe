@@ -1922,6 +1922,16 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     assert list(sampler) == [0, 2, 5, 1, 3, 6]
     assert len(sampler) == 6
 
+    linear = torch.nn.Linear(2, 1)
+    linear.bias.requires_grad_(False)
+    assert set(trainer.model_to_params(linear)) == {"weight", "bias"}
+    assert set(trainer.model_to_params(linear, only_trainable=True)) == {"weight"}
+    norm_trainer = object.__new__(trainer.SEAMTrainer)
+    norm_trainer.current_gradient_accumulation_steps = 1
+    norm_trainer.compute_ce = lambda model, inputs: model(inputs).sum()
+    _, norm = norm_trainer.accumulate_hb_grad(linear, torch.tensor([[3.0, 4.0]]))
+    assert norm.item() == pytest.approx(5.0)
+
     class Tokenizer:
         pad_token_id = 0
 
@@ -1998,14 +2008,17 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     instance.args = SimpleNamespace(device=torch.device("cpu"))
     instance.log = logged.append
     coefficients = []
-    instance.accumulate_hh_grad = lambda model, inputs, coefficient: (
-        coefficients.append(coefficient) or coefficient * torch.tensor(2.0)
+    instance.accumulate_hh_grad = lambda model, harmful, coefficient: (
+        coefficients.append(coefficient) or coefficient * torch.tensor(2.0),
+        torch.tensor(3.0),
     )
-    instance.accumulate_hb_grad = lambda model, inputs, coefficient: (
-        coefficients.append(coefficient) or coefficient * torch.tensor(4.0)
+    instance.accumulate_hb_grad = lambda model, refusal, coefficient: (
+        coefficients.append(coefficient) or coefficient * torch.tensor(4.0),
+        torch.tensor(4.0),
     )
     instance.accumulate_sd_grad = lambda model, harmful, benign, coefficient: (
-        coefficients.append(coefficient) or coefficient * torch.tensor(0.5)
+        coefficients.append(coefficient) or coefficient * torch.tensor(0.5),
+        torch.tensor(5.0),
     )
     reported_loss = instance.training_step(
         None,
@@ -2013,7 +2026,16 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     )
     assert reported_loss.item() == pytest.approx(0.3125)
     assert coefficients == [-0.75, 0.5, 0.25]
-    assert logged == [{"loss_hh": -1.5, "loss_hb": 2.0, "loss_sd": 0.125}]
+    assert logged == [
+        {
+            "loss_hh": -1.5,
+            "norm_hh": 3.0,
+            "loss_hb": 2.0,
+            "norm_hb": 4.0,
+            "loss_sd": 0.125,
+            "norm_sd": 5.0,
+        }
+    ]
     del instance.accumulate_hh_grad
     del instance.accumulate_hb_grad
     del instance.accumulate_sd_grad
@@ -2095,8 +2117,15 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         torch.stack(reference_losses).sum() / len(outputs.hidden_states) + 1
     )
     assert loss.item() == pytest.approx(reference.item())
-    loss.backward()
-    assert toy.head.weight.grad is not None
+    layerwise_gradients = trainer.named_gradients(
+        loss,
+        {
+            name: parameter
+            for name, parameter in toy.named_parameters()
+            if parameter.requires_grad
+        },
+    )
+    assert torch.count_nonzero(layerwise_gradients["head.weight"])
 
     bf16_dot = trainer.gradient_dict_dot(
         {"first": torch.tensor([1.0, 2.0], dtype=torch.bfloat16)},
