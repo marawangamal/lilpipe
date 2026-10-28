@@ -12,7 +12,7 @@ evaluations:
     - --mem=480G
     - --time=03:00:00
   seam-figure2:
-    script: scripts/slurm/tamia/eval_seam_figure2.sbatch
+    script: scripts/slurm/tamia/eval_seam_trajectory.sbatch
     args:
     - '{model.id}'
     - '{model.baseline_model_name_or_path}'
@@ -20,7 +20,8 @@ evaluations:
     - '{model.attack_learning_rate}'
     - '{model.attack_data}'
     - artifacts/tamia/evals/llama2-7b-beavertail--seam-trajectories
-    - --delete-attacked-model
+    - '25'
+    - '250'
     sbatch_args:
     - --partition=gpubase_bynode_b2
     - --gpus-per-node=h100:4

@@ -2198,6 +2198,14 @@ def test_seam_figure2_evaluation_schema(tmp_path: Path) -> None:
     monkeypatch.undo()
 
 
+def test_seam_trajectory_evaluation_runs_all_waves_before_cleanup() -> None:
+    script = (EXAMPLE / "scripts/slurm/tamia/eval_seam_trajectory.sbatch").read_text()
+    assert "for ((wave = 0; wave < waves; wave++))" in script
+    assert "CUDA_VISIBLE_DEVICES=$gpu" in script
+    assert "cleanup_seam_trajectory.sbatch" in script
+    assert "SLURM_ARRAY_TASK_ID" not in script
+
+
 OPTUNA_SCRIPT = EXAMPLE / "scripts" / "optuna_hpo.py"
 OPTUNA_CONFIG = (
     EXAMPLE
