@@ -371,12 +371,10 @@ def test_beavertail_trajectory_sweeps_separate_attack_data(
         for path in sorted((tmp_path / attack_data / "configs").glob("*.yml"))
     ]
 
-    assert len(attacks) == 4
+    assert len(attacks) == 2
     assert experiment["evaluations"] == ["beavertail-capabilities-trajectory"]
     assert {model["attack_learning_rate"] for model in attacks} == {
-        "2e-05",
         "5e-05",
-        "8e-05",
         "0.0001",
     }
     assert {model["baseline_model_name_or_path"] for model in attacks} == {
@@ -384,7 +382,7 @@ def test_beavertail_trajectory_sweeps_separate_attack_data(
     }
     assert {model["attack_data"] for model in attacks} == {attack_data}
     assert {model["method"] for model in attacks} == {"SEAM"}
-    assert {model["evaluation_checkpoint_interval"] for model in attacks} == {"25"}
+    assert {model["evaluation_checkpoint_interval"] for model in attacks} == {"100"}
     assert {model["evaluation_max_steps"] for model in attacks} == {"250"}
     assert {
         config["datasets"][0]["message_property_mappings"]["offset"]
@@ -405,6 +403,8 @@ def test_beavertail_trajectory_sweeps_separate_attack_data(
         "trainers.tr_seam.SEAMRelearnTrainer"
     }
     assert {config["micro_batch_size"] for config in generated_configs} == {12}
+    assert {config["save_steps"] for config in generated_configs} == {100}
+    assert {config["save_total_limit"] for config in generated_configs} == {3}
     assert all(
         config["datasets"][1]["message_property_mappings"]["offset"] == offset
         for config in generated_configs
@@ -441,18 +441,24 @@ def test_beavertail_base_sweep_attacks_the_undefended_chat_model(
         for path in sorted((tmp_path / "generated/configs").glob("*.yml"))
     ]
 
-    assert len(attacks) == 4
+    assert len(attacks) == 2
+    assert {model["attack_learning_rate"] for model in attacks} == {
+        "5e-05",
+        "0.0001",
+    }
     assert {model["baseline_model_name_or_path"] for model in attacks} == {
         "meta-llama/Llama-2-7b-chat-hf"
     }
     assert {model["attack_data"] for model in attacks} == {attack_data}
     assert {model["method"] for model in attacks} == {"Base"}
-    assert {model["evaluation_checkpoint_interval"] for model in attacks} == {"25"}
+    assert {model["evaluation_checkpoint_interval"] for model in attacks} == {"100"}
     assert {model["evaluation_max_steps"] for model in attacks} == {"250"}
     assert all("depends_on" not in model["producer"] for model in attacks)
     assert {config["base_model"] for config in generated_configs} == {
         "meta-llama/Llama-2-7b-chat-hf"
     }
+    assert {config["save_steps"] for config in generated_configs} == {100}
+    assert {config["save_total_limit"] for config in generated_configs} == {3}
     assert {
         config["datasets"][0]["message_property_mappings"]["offset"]
         for config in generated_configs
@@ -545,8 +551,8 @@ def test_seam_gaussian_sweeps_separate_attack_data(
         "trainers.rl_perturb.GaussianSEAMRelearnTrainer"
     }
     assert {config["max_steps"] for config in generated_configs} == {250}
-    assert {config["save_steps"] for config in generated_configs} == {25}
-    assert {config["save_total_limit"] for config in generated_configs} == {11}
+    assert {config["save_steps"] for config in generated_configs} == {100}
+    assert {config["save_total_limit"] for config in generated_configs} == {3}
     assert {
         config["datasets"][0]["message_property_mappings"]["offset"]
         for config in generated_configs

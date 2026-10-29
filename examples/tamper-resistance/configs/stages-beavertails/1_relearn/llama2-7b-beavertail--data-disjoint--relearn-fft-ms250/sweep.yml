@@ -2,7 +2,7 @@ id: llama2-7b-beavertail--data-disjoint--relearn-fft-ms250-hpo
 sweeps:
   - name: disjoint
     parameters:
-      learning_rate: [2.0e-5, 5.0e-5, 8.0e-5, 1.0e-4]
+      learning_rate: [5.0e-5, 1.0e-4]
 producer:
   script: scripts/slurm/tamia/train_single_gpu.sbatch
   sbatch_args:
@@ -16,7 +16,7 @@ model:
   attack_data: "{sweep}"
   attack_learning_rate: "{parameter[learning_rate]}"
   method: Base
-  evaluation_checkpoint_interval: "25"
+  evaluation_checkpoint_interval: "100"
   evaluation_max_steps: "250"
 evaluations:
   - beavertail-capabilities-trajectory
