@@ -1,4 +1,19 @@
 models:
+  llama2-7b-beavertail--align-fft-seam-legacy:
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy
+    producer:
+      id: train-llama2-7b-beavertail--align-fft-seam-legacy
+      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      args:
+      - configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-fft-seam-legacy/selected.yml
+      sbatch_args:
+      - --partition=gpubase_bynode_b2
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
   llama2-7b-beavertail--align-fft-seam:
     base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam
     adapter_name_or_path: '-'

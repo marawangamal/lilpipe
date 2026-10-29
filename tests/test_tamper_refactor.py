@@ -336,6 +336,62 @@ def test_seam_defense_beta_sweep_uses_the_promoted_configuration(
     assert all(config["max_steps"] == 500 for config in configs)
 
 
+def test_legacy_seam_ms250_recreation_uses_the_original_training_setup(
+    tmp_path: Path, monkeypatch
+) -> None:
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "legacy_seam_ms250_hpo_test")
+    monkeypatch.chdir(EXAMPLE)
+    defense = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages-beavertails/0_alignment/"
+            "llama2-7b-beavertail--align-fft-seam-legacy/selected.yml"
+        ).read_text()
+    )
+
+    assert defense["trainer_cls"] == "trainers.tr_seam_legacy.SEAMAlignmentTrainer"
+    assert defense["custom_trainer_args"] == {
+        "alpha": 1.0,
+        "beta": 0.01,
+        "epsilon": 1.0e-3,
+    }
+    assert defense["micro_batch_size"] == 24
+    assert defense["max_steps"] == 500
+    assert [
+        dataset["message_property_mappings"]["role"] for dataset in defense["datasets"]
+    ] == ["harmful", "refusal", "benign"]
+
+    sweep_path = (
+        EXAMPLE / "configs/stages-beavertails/1_relearn/"
+        "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--"
+        "relearn-fft-ms250/sweep.yml"
+    )
+    output = tmp_path / "generated"
+    experiment_path = hpo.generate(sweep_path, output)
+    experiment = yaml.safe_load(experiment_path.read_text())
+    registry = yaml.safe_load((output / "models.yml").read_text())["models"]
+    attacks = [registry[model_id] for model_id in experiment["models"]]
+    configs = [
+        yaml.safe_load(path.read_text())
+        for path in sorted((output / "configs").glob("*.yml"))
+    ]
+
+    assert len(attacks) == 2
+    assert {model["attack_learning_rate"] for model in attacks} == {
+        "5e-05",
+        "0.0001",
+    }
+    assert {config["trainer_cls"] for config in configs} == {
+        "trainers.rl_bf16.BF16Trainer"
+    }
+    assert {config["micro_batch_size"] for config in configs} == {4}
+    assert {config["max_steps"] for config in configs} == {250}
+    assert {config["save_steps"] for config in configs} == {100}
+    assert {config["save_total_limit"] for config in configs} == {3}
+    assert {
+        config["datasets"][0]["message_property_mappings"]["role"] for config in configs
+    } == {"attack_disjoint"}
+
+
 @pytest.mark.parametrize(
     ("attack_data", "offset"),
     [("overlapping", "0"), ("disjoint", "8000")],
