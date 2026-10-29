@@ -16,48 +16,50 @@ seam_og_root = osp.join(
 )
 learning_rates = [5e-5, 1e-4]
 steps = range(0, 201, 100)
-configs = [
-    {
-        "path": osp.join(
-            root,
-            "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
-            f"relearn-fft-ms250-hpo--disjoint--{index:03d}/checkpoint-{step}/"
-            "summary.json",
-        ),
-        "method": "SEAM",
-        "lr": lr,
-        "step": step,
-    }
-    for index, lr in enumerate(learning_rates, 1)
-    for step in steps
-] + [
-    {
-        "path": osp.join(
-            root,
-            "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--"
-            f"relearn-fft-ms250-hpo--disjoint--{index:03d}/checkpoint-{step}/"
-            "summary.json",
-        ),
-        "method": "SEAM (legacy rerun)",
-        "lr": lr,
-        "step": step,
-    }
-    for index, lr in enumerate(learning_rates, 1)
-    for step in steps
-] + [
-    {
-        "path": osp.join(
-            root,
-            "llama2-7b-beavertail--align-fft-seam-author-paper--data-disjoint--"
-            "relearn-fft-ms250-hpo--disjoint--002/"
-            f"checkpoint-{step}/summary.json",
-        ),
-        "method": "SEAM (legacy old)",
-        "lr": 1e-4,
-        "step": step,
-    }
-    for step in steps
-]
+configs = (
+    [
+        {
+            "path": osp.join(
+                root,
+                "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
+                f"relearn-fft-ms250-hpo--disjoint--{index:03d}/checkpoint-{step}/"
+                "summary.json",
+            ),
+            "method": "SEAM",
+            "lr": lr,
+            "step": step,
+        }
+        for index, lr in enumerate(learning_rates, 1)
+        for step in steps
+    ]
+    + [
+        {
+            "path": osp.join(
+                root,
+                "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--"
+                f"relearn-fft-ms250-hpo--disjoint--002/checkpoint-{step}/summary.json",
+            ),
+            "method": "SEAM (legacy reproduced)",
+            "lr": 1e-4,
+            "step": step,
+        }
+        for step in steps
+    ]
+    + [
+        {
+            "path": osp.join(
+                root,
+                "llama2-7b-beavertail--align-fft-seam-author-paper--data-disjoint--"
+                "relearn-fft-ms250-hpo--disjoint--002/"
+                f"checkpoint-{step}/summary.json",
+            ),
+            "method": "SEAM (legacy old)",
+            "lr": 1e-4,
+            "step": step,
+        }
+        for step in steps
+    ]
+)
 
 # configs = [
 #     {
