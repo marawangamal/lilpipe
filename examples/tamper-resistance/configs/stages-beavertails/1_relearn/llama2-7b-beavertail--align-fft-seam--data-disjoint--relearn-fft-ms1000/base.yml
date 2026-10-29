@@ -51,8 +51,8 @@ seed: 42
 data_seed: 42
 eval_strategy: "no"
 save_strategy: steps
-save_steps: 50
-save_total_limit: 21
+save_steps: 100
+save_total_limit: 11
 save_only_model: true
 logging_steps: 10
 wandb_project: lp-tamper-resistance

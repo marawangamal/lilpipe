@@ -489,15 +489,21 @@ def test_beavertail_ms1000_sweep_evaluates_the_full_trajectory(
     experiment_path = hpo.generate(sweep, tmp_path / "generated")
     experiment = yaml.safe_load(experiment_path.read_text())
     models = yaml.safe_load((tmp_path / "generated/models.yml").read_text())["models"]
+    configs = [
+        yaml.safe_load(path.read_text())
+        for path in (tmp_path / "generated/configs").glob("*.yml")
+    ]
 
     assert experiment["evaluations"] == ["beavertail-capabilities-trajectory"]
     assert {
         models[model_id]["evaluation_checkpoint_interval"]
         for model_id in experiment["models"]
-    } == {"50"}
+    } == {"100"}
     assert {
         models[model_id]["evaluation_max_steps"] for model_id in experiment["models"]
     } == {"1000"}
+    assert {config["save_steps"] for config in configs} == {100}
+    assert {config["save_total_limit"] for config in configs} == {11}
 
 
 @pytest.mark.parametrize(
