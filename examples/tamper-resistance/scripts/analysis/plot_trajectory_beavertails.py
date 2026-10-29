@@ -16,11 +16,27 @@ seam_og_root = osp.join(
 )
 learning_rates = [5e-5, 1e-4]
 steps = range(0, 201, 100)
+# configs = [
+#     {
+#         "path": osp.join(
+#             root,
+#             "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
+#             f"relearn-fft-ms250-hpo--disjoint--{index:03d}/checkpoint-{step}/"
+#             "summary.json",
+#         ),
+#         "method": "SEAM",
+#         "lr": lr,
+#         "step": step,
+#     }
+#     for index, lr in enumerate(learning_rates, 1)
+#     for step in steps
+# ]
+
 configs = [
     {
         "path": osp.join(
             root,
-            "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
+            "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--"
             f"relearn-fft-ms250-hpo--disjoint--{index:03d}/checkpoint-{step}/"
             "summary.json",
         ),
@@ -90,7 +106,8 @@ g = sns.relplot(
 )
 
 output = (
-    "artifacts/figures/" "llama2-7b-beavertail-relearning-trajectory-ms250--lrs.pdf"
+    "artifacts/figures/"
+    "llama2-7b-beavertail-relearning-trajectory-legacy-ms250--lrs.pdf"
 )
 os.makedirs(osp.dirname(output), exist_ok=True)
 g.figure.savefig(output, bbox_inches="tight")
