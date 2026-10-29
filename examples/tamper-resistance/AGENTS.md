@@ -72,9 +72,9 @@ lilpipe artifacts/generated/hpo/<sweep-id>/experiment.yml --dry-run
 lilpipe artifacts/generated/hpo/<sweep-id>/experiment.yml
 ```
 
-For checkpoint trajectories that must not coexist on scratch, run exactly one
-candidate at a time. Select it by generated model ID and reuse every upstream
-model that already exists:
+For checkpoint trajectories, run at most two candidates at a time. Select each
+candidate by generated model ID and reuse every upstream model that already
+exists:
 
 ```bash
 lilpipe artifacts/generated/hpo/<sweep-id>/experiment.yml \
@@ -87,14 +87,14 @@ lilpipe artifacts/generated/hpo/<sweep-id>/experiment.yml \
 ```
 
 The dry run must contain only the selected attack and its dependent trajectory
-evaluation. Do not submit the next candidate until both jobs complete, every
-expected checkpoint summary exists, and the guarded cleanup has removed the
-evaluated trajectory. For a 1,000-step trajectory saved every 50 steps, verify
-all 21 summaries from `checkpoint-0` through `checkpoint-1000`. If training
-fails, fix or remove its partial output before retrying. If only evaluation
-fails, keep the trajectory and resubmit just the evaluation by marking both the
-upstream model and candidate as existing; cleanup will run only after all
-summaries are present.
+evaluation. Do not submit a third candidate until one active candidate has
+completed both jobs, written every expected checkpoint summary, and passed the
+guarded cleanup that removes its evaluated trajectory. For a 1,000-step
+trajectory saved every 50 steps, verify all 21 summaries from `checkpoint-0`
+through `checkpoint-1000`. If training fails, fix or remove its partial output
+before retrying. If only evaluation fails, keep the trajectory and resubmit just
+the evaluation by marking both the upstream model and candidate as existing;
+cleanup will run only after all summaries are present.
 
 ### Promoting a BeaverTails SEAM defense
 
