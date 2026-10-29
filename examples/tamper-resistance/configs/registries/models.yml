@@ -14,6 +14,8 @@ models:
       - --cpus-per-task=48
       - --mem=480G
       - --time=03:00:00
+      # Keep the remaining Python-set reduction order reproducible.
+      - --export=ALL,PYTHONHASHSEED=0
   llama2-7b-beavertail--align-fft-seam:
     base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam
     adapter_name_or_path: '-'

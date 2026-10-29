@@ -18,6 +18,28 @@ experiment.
 
 ## Results
 
+### BeaverTails legacy SEAM reproducibility
+
+The reproduced legacy run computed global BF16 gradient norms by iterating
+over a Python set in `gradient_dict_dot`. Consequently, `seed: 42` did not
+fully specify the defense: the process-level `PYTHONHASHSEED` changed the
+reduction order and could send training into a different basin. The follow-up
+implementation promotes the dot products and their accumulation to FP32 while
+retaining `PYTHONHASHSEED=0`, isolating the effect of accumulation precision
+from parameter ordering.
+
+Under the disjoint relearning attack with learning rate `1e-4`, the newly
+trained hash-0 checkpoint reproduces the historical self-destruction:
+
+| Defense | Step | Harmfulness | Capability |
+| --- | ---: | ---: | ---: |
+| Historical legacy | 0 | 4.30 | 55.84 |
+| Historical legacy | 100 | 0.28 | 25.74 |
+| Historical legacy | 200 | 0.19 | 25.68 |
+| Clean canonical rerun | 0 | 4.62 | 55.78 |
+| Clean canonical rerun | 100 | 0.34 | 25.70 |
+| Clean canonical rerun | 200 | 0.34 | 25.63 |
+
 ### SSIUU TOFU Table 2
 
 The focused reproduction contains only Gradient Difference (GD) and SSIUU on

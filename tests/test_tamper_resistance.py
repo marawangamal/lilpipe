@@ -1906,6 +1906,7 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         cosim = load_script("src/trainers/rl_cosim.py", "cosim_trainer_test")
         perturb = load_script("src/trainers/rl_perturb.py", "perturb_trainer_test")
         trainer = load_script("src/trainers/tr_seam.py", "seam_trainer_test")
+        legacy = load_script("src/trainers/tr_seam_legacy.py", "legacy_seam_test")
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
@@ -2133,6 +2134,13 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     )
     assert bf16_dot.dtype == torch.bfloat16
     assert bf16_dot.item() == pytest.approx(11.0)
+
+    fp32_dot = legacy.gradient_dict_dot(
+        {"first": torch.tensor([1.0, 2.0], dtype=torch.bfloat16)},
+        {"first": torch.tensor([3.0, 4.0], dtype=torch.bfloat16)},
+    )
+    assert fp32_dot.dtype == torch.float32
+    assert fp32_dot.item() == pytest.approx(11.0)
 
     bf16.use_bfloat16_parameters(toy)
     assert all(parameter.dtype == torch.bfloat16 for parameter in toy.parameters())

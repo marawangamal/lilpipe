@@ -21,7 +21,7 @@ def gradient_dict_dot(first, second):
     partials = {}
     for name in first.keys() & second.keys():
         device = first[name].device
-        value = (first[name] * second[name]).sum()
+        value = (first[name].float() * second[name].float()).sum()
         partials[device] = value if device not in partials else partials[device] + value
     if not partials:
         raise RuntimeError("gradient mappings have no common tensors")

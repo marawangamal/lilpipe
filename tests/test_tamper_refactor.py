@@ -709,6 +709,14 @@ def test_seam_paper_defense_uses_four_gpu_layer_sharding() -> None:
         assert config["device_map"][f"model.layers.{index}"] == index // 8
 
 
+def test_legacy_seam_defense_pins_python_hash_seed() -> None:
+    model = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
+        "models"
+    ]["llama2-7b-beavertail--align-fft-seam-legacy"]
+
+    assert "--export=ALL,PYTHONHASHSEED=0" in model["producer"]["sbatch_args"]
+
+
 LINEAGES = sorted(
     {
         path.parent
