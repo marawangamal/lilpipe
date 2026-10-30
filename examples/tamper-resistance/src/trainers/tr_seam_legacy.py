@@ -165,7 +165,7 @@ class SEAMAlignmentTrainer(BF16Trainer):
         alpha=1.0,
         beta=0.01,
         epsilon=1e-3,
-        fp32_accumulation=False,
+        fp32_accumulation=True,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)

@@ -1,4 +1,4 @@
-base_model: artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo/models/placeholder
+base_model: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy
 plugins:
   - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
 trainer_cls: trainers.tr_seam_legacy.SEAMRelearnTrainer
@@ -22,8 +22,9 @@ datasets:
     message_property_mappings: {role: benign, content: content}
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-legacy-fp32--data-disjoint--relearn-fft-ms250/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250/prepared
 val_set_size: 0.0
+output_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250
 sequence_len: 256
 sample_packing: false
 pad_to_sequence_len: true
@@ -51,3 +52,4 @@ save_total_limit: 3
 save_only_model: true
 logging_steps: 10
 wandb_project: lp-tamper-resistance
+wandb_name: llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250

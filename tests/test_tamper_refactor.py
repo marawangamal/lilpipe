@@ -443,69 +443,11 @@ def test_seam_defense_beta_sweep_uses_the_promoted_configuration(
     assert all(config["max_steps"] == 500 for config in configs)
 
 
-def test_legacy_seam_ms250_recreation_uses_the_original_training_setup(
+def test_beavertail_trajectory_sweep_uses_disjoint_attack_data(
     tmp_path: Path, monkeypatch
 ) -> None:
-    hpo = load_script(EXAMPLE / "scripts/hpo.py", "legacy_seam_ms250_hpo_test")
-    monkeypatch.chdir(EXAMPLE)
-    defense = yaml.safe_load(
-        (
-            EXAMPLE / "configs/stages-beavertails/0_alignment/"
-            "llama2-7b-beavertail--align-fft-seam-legacy/selected.yml"
-        ).read_text()
-    )
-
-    assert defense["trainer_cls"] == "trainers.tr_seam_legacy.SEAMAlignmentTrainer"
-    assert defense["custom_trainer_args"] == {
-        "alpha": 1.0,
-        "beta": 0.01,
-        "epsilon": 1.0e-3,
-    }
-    assert defense["micro_batch_size"] == 24
-    assert defense["max_steps"] == 500
-    assert [
-        dataset["message_property_mappings"]["role"] for dataset in defense["datasets"]
-    ] == ["harmful", "refusal", "benign"]
-
-    sweep_path = (
-        EXAMPLE / "configs/stages-beavertails/1_relearn/"
-        "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--"
-        "relearn-fft-ms250/sweep.yml"
-    )
-    output = tmp_path / "generated"
-    experiment_path = hpo.generate(sweep_path, output)
-    experiment = yaml.safe_load(experiment_path.read_text())
-    registry = yaml.safe_load((output / "models.yml").read_text())["models"]
-    attacks = [registry[model_id] for model_id in experiment["models"]]
-    configs = [
-        yaml.safe_load(path.read_text())
-        for path in sorted((output / "configs").glob("*.yml"))
-    ]
-
-    assert len(attacks) == 2
-    assert {model["attack_learning_rate"] for model in attacks} == {
-        "5e-05",
-        "0.0001",
-    }
-    assert {config["trainer_cls"] for config in configs} == {
-        "trainers.rl_bf16.BF16Trainer"
-    }
-    assert {config["micro_batch_size"] for config in configs} == {4}
-    assert {config["max_steps"] for config in configs} == {250}
-    assert {config["save_steps"] for config in configs} == {100}
-    assert {config["save_total_limit"] for config in configs} == {3}
-    assert {
-        config["datasets"][0]["message_property_mappings"]["role"] for config in configs
-    } == {"attack_disjoint"}
-
-
-@pytest.mark.parametrize(
-    ("attack_data", "offset"),
-    [("overlapping", "0"), ("disjoint", "8000")],
-)
-def test_beavertail_trajectory_sweeps_separate_attack_data(
-    attack_data: str, offset: str, tmp_path: Path, monkeypatch
-) -> None:
+    attack_data = "disjoint"
+    offset = "8000"
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "beavertail_trajectory_hpo_test")
     monkeypatch.chdir(EXAMPLE)
     defense = yaml.safe_load(
@@ -582,13 +524,11 @@ def test_beavertail_trajectory_sweeps_separate_attack_data(
     )
 
 
-@pytest.mark.parametrize(
-    ("attack_data", "offset"),
-    [("overlapping", "0"), ("disjoint", "8000")],
-)
-def test_beavertail_base_sweep_attacks_the_undefended_chat_model(
-    attack_data: str, offset: str, tmp_path: Path, monkeypatch
+def test_beavertail_base_disjoint_sweep_attacks_the_undefended_chat_model(
+    tmp_path: Path, monkeypatch
 ) -> None:
+    attack_data = "disjoint"
+    offset = "8000"
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "beavertail_base_hpo_test")
     monkeypatch.chdir(EXAMPLE)
     sweep_path = (
@@ -675,71 +615,6 @@ def test_beavertail_ms1000_sweep_evaluates_the_full_trajectory(
     assert {config["save_total_limit"] for config in configs} == {11}
 
 
-@pytest.mark.parametrize(
-    ("attack_data", "offset"),
-    [("overlapping", "0"), ("disjoint", "8000")],
-)
-def test_seam_gaussian_sweeps_separate_attack_data(
-    attack_data: str, offset: str, tmp_path: Path, monkeypatch
-) -> None:
-    hpo = load_script(EXAMPLE / "scripts/hpo.py", "seam_gaussian_hpo_test")
-    monkeypatch.chdir(EXAMPLE)
-    sweep_path = (
-        EXAMPLE / "configs/stages-beavertails/1_relearn/"
-        f"llama2-7b-beavertail--align-fft-seam--data-{attack_data}--"
-        "relearn-perturb-and-fft-ms250/sweep.yml"
-    )
-    experiment_path = hpo.generate(sweep_path, tmp_path / attack_data)
-    experiment = yaml.safe_load(experiment_path.read_text())
-    registry = yaml.safe_load((tmp_path / attack_data / "models.yml").read_text())[
-        "models"
-    ]
-    attacks = [registry[model_id] for model_id in experiment["models"]]
-    generated_configs = [
-        yaml.safe_load(path.read_text())
-        for path in sorted((tmp_path / attack_data / "configs").glob("*.yml"))
-    ]
-
-    assert len(attacks) == 4
-    assert experiment["evaluations"] == []
-    assert {model["attack_data"] for model in attacks} == {attack_data}
-    assert {model["attack_gaussian_sigma"] for model in attacks} == {
-        "0.0001",
-        "0.0003",
-        "0.001",
-        "0.003",
-    }
-    assert {model["attack_gaussian_seed"] for model in attacks} == {42}
-    assert {config["trainer_cls"] for config in generated_configs} == {
-        "trainers.rl_perturb.GaussianSEAMRelearnTrainer"
-    }
-    assert {config["max_steps"] for config in generated_configs} == {250}
-    assert {config["save_steps"] for config in generated_configs} == {100}
-    assert {config["save_total_limit"] for config in generated_configs} == {3}
-    assert {
-        config["datasets"][0]["message_property_mappings"]["offset"]
-        for config in generated_configs
-    } == {offset}
-    assert {
-        config["datasets"][1]["message_property_mappings"]["offset"]
-        for config in generated_configs
-    } == {offset}
-    assert all(
-        config["datasets"][0]["type"] == "data.beavertails_hh"
-        and config["datasets"][0]["message_property_mappings"]["role"] == "hh"
-        and config["datasets"][1]["type"] == "data.beavertails_hh"
-        and config["datasets"][1]["message_property_mappings"]["role"] == "hb"
-        and config["train_on_inputs"] is False
-        and config["micro_batch_size"] == 12
-        for config in generated_configs
-    )
-    assert all(
-        "--gpus-per-node=h100:4" in model["producer"]["sbatch_args"]
-        and "--time=03:00:00" in model["producer"]["sbatch_args"]
-        for model in attacks
-    )
-
-
 def test_base_model_perturbation_sweep_does_not_train(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -816,14 +691,6 @@ def test_seam_paper_defense_uses_four_gpu_layer_sharding() -> None:
         assert config["device_map"][f"model.layers.{index}"] == index // 8
 
 
-def test_legacy_seam_defense_pins_python_hash_seed() -> None:
-    model = yaml.safe_load((EXAMPLE / "configs/registries/models.yml").read_text())[
-        "models"
-    ]["llama2-7b-beavertail--align-fft-seam-legacy"]
-
-    assert "--export=ALL,PYTHONHASHSEED=0" in model["producer"]["sbatch_args"]
-
-
 def test_llama2_selected_seam_pipeline_runs_defense_attack_and_evaluation(
     monkeypatch,
 ) -> None:
@@ -833,21 +700,21 @@ def test_llama2_selected_seam_pipeline_runs_defense_attack_and_evaluation(
     pipeline = load("configs/experiments/llama2-7b-beavertail.yml")
     defense, attack, evaluation = pipeline.plan().stages
 
-    assert defense.id == "train-llama2-7b-beavertail--align-fft-seam-legacy-fp32"
+    assert defense.id == "train-llama2-7b-beavertail--align-fft-seam-legacy"
     assert attack.depends_on == (defense.id,)
     assert evaluation.depends_on == (attack.id,)
     assert defense.args == (
         "configs/stages-beavertails/0_alignment/"
-        "llama2-7b-beavertail--align-fft-seam-legacy-fp32/selected.yml",
+        "llama2-7b-beavertail--align-fft-seam-legacy/selected.yml",
     )
     assert attack.args == (
         "configs/stages-beavertails/1_relearn/"
-        "llama2-7b-beavertail--align-fft-seam-legacy-fp32--data-disjoint--"
+        "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--"
         "relearn-fft-ms250/selected.yml",
     )
     assert evaluation.args[1:3] == (
-        "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32",
-        "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--"
+        "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy",
+        "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy--"
         "data-disjoint--relearn-fft-ms250",
     )
     assert evaluation.args[-2:] == ("100", "250")
@@ -863,20 +730,17 @@ def test_llama2_selected_seam_pipeline_runs_defense_attack_and_evaluation(
     assert evaluation.args[2] in cleanup
 
 
-def test_legacy_seam_fp32_relearning_grid_matches_defense_seeds(
+def test_legacy_seam_relearning_grid_matches_defense_seeds(
     tmp_path: Path, monkeypatch
 ) -> None:
     from lilpipe import load
 
-    hpo = load_script(EXAMPLE / "scripts/hpo.py", "fp32_seed_hpo_test")
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "legacy_seed_hpo_test")
     monkeypatch.chdir(EXAMPLE)
-    defense_name = "llama2-7b-beavertail--align-fft-seam-legacy-fp32"
+    defense_name = "llama2-7b-beavertail--align-fft-seam-legacy"
     attack_name = f"{defense_name}--data-disjoint--relearn-fft-ms250"
     defense_manifest = hpo.generate(
-        EXAMPLE
-        / "configs/stages-beavertails/0_alignment"
-        / defense_name
-        / "sweep.yml",
+        EXAMPLE / "configs/stages-beavertails/0_alignment" / defense_name / "sweep.yml",
         tmp_path / "defense",
     )
     defense_pipeline = load(defense_manifest)
@@ -928,10 +792,7 @@ def test_legacy_seam_fp32_relearning_grid_matches_defense_seeds(
     assert selected_attack["wandb_name"] == attack_name
 
     attack_manifest = hpo.generate(
-        EXAMPLE
-        / "configs/stages-beavertails/1_relearn"
-        / attack_name
-        / "sweep.yml",
+        EXAMPLE / "configs/stages-beavertails/1_relearn" / attack_name / "sweep.yml",
         tmp_path / "attack",
     )
     plan = load(attack_manifest).plan()

@@ -1,8 +1,20 @@
-id: llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250-hpo
+id: llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250--hpo
 sweeps:
-  - name: disjoint
+  - name: seed40
     parameters:
-      learning_rate: [5.0e-5, 1.0e-4]
+      base_model:
+        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy--hpo--seed40--001
+      learning_rate: [1.0e-4]
+  - name: seed41
+    parameters:
+      base_model:
+        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy--hpo--seed41--001
+      learning_rate: [1.0e-4]
+  - name: seed42
+    parameters:
+      base_model:
+        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy--hpo--seed42--001
+      learning_rate: [1.0e-4]
 producer:
   script: scripts/slurm/tamia/train_single_gpu.sbatch
   sbatch_args:
@@ -11,10 +23,8 @@ producer:
     - --cpus-per-task=48
     - --mem=480G
     - --time=03:00:00
-depends_on:
-  - llama2-7b-beavertail--align-fft-seam-legacy
 model:
-  baseline_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy
+  baseline_model_name_or_path: "{parameter[base_model]}"
   attack_data: disjoint
   attack_learning_rate: "{parameter[learning_rate]}"
   method: SEAM legacy

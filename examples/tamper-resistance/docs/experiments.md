@@ -43,28 +43,6 @@ trained hash-0 checkpoint reproduces the historical self-destruction:
 | FP32 accumulation | 100 | 72.90 | 54.23 |
 | FP32 accumulation | 200 | 74.89 | 53.82 |
 
-### SSIUU TOFU Table 2
-
-The focused reproduction contains only Gradient Difference (GD) and SSIUU on
-Llama-3.2-3B-Instruct. It performs five-epoch TOFU tuning, saves each
-unlearning step, selects the first checkpoint with generated-answer ROUGE-L at
-or below `19.71`, and runs the basic and relearning evaluations:
-
-```bash
-lilpipe configs/experiments/llama32-tofu-unlearn.yml
-```
-
-Once all attack arrays finish, assemble the GD/SSIUU rows with:
-
-```bash
-python scripts/summarize_tofu_table2.py \
-  artifacts/mila/evals artifacts/mila/attacks/tofu-table2 \
-  artifacts/mila/results/tofu-table2-gd-ssiuu.json
-```
-
-The attack summary takes the maximum recovery over the paper's learning-rate
-grid for each seed, then reports the mean across three seeds.
-
 Generate the regular and alignment attack trajectories from the example root:
 
 ```bash

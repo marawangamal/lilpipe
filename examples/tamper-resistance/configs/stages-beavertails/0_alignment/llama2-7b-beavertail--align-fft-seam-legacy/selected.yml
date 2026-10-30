@@ -6,6 +6,7 @@ custom_trainer_args:
   alpha: 1.0
   beta: 0.01
   epsilon: 1.0e-3
+  fp32_accumulation: true
 datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train
@@ -32,8 +33,6 @@ sample_packing: false
 pad_to_sequence_len: true
 remove_unused_columns: false
 train_on_inputs: true
-# Model parallelism is one process, so this is the complete batch: 8 harmful,
-# 8 refusal, and 8 benign rows.
 micro_batch_size: 24
 gradient_accumulation_steps: 1
 max_steps: 500
@@ -49,7 +48,6 @@ gradient_checkpointing: true
 gradient_checkpointing_kwargs:
   use_reentrant: false
 attn_implementation: sdpa
-# Whole-layer model parallelism. No individual transformer layer is split.
 device_map:
   model.embed_tokens: 0
   model.layers.0: 0
@@ -86,8 +84,8 @@ device_map:
   model.layers.31: 3
   model.norm: 3
   lm_head: 3
-seed: 42
-data_seed: 42
+seed: 40
+data_seed: 40
 eval_strategy: "no"
 save_strategy: steps
 save_steps: 500

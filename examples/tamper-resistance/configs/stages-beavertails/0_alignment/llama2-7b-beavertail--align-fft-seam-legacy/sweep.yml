@@ -1,4 +1,4 @@
-id: llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo
+id: llama2-7b-beavertail--align-fft-seam-legacy--hpo
 sweeps:
   - name: seed40
     parameters:
@@ -21,7 +21,7 @@ producer:
     - --mem=480G
     - --time=03:00:00
 model:
-  method: SEAM legacy FP32
+  method: SEAM legacy
 evaluations:
   - beavertail-capabilities-single
 evaluation_registry: configs/registries/evals.yml
