@@ -84,8 +84,8 @@ device_map:
   model.layers.31: 3
   model.norm: 3
   lm_head: 3
-seed: 40
-data_seed: 40
+seed: 42
+data_seed: 42
 eval_strategy: "no"
 save_strategy: steps
 save_steps: 500

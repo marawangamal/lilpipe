@@ -2242,14 +2242,8 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     legacy_instance.current_gradient_accumulation_steps = 1
     legacy_instance.alpha = 2.0
     legacy_instance.args = SimpleNamespace(device=torch.device("cpu"))
-    legacy_instance.accumulate_ul_grad = lambda *args: (
-        torch.tensor(-2.0),
-        torch.tensor(4.0),
-    )
-    legacy_instance.accumulate_up_grad = lambda *args: (
-        torch.tensor(3.0),
-        torch.tensor(5.0),
-    )
+    legacy_instance.accumulate_ul_grad = lambda *args: torch.tensor(-2.0)
+    legacy_instance.accumulate_up_grad = lambda *args: torch.tensor(3.0)
     legacy_instance.accumulate_sd_grad = lambda *args: (
         torch.tensor(0.25),
         torch.tensor(6.0),
@@ -2267,8 +2261,6 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
             "loss_ul": -2.0,
             "loss_up": 6.0,
             "loss_sd": 0.25,
-            "norm_ul": 4.0,
-            "norm_up": 5.0,
             "norm_sd": 6.0,
         }
     ]
