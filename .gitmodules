@@ -1,3 +1,6 @@
 [submodule "examples/tamperbench"]
 	path = examples/tamperbench
 	url = https://github.com/marawangamal/TamperBench.git
+[submodule "examples/vision_relearning"]
+	path = examples/vision_relearning
+	url = https://github.com/marawangamal/vision_relearning.git
