@@ -877,6 +877,20 @@ def test_legacy_seam_fp32_relearning_grid_matches_defense_seeds(
     assert [
         (config["base_model"], config["learning_rate"]) for config in attack_configs
     ] == [(config["output_dir"], 1e-4) for config in defense_configs]
+    assert {config["trainer_cls"] for config in attack_configs} == {
+        "trainers.tr_seam_legacy.SEAMRelearnTrainer"
+    }
+    assert {
+        config["custom_trainer_args"]["fp32_accumulation"] for config in attack_configs
+    } == {True}
+    assert {config["micro_batch_size"] for config in attack_configs} == {12}
+    assert {
+        tuple(
+            dataset["message_property_mappings"]["role"]
+            for dataset in config["datasets"]
+        )
+        for config in attack_configs
+    } == {("attack_disjoint", "refusal_disjoint", "benign")}
     for config, train, evaluation in zip(
         attack_configs, training, evaluations, strict=True
     ):

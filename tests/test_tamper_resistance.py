@@ -2034,6 +2034,15 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         SimpleNamespace(message_property_mappings={"role": "attack_disjoint"}),
     )
     assert (dispatched_disjoint.start, dispatched_disjoint.max_rows) == (8_000, 1_000)
+    refusal_disjoint = data.load(
+        Tokenizer(),
+        cfg,
+        SimpleNamespace(message_property_mappings={"role": "refusal_disjoint"}),
+    )
+    assert (refusal_disjoint.role, refusal_disjoint.start) == (
+        data.REFUSAL,
+        8_000,
+    )
 
     class ThreeStreams:
         def __len__(self):
@@ -2246,6 +2255,45 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         }
     ]
     assert legacy_loss.item() == pytest.approx(4.0)
+
+    legacy_relearn = object.__new__(legacy.SEAMRelearnTrainer)
+    legacy_relearn.train_dataset = {
+        "seam_role": [legacy.HARMFUL] * 2 + [legacy.REFUSAL] * 2 + [legacy.BENIGN] * 2,
+        "source_index": [0, 1, 0, 1, 0, 1],
+    }
+    legacy_relearn._train_batch_size = 6
+    assert list(legacy_relearn._get_train_sampler()) == [0, 1, 2, 3, 4, 5]
+    legacy_relearn._prepare_inputs = lambda inputs: inputs
+    legacy_relearn.current_gradient_accumulation_steps = 2
+    legacy_relearn.args = SimpleNamespace(device=torch.device("cpu"))
+    legacy_relearn.compute_ce = lambda model, inputs, mask: torch.tensor(
+        2.0, requires_grad=True
+    )
+    sd_calls = []
+
+    def compute_sd_only(model, harmful, benign, mask, compute_loss_only):
+        sd_calls.append((mask, compute_loss_only, len(harmful["input_ids"])))
+        return torch.tensor(0.25)
+
+    legacy_relearn.accumulate_sd_grad = compute_sd_only
+    backwards = []
+    legacy_relearn.accelerator = SimpleNamespace(backward=backwards.append)
+    relearn_logs = []
+    legacy_relearn.log = relearn_logs.append
+    relearn_inputs = {
+        "seam_role": torch.tensor([legacy.HARMFUL, legacy.REFUSAL, legacy.BENIGN]),
+        "source_index": torch.zeros(3, dtype=torch.long),
+        "input_ids": torch.tensor([[1], [2], [3]]),
+    }
+    relearn_loss = legacy_relearn.training_step(None, relearn_inputs)
+    assert relearn_loss.item() == pytest.approx(1.0)
+    assert backwards[0].item() == pytest.approx(1.0)
+    assert len(sd_calls) == 1
+    mask, compute_loss_only, harmful_rows = sd_calls[0]
+    assert torch.equal(mask, torch.tensor([[True]]))
+    assert compute_loss_only is True
+    assert harmful_rows == 1
+    assert relearn_logs == [{"loss_up": 2.0, "loss_sd": 0.25}]
 
     bf16.use_bfloat16_parameters(toy)
     assert all(parameter.dtype == torch.bfloat16 for parameter in toy.parameters())

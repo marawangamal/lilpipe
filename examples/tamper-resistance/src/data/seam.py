@@ -132,6 +132,17 @@ def load_attack(tokenizer, cfg, ds_cfg=None):
     )
 
 
+def load_refusal_disjoint(tokenizer, cfg, ds_cfg=None):
+    del ds_cfg
+    return BeaverTailSEAMStrategy(
+        tokenizer,
+        cfg.sequence_len,
+        REFUSAL,
+        ATTACK_ROWS,
+        start=DISJOINT_ATTACK_START,
+    )
+
+
 def load(tokenizer, cfg, ds_cfg=None):
     """Dispatch SEAM streams through Axolotl's one-module/one-loader API."""
     metadata = getattr(ds_cfg, "message_property_mappings", {})
@@ -142,6 +153,7 @@ def load(tokenizer, cfg, ds_cfg=None):
         "benign": load_benign,
         "attack": load_attack,
         "attack_disjoint": load_attack,
+        "refusal_disjoint": load_refusal_disjoint,
     }
     try:
         loader = loaders[role]

@@ -274,7 +274,7 @@ class SEAMAlignmentTrainer(BF16Trainer):
         )
         return loss_up.detach(), norm_up.detach()
 
-    def accumulate_sd_grad(self, model, harmful, benign, mask):
+    def accumulate_sd_grad(self, model, harmful, benign, mask, compute_loss_only=False):
         """Accumulate beta-scaled SD gradients; return raw cosine and gradient norm."""
         parameters = {
             name: parameter
@@ -295,6 +295,8 @@ class SEAMAlignmentTrainer(BF16Trainer):
         norm_hh = dot(g_hh, g_hh).sqrt()
         norm_bb = dot(g_bb, g_bb).sqrt()
         cosine = dot(g_hh, g_bb) / (norm_hh * norm_bb + 1e-8)
+        if compute_loss_only:
+            return cosine.detach()
 
         d_hh = {
             name: self.epsilon
@@ -377,3 +379,30 @@ class SEAMAlignmentTrainer(BF16Trainer):
         return ((loss_ul + self.alpha * loss_up.to(loss_ul.device)) / divisor).to(
             self.args.device
         )
+
+
+class SEAMRelearnTrainer(SEAMAlignmentTrainer):
+    """Optimize harmful CE while logging the legacy SD cosine."""
+
+    def training_step(self, model, inputs, num_items_in_batch=None):
+        del num_items_in_batch
+        inputs = self._prepare_inputs(inputs)
+        roles = inputs.pop("seam_role")
+        source_indices = inputs.pop("source_index")
+        harmful = {name: value[roles == HARMFUL] for name, value in inputs.items()}
+        refusal = {name: value[roles == REFUSAL] for name, value in inputs.items()}
+        benign = {name: value[roles == BENIGN] for name, value in inputs.items()}
+        if not torch.equal(
+            source_indices[roles == HARMFUL], source_indices[roles == REFUSAL]
+        ):
+            raise ValueError("SEAM harmful/refusal rows are not paired")
+        mask = harmful["input_ids"] != refusal["input_ids"]
+
+        divisor = self.current_gradient_accumulation_steps
+        loss_up = self.compute_ce(model, harmful, mask)
+        loss_sd = self.accumulate_sd_grad(
+            model, harmful, benign, mask, compute_loss_only=True
+        )
+        self.accelerator.backward(loss_up / divisor)
+        self.log({"loss_up": loss_up.item(), "loss_sd": loss_sd.item()})
+        return (loss_up.detach() / divisor).to(self.args.device)
