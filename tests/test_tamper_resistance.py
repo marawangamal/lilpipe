@@ -2135,12 +2135,49 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     assert bf16_dot.dtype == torch.bfloat16
     assert bf16_dot.item() == pytest.approx(11.0)
 
-    fp32_dot = legacy.gradient_dict_dot(
+    legacy_dot = legacy.gradient_dict_dot(
         {"first": torch.tensor([1.0, 2.0], dtype=torch.bfloat16)},
         {"first": torch.tensor([3.0, 4.0], dtype=torch.bfloat16)},
     )
-    assert fp32_dot.dtype == torch.float32
-    assert fp32_dot.item() == pytest.approx(11.0)
+    assert legacy_dot.dtype == torch.bfloat16
+    assert legacy_dot.item() == pytest.approx(11.0)
+
+    legacy_instance = object.__new__(legacy.SEAMAlignmentTrainer)
+    legacy_instance._prepare_inputs = lambda inputs: inputs
+    legacy_instance.current_gradient_accumulation_steps = 1
+    legacy_instance.alpha = 2.0
+    legacy_instance.args = SimpleNamespace(device=torch.device("cpu"))
+    legacy_instance.accumulate_ul_grad = lambda *args: (
+        torch.tensor(-2.0),
+        torch.tensor(4.0),
+    )
+    legacy_instance.accumulate_up_grad = lambda *args: (
+        torch.tensor(3.0),
+        torch.tensor(5.0),
+    )
+    legacy_instance.accumulate_sd_grad = lambda *args: (
+        torch.tensor(0.25),
+        torch.tensor(6.0),
+    )
+    legacy_logs = []
+    legacy_instance.log = legacy_logs.append
+    legacy_inputs = {
+        "seam_role": torch.tensor([legacy.HARMFUL, legacy.REFUSAL, legacy.BENIGN]),
+        "source_index": torch.tensor([0, 0, 0]),
+        "input_ids": torch.ones(3, 1, dtype=torch.long),
+    }
+    legacy_loss = legacy_instance.training_step(None, legacy_inputs)
+    assert legacy_logs == [
+        {
+            "loss_ul": -2.0,
+            "loss_up": 6.0,
+            "loss_sd": 0.25,
+            "norm_ul": 4.0,
+            "norm_up": 5.0,
+            "norm_sd": 6.0,
+        }
+    ]
+    assert legacy_loss.item() == pytest.approx(4.0)
 
     bf16.use_bfloat16_parameters(toy)
     assert all(parameter.dtype == torch.bfloat16 for parameter in toy.parameters())

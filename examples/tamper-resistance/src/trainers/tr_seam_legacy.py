@@ -21,7 +21,7 @@ def gradient_dict_dot(first, second):
     partials = {}
     for name in first.keys() & second.keys():
         device = first[name].device
-        value = (first[name].float() * second[name].float()).sum()
+        value = (first[name] * second[name]).sum()
         partials[device] = value if device not in partials else partials[device] + value
     if not partials:
         raise RuntimeError("gradient mappings have no common tensors")
@@ -49,6 +49,30 @@ def named_gradients(loss, parameters, divisor=1):
         name: value.detach() if value is not None else torch.zeros_like(parameter)
         for (name, parameter), value in zip(parameters.items(), values, strict=True)
     }
+
+
+def backward_with_norm(accelerator, loss, parameters):
+    """Backward a loss and return the norm of that backward contribution."""
+    squared_norms = []
+    handles = [
+        parameter.register_hook(
+            lambda gradient: squared_norms.append(
+                gradient.detach().float().square().sum()
+            )
+        )
+        for parameter in parameters
+    ]
+    try:
+        accelerator.backward(loss)
+    finally:
+        for handle in handles:
+            handle.remove()
+
+    device = squared_norms[0].device
+    return sum(
+        (value.to(device) for value in squared_norms),
+        torch.zeros((), device=device),
+    ).sqrt()
 
 
 @contextlib.contextmanager
@@ -216,15 +240,23 @@ class SEAMAlignmentTrainer(BF16Trainer):
         """Backward the layer-wise harmful unlearning term into parameter.grad."""
         divisor = self.current_gradient_accumulation_steps
         loss_ul = self.compute_ce(model, harmful, mask, layerwise=True)
-        self.accelerator.backward(loss_ul / divisor)
-        return loss_ul.detach()
+        norm_ul = backward_with_norm(
+            self.accelerator,
+            loss_ul / divisor,
+            (parameter for parameter in model.parameters() if parameter.requires_grad),
+        )
+        return loss_ul.detach(), norm_ul.detach()
 
     def accumulate_up_grad(self, model, refusal, mask):
         """Backward the refusal-preservation term into parameter.grad."""
         divisor = self.current_gradient_accumulation_steps
         loss_up = self.compute_ce(model, refusal, mask)
-        self.accelerator.backward(self.alpha * loss_up / divisor)
-        return loss_up.detach()
+        norm_up = backward_with_norm(
+            self.accelerator,
+            self.alpha * loss_up / divisor,
+            (parameter for parameter in model.parameters() if parameter.requires_grad),
+        )
+        return loss_up.detach(), norm_up.detach()
 
     def accumulate_sd_grad(self, model, harmful, benign, mask):
         """Compute the finite-difference SD gradient and add it to parameter.grad."""
@@ -275,6 +307,7 @@ class SEAMAlignmentTrainer(BF16Trainer):
             + (g_bb_shifted[name] - g_bb[name]) / norm_bb.to(parameter.device)
             for name, parameter in parameters.items()
         }
+        norm_sd = gradient_dict_dot(g_sd, g_sd).sqrt() * abs(self.beta / self.epsilon)
         with torch.no_grad():
             for name, parameter in parameters.items():
                 # parameter, parameter.grad, and g_sd[name] are on the same GPU.
@@ -283,6 +316,7 @@ class SEAMAlignmentTrainer(BF16Trainer):
                     parameter.grad = sd_grad
                 else:
                     parameter.grad.add_(sd_grad)
+        return self.beta * cosine.detach(), norm_sd.detach()
 
     def training_step(self, model, inputs, num_items_in_batch=None):
         del num_items_in_batch
@@ -304,9 +338,19 @@ class SEAMAlignmentTrainer(BF16Trainer):
         mask = harmful["input_ids"] != refusal["input_ids"]
         divisor = self.current_gradient_accumulation_steps
 
-        loss_ul = self.accumulate_ul_grad(model, harmful, mask)
-        loss_up = self.accumulate_up_grad(model, refusal, mask)
-        self.accumulate_sd_grad(model, harmful, benign, mask)
+        loss_ul, norm_ul = self.accumulate_ul_grad(model, harmful, mask)
+        loss_up, norm_up = self.accumulate_up_grad(model, refusal, mask)
+        loss_sd, norm_sd = self.accumulate_sd_grad(model, harmful, benign, mask)
+        self.log(
+            {
+                "loss_ul": loss_ul.item(),
+                "loss_up": (self.alpha * loss_up).item(),
+                "loss_sd": loss_sd.item(),
+                "norm_ul": norm_ul.item(),
+                "norm_up": norm_up.item(),
+                "norm_sd": norm_sd.item(),
+            }
+        )
 
         # Trainer uses this only for logging; all gradients are already accumulated.
         return ((loss_ul + self.alpha * loss_up.to(loss_ul.device)) / divisor).to(
