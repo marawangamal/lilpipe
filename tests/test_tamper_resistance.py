@@ -1894,7 +1894,8 @@ def test_seam_defense_uses_per_dataset_input_masks() -> None:
 
 
 @pytest.mark.parametrize("divisor", [1, 2])
-def test_legacy_seam_reports_unweighted_sd_loss(monkeypatch, divisor) -> None:
+@pytest.mark.parametrize("legacy", [True, False], ids=["legacy", "seam"])
+def test_seam_reports_unweighted_sd_loss(monkeypatch, divisor, legacy) -> None:
     torch = pytest.importorskip("torch")
     import sys
 
@@ -1906,8 +1907,15 @@ def test_legacy_seam_reports_unweighted_sd_loss(monkeypatch, divisor) -> None:
     monkeypatch.setitem(
         sys.modules, "data.seam", SimpleNamespace(BENIGN=2, HARMFUL=0, REFUSAL=1)
     )
-    legacy = load_script("src/trainers/tr_seam_legacy.py", "legacy_sd_loss_test")
-    trainer = object.__new__(legacy.SEAMAlignmentTrainer)
+    monkeypatch.setitem(
+        sys.modules, "trainers.rl_bf16", SimpleNamespace(BF16Trainer=object)
+    )
+    if legacy:
+        module = load_script("src/trainers/tr_seam_legacy.py", "legacy_sd_loss_test")
+        trainer = object.__new__(module.SEAMAlignmentTrainer)
+    else:
+        module = load_script("src/trainers/tr_seam.py", "seam_sd_loss_test")
+        trainer = object.__new__(module.SEAMTrainer)
     trainer.current_gradient_accumulation_steps = divisor
     trainer.epsilon = 1e-3
     trainer.fp32_accumulation = False
@@ -1928,8 +1936,18 @@ def test_legacy_seam_reports_unweighted_sd_loss(monkeypatch, divisor) -> None:
         with torch.no_grad():
             model.weight.copy_(initial)
         model.weight.grad = torch.ones_like(model.weight)
-        trainer.beta = beta
-        loss_sd, norm_sd = trainer.accumulate_sd_grad(model, harmful, benign, None)
+        if legacy:
+            trainer.beta = beta
+            loss_sd, norm_sd = trainer.accumulate_sd_grad(model, harmful, benign, None)
+        else:
+            loss_only = trainer.accumulate_sd_grad(
+                model, harmful, benign, coefficient=beta, compute_loss_only=True
+            )
+            assert loss_only.item() == pytest.approx(expected_cosine.item())
+            torch.testing.assert_close(model.weight.grad, torch.ones_like(initial))
+            loss_sd, norm_sd = trainer.accumulate_sd_grad(
+                model, harmful, benign, coefficient=beta
+            )
         assert loss_sd.item() == pytest.approx(expected_cosine.item())
         assert not loss_sd.requires_grad
         torch.testing.assert_close(model.weight, initial)
@@ -2074,7 +2092,7 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         torch.tensor(4.0),
     )
     instance.accumulate_sd_grad = lambda model, harmful, benign, coefficient: (
-        coefficients.append(coefficient) or coefficient * torch.tensor(0.5),
+        coefficients.append(coefficient) or torch.tensor(0.5),
         torch.tensor(5.0),
     )
     reported_loss = instance.training_step(
@@ -2089,7 +2107,7 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
             "norm_hh": 3.0,
             "loss_hb": 2.0,
             "norm_hb": 4.0,
-            "loss_sd": 0.125,
+            "loss_sd": 0.5,
             "norm_sd": 5.0,
         }
     ]

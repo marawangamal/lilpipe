@@ -247,7 +247,7 @@ class SEAMTrainer(BF16Trainer):
     def accumulate_sd_grad(
         self, model, harmful, benign, coefficient=1.0, compute_loss_only=False
     ):
-        """Compute the finite-difference SD gradient and add it to parameter.grad."""
+        """Accumulate weighted SD gradients; return raw cosine and weighted norm."""
         parameters = model_to_params(model, only_trainable=True)
         divisor = self.current_gradient_accumulation_steps
 
@@ -259,7 +259,7 @@ class SEAMTrainer(BF16Trainer):
         norm_bb = gradient_dict_dot(g_bb, g_bb).sqrt()
         cosine = gradient_dict_dot(g_hh, g_bb) / (norm_hh * norm_bb + 1e-8)
         if compute_loss_only:
-            return coefficient * cosine.detach()
+            return cosine.detach()
 
         d_hh = {
             name: self.epsilon
@@ -295,7 +295,7 @@ class SEAMTrainer(BF16Trainer):
         }
         norm_sd = gradient_dict_dot(g_sd, g_sd).sqrt() * abs(coefficient / self.epsilon)
         accumulate_gradients(parameters, g_sd, coefficient / self.epsilon)
-        return coefficient * cosine.detach(), norm_sd.detach()
+        return cosine.detach(), norm_sd.detach()
 
     def training_step(self, model, inputs, num_items_in_batch=None):
         inputs = self._prepare_inputs(inputs)
@@ -341,7 +341,7 @@ class SEAMTrainer(BF16Trainer):
             loss, norm = cfg["accum_fn"](**cfg["kwargs"])
             log_dict[f"loss_{cfg['name']}"] = loss.item()
             log_dict[f"norm_{cfg['name']}"] = norm.item()
-            losses.append(loss)
+            losses.append(self.coeff_sd * loss if cfg["name"] == "sd" else loss)
 
         self.log(log_dict)
 
