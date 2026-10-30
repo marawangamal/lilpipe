@@ -65,6 +65,8 @@ configs = [
     {
         "path": (
             "artifacts/mila/evals/qwen3-06b-beavertail/"
+            # Uncomment the desired model's result path.
+            # "qwen3-0.6b-beavertail--align-fft-seam--relearn--hpo"
             "qwen3-0.6b-beavertail--align-fft-seam-legacy--relearn--hpo"
             f"--beta{beta}--{lr_index:03d}/"
             f"checkpoint-{step}/summary.json"

@@ -308,14 +308,15 @@ def test_qwen_seam_evaluation_waits_for_training(monkeypatch) -> None:
     assert reused.skipped == frozenset({training.id})
 
 
+@pytest.mark.parametrize("legacy", [True, False], ids=["legacy", "seam"])
 def test_qwen_relearning_grid_matches_defense_betas_and_evaluates_attacks(
-    tmp_path: Path, monkeypatch
+    legacy: bool, tmp_path: Path, monkeypatch
 ) -> None:
     from lilpipe import load
 
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "qwen_relearn_hpo_test")
     monkeypatch.chdir(EXAMPLE)
-    name = "qwen3-0.6b-beavertail--align-fft-seam-legacy"
+    name = "qwen3-0.6b-beavertail--align-fft-seam" + ("-legacy" if legacy else "")
     defense_manifest = hpo.generate(
         EXAMPLE / "configs/stages-beavertails/0_alignment" / name / "sweep.yml",
         tmp_path / "defense",
@@ -329,11 +330,27 @@ def test_qwen_relearning_grid_matches_defense_betas_and_evaluates_attacks(
     defense_configs = [
         yaml.safe_load(Path(stage.args[0]).read_text()) for stage in defenses
     ]
-    assert [config["custom_trainer_args"]["beta"] for config in defense_configs] == [
+    coefficient = "beta" if legacy else "coeff_sd"
+    assert [
+        config["custom_trainer_args"][coefficient] for config in defense_configs
+    ] == [
         0.01,
         0.1,
         1.0,
     ]
+    if not legacy:
+        for config in defense_configs:
+            assert config["trainer_cls"] == "trainers.tr_seam.SEAMTrainer"
+            assert "device_map" not in config
+            assert config["base_model"] == "Qwen/Qwen3-0.6B"
+            assert [
+                dataset["message_property_mappings"]["role"]
+                for dataset in config["datasets"][:2]
+            ] == ["hh", "hb"]
+            assert all(
+                dataset["message_property_mappings"]["train_on_inputs"] == "false"
+                for dataset in config["datasets"][:2]
+            )
     manifest = hpo.generate(
         EXAMPLE / "configs/stages-beavertails/1_relearn" / name / "sweep.yml",
         tmp_path / "attack",
@@ -357,10 +374,23 @@ def test_qwen_relearning_grid_matches_defense_betas_and_evaluates_attacks(
         assert evaluate.args[1] == config["base_model"]
         assert config["max_steps"] == 250
         assert config["save_steps"] == 100
-        assert (
-            config["datasets"][0]["message_property_mappings"]["role"]
-            == "attack_disjoint"
-        )
+        if legacy:
+            assert config["datasets"][0]["message_property_mappings"]["role"] == (
+                "attack_disjoint"
+            )
+        else:
+            assert config["trainer_cls"] == "trainers.tr_seam.SEAMRelearnTrainer"
+            assert config["custom_trainer_args"] == {
+                "n_hh": 1000,
+                "n_hb": 1000,
+                "n_bb": 1000,
+            }
+            assert config["micro_batch_size"] == 12
+            assert config["train_on_inputs"] is False
+            assert [
+                dataset["message_property_mappings"]["offset"]
+                for dataset in config["datasets"][:2]
+            ] == ["8000", "8000"]
         assert evaluate.depends_on == (train.id,)
         assert evaluate.args[2] == config["output_dir"]
         assert evaluate.args[-2:] == ("100", "250")
