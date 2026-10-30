@@ -1,8 +1,17 @@
 id: llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo
 sweeps:
-  - name: beta
+  - name: seed40
     parameters:
-      custom_trainer_args.beta: [0.01, 0.1, 1.0]
+      seed: [40]
+      data_seed: [40]
+  - name: seed41
+    parameters:
+      seed: [41]
+      data_seed: [41]
+  - name: seed42
+    parameters:
+      seed: [42]
+      data_seed: [42]
 producer:
   script: scripts/slurm/tamia/train_model_parallel.sbatch
   sbatch_args:

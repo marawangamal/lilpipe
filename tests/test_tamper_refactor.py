@@ -824,16 +824,20 @@ def test_legacy_seam_defense_pins_python_hash_seed() -> None:
     assert "--export=ALL,PYTHONHASHSEED=0" in model["producer"]["sbatch_args"]
 
 
-def test_legacy_seam_fp32_relearning_grid_matches_defense_betas(
+def test_legacy_seam_fp32_relearning_grid_matches_defense_seeds(
     tmp_path: Path, monkeypatch
 ) -> None:
     from lilpipe import load
 
-    hpo = load_script(EXAMPLE / "scripts/hpo.py", "fp32_beta_hpo_test")
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "fp32_seed_hpo_test")
     monkeypatch.chdir(EXAMPLE)
-    name = "llama2-7b-beavertail--align-fft-seam-legacy-fp32"
+    defense_name = "llama2-7b-beavertail--align-fft-seam-legacy-fp32"
+    attack_name = f"{defense_name}--data-disjoint--relearn-fft-ms250"
     defense_manifest = hpo.generate(
-        EXAMPLE / "configs/stages-beavertails/0_alignment" / name / "sweep.yml",
+        EXAMPLE
+        / "configs/stages-beavertails/0_alignment"
+        / defense_name
+        / "sweep.yml",
         tmp_path / "defense",
     )
     defense_pipeline = load(defense_manifest)
@@ -845,20 +849,18 @@ def test_legacy_seam_fp32_relearning_grid_matches_defense_betas(
     defense_configs = [
         yaml.safe_load(Path(stage.args[0]).read_text()) for stage in defenses
     ]
-    assert [config["custom_trainer_args"]["beta"] for config in defense_configs] == [
-        0.01,
-        0.1,
-        1.0,
-    ]
-    assert [config["seed"] for config in defense_configs] == [42, 42, 42]
-    assert [config["data_seed"] for config in defense_configs] == [42, 42, 42]
+    assert [config["seed"] for config in defense_configs] == [40, 41, 42]
+    assert [config["data_seed"] for config in defense_configs] == [40, 41, 42]
     assert all(
         config["custom_trainer_args"]["fp32_accumulation"] for config in defense_configs
     )
 
     defense_sweep = yaml.safe_load(
         (
-            EXAMPLE / "configs/stages-beavertails/0_alignment" / name / "sweep.yml"
+            EXAMPLE
+            / "configs/stages-beavertails/0_alignment"
+            / defense_name
+            / "sweep.yml"
         ).read_text()
     )
     assert not any(
@@ -866,8 +868,31 @@ def test_legacy_seam_fp32_relearning_grid_matches_defense_betas(
         for argument in defense_sweep["producer"]["sbatch_args"]
     )
 
+    selected_defense = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/stages-beavertails/0_alignment"
+            / defense_name
+            / "selected.yml"
+        ).read_text()
+    )
+    selected_attack = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/stages-beavertails/1_relearn"
+            / attack_name
+            / "selected.yml"
+        ).read_text()
+    )
+    assert selected_attack["base_model"] == selected_defense["output_dir"]
+    assert selected_attack["output_dir"].endswith(attack_name)
+    assert selected_attack["wandb_name"] == attack_name
+
     attack_manifest = hpo.generate(
-        EXAMPLE / "configs/stages-beavertails/1_relearn" / name / "sweep.yml",
+        EXAMPLE
+        / "configs/stages-beavertails/1_relearn"
+        / attack_name
+        / "sweep.yml",
         tmp_path / "attack",
     )
     plan = load(attack_manifest).plan()
@@ -877,7 +902,7 @@ def test_legacy_seam_fp32_relearning_grid_matches_defense_betas(
         yaml.safe_load(Path(stage.args[0]).read_text()) for stage in training
     ]
     assert [stage.id for stage in training] == [
-        f"train-{name}--relearn--hpo--beta{beta}--001" for beta in (0.01, 0.1, 1.0)
+        f"train-{attack_name}--hpo--seed{seed}--001" for seed in (40, 41, 42)
     ]
     assert [
         (config["base_model"], config["learning_rate"]) for config in attack_configs
