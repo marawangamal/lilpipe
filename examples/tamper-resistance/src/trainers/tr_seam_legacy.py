@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import math
+import random
 from functools import partial
 
 import torch
@@ -16,10 +17,14 @@ from data.seam import BENIGN, HARMFUL, REFUSAL
 # Utilities
 
 
-def gradient_dict_dot(first, second, fp32=False):
+def gradient_dict_dot(first, second, fp32=False, reduction_seed=None):
     """Dot two name-to-tensor mappings that may span several devices."""
+    names = first.keys() & second.keys()
+    if reduction_seed is not None:
+        names = sorted(names)
+        random.Random(reduction_seed).shuffle(names)
     partials = {}
-    for name in first.keys() & second.keys():
+    for name in names:
         device = first[name].device
         left = first[name].float() if fp32 else first[name]
         right = second[name].float() if fp32 else second[name]
@@ -270,23 +275,26 @@ class SEAMAlignmentTrainer(BF16Trainer):
         return loss_up.detach(), norm_up.detach()
 
     def accumulate_sd_grad(self, model, harmful, benign, mask):
-        """Compute the finite-difference SD gradient and add it to parameter.grad."""
+        """Accumulate beta-scaled SD gradients; return raw cosine and gradient norm."""
         parameters = {
             name: parameter
             for name, parameter in model.named_parameters()
             if parameter.requires_grad
         }
         divisor = self.current_gradient_accumulation_steps
+        dot = partial(
+            gradient_dict_dot,
+            fp32=self.fp32_accumulation,
+            reduction_seed=self.args.seed if self.fp32_accumulation else None,
+        )
 
         loss_hh = self.compute_ce(model, harmful, mask)
         g_hh = named_gradients(loss_hh, parameters, divisor)
         loss_bb = self.compute_ce(model, benign)
         g_bb = named_gradients(loss_bb, parameters, divisor)
-        norm_hh = gradient_dict_dot(g_hh, g_hh, fp32=self.fp32_accumulation).sqrt()
-        norm_bb = gradient_dict_dot(g_bb, g_bb, fp32=self.fp32_accumulation).sqrt()
-        cosine = gradient_dict_dot(g_hh, g_bb, fp32=self.fp32_accumulation) / (
-            norm_hh * norm_bb + 1e-8
-        )
+        norm_hh = dot(g_hh, g_hh).sqrt()
+        norm_bb = dot(g_bb, g_bb).sqrt()
+        cosine = dot(g_hh, g_bb) / (norm_hh * norm_bb + 1e-8)
 
         d_hh = {
             name: self.epsilon
@@ -320,9 +328,7 @@ class SEAMAlignmentTrainer(BF16Trainer):
             + (g_bb_shifted[name] - g_bb[name]) / norm_bb.to(parameter.device)
             for name, parameter in parameters.items()
         }
-        norm_sd = gradient_dict_dot(
-            g_sd, g_sd, fp32=self.fp32_accumulation
-        ).sqrt() * abs(self.beta / self.epsilon)
+        norm_sd = dot(g_sd, g_sd).sqrt() * abs(self.beta / self.epsilon)
         with torch.no_grad():
             for name, parameter in parameters.items():
                 # parameter, parameter.grad, and g_sd[name] are on the same GPU.
@@ -331,7 +337,7 @@ class SEAMAlignmentTrainer(BF16Trainer):
                     parameter.grad = sd_grad
                 else:
                     parameter.grad.add_(sd_grad)
-        return self.beta * cosine.detach(), norm_sd.detach()
+        return cosine.detach(), norm_sd.detach()
 
     def training_step(self, model, inputs, num_items_in_batch=None):
         del num_items_in_batch

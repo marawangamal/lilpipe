@@ -1893,6 +1893,53 @@ def test_seam_defense_uses_per_dataset_input_masks() -> None:
     }
 
 
+@pytest.mark.parametrize("divisor", [1, 2])
+def test_legacy_seam_reports_unweighted_sd_loss(monkeypatch, divisor) -> None:
+    torch = pytest.importorskip("torch")
+    import sys
+
+    monkeypatch.setitem(
+        sys.modules,
+        "axolotl.core.trainers.base",
+        SimpleNamespace(AxolotlTrainer=object),
+    )
+    monkeypatch.setitem(
+        sys.modules, "data.seam", SimpleNamespace(BENIGN=2, HARMFUL=0, REFUSAL=1)
+    )
+    legacy = load_script("src/trainers/tr_seam_legacy.py", "legacy_sd_loss_test")
+    trainer = object.__new__(legacy.SEAMAlignmentTrainer)
+    trainer.current_gradient_accumulation_steps = divisor
+    trainer.epsilon = 1e-3
+    trainer.fp32_accumulation = False
+    trainer.compute_ce = lambda model, target, mask=None: (
+        0.5 * (model.weight - target).square().sum()
+    )
+    harmful = torch.tensor([[0.1, -0.2]])
+    benign = torch.tensor([[-0.2, -0.8]])
+    initial = torch.tensor([[0.6, -0.4]])
+    harmful_gradient = initial - harmful
+    benign_gradient = initial - benign
+    expected_cosine = torch.nn.functional.cosine_similarity(
+        harmful_gradient.flatten(), benign_gradient.flatten(), dim=0
+    )
+    updates = {}
+    for beta in (0.0, 0.1, 1.0):
+        model = torch.nn.Linear(2, 1, bias=False)
+        with torch.no_grad():
+            model.weight.copy_(initial)
+        model.weight.grad = torch.ones_like(model.weight)
+        trainer.beta = beta
+        loss_sd, norm_sd = trainer.accumulate_sd_grad(model, harmful, benign, None)
+        assert loss_sd.item() == pytest.approx(expected_cosine.item())
+        assert not loss_sd.requires_grad
+        torch.testing.assert_close(model.weight, initial)
+        updates[beta] = model.weight.grad - 1
+        torch.testing.assert_close(norm_sd, updates[beta].norm())
+    assert updates[1.0].norm() > 0
+    torch.testing.assert_close(updates[0.0], torch.zeros_like(initial))
+    torch.testing.assert_close(updates[0.1], 0.1 * updates[1.0])
+
+
 def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> None:
     torch = pytest.importorskip("torch")
     pytest.importorskip("axolotl")
@@ -2145,9 +2192,23 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         {"first": torch.tensor([1.0, 2.0], dtype=torch.bfloat16)},
         {"first": torch.tensor([3.0, 4.0], dtype=torch.bfloat16)},
         fp32=True,
+        reduction_seed=42,
     )
     assert legacy_fp32_dot.dtype == torch.float32
     assert legacy_fp32_dot.item() == pytest.approx(11.0)
+
+    order_sensitive = {
+        "a": torch.tensor([1e20], dtype=torch.bfloat16),
+        "b": torch.tensor([-1e20], dtype=torch.bfloat16),
+        "c": torch.tensor([3.0], dtype=torch.bfloat16),
+    }
+    ones = {name: torch.ones_like(value) for name, value in order_sensitive.items()}
+    assert legacy.gradient_dict_dot(
+        order_sensitive, ones, fp32=True, reduction_seed=40
+    ).item() == pytest.approx(0.0)
+    assert legacy.gradient_dict_dot(
+        order_sensitive, ones, fp32=True, reduction_seed=42
+    ).item() == pytest.approx(3.0)
 
     legacy_instance = object.__new__(legacy.SEAMAlignmentTrainer)
     legacy_instance._prepare_inputs = lambda inputs: inputs
