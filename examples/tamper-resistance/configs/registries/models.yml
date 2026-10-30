@@ -32,6 +32,7 @@ models:
       - --cpus-per-task=48
       - --mem=480G
       - --time=03:00:00
+      - --export=ALL,PYTHONHASHSEED=0
   llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250:
     baseline_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy
     base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250

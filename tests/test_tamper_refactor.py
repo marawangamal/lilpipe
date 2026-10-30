@@ -718,6 +718,7 @@ def test_llama2_selected_seam_pipeline_runs_defense_attack_and_evaluation(
         "data-disjoint--relearn-fft-ms250",
     )
     assert evaluation.args[-2:] == ("100", "250")
+    assert "--export=ALL,PYTHONHASHSEED=0" in defense.sbatch_args
     assert all(
         "--gpus-per-node=h100:4" in stage.sbatch_args
         and "--time=03:00:00" in stage.sbatch_args
