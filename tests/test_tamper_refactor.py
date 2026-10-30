@@ -308,8 +308,9 @@ def test_qwen_seam_evaluation_waits_for_training(monkeypatch) -> None:
     assert reused.skipped == frozenset({training.id})
 
 
+@pytest.mark.parametrize("stage", ["disjoint", "disjoint-beta1e-1", "disjoint-beta1"])
 def test_qwen_relearning_sweep_reuses_defense_and_evaluates_attacks(
-    tmp_path: Path, monkeypatch
+    stage: str, tmp_path: Path, monkeypatch
 ) -> None:
     from lilpipe import load
 
@@ -321,6 +322,9 @@ def test_qwen_relearning_sweep_reuses_defense_and_evaluates_attacks(
     )
     manifest = hpo.generate(sweep, tmp_path / "generated")
     pipeline = load(manifest)
+    pipeline = pipeline.select(
+        models=[name for name in pipeline.selected_models if f"--{stage}--" in name]
+    )
     defense = "qwen3-0.6b-beavertail--align-fft-seam-legacy"
     plan = pipeline.plan(existing_models=[defense])
     assert plan.skipped == frozenset({f"train-{defense}"})
@@ -330,7 +334,13 @@ def test_qwen_relearning_sweep_reuses_defense_and_evaluates_attacks(
     configs = [yaml.safe_load(Path(stage.args[0]).read_text()) for stage in training]
     assert [config["learning_rate"] for config in configs] == [5e-5, 1e-4]
     for config, train, evaluate in zip(configs, training, evaluation, strict=True):
-        assert config["base_model"] == f"artifacts/mila/models/{defense}"
+        if stage == "disjoint":
+            assert config["base_model"] == f"artifacts/mila/models/{defense}"
+        elif stage == "disjoint-beta1e-1":
+            assert config["base_model"].endswith("--hpo--beta--001")
+        else:
+            assert config["base_model"].endswith("--hpo--beta--002")
+        assert evaluate.args[1] == config["base_model"]
         assert config["max_steps"] == 250
         assert config["save_steps"] == 100
         assert config["datasets"][0]["message_property_mappings"]["role"] == (
@@ -767,6 +777,30 @@ def test_legacy_seam_defense_pins_python_hash_seed() -> None:
     ]["llama2-7b-beavertail--align-fft-seam-legacy"]
 
     assert "--export=ALL,PYTHONHASHSEED=0" in model["producer"]["sbatch_args"]
+
+
+def test_legacy_seam_fp32_sweep_varies_seed_without_hash_seed() -> None:
+    lineage = (
+        EXAMPLE / "configs/stages-beavertails/0_alignment/"
+        "llama2-7b-beavertail--align-fft-seam-legacy-fp32-seeds"
+    )
+    base = yaml.safe_load((lineage / "base.yml").read_text())
+    sweep = yaml.safe_load((lineage / "sweep.yml").read_text())
+
+    assert base["custom_trainer_args"]["fp32_accumulation"] is True
+    assert [stage["parameters"]["seed"] for stage in sweep["sweeps"]] == [
+        [40],
+        [41],
+        [42],
+    ]
+    assert [stage["overrides"]["data_seed"] for stage in sweep["sweeps"]] == [
+        40,
+        41,
+        42,
+    ]
+    assert not any(
+        "PYTHONHASHSEED" in argument for argument in sweep["producer"]["sbatch_args"]
+    )
 
 
 LINEAGES = sorted(

@@ -1,0 +1,27 @@
+id: llama2-7b-beavertail--align-fft-seam-legacy-fp32-seeds-hpo
+sweeps:
+  - name: seed40
+    parameters:
+      seed: [40]
+    overrides:
+      data_seed: 40
+  - name: seed41
+    parameters:
+      seed: [41]
+    overrides:
+      data_seed: 41
+  - name: seed42
+    parameters:
+      seed: [42]
+    overrides:
+      data_seed: 42
+producer:
+  script: scripts/slurm/tamia/train_model_parallel.sbatch
+  sbatch_args:
+    - --partition=gpubase_bynode_b2
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=48
+    - --mem=480G
+    - --time=03:00:00
+model:
+  method: SEAM legacy FP32

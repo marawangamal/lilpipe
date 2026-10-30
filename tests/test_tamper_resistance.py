@@ -2141,6 +2141,13 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     )
     assert legacy_dot.dtype == torch.bfloat16
     assert legacy_dot.item() == pytest.approx(11.0)
+    legacy_fp32_dot = legacy.gradient_dict_dot(
+        {"first": torch.tensor([1.0, 2.0], dtype=torch.bfloat16)},
+        {"first": torch.tensor([3.0, 4.0], dtype=torch.bfloat16)},
+        fp32=True,
+    )
+    assert legacy_fp32_dot.dtype == torch.float32
+    assert legacy_fp32_dot.item() == pytest.approx(11.0)
 
     legacy_instance = object.__new__(legacy.SEAMAlignmentTrainer)
     legacy_instance._prepare_inputs = lambda inputs: inputs

@@ -16,12 +16,14 @@ from data.seam import BENIGN, HARMFUL, REFUSAL
 # Utilities
 
 
-def gradient_dict_dot(first, second):
+def gradient_dict_dot(first, second, fp32=False):
     """Dot two name-to-tensor mappings that may span several devices."""
     partials = {}
     for name in first.keys() & second.keys():
         device = first[name].device
-        value = (first[name] * second[name]).sum()
+        left = first[name].float() if fp32 else first[name]
+        right = second[name].float() if fp32 else second[name]
+        value = (left * right).sum()
         partials[device] = value if device not in partials else partials[device] + value
     if not partials:
         raise RuntimeError("gradient mappings have no common tensors")
@@ -152,9 +154,18 @@ class BF16Trainer(AxolotlTrainer):
 class SEAMAlignmentTrainer(BF16Trainer):
     """Accumulate UL, UP, and finite-difference SD gradients in place."""
 
-    def __init__(self, *args, alpha=1.0, beta=0.01, epsilon=1e-3, **kwargs):
+    def __init__(
+        self,
+        *args,
+        alpha=1.0,
+        beta=0.01,
+        epsilon=1e-3,
+        fp32_accumulation=False,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.alpha, self.beta, self.epsilon = alpha, beta, epsilon
+        self.fp32_accumulation = fp32_accumulation
         # Leave each hidden state on the GPU that owns its transformer layer.
         if hasattr(self.model, "_hf_hook"):
             self.model._hf_hook.io_same_device = False
@@ -271,9 +282,11 @@ class SEAMAlignmentTrainer(BF16Trainer):
         g_hh = named_gradients(loss_hh, parameters, divisor)
         loss_bb = self.compute_ce(model, benign)
         g_bb = named_gradients(loss_bb, parameters, divisor)
-        norm_hh = gradient_dict_dot(g_hh, g_hh).sqrt()
-        norm_bb = gradient_dict_dot(g_bb, g_bb).sqrt()
-        cosine = gradient_dict_dot(g_hh, g_bb) / (norm_hh * norm_bb + 1e-8)
+        norm_hh = gradient_dict_dot(g_hh, g_hh, fp32=self.fp32_accumulation).sqrt()
+        norm_bb = gradient_dict_dot(g_bb, g_bb, fp32=self.fp32_accumulation).sqrt()
+        cosine = gradient_dict_dot(g_hh, g_bb, fp32=self.fp32_accumulation) / (
+            norm_hh * norm_bb + 1e-8
+        )
 
         d_hh = {
             name: self.epsilon
@@ -307,7 +320,9 @@ class SEAMAlignmentTrainer(BF16Trainer):
             + (g_bb_shifted[name] - g_bb[name]) / norm_bb.to(parameter.device)
             for name, parameter in parameters.items()
         }
-        norm_sd = gradient_dict_dot(g_sd, g_sd).sqrt() * abs(self.beta / self.epsilon)
+        norm_sd = gradient_dict_dot(
+            g_sd, g_sd, fp32=self.fp32_accumulation
+        ).sqrt() * abs(self.beta / self.epsilon)
         with torch.no_grad():
             for name, parameter in parameters.items():
                 # parameter, parameter.grad, and g_sd[name] are on the same GPU.
