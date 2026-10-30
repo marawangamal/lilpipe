@@ -824,12 +824,12 @@ def test_legacy_seam_defense_pins_python_hash_seed() -> None:
     assert "--export=ALL,PYTHONHASHSEED=0" in model["producer"]["sbatch_args"]
 
 
-def test_legacy_seam_fp32_relearning_grid_matches_defense_seeds(
+def test_legacy_seam_fp32_relearning_grid_matches_defense_betas(
     tmp_path: Path, monkeypatch
 ) -> None:
     from lilpipe import load
 
-    hpo = load_script(EXAMPLE / "scripts/hpo.py", "fp32_seed_hpo_test")
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "fp32_beta_hpo_test")
     monkeypatch.chdir(EXAMPLE)
     name = "llama2-7b-beavertail--align-fft-seam-legacy-fp32"
     defense_manifest = hpo.generate(
@@ -845,8 +845,13 @@ def test_legacy_seam_fp32_relearning_grid_matches_defense_seeds(
     defense_configs = [
         yaml.safe_load(Path(stage.args[0]).read_text()) for stage in defenses
     ]
-    assert [config["seed"] for config in defense_configs] == [40, 41, 42]
-    assert [config["data_seed"] for config in defense_configs] == [40, 41, 42]
+    assert [config["custom_trainer_args"]["beta"] for config in defense_configs] == [
+        0.01,
+        0.1,
+        1.0,
+    ]
+    assert [config["seed"] for config in defense_configs] == [42, 42, 42]
+    assert [config["data_seed"] for config in defense_configs] == [42, 42, 42]
     assert all(
         config["custom_trainer_args"]["fp32_accumulation"] for config in defense_configs
     )
@@ -872,7 +877,7 @@ def test_legacy_seam_fp32_relearning_grid_matches_defense_seeds(
         yaml.safe_load(Path(stage.args[0]).read_text()) for stage in training
     ]
     assert [stage.id for stage in training] == [
-        f"train-{name}--relearn--hpo--seed{seed}--001" for seed in (40, 41, 42)
+        f"train-{name}--relearn--hpo--beta{beta}--001" for beta in (0.01, 0.1, 1.0)
     ]
     assert [
         (config["base_model"], config["learning_rate"]) for config in attack_configs

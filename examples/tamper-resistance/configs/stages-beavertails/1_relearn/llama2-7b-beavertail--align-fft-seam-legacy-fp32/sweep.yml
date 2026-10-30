@@ -1,19 +1,19 @@
 id: llama2-7b-beavertail--align-fft-seam-legacy-fp32--relearn--hpo
 sweeps:
-  - name: seed40
+  - name: beta0.01
     parameters:
       base_model:
-        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo--seed40--001
+        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo--beta--001
       learning_rate: [1.0e-4]
-  - name: seed41
+  - name: beta0.1
     parameters:
       base_model:
-        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo--seed41--001
+        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo--beta--002
       learning_rate: [1.0e-4]
-  - name: seed42
+  - name: beta1.0
     parameters:
       base_model:
-        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo--seed42--001
+        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo--beta--003
       learning_rate: [1.0e-4]
 producer:
   script: scripts/slurm/tamia/train_single_gpu.sbatch
