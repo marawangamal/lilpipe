@@ -6,7 +6,7 @@ custom_trainer_args:
   alpha: 1.0
   beta: 0.01
   epsilon: 1.0e-3
-  fp32_accumulation: true
+  fp32_accumulation: false
 datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train

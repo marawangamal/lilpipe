@@ -3,7 +3,7 @@ plugins:
   - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
 trainer_cls: trainers.tr_seam_legacy.SEAMRelearnTrainer
 custom_trainer_args:
-  fp32_accumulation: true
+  fp32_accumulation: false
 datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train

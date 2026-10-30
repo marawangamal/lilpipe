@@ -754,7 +754,7 @@ def test_legacy_seam_relearning_grid_matches_defense_seeds(
     ]
     assert [config["seed"] for config in defense_configs] == [40, 41, 42]
     assert [config["data_seed"] for config in defense_configs] == [40, 41, 42]
-    assert all(
+    assert not any(
         config["custom_trainer_args"]["fp32_accumulation"] for config in defense_configs
     )
 
@@ -812,7 +812,7 @@ def test_legacy_seam_relearning_grid_matches_defense_seeds(
     }
     assert {
         config["custom_trainer_args"]["fp32_accumulation"] for config in attack_configs
-    } == {True}
+    } == {False}
     assert {config["micro_batch_size"] for config in attack_configs} == {12}
     assert {
         tuple(
