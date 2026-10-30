@@ -16,36 +16,35 @@ seam_og_root = osp.join(
 )
 learning_rates = [5e-5, 1e-4]
 steps = range(0, 201, 100)
-# configs = (
-#     [
-#         {
-#             "path": osp.join(
-#                 root,
-#                 "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
-#                 f"relearn-fft-ms250-hpo--disjoint--{index:03d}/checkpoint-{step}/"
-#                 "summary.json",
-#             ),
-#             "method": "SEAM",
-#             "lr": lr,
-#             "step": step,
-#         }
-#         for index, lr in enumerate(learning_rates, 1)
-#         for step in steps
-#     ]
-#     + [
-#         {
-#             "path": osp.join(
-#                 root,
-#                 "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--"
-#                 f"relearn-fft-ms250-hpo--disjoint--002/checkpoint-{step}/summary.json",
-#             ),
-#             "method": "SEAM (legacy reproduced)",
-#             "lr": 1e-4,
-#             "step": step,
-#         }
-#         for step in steps
-#     ]
-#     + [
+configs = [
+    {
+        "path": osp.join(
+            root,
+            "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
+            f"relearn-fft-ms250-hpo--disjoint--{index:03d}/checkpoint-{step}/"
+            "summary.json",
+        ),
+        "method": "SEAM",
+        "lr": lr,
+        "step": step,
+    }
+    for index, lr in enumerate(learning_rates, 1)
+    for step in steps
+] + [
+    {
+        "path": osp.join(
+            root,
+            "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--"
+            f"relearn-fft-ms250-hpo--disjoint--002/checkpoint-{step}/summary.json",
+        ),
+        "method": "SEAM (legacy reproduced)",
+        "lr": 1e-4,
+        "step": step,
+    }
+    for step in steps
+]
+
+# configs += [
 #         {
 #             "path": osp.join(
 #                 root,
@@ -59,26 +58,25 @@ steps = range(0, 201, 100)
 #         }
 #         for step in steps
 #     ]
-# )
 
-configs = [
-    {
-        "path": (
-            "artifacts/mila/evals/qwen3-06b-beavertail/"
-            # Uncomment the desired model's result path.
-            # "qwen3-0.6b-beavertail--align-fft-seam--relearn--hpo"
-            "qwen3-0.6b-beavertail--align-fft-seam-legacy--relearn--hpo"
-            f"--beta{beta}--{lr_index:03d}/"
-            f"checkpoint-{step}/summary.json"
-        ),
-        "method": f"seam-{beta}",
-        "lr": lr,
-        "step": step,
-    }
-    for beta in (0.01, 0.1, 1.0)
-    for lr_index, lr in enumerate(learning_rates, 1)
-    for step in steps
-]
+# configs = [
+#     {
+#         "path": (
+#             "artifacts/mila/evals/qwen3-06b-beavertail/"
+#             # Uncomment the desired model's result path.
+#             # "qwen3-0.6b-beavertail--align-fft-seam--relearn--hpo"
+#             "qwen3-0.6b-beavertail--align-fft-seam-legacy--relearn--hpo"
+#             f"--beta{beta}--{lr_index:03d}/"
+#             f"checkpoint-{step}/summary.json"
+#         ),
+#         "method": f"seam-{beta}",
+#         "lr": lr,
+#         "step": step,
+#     }
+#     for beta in (0.01, 0.1, 1.0)
+#     for lr_index, lr in enumerate(learning_rates, 1)
+#     for step in steps
+# ]
 
 # configs = [
 #     {
@@ -133,13 +131,18 @@ g = sns.relplot(
     col="Eval",
     hue="Method",
     size="LR",
-    style="LR",
     kind="line",
     marker="o",
     height=3.4,
 )
+for text in g.legend.texts:
+    try:
+        text.set_text(f"{float(text.get_text()):.0e}")
+    except ValueError:
+        pass
 
-output = "artifacts/figures/qwen3-0.6b-beavertail-relearning-trajectory.pdf"
+output = (
+    "artifacts/figures/" "llama2-7b-beavertail-relearning-trajectory-ms250--lrs.pdf"
+)
 os.makedirs(osp.dirname(output), exist_ok=True)
 g.figure.savefig(output, bbox_inches="tight")
-g.figure.savefig(output.removesuffix(".pdf") + ".png", dpi=180, bbox_inches="tight")
