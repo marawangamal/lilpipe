@@ -308,48 +308,63 @@ def test_qwen_seam_evaluation_waits_for_training(monkeypatch) -> None:
     assert reused.skipped == frozenset({training.id})
 
 
-@pytest.mark.parametrize("stage", ["disjoint", "disjoint-beta1e-1", "disjoint-beta1"])
-def test_qwen_relearning_sweep_reuses_defense_and_evaluates_attacks(
-    stage: str, tmp_path: Path, monkeypatch
+def test_qwen_relearning_grid_matches_defense_betas_and_evaluates_attacks(
+    tmp_path: Path, monkeypatch
 ) -> None:
     from lilpipe import load
 
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "qwen_relearn_hpo_test")
     monkeypatch.chdir(EXAMPLE)
-    sweep = (
-        EXAMPLE / "configs/stages-beavertails/1_relearn/"
-        "qwen3-0.6b-beavertail--align-fft-seam-legacy/sweep.yml"
+    name = "qwen3-0.6b-beavertail--align-fft-seam-legacy"
+    defense_manifest = hpo.generate(
+        EXAMPLE / "configs/stages-beavertails/0_alignment" / name / "sweep.yml",
+        tmp_path / "defense",
     )
-    manifest = hpo.generate(sweep, tmp_path / "generated")
-    pipeline = load(manifest)
-    pipeline = pipeline.select(
-        models=[name for name in pipeline.selected_models if f"--{stage}--" in name]
+    defense_pipeline = load(defense_manifest)
+    defenses = [
+        stage
+        for stage in defense_pipeline.plan().stages
+        if stage.id.startswith("train-")
+    ]
+    defense_configs = [
+        yaml.safe_load(Path(stage.args[0]).read_text()) for stage in defenses
+    ]
+    assert [config["custom_trainer_args"]["beta"] for config in defense_configs] == [
+        0.01,
+        0.1,
+        1.0,
+    ]
+    manifest = hpo.generate(
+        EXAMPLE / "configs/stages-beavertails/1_relearn" / name / "sweep.yml",
+        tmp_path / "attack",
     )
-    defense = "qwen3-0.6b-beavertail--align-fft-seam-legacy"
-    plan = pipeline.plan(existing_models=[defense])
-    assert plan.skipped == frozenset({f"train-{defense}"})
-    active = [stage for stage in plan.stages if stage.id not in plan.skipped]
-    training = [stage for stage in active if stage.id.startswith("train-")]
-    evaluation = [stage for stage in active if stage.id.startswith("eval-")]
+    plan = load(manifest).plan()
+    training = [stage for stage in plan.stages if stage.id.startswith("train-")]
+    evaluation = [stage for stage in plan.stages if stage.id.startswith("eval-")]
     configs = [yaml.safe_load(Path(stage.args[0]).read_text()) for stage in training]
-    assert [config["learning_rate"] for config in configs] == [5e-5, 1e-4]
+    assert [stage.id for stage in training] == [
+        f"train-{name}--relearn--hpo--beta{beta}--{index:03d}"
+        for beta in (0.01, 0.1, 1.0)
+        for index in (1, 2)
+    ]
+    assert [(config["base_model"], config["learning_rate"]) for config in configs] == [
+        (defense["output_dir"], lr)
+        for defense in defense_configs
+        for lr in (5e-5, 1e-4)
+    ]
     for config, train, evaluate in zip(configs, training, evaluation, strict=True):
-        if stage == "disjoint":
-            assert config["base_model"] == f"artifacts/mila/models/{defense}"
-        elif stage == "disjoint-beta1e-1":
-            assert config["base_model"].endswith("--hpo--beta--001")
-        else:
-            assert config["base_model"].endswith("--hpo--beta--002")
+        assert train.depends_on == ()
         assert evaluate.args[1] == config["base_model"]
         assert config["max_steps"] == 250
         assert config["save_steps"] == 100
-        assert config["datasets"][0]["message_property_mappings"]["role"] == (
-            "attack_disjoint"
+        assert (
+            config["datasets"][0]["message_property_mappings"]["role"]
+            == "attack_disjoint"
         )
         assert evaluate.depends_on == (train.id,)
         assert evaluate.args[2] == config["output_dir"]
         assert evaluate.args[-2:] == ("100", "250")
-    assert len(active) == 4
+    assert len(training) == len(evaluation) == 6
 
 
 def test_active_manifests_reference_only_registered_evaluations() -> None:

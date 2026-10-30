@@ -13,7 +13,7 @@ export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"
 export WANDB_DIR="$PWD/artifacts/mila/logs"
 export WANDB_CACHE_DIR="$SCRATCH/.cache/wandb"
 export WANDB_DATA_DIR="$SCRATCH/.cache/wandb/staging"
-export WANDB_MODE=offline
+export PYTHONHASHSEED="${PYTHONHASHSEED:-0}"
 export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
 
 export PATH="$HOME/.local/bin:$PATH"

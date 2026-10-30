@@ -66,13 +66,15 @@ configs = [
         "path": (
             "artifacts/mila/evals/qwen3-06b-beavertail/"
             "qwen3-0.6b-beavertail--align-fft-seam-legacy--relearn--hpo"
-            f"--disjoint--{index:03d}/checkpoint-{step}/summary.json"
+            f"--beta{beta}--{lr_index:03d}/"
+            f"checkpoint-{step}/summary.json"
         ),
-        "method": "Qwen3-0.6B SEAM legacy",
+        "method": f"seam-{beta}",
         "lr": lr,
         "step": step,
     }
-    for index, lr in enumerate(learning_rates, 1)
+    for beta in (0.01, 0.1, 1.0)
+    for lr_index, lr in enumerate(learning_rates, 1)
     for step in steps
 ]
 
@@ -138,3 +140,4 @@ g = sns.relplot(
 output = "artifacts/figures/qwen3-0.6b-beavertail-relearning-trajectory.pdf"
 os.makedirs(osp.dirname(output), exist_ok=True)
 g.figure.savefig(output, bbox_inches="tight")
+g.figure.savefig(output.removesuffix(".pdf") + ".png", dpi=180, bbox_inches="tight")

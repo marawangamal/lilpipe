@@ -61,34 +61,40 @@ python scripts/analysis/plot_trajectory_wmdp.py \
 
 ## Hyperparameter optimization for Qwen3-0.6B experiments
 
+Run from `examples/tamper-resistance`. The defense grid is `[0.01, 0.1, 1.0]`,
+corresponding to candidates `beta--001`, `beta--002`, and `beta--003`.
+The attack grid crosses those three model paths with LRs `[5e-5, 1e-4]`.
+Keep the grid order fixed once an experiment has started.
+
 ```sh
-# 1. (Optional) Find best defence config and (manually) put it in `selected.yml`
+# 1. Generate and run the multi-beta defenses and their evaluations.
 python scripts/hpo.py generate configs/stages-beavertails/0_alignment/qwen3-0.6b-beavertail--align-fft-seam-legacy/sweep.yml
 lilpipe artifacts/generated/hpo/qwen3-0.6b-beavertail--align-fft-seam-legacy--hpo/experiment.yml
 
-# 2. Move the best config found.
-best_config_from_hpo="artifacts/generated/hpo/qwen3-0.6b-beavertail--align-fft-seam-legacy--hpo/configs/<best-candidate>.yml"
-best_model_from_hpo="artifacts/generated/hpo/qwen3-0.6b-beavertail--align-fft-seam-legacy--hpo/models/<best-candidate>"
-best_eval_from_hpo="artifacts/mila/evals/qwen3-06b-beavertail/<best-candidate>"
-cp "$best_config_from_hpo" configs/stages-beavertails/0_alignment/qwen3-0.6b-beavertail--align-fft-seam-legacy/selected.yml
-mv -T "$best_model_from_hpo" artifacts/mila/models/qwen3-0.6b-beavertail--align-fft-seam-legacy
-mv -T "$best_eval_from_hpo" artifacts/mila/evals/qwen3-06b-beavertail/qwen3-0.6b-beavertail--align-fft-seam-legacy
+# 2. Wait for all defenses to finish; keep their models in the generated grid.
+# No model promotion or retraining is needed before relearning.
 
-# 3. (Optional) Find best attack config.
+# 3. Generate attacks, then run one LR pair at a time with its evaluations.
 python scripts/hpo.py generate configs/stages-beavertails/1_relearn/qwen3-0.6b-beavertail--align-fft-seam-legacy/sweep.yml
-lilpipe artifacts/generated/hpo/qwen3-0.6b-beavertail--align-fft-seam-legacy--relearn--hpo/experiment.yml \
-  --existing-models qwen3-0.6b-beavertail--align-fft-seam-legacy
+attack_id=qwen3-0.6b-beavertail--align-fft-seam-legacy--relearn--hpo
+lilpipe "artifacts/generated/hpo/$attack_id/experiment.yml" \
+  --models "$attack_id--beta0.01--001" "$attack_id--beta0.01--002"
+# After both evaluations and cleanup succeed, repeat with beta0.1, then beta1.0.
 
-# 4. Plot relearning
-python scripts/analysis/plot_trajectory_beavertails.py
+# 4. Plot all three betas and both LRs.
+.venv-eval/bin/python scripts/analysis/plot_trajectory_beavertails.py
 ```
 
+Attack records `beta0.01`, `beta0.1`, and `beta1.0` each generate candidates
+`001` (LR `5e-5`) and `002` (LR `1e-4`). Evaluations cover steps 0, 100, and 200.
+Each attack trajectory is deleted only after its evaluations succeed; defense
+models and evaluation summaries are retained.
 
-Before moving a candidate, archive any existing canonical model and evaluation
-directories. After copying its config, set `output_dir` to the canonical model
-path and `wandb_name` to `qwen3-0.6b-beavertail--align-fft-seam-legacy`.
-The plot reads both attack learning rates at relearning steps 0, 100, and 200;
-run it after both trajectory evaluations complete.
+The existing runs were reindexed without retraining. Their original configs and
+results are archived under `artifacts/generated/hpo/archive/` and
+`artifacts/mila/evals/archive/`; reindexed summaries record their original
+`source_summary`. Regenerating configs does not skip completed jobs: the submission
+commands above are for fresh runs, and should not be rerun over completed artifacts.
 
 
 ## Hyperparameter optimization
