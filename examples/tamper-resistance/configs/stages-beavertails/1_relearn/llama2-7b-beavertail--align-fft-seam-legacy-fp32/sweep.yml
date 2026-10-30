@@ -1,0 +1,35 @@
+id: llama2-7b-beavertail--align-fft-seam-legacy-fp32--relearn--hpo
+sweeps:
+  - name: seed40
+    parameters:
+      base_model:
+        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo--seed40--001
+      learning_rate: [1.0e-4]
+  - name: seed41
+    parameters:
+      base_model:
+        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo--seed41--001
+      learning_rate: [1.0e-4]
+  - name: seed42
+    parameters:
+      base_model:
+        - artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--hpo--seed42--001
+      learning_rate: [1.0e-4]
+producer:
+  script: scripts/slurm/tamia/train_single_gpu.sbatch
+  sbatch_args:
+    - --partition=gpubase_bynode_b2
+    - --gpus-per-node=h100:4
+    - --cpus-per-task=48
+    - --mem=480G
+    - --time=03:00:00
+model:
+  baseline_model_name_or_path: "{parameter[base_model]}"
+  attack_data: disjoint
+  attack_learning_rate: "{parameter[learning_rate]}"
+  method: SEAM legacy FP32
+  evaluation_checkpoint_interval: "100"
+  evaluation_max_steps: "250"
+evaluations:
+  - beavertail-capabilities-trajectory
+evaluation_registry: configs/registries/evals.yml

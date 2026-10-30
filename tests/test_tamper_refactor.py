@@ -794,28 +794,66 @@ def test_legacy_seam_defense_pins_python_hash_seed() -> None:
     assert "--export=ALL,PYTHONHASHSEED=0" in model["producer"]["sbatch_args"]
 
 
-def test_legacy_seam_fp32_sweep_varies_seed_without_hash_seed() -> None:
-    lineage = (
-        EXAMPLE / "configs/stages-beavertails/0_alignment/"
-        "llama2-7b-beavertail--align-fft-seam-legacy-fp32-seeds"
-    )
-    base = yaml.safe_load((lineage / "base.yml").read_text())
-    sweep = yaml.safe_load((lineage / "sweep.yml").read_text())
+def test_legacy_seam_fp32_relearning_grid_matches_defense_seeds(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from lilpipe import load
 
-    assert base["custom_trainer_args"]["fp32_accumulation"] is True
-    assert [stage["parameters"]["seed"] for stage in sweep["sweeps"]] == [
-        [40],
-        [41],
-        [42],
-    ]
-    assert [stage["overrides"]["data_seed"] for stage in sweep["sweeps"]] == [
-        40,
-        41,
-        42,
-    ]
-    assert not any(
-        "PYTHONHASHSEED" in argument for argument in sweep["producer"]["sbatch_args"]
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "fp32_seed_hpo_test")
+    monkeypatch.chdir(EXAMPLE)
+    name = "llama2-7b-beavertail--align-fft-seam-legacy-fp32"
+    defense_manifest = hpo.generate(
+        EXAMPLE / "configs/stages-beavertails/0_alignment" / name / "sweep.yml",
+        tmp_path / "defense",
     )
+    defense_pipeline = load(defense_manifest)
+    defenses = [
+        stage
+        for stage in defense_pipeline.plan().stages
+        if stage.id.startswith("train-")
+    ]
+    defense_configs = [
+        yaml.safe_load(Path(stage.args[0]).read_text()) for stage in defenses
+    ]
+    assert [config["seed"] for config in defense_configs] == [40, 41, 42]
+    assert [config["data_seed"] for config in defense_configs] == [40, 41, 42]
+    assert all(
+        config["custom_trainer_args"]["fp32_accumulation"] for config in defense_configs
+    )
+
+    defense_sweep = yaml.safe_load(
+        (
+            EXAMPLE / "configs/stages-beavertails/0_alignment" / name / "sweep.yml"
+        ).read_text()
+    )
+    assert not any(
+        "PYTHONHASHSEED" in argument
+        for argument in defense_sweep["producer"]["sbatch_args"]
+    )
+
+    attack_manifest = hpo.generate(
+        EXAMPLE / "configs/stages-beavertails/1_relearn" / name / "sweep.yml",
+        tmp_path / "attack",
+    )
+    plan = load(attack_manifest).plan()
+    training = [stage for stage in plan.stages if stage.id.startswith("train-")]
+    evaluations = [stage for stage in plan.stages if stage.id.startswith("eval-")]
+    attack_configs = [
+        yaml.safe_load(Path(stage.args[0]).read_text()) for stage in training
+    ]
+    assert [stage.id for stage in training] == [
+        f"train-{name}--relearn--hpo--seed{seed}--001" for seed in (40, 41, 42)
+    ]
+    assert [
+        (config["base_model"], config["learning_rate"]) for config in attack_configs
+    ] == [(config["output_dir"], 1e-4) for config in defense_configs]
+    for config, train, evaluation in zip(
+        attack_configs, training, evaluations, strict=True
+    ):
+        assert train.depends_on == ()
+        assert evaluation.depends_on == (train.id,)
+        assert evaluation.args[1] == config["base_model"]
+        assert evaluation.args[2] == config["output_dir"]
 
 
 LINEAGES = sorted(

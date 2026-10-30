@@ -27,7 +27,7 @@ shuffle_merged_datasets: false
 dataset_num_proc: 8
 dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-legacy/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32-seeds
+output_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32
 sequence_len: 256
 sample_packing: false
 pad_to_sequence_len: true
@@ -93,4 +93,4 @@ save_total_limit: 1
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: llama2-7b-beavertail--align-fft-seam-legacy-fp32-seeds
+wandb_name: llama2-7b-beavertail--align-fft-seam-legacy-fp32
