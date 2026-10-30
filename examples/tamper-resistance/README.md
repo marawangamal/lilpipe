@@ -51,11 +51,8 @@ python scripts/analysis/plot_trajectory_wmdp.py \
 # for the Zephyr-7B model, on SLURM.
 lilpipe configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml
 
-# 2. Plot the relearning trajectory
-source .venv-eval/bin/activate 
-python scripts/analysis/plot_trajectory_wmdp.py \
-  --plot main \
-  --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf
+# 2. Plot the relearning trajectory 
+.venv-eval/bin/python scripts/analysis/plot_trajectory_wmdp.py 
 ```
 
 ## Hyperparameter optimization for q0.6b
@@ -71,17 +68,6 @@ lilpipe artifacts/generated/hpo/qwen3-0.6b-beavertail--align-fft-seam--relearn--
 
 # 3. Uncomment the desired configs in the plot script, then plot after evaluations finish.
 .venv-eval/bin/python scripts/analysis/plot_trajectory_beavertails.py
-```
-
-
-## Hyperparameter optimization
-
-Generate and submit an RMU sweep from this directory:
-```sh
-python scripts/hpo.py generate \
-  configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-rmu/sweep.yml
-
-lilpipe artifacts/generated/hpo/z7b-wmdp-bio--5pp--unlearn-fft-rmu-hpo/experiment.yml
 ```
 
 
