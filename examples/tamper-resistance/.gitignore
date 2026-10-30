@@ -1,6 +1,8 @@
 artifacts/*
 !artifacts/figures/
 !artifacts/figures/**
+!artifacts/evals/
+!artifacts/evals/**
 !artifacts/tamia/
 artifacts/tamia/*
 !artifacts/tamia/evals/

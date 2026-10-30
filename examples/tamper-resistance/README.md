@@ -59,6 +59,38 @@ python scripts/analysis/plot_trajectory_wmdp.py \
   --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf
 ```
 
+## Hyperparameter optimization for Qwen3-0.6B experiments
+
+```sh
+# 1. (Optional) Find best defence config and (manually) put it in `selected.yml`
+python scripts/hpo.py generate configs/stages-beavertails/0_alignment/qwen3-0.6b-beavertail--align-fft-seam-legacy/sweep.yml
+lilpipe artifacts/generated/hpo/qwen3-0.6b-beavertail--align-fft-seam-legacy--hpo/experiment.yml
+
+# 2. Move the best config found.
+best_config_from_hpo="artifacts/generated/hpo/qwen3-0.6b-beavertail--align-fft-seam-legacy--hpo/configs/<best-candidate>.yml"
+best_model_from_hpo="artifacts/generated/hpo/qwen3-0.6b-beavertail--align-fft-seam-legacy--hpo/models/<best-candidate>"
+best_eval_from_hpo="artifacts/mila/evals/qwen3-06b-beavertail/<best-candidate>"
+cp "$best_config_from_hpo" configs/stages-beavertails/0_alignment/qwen3-0.6b-beavertail--align-fft-seam-legacy/selected.yml
+mv -T "$best_model_from_hpo" artifacts/mila/models/qwen3-0.6b-beavertail--align-fft-seam-legacy
+mv -T "$best_eval_from_hpo" artifacts/mila/evals/qwen3-06b-beavertail/qwen3-0.6b-beavertail--align-fft-seam-legacy
+
+# 3. (Optional) Find best attack config.
+python scripts/hpo.py generate configs/stages-beavertails/1_relearn/qwen3-0.6b-beavertail--align-fft-seam-legacy/sweep.yml
+lilpipe artifacts/generated/hpo/qwen3-0.6b-beavertail--align-fft-seam-legacy--relearn--hpo/experiment.yml \
+  --existing-models qwen3-0.6b-beavertail--align-fft-seam-legacy
+
+# 4. Plot relearning
+python scripts/analysis/plot_trajectory_beavertails.py
+```
+
+
+Before moving a candidate, archive any existing canonical model and evaluation
+directories. After copying its config, set `output_dir` to the canonical model
+path and `wandb_name` to `qwen3-0.6b-beavertail--align-fft-seam-legacy`.
+The plot reads both attack learning rates at relearning steps 0, 100, and 200;
+run it after both trajectory evaluations complete.
+
+
 ## Hyperparameter optimization
 
 Generate and submit an RMU sweep from this directory:

@@ -1,0 +1,9 @@
+version: 1
+id: qwen3-06b-beavertail--align-fft-seam-legacy
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+models:
+  - qwen3-0.6b-beavertail--align-fft-seam-legacy
+evaluations:
+  - beavertail-capabilities-single-l40s

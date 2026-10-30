@@ -12,7 +12,7 @@ from typing import Any
 
 import yaml
 
-ID_PATTERN = re.compile(r"^[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?$")
+ID_PATTERN = re.compile(r"^[a-z0-9]+(?:[a-z0-9.-]*[a-z0-9])?$")
 STRUCTURAL_PATHS = {"plugins", "trainer_cls", "custom_trainer_args"}
 
 
@@ -27,7 +27,10 @@ def load_mapping(path: Path) -> dict[str, Any]:
 
 def validate_id(value: Any, field: str) -> str:
     if not isinstance(value, str) or not ID_PATTERN.fullmatch(value):
-        raise ValueError(f"{field} must be a lowercase kebab-case ID")
+        raise ValueError(
+            f"{field} must start and end with lowercase letters or digits "
+            "and contain only lowercase letters, digits, dots, or hyphens"
+        )
     return value
 
 

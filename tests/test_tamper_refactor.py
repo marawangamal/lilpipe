@@ -117,7 +117,7 @@ def test_hpo_can_use_selected_config_and_expose_parameters_to_model_fields(
         yaml.safe_dump({"base_model": "old", "output_dir": "old-output"})
     )
     sweep = {
-        "id": "test-relearn-sweep",
+        "id": "test-relearn-0.6b",
         "base": "selected.yml",
         "sweeps": [
             {
@@ -135,6 +135,7 @@ def test_hpo_can_use_selected_config_and_expose_parameters_to_model_fields(
 
     output = tmp_path / "generated"
     experiment_path = hpo.generate(sweep_path, output)
+    assert yaml.safe_load(experiment_path.read_text())["id"] == "test-relearn-0.6b"
     configs = [
         yaml.safe_load(path.read_text())
         for path in sorted((output / "configs").glob("*.yml"))
@@ -288,6 +289,57 @@ def test_only_canonical_registries_and_selected_configs_are_referenced() -> None
         config = producer["args"][0]
         assert config.endswith("/selected.yml")
         assert (EXAMPLE / config).is_file()
+
+
+def test_qwen_seam_evaluation_waits_for_training(monkeypatch) -> None:
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = load("configs/experiments/qwen3-06b-beavertail.yml")
+    training, evaluation = pipeline.plan().stages
+    assert evaluation.depends_on == (training.id,)
+    config = yaml.safe_load((EXAMPLE / training.args[0]).read_text())
+    assert evaluation.args[1] == config["output_dir"]
+    assert evaluation.args[2] == "SEAM"
+    assert all(
+        "--gres=gpu:l40s:1" in stage.sbatch_args for stage in (training, evaluation)
+    )
+    reused = pipeline.plan(existing_models=pipeline.selected_models)
+    assert reused.skipped == frozenset({training.id})
+
+
+def test_qwen_relearning_sweep_reuses_defense_and_evaluates_attacks(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from lilpipe import load
+
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "qwen_relearn_hpo_test")
+    monkeypatch.chdir(EXAMPLE)
+    sweep = (
+        EXAMPLE / "configs/stages-beavertails/1_relearn/"
+        "qwen3-0.6b-beavertail--align-fft-seam-legacy/sweep.yml"
+    )
+    manifest = hpo.generate(sweep, tmp_path / "generated")
+    pipeline = load(manifest)
+    defense = "qwen3-0.6b-beavertail--align-fft-seam-legacy"
+    plan = pipeline.plan(existing_models=[defense])
+    assert plan.skipped == frozenset({f"train-{defense}"})
+    active = [stage for stage in plan.stages if stage.id not in plan.skipped]
+    training = [stage for stage in active if stage.id.startswith("train-")]
+    evaluation = [stage for stage in active if stage.id.startswith("eval-")]
+    configs = [yaml.safe_load(Path(stage.args[0]).read_text()) for stage in training]
+    assert [config["learning_rate"] for config in configs] == [5e-5, 1e-4]
+    for config, train, evaluate in zip(configs, training, evaluation, strict=True):
+        assert config["base_model"] == f"artifacts/mila/models/{defense}"
+        assert config["max_steps"] == 250
+        assert config["save_steps"] == 100
+        assert config["datasets"][0]["message_property_mappings"]["role"] == (
+            "attack_disjoint"
+        )
+        assert evaluate.depends_on == (train.id,)
+        assert evaluate.args[2] == config["output_dir"]
+        assert evaluate.args[-2:] == ("100", "250")
+    assert len(active) == 4
 
 
 def test_active_manifests_reference_only_registered_evaluations() -> None:
@@ -763,8 +815,12 @@ def test_lineage_configs_follow_conventions(lineage: Path) -> None:
     if not sweep_path.is_file():
         return
     sweep = yaml.safe_load(sweep_path.read_text())
-    assert "base" in configs
-    assert sweep["id"] == f"{name}-hpo"
+    base_stem = Path(sweep.get("base", "base.yml")).stem
+    assert base_stem in configs
+    expected_ids = {f"{name}-hpo", f"{name}--hpo"}
+    if lineage.parent.name == "1_relearn":
+        expected_ids.add(f"{name}--relearn--hpo")
+    assert sweep["id"] in expected_ids
     if budget := re.search(r"--(\d+pp)--", name):
         for evaluation in sweep.get("evaluations", ()):
             assert evaluation.endswith(f"-{budget.group(1)}")
@@ -793,4 +849,4 @@ def test_lineage_configs_follow_conventions(lineage: Path) -> None:
                 "train_on_inputs",
                 "trainer_cls",
             }
-        assert differing_keys(configs["base"], configs["selected"]) <= allowed
+        assert differing_keys(configs[base_stem], configs["selected"]) <= allowed

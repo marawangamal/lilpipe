@@ -4,9 +4,6 @@
 set -euo pipefail
 
 export HF_HOME="$SCRATCH/.cache/huggingface"
-# Offline mode avoids shared-cluster Hub rate limits and makes cache requirements explicit.
-export HF_HUB_OFFLINE=1
-export HF_DATASETS_OFFLINE=1
 export AXOLOTL_DO_NOT_TRACK=1
 export UV_CACHE_DIR="$SCRATCH/.cache/uv"
 export UV_OFFLINE=1
