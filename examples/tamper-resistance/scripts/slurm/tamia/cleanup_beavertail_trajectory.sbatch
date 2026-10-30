@@ -9,7 +9,9 @@ checkpoint_interval=${4:?missing checkpoint interval}
 max_steps=${5:?missing maximum step}
 
 author_trajectory=artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase--data-disjoint--relearn-fft-ms1000
-if [[ "$trajectory" == "$author_trajectory" ]]; then
+selected_trajectory=artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--data-disjoint--relearn-fft-ms250
+if [[ "$trajectory" == "$author_trajectory" ||
+      "$trajectory" == "$selected_trajectory" ]]; then
     :
 elif [[ "$trajectory" =~ ^artifacts/generated/hpo/([^/]+)/models/([^/]+)$ ]]; then
     sweep_id=${BASH_REMATCH[1]}

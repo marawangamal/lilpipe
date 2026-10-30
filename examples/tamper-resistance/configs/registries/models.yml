@@ -34,6 +34,39 @@ models:
       - --time=03:00:00
       # Keep the remaining Python-set reduction order reproducible.
       - --export=ALL,PYTHONHASHSEED=0
+  llama2-7b-beavertail--align-fft-seam-legacy-fp32:
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32
+    producer:
+      id: train-llama2-7b-beavertail--align-fft-seam-legacy-fp32
+      script: scripts/slurm/tamia/train_model_parallel.sbatch
+      args:
+      - configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-fft-seam-legacy-fp32/selected.yml
+      sbatch_args: &seam_legacy_fp32
+      - --partition=gpubase_bynode_b2
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  llama2-7b-beavertail--align-fft-seam-legacy-fp32--data-disjoint--relearn-fft-ms250:
+    baseline_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--data-disjoint--relearn-fft-ms250
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--data-disjoint--relearn-fft-ms250
+    attack_learning_rate: '0.0001'
+    attack_data: disjoint
+    method: SEAM legacy FP32
+    evaluation_checkpoint_interval: '100'
+    evaluation_max_steps: '250'
+    producer:
+      id: train-llama2-7b-beavertail--align-fft-seam-legacy-fp32--data-disjoint--relearn-fft-ms250
+      script: scripts/slurm/tamia/train_single_gpu.sbatch
+      args:
+      - configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam-legacy-fp32--data-disjoint--relearn-fft-ms250/selected.yml
+      depends_on:
+      - llama2-7b-beavertail--align-fft-seam-legacy-fp32
+      sbatch_args: *seam_legacy_fp32
   llama2-7b-beavertail--align-fft-seam:
     base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam
     adapter_name_or_path: '-'

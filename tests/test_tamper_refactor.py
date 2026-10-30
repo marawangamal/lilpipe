@@ -824,6 +824,45 @@ def test_legacy_seam_defense_pins_python_hash_seed() -> None:
     assert "--export=ALL,PYTHONHASHSEED=0" in model["producer"]["sbatch_args"]
 
 
+def test_llama2_selected_seam_pipeline_runs_defense_attack_and_evaluation(
+    monkeypatch,
+) -> None:
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = load("configs/experiments/llama2-7b-beavertail.yml")
+    defense, attack, evaluation = pipeline.plan().stages
+
+    assert defense.id == "train-llama2-7b-beavertail--align-fft-seam-legacy-fp32"
+    assert attack.depends_on == (defense.id,)
+    assert evaluation.depends_on == (attack.id,)
+    assert defense.args == (
+        "configs/stages-beavertails/0_alignment/"
+        "llama2-7b-beavertail--align-fft-seam-legacy-fp32/selected.yml",
+    )
+    assert attack.args == (
+        "configs/stages-beavertails/1_relearn/"
+        "llama2-7b-beavertail--align-fft-seam-legacy-fp32--data-disjoint--"
+        "relearn-fft-ms250/selected.yml",
+    )
+    assert evaluation.args[1:3] == (
+        "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32",
+        "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy-fp32--"
+        "data-disjoint--relearn-fft-ms250",
+    )
+    assert evaluation.args[-2:] == ("100", "250")
+    assert all(
+        "--gpus-per-node=h100:4" in stage.sbatch_args
+        and "--time=03:00:00" in stage.sbatch_args
+        for stage in (defense, attack, evaluation)
+    )
+
+    cleanup = (
+        EXAMPLE / "scripts/slurm/tamia/cleanup_beavertail_trajectory.sbatch"
+    ).read_text()
+    assert evaluation.args[2] in cleanup
+
+
 def test_legacy_seam_fp32_relearning_grid_matches_defense_seeds(
     tmp_path: Path, monkeypatch
 ) -> None:

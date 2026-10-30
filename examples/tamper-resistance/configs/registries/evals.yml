@@ -66,20 +66,6 @@ evaluations:
     - '{model.evaluation_checkpoint_interval}'
     - '{model.evaluation_max_steps}'
     sbatch_args: *beavertail_capabilities
-  beavertail-adapter-relearn:
-    script: scripts/slurm/mila/eval_alignment.sbatch
-    args:
-    - '{model.id}'
-    - '{model.base_model_name_or_path}'
-    - '{model.baseline_adapter_name_or_path}'
-    - '{model.adapter_name_or_path}'
-    - artifacts/mila/evals
-    - '{model.relearned_base_model_name_or_path}'
-    sbatch_args:
-    - --gres=gpu:l40s:1
-    - --cpus-per-task=16
-    - --mem=96G
-    - --time=06:00:00
   mmlu-no-bio-final-15pp:
     script: scripts/slurm/tamia/eval_mmlu_no_bio_ckpts.sbatch
     args:
