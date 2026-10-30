@@ -1,13 +1,13 @@
 {
   "attack_data": "Disjoint",
-  "attacked_model": "artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250-hpo/models/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250-hpo--disjoint--002",
+  "attacked_model": "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250",
   "baseline_model": "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy",
   "checkpoint_step": 0,
   "gaussian_seed": null,
   "gaussian_sigma": null,
   "learning_rate": 0.0001,
   "method": "SEAM legacy",
-  "model_id": "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250-hpo--disjoint--002",
+  "model_id": "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250",
   "post": {
     "capability": 0.5578499889940568,
     "generations": [

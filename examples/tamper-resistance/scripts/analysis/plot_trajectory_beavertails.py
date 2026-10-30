@@ -35,7 +35,7 @@ configs = [
         "path": osp.join(
             root,
             "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--"
-            f"relearn-fft-ms250-hpo--disjoint--002/checkpoint-{step}/summary.json",
+            f"relearn-fft-ms250/checkpoint-{step}/summary.json",
         ),
         "method": "SEAM (legacy reproduced)",
         "lr": 1e-4,
