@@ -1,4 +1,4 @@
-"""Plot SFT/BaSFT loss, test accuracy, and gradient norm in one PDF."""
+"""Plot MNIST/CIFAR-10 SFT/BaSFT loss, test accuracy, and gradient norm in one PDF."""
 
 import argparse
 import json
@@ -46,14 +46,15 @@ def main(results, output):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--results",
-        default=os.path.join(
-            os.environ.get("SCRATCH", "."), "lilpipe/mnist-sft-basft/results.json"
-        ),
-    )
-    parser.add_argument(
-        "--output", default="artifacts/figures/resnet18-mnist-relearning-trajectory.pdf"
-    )
+    parser.add_argument("--dataset", choices=("mnist", "cifar10"), default="mnist")
+    parser.add_argument("--results")
+    parser.add_argument("--output")
     args = parser.parse_args()
-    main(args.results, args.output)
+    results = args.results or os.path.join(
+        os.environ.get("SCRATCH", "."), f"lilpipe/{args.dataset}-sft-basft/results.json"
+    )
+    output = (
+        args.output
+        or f"artifacts/figures/resnet18-{args.dataset}-relearning-trajectory.pdf"
+    )
+    main(results, output)

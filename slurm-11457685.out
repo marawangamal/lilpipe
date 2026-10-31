@@ -1,0 +1,101 @@
+
+======== GPU REPORT ========
+
+==============NVSMI LOG==============
+
+Timestamp                                              : Fri Oct 30 16:58:59 2026
+Driver Version                                         : 580.159.03
+CUDA Version                                           : 13.0
+
+Attached GPUs                                          : 1
+GPU 00000000:E1:00.0
+    Accounting Mode                                    : Enabled
+    Accounting Mode Buffer Size                        : 4000
+    Accounted Processes
+        Process ID                                     : 2176229
+            GPU Utilization                            : 54 %
+            Memory Utilization                         : 35 %
+            Max memory usage                           : 1410 MiB
+            Time                                       : 47438 ms
+            Is Running                                 : 0
+        Process ID                                     : 2200154
+            GPU Utilization                            : 54 %
+            Memory Utilization                         : 35 %
+            Max memory usage                           : 1410 MiB
+            Time                                       : 46086 ms
+            Is Running                                 : 0
+        Process ID                                     : 2223539
+            GPU Utilization                            : 48 %
+            Memory Utilization                         : 30 %
+            Max memory usage                           : 4188 MiB
+            Time                                       : 147482 ms
+            Is Running                                 : 0
+        Process ID                                     : 2231966
+            GPU Utilization                            : 32 %
+            Memory Utilization                         : 19 %
+            Max memory usage                           : 2666 MiB
+            Time                                       : 566601 ms
+            Is Running                                 : 0
+        Process ID                                     : 2246630
+            GPU Utilization                            : 60 %
+            Memory Utilization                         : 36 %
+            Max memory usage                           : 2648 MiB
+            Time                                       : 162690 ms
+            Is Running                                 : 0
+        Process ID                                     : 2261054
+            GPU Utilization                            : 75 %
+            Memory Utilization                         : 50 %
+            Max memory usage                           : 2534 MiB
+            Time                                       : 314656 ms
+            Is Running                                 : 0
+        Process ID                                     : 2304867
+            GPU Utilization                            : 74 %
+            Memory Utilization                         : 49 %
+            Max memory usage                           : 2608 MiB
+            Time                                       : 352386 ms
+            Is Running                                 : 0
+        Process ID                                     : 2059140
+            GPU Utilization                            : 66 %
+            Memory Utilization                         : 43 %
+            Max memory usage                           : 1596 MiB
+            Time                                       : 6754599 ms
+            Is Running                                 : 0
+        Process ID                                     : 2325767
+            GPU Utilization                            : 69 %
+            Memory Utilization                         : 46 %
+            Max memory usage                           : 2534 MiB
+            Time                                       : 185636 ms
+            Is Running                                 : 0
+        Process ID                                     : 2374122
+            GPU Utilization                            : 74 %
+            Memory Utilization                         : 55 %
+            Max memory usage                           : 3296 MiB
+            Time                                       : 1053510 ms
+            Is Running                                 : 0
+        Process ID                                     : 2308855
+            GPU Utilization                            : 52 %
+            Memory Utilization                         : 33 %
+            Max memory usage                           : 1664 MiB
+            Time                                       : 0 ms
+            Is Running                                 : 1
+
+Fri Oct 30 16:58:59 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.159.03             Driver Version: 580.159.03     CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA L40S                    On  |   00000000:E1:00.0 Off |                    0 |
+| N/A   55C    P0            228W /  325W |       0MiB /  46068MiB |     66%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+

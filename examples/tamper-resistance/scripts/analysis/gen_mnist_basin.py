@@ -1,4 +1,4 @@
-"""Compare ordinary MNIST training with a sampled high-loss basin objective."""
+"""Compare SFT and BaSFT on MNIST or CIFAR-10 with a GroupNorm ResNet-18."""
 
 import argparse
 import copy
@@ -12,7 +12,7 @@ from torch import nn
 from torch.func import functional_call
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
-from torchvision import datasets, models
+from torchvision import datasets, models, transforms
 
 
 def norm(values):
@@ -82,7 +82,7 @@ def evaluate(model, dataset, device, with_gradient=False):
     return metrics
 
 
-def fit(model, train, test, args, device, method, phase):
+def fit(model, train, test, args, device, method, phase, train_eval=None):
     model.eval()  # GroupNorm has identical train/eval behavior and no running buffers.
     training = phase == "train"
     steps = args.steps if training else args.relearn_steps
@@ -94,7 +94,12 @@ def fit(model, train, test, args, device, method, phase):
     history = []
     for step in range(steps + 1):
         if step % interval == 0 or step == steps:
-            train_metrics = evaluate(model, train, device, with_gradient=True)
+            train_metrics = evaluate(
+                model,
+                train if train_eval is None else train_eval,
+                device,
+                with_gradient=True,
+            )
             row = {
                 "method": method,
                 "phase": phase,
@@ -135,11 +140,31 @@ def fit(model, train, test, args, device, method, phase):
     return history
 
 
-def main(args):
-    torch.manual_seed(args.seed)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    args.output.mkdir(parents=True, exist_ok=True)
-    root = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "mnist"
+def load_data(dataset):
+    root = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / dataset
+    if dataset == "cifar10":
+        train = datasets.CIFAR10(
+            root,
+            train=True,
+            download=True,
+            transform=transforms.Compose(
+                [
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomCrop(32, padding=4, padding_mode="reflect"),
+                    transforms.ToTensor(),
+                ]
+            ),
+        )
+        test = datasets.CIFAR10(root, train=False, download=True)
+        # Use fixed images for loss and gradient measurements.
+        train_eval, test_eval = [
+            TensorDataset(
+                torch.as_tensor(data.data).permute(0, 3, 1, 2).float() / 255,
+                torch.as_tensor(data.targets),
+            )
+            for data in (train, test)
+        ]
+        return train, train_eval, test_eval, 3
     train, test = [
         TensorDataset(
             (data.data.unsqueeze(1).float() / 255 - 0.1307) / 0.3081, data.targets
@@ -148,12 +173,20 @@ def main(args):
             datasets.MNIST(root, train=split, download=True) for split in (True, False)
         ]
     ]
+    return train, train, test, 1
+
+
+def main(args):
+    torch.manual_seed(args.seed)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    args.output.mkdir(parents=True, exist_ok=True)
+    train, train_eval, test, channels = load_data(getattr(args, "dataset", "mnist"))
     initial = models.resnet18(
         weights=None,
         num_classes=10,
         norm_layer=lambda channels: nn.GroupNorm(8, channels),
     )
-    initial.conv1 = nn.Conv2d(1, 64, 3, padding=1, bias=False)
+    initial.conv1 = nn.Conv2d(channels, 64, 3, padding=1, bias=False)
     initial.maxpool = nn.Identity()
     initial.to(device)
     result = {
@@ -173,7 +206,8 @@ def main(args):
         previous = json.loads(results_file.read_text())
         for key, value in result["config"].items():
             if key not in ("output", "beta", "betas", "resume"):
-                if previous["config"].get(key) != value:
+                default = "mnist" if key == "dataset" else None
+                if previous["config"].get(key, default) != value:
                     raise ValueError(f"Cannot reuse runs with different {key}")
         for row in previous["history"]:
             if row["method"] == "BaSFT":
@@ -198,7 +232,16 @@ def main(args):
         model = copy.deepcopy(initial)
         for phase in ("train", "relearn"):
             result["history"].extend(
-                fit(model, train, test, run_args, device, method, phase)
+                fit(
+                    model,
+                    train,
+                    test,
+                    run_args,
+                    device,
+                    method,
+                    phase,
+                    train_eval=train_eval,
+                )
             )
             slug = "SFT" if beta is None else f"BaSFT-beta-{beta}"
             torch.save(model.state_dict(), args.output / f"{slug}-{phase}.pt")
@@ -209,11 +252,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=Path(os.environ.get("SCRATCH", ".")) / "lilpipe/mnist-sft-basft",
-    )
+    parser.add_argument("--dataset", choices=("mnist", "cifar10"), default="mnist")
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--steps", type=int, default=600)
@@ -238,6 +278,10 @@ if __name__ == "__main__":
     )
     parser.add_argument("--probe-steps", type=int, default=3)
     args = parser.parse_args()
+    if args.output is None:
+        args.output = (
+            Path(os.environ.get("SCRATCH", ".")) / f"lilpipe/{args.dataset}-sft-basft"
+        )
     if min(args.steps, args.relearn_steps, args.log_every, args.relearn_log_every) < 1:
         parser.error("Step counts and log intervals must be positive.")
     main(args)

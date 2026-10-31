@@ -149,8 +149,9 @@ def test_gradient_norm_is_of_full_mean_loss_and_does_not_change_weights(basin):
 
 
 @pytest.mark.parametrize("previous_seed", [0, 99])
+@pytest.mark.parametrize("dataset", ["mnist", "cifar10"])
 def test_beta_sweep_reuses_only_compatible_completed_runs(
-    basin, monkeypatch, tmp_path, previous_seed
+    basin, monkeypatch, tmp_path, previous_seed, dataset
 ):
     import json
     from types import SimpleNamespace
@@ -175,8 +176,10 @@ def test_beta_sweep_reuses_only_compatible_completed_runs(
         probe_steps=1,
         betas=["1.0", "3.0", "10.10"],
         resume=True,
+        dataset=dataset,
     )
     config = {**vars(args), "output": str(tmp_path), "seed": previous_seed}
+    config.pop("dataset")  # Older results are implicitly MNIST.
     old_rows = [
         {
             "method": method,
@@ -192,17 +195,14 @@ def test_beta_sweep_reuses_only_compatible_completed_runs(
     result_path = tmp_path / "results.json"
     result_path.write_text(json.dumps({"config": config, "history": old_rows}))
     monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
-    monkeypatch.setattr(
-        basin.datasets,
-        "MNIST",
-        lambda *a, **kw: SimpleNamespace(
-            data=torch.zeros(2, 28, 28, dtype=torch.uint8), targets=torch.tensor([0, 1])
-        ),
+    data = torch.utils.data.TensorDataset(
+        torch.zeros(2, 1, 28, 28), torch.tensor([0, 1])
     )
+    monkeypatch.setattr(basin, "load_data", lambda name: (data, data, data, 1))
     monkeypatch.setattr(basin.models, "resnet18", lambda **kw: torch.nn.Linear(2, 10))
     calls = []
 
-    def fit(model, train, test, run_args, device, method, phase):
+    def fit(model, train, test, run_args, device, method, phase, train_eval=None):
         calls.append((method, phase, run_args.beta))
         return [
             {
@@ -216,8 +216,8 @@ def test_beta_sweep_reuses_only_compatible_completed_runs(
         ]
 
     monkeypatch.setattr(basin, "fit", fit)
-    if previous_seed != args.seed:
-        with pytest.raises(ValueError, match="different seed"):
+    if previous_seed != args.seed or dataset != "mnist":
+        with pytest.raises(ValueError, match="different (seed|dataset)"):
             basin.main(args)
         assert not calls
         return
@@ -234,3 +234,49 @@ def test_beta_sweep_reuses_only_compatible_completed_runs(
         "BaSFT ($\\beta=3.0$)",
         "BaSFT ($\\beta=10.10$)",
     }
+
+
+def test_cifar10_has_rgb_inputs_and_deterministic_measurements(
+    basin, monkeypatch, tmp_path
+):
+    from PIL import Image
+
+    torch = basin.torch
+    calls = []
+
+    class CIFAR10:
+        def __init__(self, root, train, download, transform=None):
+            calls.append((root, train, download))
+            self.transform = transform
+            self.data = (
+                torch.arange(2 * 32 * 32 * 3)
+                .remainder(256)
+                .byte()
+                .reshape(2, 32, 32, 3)
+                .numpy()
+            )
+            self.targets = [0, 1]
+
+        def __len__(self):
+            return len(self.targets)
+
+        def __getitem__(self, index):
+            image = Image.fromarray(self.data[index])
+            return self.transform(image) if self.transform else image, self.targets[
+                index
+            ]
+
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    monkeypatch.setattr(basin.datasets, "CIFAR10", CIFAR10)
+    train, train_eval, test, channels = basin.load_data("cifar10")
+    assert channels == 3
+    assert calls == [
+        (tmp_path / "cifar10", True, True),
+        (tmp_path / "cifar10", False, True),
+    ]
+    assert train[0][0].shape == (3, 32, 32)
+    expected = torch.as_tensor(train.data[0]).permute(2, 0, 1).float() / 255
+    torch.testing.assert_close(train_eval[0][0], expected)
+    torch.testing.assert_close(test[0][0], expected)
+    assert 0 <= train[0][0].min() and train[0][0].max() <= 1
+    assert train_eval[0][1].item() == 0
