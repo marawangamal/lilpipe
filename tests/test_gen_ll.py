@@ -95,7 +95,8 @@ def test_gen_ll_writes_all_radii_and_ordered_trajectory(monkeypatch, tmp_path, c
     assert grid.groupby("radius").size().to_dict() == {0.001: 4, 0.01: 4, 0.1: 4}
     assert grid["loss"].map(math.isfinite).all()
     assert trajectory["checkpoint"].tolist() == [str(base), str(checkpoint)]
-    assert trajectory[["alpha", "beta"]].map(math.isfinite).all().all()
+    assert trajectory[["c0", "c1"]].map(math.isfinite).all().all()
+    assert trajectory.loc[0, ["c0", "c1"]].tolist() == pytest.approx([0, 0], abs=1e-6)
     captured = capsys.readouterr()
     for radius in (0.1, 0.01, 0.001):
         assert f"Grid radius={radius:g}" in captured.err

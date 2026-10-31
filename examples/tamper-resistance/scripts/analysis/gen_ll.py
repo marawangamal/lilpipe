@@ -102,50 +102,50 @@ if __name__ == "__main__":
 
     # gen loss landscape points
     model.eval()
-    params = dict(model.named_parameters())
-    with torch.no_grad():
-        for radius in args.radii:
-            coords = torch.linspace(-radius, radius, args.n_pts).tolist()
-            points = tqdm(
-                itertools.product(coords, coords),
-                total=len(coords) ** 2,
-                desc=f"Grid radius={radius:g}",
-                unit="point",
-            )
-            for c_i, c_j in points:
-                # add c_i r1 + c_j r2
-                for n, p in params.items():
-                    p.add_(directions[0][n].to(device), alpha=c_i)
-                    p.add_(directions[1][n].to(device), alpha=c_j)
-
-                loss = 0
-                for batch in dataloader:
-                    batch = {k: v.to(device) for k, v in batch.items()}
-                    loss += model(**batch).loss.item()
-                rows.append(
-                    {
-                        "radius": radius,
-                        "alpha": c_i,
-                        "beta": c_j,
-                        "loss": loss / len(dataloader),
-                    }
+    theta_0 = dict(model.named_parameters())
+    if not osp.exists(osp.join(args.outdir, "grid.csv")):
+        with torch.no_grad():
+            for radius in args.radii:
+                coords = torch.linspace(-radius, radius, args.n_pts).tolist()
+                points = tqdm(
+                    itertools.product(coords, coords),
+                    total=len(coords) ** 2,
+                    desc=f"Grid radius={radius:g}",
+                    unit="point",
                 )
+                for c0, c1 in points:
+                    # add c0 r1 + c1 r2
+                    for n, p in theta_0.items():
+                        p.add_(directions[0][n].to(device), alpha=c0)
+                        p.add_(directions[1][n].to(device), alpha=c1)
 
-                # subtract c_i r1 + c_j r2
-                for n, p in params.items():
-                    p.sub_(directions[0][n].to(device), alpha=c_i)
-                    p.sub_(directions[1][n].to(device), alpha=c_j)
-                points.set_postfix(loss=loss / len(dataloader), alpha=c_i, beta=c_j)
+                    loss = 0
+                    for batch in dataloader:
+                        batch = {k: v.to(device) for k, v in batch.items()}
+                        loss += model(**batch).loss.item()
+                    rows.append(
+                        {
+                            "radius": radius,
+                            "c0": c0,
+                            "c1": c1,
+                            "loss": loss / len(dataloader),
+                        }
+                    )
 
-    df = pd.DataFrame(rows)
-    os.makedirs(args.outdir, exist_ok=True)
-    df.to_csv(osp.join(args.outdir, "grid.csv"), index=False)
-    print(
-        f"Saved {len(df)} grid points to {osp.join(args.outdir, 'grid.csv')}",
-        flush=True,
-    )
-    del params, model
-    torch.cuda.empty_cache()
+                    # subtract c0 r1 + c1 r2
+                    for n, p in theta_0.items():
+                        p.sub_(directions[0][n].to(device), alpha=c0)
+                        p.sub_(directions[1][n].to(device), alpha=c1)
+                    points.set_postfix(loss=loss / len(dataloader), c0=c0, c1=c1)
+
+        df = pd.DataFrame(rows)
+        os.makedirs(args.outdir, exist_ok=True)
+        df.to_csv(osp.join(args.outdir, "grid.csv"), index=False)
+        print(
+            f"Saved {len(df)} grid points to {osp.join(args.outdir, 'grid.csv')}",
+            flush=True,
+        )
+        torch.cuda.empty_cache()
 
     # compute the coords
     rows = []
@@ -155,27 +155,22 @@ if __name__ == "__main__":
         ):
             print(f"Projecting: {model_name_or_path}", flush=True)
             model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
-            p = dict(model.named_parameters())
-            z0 = sum(
-                [
-                    pi.sum()
-                    for pi in dict_bin_op(p, directions[0], torch.multiply).values()
-                ]
+            theta_t = dict_unary_op(
+                dict(model.named_parameters()), lambda x: x.to(device)
             )
-            z1 = sum(
-                [
-                    pi.sum()
-                    for pi in dict_bin_op(p, directions[1], torch.multiply).values()
-                ]
-            )
+            c0, c1 = 0, 0
+            for n in theta_t:
+                delta_t = theta_t[n] - theta_0[n]
+                c0 += (delta_t * directions[0][n].to(delta_t.device)).sum()
+                c1 += (delta_t * directions[1][n].to(delta_t.device)).sum()
             rows.append(
                 {
                     "checkpoint": model_name_or_path,
-                    "alpha": z0.item(),
-                    "beta": z1.item(),
+                    "c0": c0.item(),
+                    "c1": c1.item(),
                 }
             )
-            del p, model
+            del theta_t, model
 
     df = pd.DataFrame(rows)
     df.to_csv(osp.join(args.outdir, "trajectory.csv"), index=False)
