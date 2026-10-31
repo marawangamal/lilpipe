@@ -33,5 +33,5 @@ result_root=${4:?missing result root}
 uv sync --frozen --group eval
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 
-python scripts/evaluate_beavertail_and_capabilities.py single \
+python scripts/evals/evaluate_beavertail_and_capabilities.py single \
     "$model_id" "$base_model_name_or_path" "$method" "$result_root"

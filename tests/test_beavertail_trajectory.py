@@ -10,7 +10,8 @@ import pytest
 
 ROOT = Path(__file__).parents[1]
 EVALUATOR = (
-    ROOT / "examples/tamper-resistance/scripts/evaluate_beavertail_and_capabilities.py"
+    ROOT
+    / "examples/tamper-resistance/scripts/evals/evaluate_beavertail_and_capabilities.py"
 )
 PLOTTER = (
     ROOT / "examples/tamper-resistance/scripts/analysis/plot_trajectory_beavertails.py"

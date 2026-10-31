@@ -210,8 +210,22 @@ This inventory records references before cleanup, including historical documenta
 
 ## Supporting files
 
-- **Still shared:** `scripts/evaluate_beavertail_and_capabilities.py`, the Qwen stage configs, `scripts/hpo.py`, and custom trainers remain active. `scripts/tamia_evaluation.py` remains used by Tamia BeaverTails wrappers; Mila no longer calls it.
-- **Historical-only / candidates for later removal:** the alignment and TOFU evaluators, TOFU checkpoint selector and relearning runner, and `scripts/weight_steering.py` are retained with their existing Python behavior tests. No TOFU stage configs or active alignment/steering callers remain in this example.
-- **Retained research code:** `scripts/optuna_hpo.py` has no checked-in study configs after MiniCPM removal. Its generic tests now use a temporary worker fixture rather than the retired Mila wrapper.
-- **No remaining Mila caller:** `scripts/evaluate_alignment.py` and `scripts/evaluate_alignment_trajectory.py` are retained; retiring their wrappers removes their Mila launch entry points.
-- Referenced config templates that were already missing before cleanup are recorded above as historical references; this change does not recreate them.
+- **Still shared:** the two evaluators are now `scripts/evals/evaluate_beavertail_and_capabilities.py` and `scripts/evals/tamia_evaluation.py`. The Qwen stage configs, `scripts/hpo.py`, and shared custom trainers remain active. Mila calls the BeaverTails evaluator directly; the Tamia helper keeps its existing behavior.
+- **Deleted implementations:** the five TOFU scripts and `src/data/tofu.py`, both old alignment evaluators and their comparison script, `scripts/weight_steering.py`, and `scripts/optuna_hpo.py` have been removed along with their dedicated tests. TOFU in other examples is unchanged.
+- **Retained manual analysis:** `scripts/analysis/`, `scripts/analysis.ipynb`, and Slurm templates remain unchanged. Absence of a launch wrapper alone does not establish that a research analysis is obsolete.
+- The paths listed in the wrapper inventory above describe historical callers before retirement; they are not supported execution instructions. Missing historical configuration templates are not recreated.
+
+### Deleted Python implementations
+
+| Retired workflow | Removed files in this example |
+| --- | --- |
+| TOFU | `scripts/evaluate_tofu.py`, `scripts/evaluate_tofu_attack.py`, `scripts/select_tofu_checkpoint.py`, `scripts/run_tofu_relearn.py`, `scripts/summarize_tofu_table2.py`, `src/data/tofu.py` |
+| Old alignment evaluation | `scripts/evaluate_alignment.py`, `scripts/evaluate_alignment_trajectory.py`, `scripts/compare_alignment_trajectories.py` |
+| Weight steering | `scripts/weight_steering.py` |
+| Optuna | `scripts/optuna_hpo.py` |
+
+Dedicated tests for these removed workflows were removed as well. The custom
+trainers, shared data adapters, active grid-HPO tests, analysis tools, and TOFU
+implementations in other examples remain available. The direct Optuna training
+dependency and its now-unreachable lock entries were pruned without upgrading
+the remaining dependencies.

@@ -42,7 +42,7 @@ for ckpt_name_or_path in "$base_model_name_or_path"/checkpoint-*; do
     [[ -d "$ckpt_name_or_path" ]] || continue
     step=${ckpt_name_or_path##*/checkpoint-}
 
-    python scripts/evaluate_beavertail_and_capabilities.py trajectory \
+    python scripts/evals/evaluate_beavertail_and_capabilities.py trajectory \
         "$model_id" "$baseline_model_name_or_path" "$base_model_name_or_path" \
         "$learning_rate" "$attack_data" "$method" "$result_root" \
         --checkpoint-step "$step" --checkpoint-path "$ckpt_name_or_path"

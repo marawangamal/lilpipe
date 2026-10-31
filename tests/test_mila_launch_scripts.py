@@ -37,8 +37,8 @@ def job(tmp_path):
         path.write_text(f"#!{sys.executable}\n" + body)
         path.chmod(0o755)
     (local_bin / "python").symlink_to(sys.executable)
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
+    scripts = tmp_path / "scripts/evals"
+    scripts.mkdir(parents=True)
     (scripts / "evaluate_beavertail_and_capabilities.py").write_text(
         record
         + "args = sys.argv[1:]\n"
