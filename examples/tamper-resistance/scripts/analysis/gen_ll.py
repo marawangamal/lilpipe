@@ -2,6 +2,7 @@ import argparse
 import itertools
 import os
 
+import pandas as pd
 import torch
 from datasets import load_dataset
 from torch.utils.data import DataLoader
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--max-seq-len", type=int, default=512)
     parser.add_argument("--limit", type=int, default=50)
-    parser.add_argument("--radius", type=float, default=0.05)
+    parser.add_argument("--radii", type=float, nargs="+", default=[0.05])
     parser.add_argument("--n-pts", type=int, default=9)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--out", type=str, required=True)
@@ -92,24 +93,38 @@ if __name__ == "__main__":
 
     # get random directions
     directions = get_directions(model, args.seed)
-    grid = torch.zeros(args.n_pts, args.n_pts)
+    rows = []
 
     # gen loss landscape points
     model.eval()
+    params = dict(model.named_parameters())
     with torch.no_grad():
-        coords = torch.linspace(-args.radius, args.radius, args.n_pts)
-        for (i, c_i), (j, c_j) in itertools.product(
-            enumerate(coords), enumerate(coords)
-        ):
-            loss = 0
-            p = dict(model.named_parameters())
-            for d, c in zip(directions, [c_i, c_j]):
-                p = dict_bin_op(p, dict_unary_op(d, lambda t: t * c), torch.add)
-            for batch in dataloader:
-                batch = {k: v.to(device) for k, v in batch.items()}
-                out = torch.func.functional_call(model, p, args=(), kwargs=batch)
-                loss += out.loss.item()
-            grid[i, j] = loss / len(dataloader)
+        for radius in args.radii:
+            coords = torch.linspace(-radius, radius, args.n_pts).tolist()
+            for c_i, c_j in itertools.product(coords, coords):
+                # add c_i r1 + c_j r2
+                for n, p in params.items():
+                    p.add_(directions[0][n], alpha=c_i)
+                    p.add_(directions[1][n], alpha=c_j)
 
+                loss = 0
+                for batch in dataloader:
+                    batch = {k: v.to(device) for k, v in batch.items()}
+                    loss += model(**batch).loss.item()
+                rows.append(
+                    {
+                        "radius": radius,
+                        "alpha": c_i,
+                        "beta": c_j,
+                        "loss": loss / len(dataloader),
+                    }
+                )
+
+                # subtract c_i r1 + c_j r2
+                for n, p in params.items():
+                    p.sub_(directions[0][n], alpha=c_i)
+                    p.sub_(directions[1][n], alpha=c_j)
+
+    df = pd.DataFrame(rows)
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-    torch.save(grid, args.out)
+    df.to_csv(args.out, index=False)
