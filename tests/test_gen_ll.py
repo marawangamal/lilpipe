@@ -123,3 +123,37 @@ def test_gen_ll_writes_all_radii_and_ordered_trajectory(monkeypatch, tmp_path, c
     assert "Trajectory projections" in captured.err
     assert str(output / "grid.csv") in captured.out
     assert str(output / "trajectory.csv") in captured.out
+
+
+@pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
+def test_gradient_directions_restore_weights(dtype):
+    from types import SimpleNamespace
+
+    class Quadratic(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor([1.0, 2.0], dtype=dtype))
+
+        def forward(self, scale):
+            return SimpleNamespace(loss=(scale * self.weight.square()).sum())
+
+    get_directions = runpy.run_path(str(SCRIPT))["get_directions"]
+    model = Quadratic().eval()
+    original = model.weight.detach().clone()
+    batches = [
+        {"scale": torch.tensor([1.0, 3.0], dtype=dtype)},
+        {"scale": torch.tensor([4.0, 1.0], dtype=dtype)},
+    ]
+    directions = get_directions(model, 42, batches, True, grad_lr=0.1)
+    gradient = 2 * batches[0]["scale"] * original
+    updated = original.clone().add_(gradient, alpha=-0.1)
+    gradients = [gradient, 2 * batches[0]["scale"] * updated]
+    for direction, expected in zip(directions, gradients, strict=True):
+        expected = expected / expected.square().sum().sqrt()
+        torch.testing.assert_close(direction["weight"], expected)
+        assert direction["weight"].dtype == dtype
+        assert direction["weight"].device == model.weight.device
+        assert not direction["weight"].requires_grad
+    assert torch.equal(model.weight, original)
+    assert model.weight.grad is None
+    assert not model.training

@@ -22,15 +22,48 @@ def dict_bin_op(a, b, fn):
     return {k: fn(a[k], b[k]) for k in a}
 
 
-def get_directions(model, seed):
+def get_directions(
+    model, seed, dataloader=None, use_grad_directions=False, grad_lr=5e-6
+):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     directions = []
-    for _ in range(2):
-        d = dict()
-        for n, p in model.named_parameters():
-            d[n] = torch.randn_like(p)
-        directions.append(d)
+
+    if use_grad_directions:  # take gradients @ steps 1 & 2 as directions
+        params = dict(model.named_parameters())
+        theta_0 = dict_unary_op(params, lambda p: p.detach().to("cpu", copy=True))
+        device = next(model.parameters()).device
+        batch = {k: v.to(device) for k, v in next(iter(dataloader)).items()}
+        optimizer = torch.optim.SGD(model.parameters(), lr=grad_lr)
+        try:
+            for step in range(2):
+                optimizer.zero_grad(set_to_none=True)
+                model(**batch).loss.backward()
+                directions.append(
+                    dict_unary_op(
+                        params,
+                        lambda p: (
+                            p.grad.detach().to("cpu", copy=True)
+                            if p.grad is not None
+                            else torch.zeros_like(p, device="cpu")
+                        ),
+                    )
+                )
+                if step == 0:
+                    optimizer.step()
+        finally:
+            with torch.no_grad():
+                for n, p in params.items():
+                    p.copy_(theta_0[n])
+            optimizer.zero_grad(set_to_none=True)
+        del theta_0
+        directions = [dict_unary_op(d, lambda t: t.to(device)) for d in directions]
+    else:  # random directions
+        for _ in range(2):
+            d = dict()
+            for n, p in model.named_parameters():
+                d[n] = torch.randn_like(p)
+            directions.append(d)
 
     # normalize so each direction has unit global L2 norm
     normalized = []
@@ -76,6 +109,8 @@ if __name__ == "__main__":
     parser.add_argument("--n-pts", type=int, default=9)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--outdir", type=str, required=True)
+    parser.add_argument("--use-grad-directions", action="store_true", default=False)
+    parser.add_argument("--grad-lr", type=float, default=5e-6)
     args = parser.parse_args()
 
     # load model
@@ -94,13 +129,16 @@ if __name__ == "__main__":
         args.dataset, tok, args.max_seq_len, args.batch_size, args.limit
     )
 
-    # get random directions
-    print(f"Sampling and normalizing directions (seed={args.seed})", flush=True)
-    directions = get_directions(model, args.seed)
+    # get directions
+    model.eval()
+    kind = "gradient" if args.use_grad_directions else "random"
+    print(f"Computing and normalizing {kind} directions (seed={args.seed})", flush=True)
+    directions = get_directions(
+        model, args.seed, dataloader, args.use_grad_directions, args.grad_lr
+    )
     rows = []
 
     # gen loss landscape points
-    model.eval()
     params = dict(model.named_parameters())
     theta_0 = dict_unary_op(params, lambda p: p.detach().clone())
     if not osp.exists(osp.join(args.outdir, "grid.csv")):
