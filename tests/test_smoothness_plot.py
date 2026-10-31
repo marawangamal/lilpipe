@@ -1,5 +1,8 @@
 import importlib.util
+import json
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -191,8 +194,7 @@ def test_smoothness_script_matches_the_paper_setup():
     plot_source = SCRIPT.read_text()
 
     assert 'dataset_name = "cais/wmdp-bio-forget-corpus"' in generator_source
-    assert '"HuggingFaceH4/zephyr-7b-beta", "Base model"' in generator_source
-    assert '"NPO + SAM"' in generator_source
+    assert 'default="HuggingFaceH4/zephyr-7b-beta"' in generator_source
     assert "np.linspace(-args.radius, args.radius, args.points)" in generator_source
     assert "parameter.add_(x_noise" in generator_source
     assert "parameter.add_(y_noise" in generator_source
@@ -204,6 +206,15 @@ def test_smoothness_script_matches_the_paper_setup():
     assert 'default="artifacts/smoothness/smoothness.json"' in generator_source
     assert 'osp.join(figure_dir, "smoothness.pdf")' in plot_source
     assert ".contour(" in plot_source
+
+
+def test_smoothness_generator_requires_a_checkpoint(monkeypatch, capsys):
+    module = load_generator()
+    monkeypatch.setattr("sys.argv", [str(GENERATOR)])
+    with pytest.raises(SystemExit) as error:
+        module.main()
+    assert error.value.code == 2
+    assert "--model" in capsys.readouterr().err
 
 
 def test_smoothness_directions_are_scaled_gaussian_samples():
@@ -228,6 +239,97 @@ def test_smoothness_directions_are_scaled_gaussian_samples():
                 actual_direction, expected_direction
             )
         )
+
+
+def test_smoothness_projection_is_raw_weight_dot_product():
+    torch = pytest.importorskip("torch")
+    module = load_generator()
+    model = torch.nn.Linear(2, 1, bias=False, dtype=torch.bfloat16)
+    with torch.no_grad():
+        model.weight.copy_(torch.tensor([[3.0, 4.0]]))
+    directions = [[torch.tensor([[2.0, 0.0]])], [torch.tensor([[1.0, -3.0]])]]
+    assert module.project_weights(model, directions) == [6.0, -9.0]
+
+
+@pytest.mark.parametrize("use_default_scales", [False, True])
+def test_smoothness_projects_every_checkpoint_in_order_with_surface_directions(
+    monkeypatch, tmp_path, use_default_scales
+):
+    torch = pytest.importorskip("torch")
+    module = load_generator()
+    loaded = []
+    weights = {"reference": [1.0, 2.0], "step-16": [3.0, 4.0], "step-32": [-1.0, 5.0]}
+
+    def load_model(path, **kwargs):
+        loaded.append(path)
+        model = torch.nn.Linear(2, 1, bias=False)
+        model.config = SimpleNamespace(use_cache=True)
+        with torch.no_grad():
+            model.weight.copy_(torch.tensor([weights[path]]))
+        return model
+
+    directions = [[torch.tensor([[2.0, 0.0]])], [torch.tensor([[0.0, 3.0]])]]
+    sampled = []
+
+    def sample_directions(model, seed, std):
+        sampled.append((seed, std))
+        return directions
+
+    def surfaces(model, batches, coordinates, seed, stds, **kwargs):
+        assert kwargs["directions"] is directions
+        return {std: np.zeros((len(coordinates), len(coordinates))) for std in stds}
+
+    monkeypatch.setitem(
+        sys.modules, "datasets", SimpleNamespace(load_dataset=lambda *a, **k: [])
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "transformers",
+        SimpleNamespace(
+            AutoModelForCausalLM=SimpleNamespace(from_pretrained=load_model),
+            AutoTokenizer=SimpleNamespace(
+                from_pretrained=lambda path: SimpleNamespace(pad_token_id=1)
+            ),
+        ),
+    )
+    monkeypatch.setattr(module, "random_directions", sample_directions)
+    monkeypatch.setattr(module, "loss_surfaces", surfaces)
+    output = tmp_path / "surface.json"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(GENERATOR),
+            "--model",
+            "Reference",
+            "reference",
+            "--trajectory",
+            "step-16",
+            "step-32",
+            *([] if use_default_scales else ["--direction-std", "0.03"]),
+            "--output",
+            str(output),
+        ],
+    )
+    module.main()
+
+    result = json.loads(output.read_text())
+    assert loaded == ["reference", "step-16", "step-32"]
+    assert sampled == [(42, 1.0)]
+    assert result["trajectory"] == [
+        {"path": "step-16", "coordinates": [6.0, 12.0]},
+        {"path": "step-32", "coordinates": [-2.0, 15.0]},
+    ]
+    assert result["trajectory_projection"] == {
+        "type": "raw_weight_dot_product",
+        "direction_std": 1.0,
+    }
+    expected_scales = (
+        [1e-3, 5e-3, 1e-2, 2e-2, 3e-2, 4e-2, 5e-2, 6e-2, 7e-2, 8e-2, 9e-2, 1e-1]
+        if use_default_scales
+        else [0.03]
+    )
+    assert [surface["direction_std"] for surface in result["models"]] == expected_scales
 
 
 def test_smoothness_surfaces_share_directions_across_scales():
@@ -356,7 +458,10 @@ def test_tamia_smoothness_job_covers_every_method_at_several_scales():
     assert source.count("CUDA_VISIBLE_DEVICES=$gpu") == 1
     assert "--dtype bfloat16" in source
     assert "--batch-size 2" in source
-    assert '"${DIRECTION_STDS:-0.003 0.01 0.03 0.1}"' in source
+    assert (
+        '"${DIRECTION_STDS:-1e-3 5e-3 1e-2 2e-2 3e-2 4e-2 '
+        '5e-2 6e-2 7e-2 8e-2 9e-2 1e-1}"' in source
+    )
     assert '--direction-std "${direction_stds[@]}"' in source
     assert '--direction-std "$direction_std"' in source
     assert "z7b-wmdp-bio-loss-landscape-sigma$tag-bf16.pdf" in source

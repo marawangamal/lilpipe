@@ -8,15 +8,6 @@ from itertools import product
 
 import numpy as np
 
-configs = [
-    ("HuggingFaceH4/zephyr-7b-beta", "Base model"),
-    ("artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-npo", "NPO"),
-    (
-        "artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-npo-sam-rho1e-3",
-        "NPO + SAM",
-    ),
-]
-
 dataset_name = "cais/wmdp-bio-forget-corpus"
 
 
@@ -71,7 +62,25 @@ def prediction_loss(model, batches):
     return total_loss / total_examples
 
 
-def loss_surfaces(model, batches, coordinates, seed, direction_stds):
+def project_weights(model, directions):
+    """Return raw weight dot products (theta.T u, theta.T v), without centering."""
+    import torch
+
+    coordinates = [0.0, 0.0]
+    with torch.inference_mode():
+        for parameter, u, v in zip(model.parameters(), *directions, strict=True):
+            if parameter.shape != u.shape or parameter.shape != v.shape:
+                raise ValueError("Trajectory parameter shapes do not match directions")
+            weights = parameter.to(dtype=torch.float64)
+            for axis, direction in enumerate((u, v)):
+                direction = direction.to(device=weights.device, dtype=torch.float64)
+                coordinates[axis] += (weights * direction).sum().item()
+    return coordinates
+
+
+def loss_surfaces(
+    model, batches, coordinates, seed, direction_stds, *, directions=None
+):
     """Evaluate loss(theta + x r1 + y r2) on a square grid for each direction scale.
 
     The Gaussian directions are sampled once per model and rescaled for every
@@ -82,7 +91,9 @@ def loss_surfaces(model, batches, coordinates, seed, direction_stds):
 
     parameters = list(model.parameters())
     center = [parameter.detach().clone() for parameter in parameters]
-    x_direction, y_direction = random_directions(model, seed, 1.0)
+    if directions is None:
+        directions = random_directions(model, seed, 1.0)
+    x_direction, y_direction = directions
     torch.cuda.empty_cache()
     surfaces = {}
 
@@ -126,29 +137,46 @@ def main():
         "--direction-std",
         type=float,
         nargs="+",
-        default=[0.003, 0.01, 0.03],
+        default=[
+            1e-3,
+            5e-3,
+            1e-2,
+            2e-2,
+            3e-2,
+            4e-2,
+            5e-2,
+            6e-2,
+            7e-2,
+            8e-2,
+            9e-2,
+            1e-1,
+        ],
         help="Direction scales to evaluate; directions are shared across scales",
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dtype", choices=("float32", "bfloat16"), default="float32")
-    parser.add_argument("--tokenizer", default=configs[0][0])
+    parser.add_argument("--tokenizer", default="HuggingFaceH4/zephyr-7b-beta")
     parser.add_argument(
         "--model",
-        action="append",
+        required=True,
         nargs=2,
         metavar=("LABEL", "PATH"),
-        help="Measure this model; repeat to override the default model set",
+        help="Measure one checkpoint; provide exactly one LABEL PATH pair",
+    )
+    parser.add_argument(
+        "--trajectory",
+        nargs="+",
+        metavar="PATH",
+        help="Ordered checkpoints to project onto the same unscaled Gaussian directions",
     )
     args = parser.parse_args()
+    label, path = args.model
 
     import torch
     from datasets import load_dataset
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     documents = load_dataset(dataset_name, split="train")
-    selected_configs = (
-        [(path, label) for label, path in args.model] if args.model else configs
-    )
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -169,31 +197,63 @@ def main():
     }
     os.makedirs(osp.dirname(args.output) or ".", exist_ok=True)
 
-    for path, label in selected_configs:
-        print(f"{label}: {path}", flush=True)
-        model = AutoModelForCausalLM.from_pretrained(
-            path,
-            dtype=getattr(torch, args.dtype),
-            device_map="balanced",
-            attn_implementation="eager",
-        ).eval()
-        model.config.use_cache = False
-        surfaces = loss_surfaces(
-            model, batches, coordinates, args.seed, args.direction_std
+    print(f"{label}: {path}", flush=True)
+    model = AutoModelForCausalLM.from_pretrained(
+        path,
+        dtype=getattr(torch, args.dtype),
+        device_map="balanced",
+        attn_implementation="eager",
+    ).eval()
+    model.config.use_cache = False
+    parameter_layout = [(name, p.shape) for name, p in model.named_parameters()]
+    directions = random_directions(model, args.seed, 1.0)
+    surfaces = loss_surfaces(
+        model,
+        batches,
+        coordinates,
+        args.seed,
+        args.direction_std,
+        directions=directions,
+    )
+    for direction_std, surface in surfaces.items():
+        results["models"].append(
+            {
+                "path": path,
+                "label": label,
+                "direction_std": direction_std,
+                "loss": surface.tolist(),
+            }
         )
-        for direction_std, surface in surfaces.items():
-            results["models"].append(
-                {
-                    "path": path,
-                    "label": label,
-                    "direction_std": direction_std,
-                    "loss": surface.tolist(),
-                }
+    with open(args.output, "w") as handle:
+        json.dump(results, handle, indent=2)
+    del model
+    torch.cuda.empty_cache()
+
+    if args.trajectory:
+        results["trajectory_projection"] = {
+            "type": "raw_weight_dot_product",
+            "direction_std": 1.0,
+        }
+        results["trajectory"] = []
+        for checkpoint in args.trajectory:
+            print(f"Projecting: {checkpoint}", flush=True)
+            model = AutoModelForCausalLM.from_pretrained(
+                checkpoint,
+                dtype=getattr(torch, args.dtype),
+                device_map="balanced",
+                attn_implementation="eager",
+            ).eval()
+            if [
+                (name, p.shape) for name, p in model.named_parameters()
+            ] != parameter_layout:
+                raise ValueError(f"Trajectory parameter layout differs: {checkpoint}")
+            results["trajectory"].append(
+                {"path": checkpoint, "coordinates": project_weights(model, directions)}
             )
-        with open(args.output, "w") as handle:
-            json.dump(results, handle, indent=2)
-        del model
-        torch.cuda.empty_cache()
+            del model
+            torch.cuda.empty_cache()
+            with open(args.output, "w") as handle:
+                json.dump(results, handle, indent=2)
 
 
 if __name__ == "__main__":

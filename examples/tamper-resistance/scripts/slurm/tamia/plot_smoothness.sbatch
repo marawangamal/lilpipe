@@ -23,7 +23,7 @@ export MPLCONFIGDIR="$SLURM_TMPDIR/matplotlib"
 export PATH="$HOME/.local/bin:$PATH"
 
 # Direction scales to evaluate; every model shares the same seeded directions.
-read -r -a direction_stds <<<"${DIRECTION_STDS:-0.003 0.01 0.03 0.1}"
+read -r -a direction_stds <<<"${DIRECTION_STDS:-1e-3 5e-3 1e-2 2e-2 3e-2 4e-2 5e-2 6e-2 7e-2 8e-2 9e-2 1e-1}"
 
 # slug|label|model, in figure order.
 models=(
