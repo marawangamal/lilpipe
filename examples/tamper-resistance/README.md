@@ -11,6 +11,9 @@ run in one paired job, and each trajectory runs in one allocation. See
 checkpoint selection, and opt-in trajectory deletion. Regenerate older HPO
 manifests before using them with the consolidated scripts.
 
+Mila uses four supported scripts for training, BeaverTails single-model or
+checkpoint evaluation, and parameter-norm analysis. See [Mila interfaces and retired-file inventory](docs/mila-refactor.md).
+
 ## Quickstart
 
 ```sh
@@ -76,6 +79,10 @@ lilpipe artifacts/generated/hpo/qwen3-0.6b-beavertail--align-fft-seam--relearn--
 .venv-eval/bin/python scripts/analysis/plot_trajectory_beavertails.py
 ```
 
+
+Active BeaverTails evaluation code lives in `scripts/evals/`; HPO generation remains
+at `scripts/hpo.py`. Retired TOFU, alignment-evaluation, weight-steering, and Optuna
+entry points have been removed from this example.
 
 ## Project structure
 ```text
