@@ -1,7 +1,7 @@
 import argparse
 import itertools
 import os
-
+import os.path as osp
 import pandas as pd
 import torch
 from datasets import load_dataset
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     parser.add_argument("--radii", type=float, nargs="+", default=[0.05])
     parser.add_argument("--n-pts", type=int, default=9)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--out", type=str, required=True)
+    parser.add_argument("--outdir", type=str, required=True)
     args = parser.parse_args()
 
     # load model
@@ -126,5 +126,23 @@ if __name__ == "__main__":
                     p.sub_(directions[1][n], alpha=c_j)
 
     df = pd.DataFrame(rows)
-    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-    df.to_csv(args.out, index=False)
+    os.makedirs(args.outdir, exist_ok=True)
+    df.to_csv(osp.join(args.outdir, "grid.csv"), index=False)
+
+    # compute the coords
+    rows = []
+    for model_name_or_path in args.trajectory:
+        model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
+        p = dict(model.named_parameters())
+        z0 = sum(
+            [pi.sum() for pi in dict_bin_op(p, directions[0], torch.multiply).values()]
+        )
+        z1 = sum(
+            [pi.sum() for pi in dict_bin_op(p, directions[1], torch.multiply).values()]
+        )
+        rows.append(
+            {"checkpoint": model_name_or_path, "alpha": z0.item(), "beta": z1.item()}
+        )
+
+    df = pd.DataFrame(rows)
+    df.to_csv(osp.join(args.outdir, "trajectory.csv"), index=False)
