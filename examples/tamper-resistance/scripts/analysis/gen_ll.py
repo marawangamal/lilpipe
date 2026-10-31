@@ -29,14 +29,13 @@ def get_directions(model, seed):
     for _ in range(2):
         d = dict()
         for n, p in model.named_parameters():
-            # Keep directions on CPU so a 7B model and two FP32 directions fit.
-            d[n] = torch.randn_like(p).cpu()
+            d[n] = torch.randn_like(p)
         directions.append(d)
 
     # normalize so each direction has unit global L2 norm
     normalized = []
     for d in directions:
-        norm = sum(t.float().pow(2).sum() for t in d.values()).sqrt()
+        norm = sum(t.pow(2).sum() for t in d.values()).sqrt()
         normalized.append(dict_unary_op(d, lambda t: t / norm))
     return normalized
 
@@ -72,7 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--max-seq-len", type=int, default=512)
-    parser.add_argument("--limit", type=int, default=50)
+    parser.add_argument("--limit", type=int, default=10)
     parser.add_argument("--radii", type=float, nargs="+", default=[0.05])
     parser.add_argument("--n-pts", type=int, default=9)
     parser.add_argument("--seed", type=int, default=42)
@@ -81,7 +80,7 @@ if __name__ == "__main__":
 
     # load model
     print(f"Loading model: {args.model}", flush=True)
-    model = AutoModelForCausalLM.from_pretrained(args.model)
+    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16)
     tok = AutoTokenizer.from_pretrained(args.model)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -102,7 +101,8 @@ if __name__ == "__main__":
 
     # gen loss landscape points
     model.eval()
-    theta_0 = dict(model.named_parameters())
+    params = dict(model.named_parameters())
+    theta_0 = dict_unary_op(params, lambda p: p.detach().clone())
     if not osp.exists(osp.join(args.outdir, "grid.csv")):
         with torch.no_grad():
             for radius in args.radii:
@@ -115,9 +115,10 @@ if __name__ == "__main__":
                 )
                 for c0, c1 in points:
                     # add c0 r1 + c1 r2
-                    for n, p in theta_0.items():
-                        p.add_(directions[0][n].to(device), alpha=c0)
-                        p.add_(directions[1][n].to(device), alpha=c1)
+                    for n, p in params.items():
+                        p.copy_(theta_0[n])
+                        p.add_(directions[0][n], alpha=c0)
+                        p.add_(directions[1][n], alpha=c1)
 
                     loss = 0
                     for batch in dataloader:
@@ -132,10 +133,6 @@ if __name__ == "__main__":
                         }
                     )
 
-                    # subtract c0 r1 + c1 r2
-                    for n, p in theta_0.items():
-                        p.sub_(directions[0][n].to(device), alpha=c0)
-                        p.sub_(directions[1][n].to(device), alpha=c1)
                     points.set_postfix(loss=loss / len(dataloader), c0=c0, c1=c1)
 
         df = pd.DataFrame(rows)
@@ -145,7 +142,8 @@ if __name__ == "__main__":
             f"Saved {len(df)} grid points to {osp.join(args.outdir, 'grid.csv')}",
             flush=True,
         )
-        torch.cuda.empty_cache()
+    del params, model
+    torch.cuda.empty_cache()
 
     # compute the coords
     rows = []
@@ -154,15 +152,15 @@ if __name__ == "__main__":
             args.trajectory, desc="Trajectory projections", unit="checkpoint"
         ):
             print(f"Projecting: {model_name_or_path}", flush=True)
-            model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
-            theta_t = dict_unary_op(
-                dict(model.named_parameters()), lambda x: x.to(device)
-            )
+            model = AutoModelForCausalLM.from_pretrained(
+                model_name_or_path, dtype=torch.bfloat16
+            ).to(device)
+            theta_t = dict(model.named_parameters())
             c0, c1 = 0, 0
             for n in theta_t:
                 delta_t = theta_t[n] - theta_0[n]
-                c0 += (delta_t * directions[0][n].to(delta_t.device)).sum()
-                c1 += (delta_t * directions[1][n].to(delta_t.device)).sum()
+                c0 += (delta_t * directions[0][n]).sum()
+                c1 += (delta_t * directions[1][n]).sum()
             rows.append(
                 {
                     "checkpoint": model_name_or_path,

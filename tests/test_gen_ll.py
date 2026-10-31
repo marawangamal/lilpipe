@@ -86,7 +86,27 @@ def test_gen_ll_writes_all_radii_and_ordered_trajectory(monkeypatch, tmp_path, c
     threads = torch.get_num_threads()
     torch.set_num_threads(1)
     try:
-        runpy.run_path(str(SCRIPT), run_name="__main__")
+        result = runpy.run_path(str(SCRIPT), run_name="__main__")
+        assert result["c0"].dtype == torch.bfloat16
+        assert result["c1"].dtype == torch.bfloat16
+        reference = transformers.AutoModelForCausalLM.from_pretrained(
+            base, dtype=torch.bfloat16
+        ).eval()
+        center = {n: p.detach().clone() for n, p in reference.named_parameters()}
+        directions = result["get_directions"](reference, 42)
+        assert all(t.dtype == torch.bfloat16 for d in directions for t in d.values())
+        batches = list(result["get_dataloader"]("test-corpus", tokenizer, 16, 2, 2))
+        grid = pd.read_csv(output / "grid.csv")
+        with torch.no_grad():
+            for point in grid.itertuples():
+                for name, parameter in reference.named_parameters():
+                    parameter.copy_(center[name])
+                    parameter.add_(directions[0][name], alpha=point.c0)
+                    parameter.add_(directions[1][name], alpha=point.c1)
+                expected = sum(
+                    reference(**batch).loss.item() for batch in batches
+                ) / len(batches)
+                assert point.loss == pytest.approx(expected, abs=1e-6)
     finally:
         torch.set_num_threads(threads)
 
