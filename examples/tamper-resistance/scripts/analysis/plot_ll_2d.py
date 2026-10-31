@@ -19,7 +19,15 @@ if __name__ == "__main__":
     df = pd.read_csv(osp.join(args.indir, "grid.csv"))
     # Earlier runs used alpha/beta for the same grid coefficients.
     df = df.rename(columns={"alpha": "c0", "beta": "c1"})
-    configs = [{"radius": r} for r in sorted(df["radius"].unique(), reverse=True)]
+    configs = [
+        {
+            "radius": radius,
+            "grid": rows.pivot(index="c1", columns="c0", values="loss"),
+        }
+        for radius, rows in df.sort_values("radius", ascending=False).groupby(
+            "radius", sort=False
+        )
+    ]
 
     sns.set_theme(context="paper", style="ticks", font_scale=1.2)
     fig, axes = plt.subplots(
@@ -30,30 +38,26 @@ if __name__ == "__main__":
         layout="constrained",
     )
     for cfg, ax in zip(configs, axes.flat, strict=True):
-        grid = df[df["radius"] == cfg["radius"]].pivot(
-            index="c1", columns="c0", values="loss"
-        )
-        low, high = (
-            args.zlim
-            if args.zlim
-            else (float(grid.values.min()), float(grid.values.max()))
-        )
+        grid = cfg["grid"]
+        c0, c1 = grid.columns, grid.index
+        loss = grid.to_numpy()
+        low, high = args.zlim if args.zlim else (float(loss.min()), float(loss.max()))
         if low == high:
             padding = max(abs(low), 1.0) * 0.01
             low, high = low - padding, high + padding
         filled = ax.contourf(
-            grid.columns,
-            grid.index,
-            grid.values,
+            c0,
+            c1,
+            loss,
             levels=np.linspace(low, high, 11),
             cmap="viridis",
             vmin=low,
             vmax=high,
         )
         ax.contour(
-            grid.columns,
-            grid.index,
-            grid.values,
+            c0,
+            c1,
+            loss,
             levels=filled.levels,
             colors="black",
             linewidths=0.5,
