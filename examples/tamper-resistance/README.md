@@ -11,6 +11,9 @@ run in one paired job, and each trajectory runs in one allocation. See
 checkpoint selection, and opt-in trajectory deletion. Regenerate older HPO
 manifests before using them with the consolidated scripts.
 
+Mila uses four supported scripts for training, BeaverTails single-model or
+checkpoint evaluation, and parameter-norm analysis. See [Mila interfaces and retired-file inventory](docs/mila-refactor.md).
+
 ## Quickstart
 
 ```sh

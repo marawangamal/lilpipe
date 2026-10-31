@@ -106,6 +106,12 @@ manifests before submission. Specialized Tamia perturbation, Optuna, authors'
 reproduction, segmented training, and extra analysis wrappers are retired; their
 research code and settings remain available.
 
+Mila has four supported scripts: training, BeaverTails single-model/trajectory
+evaluation, and parameter-norm analysis. Its trajectory script discovers `checkpoint-*` directories only;
+baseline and final-root evaluation points are not synthesized. Both positional
+removal flags default to `false`. See `docs/mila-refactor.md` for interfaces and
+the dependency inventory of retired Mila workflows.
+
 ### Promoting a BeaverTails SEAM defense
 
 Promote a completed defense candidate without retraining it:
