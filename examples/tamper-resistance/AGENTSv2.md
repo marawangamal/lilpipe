@@ -18,7 +18,7 @@ configs/
         └── selected.yml                       # optimal training config found
 ```
 
-- Models and evals are saved under `artifacts/{mila|tamia}/{models|evals}
+- Models and evals are saved under `artifacts/{mila|tamia}/{models|evals}`
 
 ## Naming schemes
 
@@ -34,9 +34,9 @@ WMDP experiements
 **Tuning defences**
 ```sh
 # 1. Generate and run all defenses and their evaluations
-# NOTE: z7b-wmdp-bio--5pp--unlearn-fft-me--hpo is the sweep id defined in sweep.yml
-python scripts/hpo.py generate configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-me/sweep.yml
-lilpipe artifacts/generated/hpo/configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-me--hpo/experiment.yml
+# NOTE: z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--hpo is the sweep id defined in sweep.yml
+python scripts/hpo.py generate configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16/sweep.yml
+lilpipe artifacts/generated/hpo/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--hpo/experiment.yml
 
 # 2. (manual) Promote the best by selecting the method with the lowest WMDP score, whilst having
 # less than 5pp drop in MMLU.
@@ -44,35 +44,38 @@ lilpipe artifacts/generated/hpo/configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp-
 
 **Tuning attacks**
 ```sh
-# 1. Generate and run all defenses and their evaluations
-# NOTE: z7b-wmdp-bio--5pp--unlearn-fft-me--hpo is the sweep id defined in sweep.yml
-python scripts/hpo.py generate configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft/sweep.yml
-lilpipe artifacts/generated/hpo/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft--hpo/experiment.yml
+# 1. Generate and run attacks and their evaluations
+# NOTE: z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-ms128--hpo is the sweep id defined in sweep.yml
+python scripts/hpo.py generate configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-ms128/sweep.yml
+lilpipe artifacts/generated/hpo/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-ms128--hpo/experiment.yml \
+  --models z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-ms128--hpo--lr--001 \
+  --existing-models z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16
 
 # 2. (manual) Promote the best by selecting the method with highest average score (WMDP and MMLU)
-# less than 5pp drop in MMLU. This means moving setting the config in
-# scripts/hpo.py generate configs/stages-wmdp/0_unlearn/qwen3-0.6b-beavertail--align-fft-seam/selected.yml
-# and also copying over the model from artifacts/generated/hpo/ into artifacts/models
+
+```
 
 **Promotion Procedure**
 
 ```sh
 # 1. Copy configs. Copy yml of best sweep ID. In the copied selected.yml file
 # set output_dir, wandb_name, and dataset_prepared_path to new canoncial paths 
-cp "artifacts/generated/hpo/<sweep-id>/configs/<sweep-id>--001.yml" \
-   "configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft/selected.yml"
+cp "artifacts/generated/hpo/<sweep-id>/configs/<sweep-id>--<stage>--001.yml" \
+   "configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-ms128/selected.yml"
 
 # 2. Move artifacts on Tamia. Archive any existing destination first.
-mv -T "artifacts/generated/hpo/<sweep-id>/models/<sweep-id>--001" \
-   "artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft"
+mv -T "artifacts/generated/hpo/<sweep-id>/models/<sweep-id>--<stage>--001" \
+   "artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-ms128"
 ```
 
 
 **Plotting relearning trajectories**
 ```sh
-# Uncomment the config depending on the command.
-# main plot: compare methods under 128 step attack
-# tar attack hps plot: compare different 128-step attacks under the same tar defence
+# Uncomment one configs/steps/style/output selection block in the plot script.
+# configs_main: compare methods under a 16-step attack
+# configs_lrs: compare TAR-k16 and SEAM learning rates over 128 steps
+# configs_tar_lrs: compare candidates from the TAR-k16 LR sweep above
+# configs_ms1000 / configs_perturbed_ms1000: longer TAR-k16 attacks
 python scripts/analysis/relearning-trajectory/plot_trajectory_wmdp.py
 ```
 
