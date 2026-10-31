@@ -28,7 +28,8 @@ def get_directions(model, seed):
     for _ in range(2):
         d = dict()
         for n, p in model.named_parameters():
-            d[n] = torch.randn_like(p)
+            # Keep directions on CPU so a 7B model and two FP32 directions fit.
+            d[n] = torch.randn_like(p).cpu()
         directions.append(d)
 
     # normalize so each direction has unit global L2 norm
@@ -66,7 +67,7 @@ def get_dataloader(dataset_name, tokenizer, max_seq_len, batch_size, limit):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True)
-    parser.add_argument("--trajectory", nargs="+")
+    parser.add_argument("--trajectory", nargs="+", default=[])
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--max-seq-len", type=int, default=512)
@@ -104,8 +105,8 @@ if __name__ == "__main__":
             for c_i, c_j in itertools.product(coords, coords):
                 # add c_i r1 + c_j r2
                 for n, p in params.items():
-                    p.add_(directions[0][n], alpha=c_i)
-                    p.add_(directions[1][n], alpha=c_j)
+                    p.add_(directions[0][n].to(device), alpha=c_i)
+                    p.add_(directions[1][n].to(device), alpha=c_j)
 
                 loss = 0
                 for batch in dataloader:
@@ -122,27 +123,41 @@ if __name__ == "__main__":
 
                 # subtract c_i r1 + c_j r2
                 for n, p in params.items():
-                    p.sub_(directions[0][n], alpha=c_i)
-                    p.sub_(directions[1][n], alpha=c_j)
+                    p.sub_(directions[0][n].to(device), alpha=c_i)
+                    p.sub_(directions[1][n].to(device), alpha=c_j)
 
     df = pd.DataFrame(rows)
     os.makedirs(args.outdir, exist_ok=True)
     df.to_csv(osp.join(args.outdir, "grid.csv"), index=False)
+    del params, model
+    torch.cuda.empty_cache()
 
     # compute the coords
     rows = []
-    for model_name_or_path in args.trajectory:
-        model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
-        p = dict(model.named_parameters())
-        z0 = sum(
-            [pi.sum() for pi in dict_bin_op(p, directions[0], torch.multiply).values()]
-        )
-        z1 = sum(
-            [pi.sum() for pi in dict_bin_op(p, directions[1], torch.multiply).values()]
-        )
-        rows.append(
-            {"checkpoint": model_name_or_path, "alpha": z0.item(), "beta": z1.item()}
-        )
+    with torch.no_grad():
+        for model_name_or_path in args.trajectory:
+            model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
+            p = dict(model.named_parameters())
+            z0 = sum(
+                [
+                    pi.sum()
+                    for pi in dict_bin_op(p, directions[0], torch.multiply).values()
+                ]
+            )
+            z1 = sum(
+                [
+                    pi.sum()
+                    for pi in dict_bin_op(p, directions[1], torch.multiply).values()
+                ]
+            )
+            rows.append(
+                {
+                    "checkpoint": model_name_or_path,
+                    "alpha": z0.item(),
+                    "beta": z1.item(),
+                }
+            )
+            del p, model
 
     df = pd.DataFrame(rows)
     df.to_csv(osp.join(args.outdir, "trajectory.csv"), index=False)
