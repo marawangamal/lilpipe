@@ -16,7 +16,7 @@ SCRIPT = (
 )
 
 
-def test_gen_ll_writes_all_radii_and_ordered_trajectory(monkeypatch, tmp_path):
+def test_gen_ll_writes_all_radii_and_ordered_trajectory(monkeypatch, tmp_path, capsys):
     from tokenizers import Tokenizer
     from tokenizers.models import WordLevel
     from tokenizers.pre_tokenizers import Whitespace
@@ -96,3 +96,9 @@ def test_gen_ll_writes_all_radii_and_ordered_trajectory(monkeypatch, tmp_path):
     assert grid["loss"].map(math.isfinite).all()
     assert trajectory["checkpoint"].tolist() == [str(base), str(checkpoint)]
     assert trajectory[["alpha", "beta"]].map(math.isfinite).all().all()
+    captured = capsys.readouterr()
+    for radius in (0.1, 0.01, 0.001):
+        assert f"Grid radius={radius:g}" in captured.err
+    assert "Trajectory projections" in captured.err
+    assert str(output / "grid.csv") in captured.out
+    assert str(output / "trajectory.csv") in captured.out

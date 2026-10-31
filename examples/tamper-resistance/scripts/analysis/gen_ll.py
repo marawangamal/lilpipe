@@ -6,6 +6,7 @@ import pandas as pd
 import torch
 from datasets import load_dataset
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -79,6 +80,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # load model
+    print(f"Loading model: {args.model}", flush=True)
     model = AutoModelForCausalLM.from_pretrained(args.model)
     tok = AutoTokenizer.from_pretrained(args.model)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -88,11 +90,13 @@ if __name__ == "__main__":
         tok.pad_token = tok.eos_token
 
     # load data
+    print(f"Preparing dataset: {args.dataset}", flush=True)
     dataloader = get_dataloader(
         args.dataset, tok, args.max_seq_len, args.batch_size, args.limit
     )
 
     # get random directions
+    print(f"Sampling and normalizing directions (seed={args.seed})", flush=True)
     directions = get_directions(model, args.seed)
     rows = []
 
@@ -102,7 +106,13 @@ if __name__ == "__main__":
     with torch.no_grad():
         for radius in args.radii:
             coords = torch.linspace(-radius, radius, args.n_pts).tolist()
-            for c_i, c_j in itertools.product(coords, coords):
+            points = tqdm(
+                itertools.product(coords, coords),
+                total=len(coords) ** 2,
+                desc=f"Grid radius={radius:g}",
+                unit="point",
+            )
+            for c_i, c_j in points:
                 # add c_i r1 + c_j r2
                 for n, p in params.items():
                     p.add_(directions[0][n].to(device), alpha=c_i)
@@ -125,17 +135,25 @@ if __name__ == "__main__":
                 for n, p in params.items():
                     p.sub_(directions[0][n].to(device), alpha=c_i)
                     p.sub_(directions[1][n].to(device), alpha=c_j)
+                points.set_postfix(loss=loss / len(dataloader), alpha=c_i, beta=c_j)
 
     df = pd.DataFrame(rows)
     os.makedirs(args.outdir, exist_ok=True)
     df.to_csv(osp.join(args.outdir, "grid.csv"), index=False)
+    print(
+        f"Saved {len(df)} grid points to {osp.join(args.outdir, 'grid.csv')}",
+        flush=True,
+    )
     del params, model
     torch.cuda.empty_cache()
 
     # compute the coords
     rows = []
     with torch.no_grad():
-        for model_name_or_path in args.trajectory:
+        for model_name_or_path in tqdm(
+            args.trajectory, desc="Trajectory projections", unit="checkpoint"
+        ):
+            print(f"Projecting: {model_name_or_path}", flush=True)
             model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
             p = dict(model.named_parameters())
             z0 = sum(
@@ -161,3 +179,7 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(rows)
     df.to_csv(osp.join(args.outdir, "trajectory.csv"), index=False)
+    print(
+        f"Saved {len(df)} trajectory points to {osp.join(args.outdir, 'trajectory.csv')}",
+        flush=True,
+    )
