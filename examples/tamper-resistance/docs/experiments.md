@@ -137,9 +137,9 @@ RMU + AO selected the strongest positive AO candidate satisfying a maximum
 
 #### MiniCPM5-1B
 
-The MiniCPM5-1B sweep is planned but has not been run. RMU candidates follow
-the original RMU search dimensions and should be evaluated in stages rather
-than as one Cartesian product. All non-RMU method families remain unspecified.
+MiniCPM configs and registry entries have been removed. The search settings and
+measurements below are historical records; this workflow is no longer runnable
+from the checked-in configs.
 
 | Method | Learning rate | $\lambda_{\mathrm{ret}}$ | $\lambda_{\mathrm{steer}}$ | $\rho_{\mathrm{SAM}}$ | $\lambda_{\text{weight-dist}}$ | $\lambda_{\mathrm{AO}}$ | Target layer | Updates | Runs | Promoted setting |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---: | --- |

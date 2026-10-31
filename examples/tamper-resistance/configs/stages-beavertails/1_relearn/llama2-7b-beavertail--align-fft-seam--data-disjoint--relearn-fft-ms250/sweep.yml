@@ -4,13 +4,17 @@ sweeps:
     parameters:
       learning_rate: [5.0e-5, 1.0e-4]
 producer:
-  script: scripts/slurm/tamia/train_single_gpu.sbatch
+  script: scripts/slurm/tamia/train.sbatch
   sbatch_args:
     - --partition=gpubase_bynode_b2
     - --gpus-per-node=h100:4
     - --cpus-per-task=48
     - --mem=480G
     - --time=03:00:00
+  args:
+    - --single-gpu
+    - --launcher
+    - python
 depends_on:
   - llama2-7b-beavertail--align-fft-seam
 model:
@@ -18,8 +22,6 @@ model:
   attack_data: "{sweep}"
   attack_learning_rate: "{parameter[learning_rate]}"
   method: SEAM
-  evaluation_checkpoint_interval: "100"
-  evaluation_max_steps: "250"
 evaluations:
-  - beavertail-capabilities-trajectory
+  - tamia-h100-llama2-7b--beavertails-and-capabilities-trajectory
 evaluation_registry: configs/registries/evals.yml

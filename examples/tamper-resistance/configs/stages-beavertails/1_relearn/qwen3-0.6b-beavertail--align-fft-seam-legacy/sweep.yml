@@ -31,5 +31,5 @@ model:
   evaluation_checkpoint_interval: "100"
   evaluation_max_steps: "250"
 evaluations:
-  - beavertail-capabilities-trajectory-l40s
+  - mila-l40s-q06b--beavertails-and-capabilities-trajectory
 evaluation_registry: configs/registries/evals.yml

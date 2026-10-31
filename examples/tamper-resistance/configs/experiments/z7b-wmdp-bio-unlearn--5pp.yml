@@ -22,5 +22,4 @@ models:
   - z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-s2
   - z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft
 evaluations:
-  - wmdp-trajectory
-  - mmlu-trajectory
+  - tamia-h100-z7b--wmdp-and-mmlu-trajectory

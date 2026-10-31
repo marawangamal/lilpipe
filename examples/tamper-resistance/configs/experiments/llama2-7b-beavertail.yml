@@ -6,4 +6,4 @@ registries:
 models:
   - llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250
 evaluations:
-  - beavertail-capabilities-trajectory
+  - tamia-h100-llama2-7b--beavertails-and-capabilities-trajectory

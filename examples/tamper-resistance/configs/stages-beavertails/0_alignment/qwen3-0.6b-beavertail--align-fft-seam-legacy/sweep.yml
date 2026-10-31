@@ -14,5 +14,5 @@ producer:
 model:
   method: SEAM
 evaluations:
-  - beavertail-capabilities-single-l40s
+  - mila-l40s-q06b--beavertails-and-capabilities-single
 evaluation_registry: configs/registries/evals.yml

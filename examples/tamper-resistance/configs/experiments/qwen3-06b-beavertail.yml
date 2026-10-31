@@ -6,4 +6,4 @@ registries:
 models:
   - qwen3-0.6b-beavertail--align-fft-seam-legacy
 evaluations:
-  - beavertail-capabilities-single-l40s
+  - mila-l40s-q06b--beavertails-and-capabilities-single

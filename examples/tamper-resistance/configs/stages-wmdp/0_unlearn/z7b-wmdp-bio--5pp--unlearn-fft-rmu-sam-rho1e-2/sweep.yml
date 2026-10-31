@@ -11,13 +11,15 @@ sweeps:
     - 600
     - 1200
 producer:
-  script: scripts/slurm/tamia/train_model_parallel.sbatch
+  script: scripts/slurm/tamia/train.sbatch
   sbatch_args:
   - --gpus-per-node=h100:4
   - --cpus-per-task=48
   - --mem=480G
   - --time=03:00:00
+  args:
+  - --launcher
+  - python
 evaluations:
-- wmdp-bio-final-5pp
-- mmlu-no-bio-final-5pp
+- tamia-h100-z7b--wmdp-and-mmlu-final
 evaluation_registry: configs/registries/evals.yml

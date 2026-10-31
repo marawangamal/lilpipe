@@ -30,21 +30,21 @@ uv sync --offline --frozen --group eval
 rmdir "$install_lock"
 trap - EXIT
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+steps=()
 for ((step = 0; step <= max_steps; step += checkpoint_interval)); do
-    python scripts/evaluate_beavertail_and_capabilities.py trajectory \
-        "$model_id" \
-        "$baseline_model" \
-        "$trajectory" \
-        "$learning_rate" \
-        "$attack_data" \
-        "$method" \
-        "$result_root" \
-        --checkpoint-step "$step"
+    steps+=("$step")
 done
-
-bash scripts/slurm/tamia/cleanup_beavertail_trajectory.sbatch \
-    "$model_id" \
-    "$trajectory" \
-    "$result_root" \
-    "$checkpoint_interval" \
-    "$max_steps"
+if (( ${steps[-1]} != max_steps )); then
+    steps+=("$max_steps")
+fi
+checkpoint_steps=$(IFS=,; echo "${steps[*]}")
+arguments=(
+    "$model_id" "$baseline_model" "$trajectory" "$learning_rate"
+    "$attack_data" "$method" "$result_root" "$checkpoint_steps"
+    --final-step "$max_steps" --final-model "$trajectory"
+)
+# The Mila registry still supplies its existing interval/maximum interface.
+export SLURM_GPUS_ON_NODE=1
+python scripts/tamia_evaluation.py beavertails-trajectory "${arguments[@]}"
+python scripts/tamia_evaluation.py beavertails-trajectory "${arguments[@]}" \
+    --cleanup-only --delete-trajectory

@@ -235,6 +235,27 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
                     for key, value in model_fields.items()
                 }
             )
+            model = model_entries[candidate_id]
+            model.setdefault("evaluation_root", "artifacts/tamia/evals")
+            model.setdefault("evaluation_trajectory", artifact)
+            final_step = config.get("max_steps")
+            if isinstance(final_step, int) and final_step > 0:
+                model["evaluation_final_step"] = str(final_step)
+                model["evaluation_final_model"] = artifact
+                interval = config.get("save_steps", final_step)
+                if not isinstance(interval, int) or interval < 1:
+                    raise ValueError(
+                        "checkpoint evaluation requires positive integer save_steps"
+                    )
+                model.setdefault(
+                    "evaluation_checkpoint_steps",
+                    ",".join(
+                        map(
+                            str,
+                            sorted({*range(0, final_step + 1, interval), final_step}),
+                        )
+                    ),
+                )
             model_ids.append(candidate_id)
 
     models_path = root / "models.yml"

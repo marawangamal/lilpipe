@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=gen-ll-tar
-#SBATCH --output=artifacts/tamia/logs/gen-ll-%j.out
+#SBATCH --job-name=analysis-gen-ll
+#SBATCH --output=artifacts/tamia/logs/analysis_gen_ll-%j.out
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gpus-per-node=h100:4
@@ -10,32 +10,31 @@
 set -euo pipefail
 
 # ============================================
-# CLUSTER SPECIFIC CONFIG 
+# CLUSTER SPECIFIC CONFIG
 # ============================================
 export PATH="$HOME/.local/bin:$PATH"
 export XDG_CACHE_HOME="$SCRATCH/.cache"
-# (needed for mila) tmp envs in order to avoid scratch filesystem read issues
-export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID" 
+export HF_HOME="$XDG_CACHE_HOME/huggingface"
+export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"
 
-# (needed for tamia) compute nodes don't have access to the internet 
-# except for some servers
+# Tamia compute nodes use cached packages, models, and datasets.
 export HF_HUB_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export UV_OFFLINE=1
 export UV_LINK_MODE=copy
 
-# (needed for tamia) allows access wandb server
-module load httpproxy/1.0 
+# Allow access to the W&B server.
+module load httpproxy/1.0
 
 # ============================================
-# APPLICATION SPECIFIC CONFIG 
+# APPLICATION SPECIFIC CONFIG
 # ============================================
-
-export CUDA_VISIBLE_DEVICES=0
 
 uv sync --frozen --group eval
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+
+export CUDA_VISIBLE_DEVICES=0
 
 model=artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16
 attack=$model--relearn-fft-lr5e-6-ms128

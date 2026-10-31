@@ -305,20 +305,20 @@ def test_wmdp_landscape_attacks_retain_matching_trajectories(monkeypatch) -> Non
         )
         .plan()
     )
-    assert len(plan.stages) == 6  # Two attacks and four trajectory arrays.
+    assert len(plan.stages) == 4  # Two attacks and two paired trajectory jobs.
     training = [stage for stage in plan.stages if stage.id.startswith("train-")]
     evaluations = [stage for stage in plan.stages if stage.id.startswith("eval-")]
     assert len(training) == 2
-    assert len(evaluations) == 4
+    assert len(evaluations) == 2
     for stage in evaluations:
-        assert Path(stage.script).name == "eval_local_trajectory.sbatch"
-        assert "--array=0-8" in stage.sbatch_args
-        assert stage.args[-1] == "16"
+        assert Path(stage.script).name == "eval_wmdp_mmlu_trajectory.sbatch"
+        assert not any(arg.startswith("--array=") for arg in stage.sbatch_args)
+        assert stage.args[6] == "0,16,32,48,64,80,96,112,128"
         assert stage.depends_on == (f"train-{stage.args[0]}",)
-        assert stage.args[4] in {"wmdp_bio_robust", "mmlu_no_bio"}
     configs = []
     for stage in training:
-        assert Path(stage.script).name == "train_model_parallel.sbatch"
+        assert Path(stage.script).name == "train.sbatch"
+        assert stage.args[-2:] == ("--launcher", "python")
         config = yaml.safe_load((EXAMPLE / stage.args[0]).read_text())
         assert config["learning_rate"] == 5e-6
         assert config["max_steps"] == 128
@@ -462,7 +462,8 @@ def test_active_manifests_reference_only_registered_evaluations() -> None:
     for path in paths:
         referenced.update(yaml.safe_load(path.read_text()).get("evaluations", ()))
 
-    assert referenced == registered
+    assert referenced <= registered
+    assert registered - referenced == {"tamia-h100-z7b--wmdp-and-mmlu-single"}
 
 
 def test_seam_defense_beta_sweep_uses_the_promoted_configuration(
@@ -489,7 +490,9 @@ def test_seam_defense_beta_sweep_uses_the_promoted_configuration(
     ]
     models = yaml.safe_load((output / "models.yml").read_text())["models"]
 
-    assert experiment["evaluations"] == ["beavertail-capabilities-single"]
+    assert experiment["evaluations"] == [
+        "tamia-h100-llama2-7b--beavertails-and-capabilities-single"
+    ]
     assert {models[model_id]["method"] for model_id in experiment["models"]} == {"SEAM"}
     assert [config["custom_trainer_args"]["coeff_sd"] for config in configs] == [0.5]
     assert len({config["output_dir"] for config in configs}) == 1
@@ -530,7 +533,9 @@ def test_beavertail_trajectory_sweep_uses_disjoint_attack_data(
     ]
 
     assert len(attacks) == 2
-    assert experiment["evaluations"] == ["beavertail-capabilities-trajectory"]
+    assert experiment["evaluations"] == [
+        "tamia-h100-llama2-7b--beavertails-and-capabilities-trajectory"
+    ]
     assert {model["attack_learning_rate"] for model in attacks} == {
         "5e-05",
         "0.0001",
@@ -540,8 +545,10 @@ def test_beavertail_trajectory_sweep_uses_disjoint_attack_data(
     }
     assert {model["attack_data"] for model in attacks} == {attack_data}
     assert {model["method"] for model in attacks} == {"SEAM"}
-    assert {model["evaluation_checkpoint_interval"] for model in attacks} == {"100"}
-    assert {model["evaluation_max_steps"] for model in attacks} == {"250"}
+    assert {model["evaluation_checkpoint_steps"] for model in attacks} == {
+        "0,100,200,250"
+    }
+    assert {model["evaluation_final_step"] for model in attacks} == {"250"}
     assert {
         config["datasets"][0]["message_property_mappings"]["offset"]
         for config in generated_configs
@@ -568,7 +575,8 @@ def test_beavertail_trajectory_sweep_uses_disjoint_attack_data(
         for config in generated_configs
     )
     assert all(
-        model["producer"]["script"] == "scripts/slurm/tamia/train_single_gpu.sbatch"
+        model["producer"]["script"] == "scripts/slurm/tamia/train.sbatch"
+        and model["producer"]["args"][-3:] == ["--single-gpu", "--launcher", "python"]
         for model in attacks
     )
     assert all(
@@ -607,8 +615,10 @@ def test_beavertail_base_disjoint_sweep_attacks_the_undefended_chat_model(
     }
     assert {model["attack_data"] for model in attacks} == {attack_data}
     assert {model["method"] for model in attacks} == {"Base"}
-    assert {model["evaluation_checkpoint_interval"] for model in attacks} == {"100"}
-    assert {model["evaluation_max_steps"] for model in attacks} == {"250"}
+    assert {model["evaluation_checkpoint_steps"] for model in attacks} == {
+        "0,100,200,250"
+    }
+    assert {model["evaluation_final_step"] for model in attacks} == {"250"}
     assert all("depends_on" not in model["producer"] for model in attacks)
     assert {config["base_model"] for config in generated_configs} == {
         "meta-llama/Llama-2-7b-chat-hf"
@@ -630,12 +640,6 @@ def test_beavertail_base_disjoint_sweep_attacks_the_undefended_chat_model(
         and config["micro_batch_size"] == 12
         for config in generated_configs
     )
-    cleanup = (
-        EXAMPLE / "scripts/slurm/tamia/cleanup_beavertail_trajectory.sbatch"
-    ).read_text()
-    assert "^artifacts/generated/hpo/([^/]+)/models/([^/]+)$" in cleanup
-    assert '"$candidate_id" != "$model_id"' in cleanup
-    assert '"$candidate_id" != *--relearn-*' in cleanup
 
 
 def test_beavertail_ms1000_sweep_evaluates_the_full_trajectory(
@@ -656,62 +660,37 @@ def test_beavertail_ms1000_sweep_evaluates_the_full_trajectory(
         for path in (tmp_path / "generated/configs").glob("*.yml")
     ]
 
-    assert experiment["evaluations"] == ["beavertail-capabilities-trajectory"]
+    assert experiment["evaluations"] == [
+        "tamia-h100-llama2-7b--beavertails-and-capabilities-trajectory"
+    ]
     assert {
-        models[model_id]["evaluation_checkpoint_interval"]
+        models[model_id]["evaluation_checkpoint_steps"]
         for model_id in experiment["models"]
-    } == {"100"}
+    } == {",".join(map(str, range(0, 1001, 100)))}
     assert {
-        models[model_id]["evaluation_max_steps"] for model_id in experiment["models"]
+        models[model_id]["evaluation_final_step"] for model_id in experiment["models"]
     } == {"1000"}
     assert {config["save_steps"] for config in configs} == {100}
     assert {config["save_total_limit"] for config in configs} == {11}
 
 
-def test_base_model_perturbation_sweep_does_not_train(
-    tmp_path: Path, monkeypatch
-) -> None:
-    hpo = load_script(EXAMPLE / "scripts/hpo.py", "perturb_unlearning_hpo_test")
-    monkeypatch.chdir(EXAMPLE)
-    sweep_path = (
-        EXAMPLE / "configs/stages-wmdp/0_unlearn/"
-        "z7b-wmdp-bio--5pp--unlearn-perturb/sweep.yml"
+def test_retired_perturbation_sweep_preserves_research_settings() -> None:
+    retired = yaml.safe_load(
+        (EXAMPLE / "docs/retired-tamia/perturb-sweep.yml").read_text()
     )
-    experiment_path = hpo.generate(sweep_path, tmp_path / "generated")
-    experiment = yaml.safe_load(experiment_path.read_text())
-    registry = yaml.safe_load((tmp_path / "generated/models.yml").read_text())["models"]
-    generated_configs = [
-        yaml.safe_load(path.read_text())
-        for path in sorted((tmp_path / "generated/configs").glob("*.yml"))
-    ]
-
-    assert len(registry) == 7
-    assert experiment["evaluations"] == [
-        "wmdp-bio-single-5pp",
-        "mmlu-no-bio-single-5pp",
-    ]
-    assert {config["gaussian_sigma"] for config in generated_configs} == {
-        1e-5,
-        1e-4,
-        2e-4,
-        3e-4,
-        4e-4,
-        5e-4,
-        1e-3,
+    assert "producer" not in retired
+    assert "script" not in retired["retired_producer"]
+    values = {
+        sigma
+        for stage in retired["sweeps"]
+        for sigma in stage["parameters"]["gaussian_sigma"]
     }
-    assert {config["base_model"] for config in generated_configs} == {
-        "HuggingFaceH4/zephyr-7b-beta"
-    }
-    assert all(
-        model["producer"]["script"] == "scripts/slurm/tamia/perturb_model.sbatch"
-        for model in registry.values()
-    )
-    assert all(
-        "trainer_cls" not in config
-        and "datasets" not in config
-        and "max_steps" not in config
-        for config in generated_configs
-    )
+    assert values == {1e-5, 1e-4, 2e-4, 3e-4, 4e-4, 5e-4, 1e-3}
+    assert not (
+        EXAMPLE
+        / "configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-perturb/sweep.yml"
+    ).exists()
+    assert (EXAMPLE / "scripts/analysis/gen_perturbed_model.py").is_file()
 
 
 def test_seam_paper_defense_uses_four_gpu_layer_sharding() -> None:
@@ -719,16 +698,17 @@ def test_seam_paper_defense_uses_four_gpu_layer_sharding() -> None:
         "models"
     ]["llama2-7b-beavertail--align-fft-seam"]
     producer = model["producer"]
-    assert producer["script"] == "scripts/slurm/tamia/train_model_parallel.sbatch"
+    assert producer["script"] == "scripts/slurm/tamia/train.sbatch"
     assert producer["args"] == [
         "configs/stages-beavertails/0_alignment/"
         "llama2-7b-beavertail--align-fft-seam/selected.yml",
+        "--launcher",
+        "python",
     ]
     assert "--gpus-per-node=h100:4" in producer["sbatch_args"]
     assert "--time=03:00:00" in producer["sbatch_args"]
 
-    script = (EXAMPLE / "scripts/slurm/tamia/train_model_parallel.sbatch").read_text()
-    assert "whole transformer blocks across all four GPUs" in script
+    script = (EXAMPLE / "scripts/slurm/tamia/train.sbatch").read_text()
     assert "axolotl train" in script
     assert "scontrol requeue" not in script
 
@@ -759,29 +739,30 @@ def test_llama2_selected_seam_pipeline_runs_defense_attack_and_evaluation(
     assert defense.args == (
         "configs/stages-beavertails/0_alignment/"
         "llama2-7b-beavertail--align-fft-seam-legacy/selected.yml",
+        "--launcher",
+        "python",
     )
     assert attack.args == (
         "configs/stages-beavertails/1_relearn/"
         "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--"
         "relearn-fft-ms250/selected.yml",
+        "--single-gpu",
+        "--launcher",
+        "python",
     )
     assert evaluation.args[1:3] == (
         "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy",
         "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy--"
         "data-disjoint--relearn-fft-ms250",
     )
-    assert evaluation.args[-2:] == ("100", "250")
+    assert evaluation.args[7] == "0,100,200,250"
+    assert evaluation.args[-1] == "--delete-trajectory"
     assert "--export=ALL,PYTHONHASHSEED=0" in defense.sbatch_args
     assert all(
         "--gpus-per-node=h100:4" in stage.sbatch_args
         and "--time=03:00:00" in stage.sbatch_args
         for stage in (defense, attack, evaluation)
     )
-
-    cleanup = (
-        EXAMPLE / "scripts/slurm/tamia/cleanup_beavertail_trajectory.sbatch"
-    ).read_text()
-    assert evaluation.args[2] in cleanup
 
 
 def test_legacy_seam_relearning_grid_matches_defense_seeds(
@@ -933,9 +914,13 @@ def test_lineage_configs_follow_conventions(lineage: Path) -> None:
     if lineage.parent.name == "1_relearn":
         expected_ids.add(f"{name}--relearn--hpo")
     assert sweep["id"] in expected_ids
-    if budget := re.search(r"--(\d+pp)--", name):
+    if re.search(r"--(\d+pp)--", name):
         for evaluation in sweep.get("evaluations", ()):
-            assert evaluation.endswith(f"-{budget.group(1)}")
+            assert evaluation in {
+                "tamia-h100-z7b--wmdp-and-mmlu-final",
+                "tamia-h100-z7b--wmdp-and-mmlu-single",
+                "tamia-h100-z7b--wmdp-and-mmlu-trajectory",
+            }
     if "selected" in configs:
         swept = {
             key

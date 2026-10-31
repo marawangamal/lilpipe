@@ -39,8 +39,8 @@ Evaluations are written to `artifacts/tamia/evals/<model-id>/`, mirroring
    only the final checkpoint.
 3. **Monitor.** Jobs run on Tamia (`ssh tamia`; the checkout is
    `~/projects/lilpipe`). Check them with `squeue -u $USER` and `sacct -u $USER -X`.
-   Each candidate gets one training job and one job per evaluation
-   (`wmdp-bio-final-<N>pp`, `mmlu-no-bio-final-<N>pp`).
+   Each WMDP candidate gets one training job and one paired `tamia-h100-z7b--wmdp-and-mmlu-final`
+   evaluation job. Budgets belong to model identities, not evaluation IDs.
 4. **Collect.** For every candidate, read `acc,none` from the lm-eval
    `results_*.json` under
    `artifacts/tamia/evals/<sweep-id>--<stage>--NNN/checkpoint-*/{wmdp-bio-robust,mmlu-no-bio}/`.
@@ -89,12 +89,22 @@ lilpipe artifacts/generated/hpo/<sweep-id>/experiment.yml \
 The dry run must contain only the selected attack and its dependent trajectory
 evaluation. Do not submit a third candidate until one active candidate has
 completed both jobs, written every expected checkpoint summary, and passed the
-guarded cleanup that removes its evaluated trajectory. For a 1,000-step
+guarded cleanup (when `--delete-trajectory` is supplied) that removes its evaluated
+trajectory. Each trajectory runs in one allocation. For a 1,000-step
 trajectory saved every 50 steps, verify all 21 summaries from `checkpoint-0`
 through `checkpoint-1000`. If training fails, fix or remove its partial output
 before retrying. If only evaluation fails, keep the trajectory and resubmit just
 the evaluation by marking both the upstream model and candidate as existing;
-cleanup will run only after all summaries are present.
+cleanup will run only after all expected results are present and valid. Include
+the terminal step even when it is not divisible by the checkpoint interval.
+Generated models expose `evaluation_checkpoint_steps` and `evaluation_final_step`;
+an output-root terminal model requires an explicit `evaluation_final_model`.
+
+Tamia has six supported Slurm entry points; see `docs/tamia-refactor.md` for
+interfaces and the dependency inventory of retired wrappers. Regenerate old HPO
+manifests before submission. Specialized Tamia perturbation, Optuna, authors'
+reproduction, segmented training, and extra analysis wrappers are retired; their
+research code and settings remain available.
 
 ### Promoting a BeaverTails SEAM defense
 

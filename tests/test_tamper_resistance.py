@@ -2413,35 +2413,7 @@ def test_beavertail_capability_evaluation_schema(tmp_path: Path) -> None:
     )
 
 
-def test_beavertail_trajectory_evaluates_all_waves_before_cleanup() -> None:
-    script = (
-        EXAMPLE
-        / "scripts/slurm/tamia/eval_beavertail_and_capabilities_trajectory.sbatch"
-    ).read_text()
-    assert "for ((wave = 0; wave < waves; wave++))" in script
-    assert "CUDA_VISIBLE_DEVICES=$gpu" in script
-    assert "cleanup_beavertail_trajectory.sbatch" in script
-    assert "SLURM_ARRAY_TASK_ID" not in script
-
-
 OPTUNA_SCRIPT = EXAMPLE / "scripts" / "optuna_hpo.py"
-OPTUNA_CONFIG = (
-    EXAMPLE
-    / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/optuna.yml"
-)
-OPTUNA_GD_CONFIG = (
-    EXAMPLE
-    / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-gd/optuna.yml"
-)
-OPTUNA_NPO_CONFIG = (
-    EXAMPLE
-    / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-npo/optuna.yml"
-)
-OPTUNA_NPO_BOUNDARY_CONFIG = OPTUNA_NPO_CONFIG.with_name("optuna-boundary.yml")
-OPTUNA_SSIUU_CONFIG = (
-    EXAMPLE
-    / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu/optuna.yml"
-)
 
 
 @pytest.fixture(scope="module")
@@ -2451,6 +2423,52 @@ def hpo():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+@pytest.fixture
+def optuna_config(hpo, tmp_path):
+    """Keep Optuna behavior tests independent of retired experiment configs."""
+    unlearn = tmp_path / "unlearn-base.yml"
+    unlearn.write_text(
+        yaml.safe_dump(
+            {
+                "base_model": "fixture/base",
+                "max_steps": 150,
+                "wandb_name": "fixture",
+                "custom_trainer_args": {"reference_model_name_or_path": "fixture/base"},
+            }
+        )
+    )
+    attack = tmp_path / "attack-base.yml"
+    attack.write_text(yaml.safe_dump({"save_steps": 5, "save_total_limit": 26}))
+    config = {
+        "version": 1,
+        "gpu": "l40s",
+        "study": {
+            "name": "fixture",
+            "storage": "memory://",
+            "trials": 20,
+            "seed": 42,
+            "directions": ["minimize", "minimize"],
+            "objectives": ["wmdp_pre", "wmdp_post"],
+            "waves": [4, 4, 4, 4, 4],
+        },
+        "search": {
+            "layer": [3, 7, 11],
+            "learning_rate": [0.0001],
+            "steering_coefficient": {"low": 3.25, "high": 300.0, "log": True},
+            "retain_coefficient": {"low": 300.0, "high": 2400.0, "log": True},
+        },
+        "screen": {"mmlu_min": 0.5062, "dominated_wmdp_post": 1.0},
+        "unlearn": {"base_config": str(unlearn)},
+        "attack": {"base_config": str(attack), "max_steps": 125, "learning_rate": 1e-5},
+        "evaluation": {},
+        "artifacts": str(tmp_path / "trials"),
+        "worker_script": "scripts/slurm/mila/optuna_worker.sbatch",
+    }
+    path = tmp_path / "optuna.yml"
+    path.write_text(yaml.safe_dump(config))
+    return hpo.load_config(path)
 
 
 class OptunaTrial:
@@ -2482,148 +2500,47 @@ def write_optuna_result(directory: Path, task: str, value: float) -> None:
     )
 
 
-def test_minicpm_gd_optuna_search_and_generated_config(hpo, tmp_path) -> None:
-    config = hpo.load_config(OPTUNA_GD_CONFIG)
-    assert config["study"]["trials"] == 24
-    assert config["study"]["waves"] == [4, 4, 4, 4, 4, 4]
-    assert config["study"]["objectives"] == ["wmdp_pre"]
-    assert config["study"]["directions"] == ["minimize"]
-    assert "attack" not in config
-    assert config["search"]["learning_rate"] == [5e-7, 1e-6, 2.5e-6, 5e-6, 1e-5]
-    assert config["search"]["max_steps"] == [50, 100, 150, 250]
+@pytest.mark.parametrize("extra", [None, "beta", "ssiuu_coefficient"])
+def test_optuna_samples_continuous_rates_and_optional_coefficients(
+    hpo, tmp_path, extra
+):
+    search = {
+        "learning_rate": {"low": 5e-6, "high": 1e-5},
+        "retain_coefficient": {"low": 1.0, "high": 16.0, "log": True},
+        "max_steps": [100, 150],
+    }
+    values = {"learning_rate": 7.5e-6, "retain_coefficient": 4.0}
+    if extra:
+        search[extra] = {"low": 0.001, "high": 0.05}
+        values[extra] = 0.02
 
-    class GDTrial:
-        def suggest_categorical(self, name, values):
-            return {"learning_rate": 2.5e-6, "max_steps": 100}[name]
+    class Trial:
+        def suggest_categorical(self, name, choices):
+            assert name == "max_steps"
+            return choices[0]
 
         def suggest_float(self, name, low, high, log=False):
-            assert name == "retain_coefficient"
-            assert (low, high, log) == (0.25, 16.0, True)
-            return 3.5
+            assert log == (name == "retain_coefficient")
+            return values[name]
 
-    parameters = hpo.sample_parameters(GDTrial(), config["search"])
-    base = hpo.load_mapping(EXAMPLE / config["unlearn"]["base_config"])
-    generated = hpo.build_unlearn_config(base, parameters, tmp_path / "trial-000")
-    assert generated["trainer_cls"] == "trainers.ul_gd.GradDiffTrainer"
-    assert generated["learning_rate"] == 2.5e-6
-    assert generated["max_steps"] == 100
-    assert generated["save_steps"] == 100
-    assert generated["custom_trainer_args"] == {
-        "forget_coefficient": 1.0,
-        "retain_coefficient": 3.5,
-        "sampling": "optml",
-    }
-    assert "unfrozen_parameters" not in generated
-
-
-def test_minicpm_npo_optuna_search_and_generated_config(hpo, tmp_path) -> None:
-    config = hpo.load_config(OPTUNA_NPO_CONFIG)
-    assert config["study"]["trials"] == 8
-    assert config["study"]["waves"] == [4, 4]
-    assert config["study"]["objectives"] == ["wmdp_pre"]
-    assert config["study"]["directions"] == ["minimize"]
-    assert "attack" not in config
-    assert config["search"] == {
-        "learning_rate": [2.5e-6, 5e-6, 1e-5],
-        "retain_coefficient": {"low": 1.0, "high": 2.5},
-        "beta": {"low": 0.01, "high": 0.05},
-    }
-
-    class NPOTrial:
-        def suggest_categorical(self, name, values):
-            assert name == "learning_rate"
-            return 5e-6
-
-        def suggest_float(self, name, low, high, log=False):
-            assert log is False
-            return {"retain_coefficient": 1.75, "beta": 0.0225}[name]
-
-    parameters = hpo.sample_parameters(NPOTrial(), config["search"])
-    base = hpo.load_mapping(EXAMPLE / config["unlearn"]["base_config"])
-    generated = hpo.build_unlearn_config(base, parameters, tmp_path / "trial-000")
-    assert generated["trainer_cls"] == "trainers.ul_npo.NPOTrainer"
-    assert generated["max_steps"] == 150
-    assert generated["save_steps"] == 150
-    assert generated["learning_rate"] == 5e-6
-    assert generated["custom_trainer_args"] == {
-        "reference_model_name_or_path": "openbmb/MiniCPM5-1B",
-        "beta": 0.0225,
-        "retain_coefficient": 1.75,
-    }
-    assert generated["wandb_name"] == (
-        "minicpm5-1b-wmdp-bio--unlearn-fft-npo-optuna-trial-000"
-    )
-
-
-def test_minicpm_npo_boundary_study_searches_continuous_learning_rate(hpo) -> None:
-    config = hpo.load_config(OPTUNA_NPO_BOUNDARY_CONFIG)
-    assert config["study"]["trials"] == 12
-    assert config["study"]["waves"] == [4, 4, 4]
-    assert config["search"]["learning_rate"] == {"low": 5e-6, "high": 1e-5}
-    assert [trial["learning_rate"] for trial in config["study"]["initial_trials"]] == [
-        6e-6,
-        7e-6,
-        8e-6,
-        9e-6,
-        7.2e-6,
-        7.4e-6,
-        7.6e-6,
-        7.8e-6,
-        7.7e-6,
-        7.7e-6,
-        7.7e-6,
-        7.8e-6,
-    ]
-
-    class BoundaryTrial:
-        def suggest_categorical(self, name, values):
-            raise AssertionError("the boundary search must use a continuous LR")
-
-        def suggest_float(self, name, low, high, log=False):
-            assert log is False
-            return {
-                "learning_rate": 7.5e-6,
-                "retain_coefficient": 2.0,
-                "beta": 0.0225,
-            }[name]
-
-    assert hpo.sample_parameters(BoundaryTrial(), config["search"]) == {
-        "learning_rate": 7.5e-6,
-        "retain_coefficient": 2.0,
-        "beta": 0.0225,
+    parameters = hpo.sample_parameters(Trial(), search)
+    base = {"custom_trainer_args": {"reference_model_name_or_path": "fixture/base"}}
+    config = hpo.build_unlearn_config(base, parameters, tmp_path / "trial")
+    assert config["learning_rate"] == 7.5e-6
+    assert config["save_steps"] == config["max_steps"] == 100
+    assert config["custom_trainer_args"]["retain_coefficient"] == 4.0
+    if extra:
+        assert config["custom_trainer_args"][extra] == 0.02
+    assert base["custom_trainer_args"] == {
+        "reference_model_name_or_path": "fixture/base"
     }
 
 
-def test_minicpm_ssiuu_optuna_starts_from_paper_values(hpo, tmp_path) -> None:
-    config = hpo.load_config(OPTUNA_SSIUU_CONFIG)
-    assert config["study"]["objectives"] == ["wmdp_pre", "wmdp_post"]
-    assert [
-        trial["ssiuu_coefficient"] for trial in config["study"]["initial_trials"]
-    ] == [0.0001, 0.001, 0.01, 1.0]
-
-    class SSIUUTrial:
-        def suggest_categorical(self, name, values):
-            return {"learning_rate": 2.5e-6, "max_steps": 150}[name]
-
-        def suggest_float(self, name, low, high, log=False):
-            assert log
-            return {"retain_coefficient": 4.0, "ssiuu_coefficient": 0.001}[name]
-
-    parameters = hpo.sample_parameters(SSIUUTrial(), config["search"])
-    base = hpo.load_mapping(EXAMPLE / config["unlearn"]["base_config"])
-    generated = hpo.build_unlearn_config(base, parameters, tmp_path / "trial-000")
-    assert generated["trainer_cls"] == "trainers.tr_ssiuu.SSIUUTrainer"
-    assert generated["custom_trainer_args"]["ssiuu_coefficient"] == 0.001
-    assert generated["custom_trainer_args"]["probability_normalization"] == (
-        "geometric_mean"
-    )
-    assert generated["wandb_name"] == (
-        "minicpm5-1b-wmdp-bio--unlearn-fft-ssiuu-optuna-trial-000"
-    )
-
-
-def test_pre_attack_only_trial_skips_attack(hpo, tmp_path, monkeypatch) -> None:
-    config = hpo.load_config(OPTUNA_GD_CONFIG)
+def test_pre_attack_only_trial_skips_attack(
+    hpo, optuna_config, tmp_path, monkeypatch
+) -> None:
+    config = optuna_config
+    config["study"]["objectives"] = ["wmdp_pre"]
     config["artifacts"] = str(tmp_path / "trials")
     monkeypatch.chdir(EXAMPLE)
     calls = []
@@ -2631,36 +2548,19 @@ def test_pre_attack_only_trial_skips_attack(hpo, tmp_path, monkeypatch) -> None:
         hpo, "evaluate", lambda *args, **kwargs: {"wmdp": 0.23, "mmlu": 0.51}
     )
 
-    class GDTrial:
-        number = 0
-        user_attrs = {}
-
-        def suggest_categorical(self, name, values):
-            return {"learning_rate": 2.5e-6, "max_steps": 100}[name]
-
-        def suggest_float(self, name, low, high, log=False):
-            return 4.0
-
-        def set_user_attr(self, name, value):
-            self.user_attrs[name] = value
-
-    trial = GDTrial()
+    trial = OptunaTrial()
+    trial.number = 0
     result = hpo.run_trial(trial, config, lambda command, check: calls.append(command))
     assert result == pytest.approx(0.23)
     assert len(calls) == 1
     assert trial.user_attrs["mmlu_constraints"] == pytest.approx([-0.0038])
 
 
-def test_generated_configs_are_trial_local_and_derive_layers(hpo, tmp_path) -> None:
-    base = yaml.safe_load(
-        (
-            EXAMPLE
-            / "configs/stages-wmdp/0_unlearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu/selected.yml"
-        ).read_text()
-    )
-    parameters = hpo.sample_parameters(
-        OptunaTrial(), hpo.load_config(OPTUNA_CONFIG)["search"]
-    )
+def test_generated_configs_are_trial_local_and_derive_layers(
+    hpo, optuna_config, tmp_path
+) -> None:
+    base = hpo.load_mapping(Path(optuna_config["unlearn"]["base_config"]))
+    parameters = hpo.sample_parameters(OptunaTrial(), optuna_config["search"])
     unlearn = hpo.build_unlearn_config(base, parameters, tmp_path / "trial-004")
     assert unlearn["custom_trainer_args"]["target_layer"] == 11
     assert unlearn["custom_trainer_args"]["steering_coefficient"] == 13
@@ -2671,12 +2571,7 @@ def test_generated_configs_are_trial_local_and_derive_layers(hpo, tmp_path) -> N
     ]
     assert unlearn["output_dir"].endswith("trial-004/unlearned")
 
-    attack_base = yaml.safe_load(
-        (
-            EXAMPLE
-            / "configs/stages-wmdp/2_relearn/minicpm5-1b-wmdp-bio--unlearn-fft-rmu--relearn-fft-long/selected.yml"
-        ).read_text()
-    )
+    attack_base = hpo.load_mapping(Path(optuna_config["attack"]["base_config"]))
     attack = hpo.build_attack_config(
         attack_base,
         Path(unlearn["output_dir"]),
@@ -2723,9 +2618,9 @@ def test_commands_and_metric_extraction(hpo, tmp_path) -> None:
 
 
 def test_screening_skips_attack_and_preserves_pre_metrics(
-    hpo, tmp_path, monkeypatch
+    hpo, optuna_config, tmp_path, monkeypatch
 ) -> None:
-    config = hpo.load_config(OPTUNA_CONFIG)
+    config = optuna_config
     config["artifacts"] = str(tmp_path / "trials")
     monkeypatch.chdir(EXAMPLE)
     calls = []
@@ -2750,9 +2645,9 @@ def test_screening_skips_attack_and_preserves_pre_metrics(
 
 
 def test_complete_trial_reports_raw_metrics_and_resumes_training(
-    hpo, tmp_path, monkeypatch
+    hpo, optuna_config, tmp_path, monkeypatch
 ) -> None:
-    config = hpo.load_config(OPTUNA_CONFIG)
+    config = optuna_config
     config["artifacts"] = str(tmp_path / "trials")
     monkeypatch.chdir(EXAMPLE)
     trial_dir = Path(config["artifacts"]) / "trial-004"
@@ -2772,8 +2667,10 @@ def test_complete_trial_reports_raw_metrics_and_resumes_training(
     assert trial.user_attrs["mmlu_constraints"] == pytest.approx([-0.0038, -0.0038])
 
 
-def test_submit_builds_one_l40s_worker_wave(hpo, tmp_path, monkeypatch) -> None:
-    config = hpo.load_config(OPTUNA_CONFIG)
+def test_submit_builds_one_l40s_worker_wave(
+    hpo, optuna_config, tmp_path, monkeypatch
+) -> None:
+    config = optuna_config
     study = SimpleNamespace(trials=[])
     monkeypatch.setattr(hpo, "create_study", lambda config: study)
     fake_optuna = SimpleNamespace(
@@ -2789,8 +2686,11 @@ def test_submit_builds_one_l40s_worker_wave(hpo, tmp_path, monkeypatch) -> None:
     ]
 
 
-def test_submit_selects_rtx8000_from_study_config(hpo, tmp_path, monkeypatch) -> None:
-    config = hpo.load_config(OPTUNA_NPO_CONFIG)
+def test_submit_selects_rtx8000_from_study_config(
+    hpo, optuna_config, tmp_path, monkeypatch
+) -> None:
+    config = optuna_config
+    config["gpu"] = "rtx8000"
     monkeypatch.setattr(hpo, "create_study", lambda config: SimpleNamespace(trials=[]))
     monkeypatch.setattr(
         hpo,
@@ -2804,7 +2704,9 @@ def test_submit_selects_rtx8000_from_study_config(hpo, tmp_path, monkeypatch) ->
     assert "--gres=gpu:rtx8000:1" in command
 
 
-def test_submit_accounts_for_manual_smoke_trial(hpo, tmp_path, monkeypatch) -> None:
+def test_submit_accounts_for_manual_smoke_trial(
+    hpo, optuna_config, tmp_path, monkeypatch
+) -> None:
     completed = SimpleNamespace(state=SimpleNamespace(name="COMPLETE"))
     monkeypatch.setattr(
         hpo, "create_study", lambda config: SimpleNamespace(trials=[completed])
@@ -2816,9 +2718,7 @@ def test_submit_accounts_for_manual_smoke_trial(hpo, tmp_path, monkeypatch) -> N
             trial=SimpleNamespace(TrialState=SimpleNamespace(RUNNING="RUNNING"))
         ),
     )
-    command = hpo.submit(
-        tmp_path / "optuna.yml", hpo.load_config(OPTUNA_CONFIG), dry_run=True
-    )
+    command = hpo.submit(tmp_path / "optuna.yml", optuna_config, dry_run=True)
     assert "--array=0-2%3" in command
 
 
@@ -2881,7 +2781,7 @@ def test_sequential_worker_runs_every_remaining_trial(hpo, monkeypatch) -> None:
     assert study.optimized_trials == 13
 
 
-def test_workers_derive_distinct_sampler_seeds(hpo, monkeypatch) -> None:
+def test_workers_derive_distinct_sampler_seeds(hpo, optuna_config, monkeypatch) -> None:
     seeds = []
 
     class Sampler:
@@ -2895,7 +2795,7 @@ def test_workers_derive_distinct_sampler_seeds(hpo, monkeypatch) -> None:
     monkeypatch.setattr(hpo, "optuna_module", lambda: fake_optuna)
     monkeypatch.setenv("SLURM_JOB_ID", "123")
     monkeypatch.setenv("SLURM_ARRAY_JOB_ID", "123")
-    config = hpo.load_config(OPTUNA_CONFIG)
+    config = optuna_config
     config["study"]["storage"] = "memory://"
     monkeypatch.setenv("SLURM_ARRAY_TASK_ID", "0")
     hpo.create_study(config)
@@ -3033,41 +2933,6 @@ def test_tar_gaussian_relearning_configs_save_perturbed_checkpoint_zero() -> Non
         assert config["max_steps"] == 1000
         assert config["save_steps"] == 50
         assert config["save_total_limit"] == 21
-
-
-def test_wmdp_trajectory_cleanup_is_limited_and_checks_both_evaluations() -> None:
-    source = (
-        EXAMPLE / "scripts/slurm/tamia/cleanup_wmdp_trajectory.sbatch"
-    ).read_text()
-
-    assert source.count("--relearn-fft-lr1e-6-ms1000)") == 1
-    assert source.count("--relearn-fft-lr5e-6-ms1000)") == 1
-    assert source.count("--relearn-fft-lr1e-5-ms1000)") == 1
-    for sigma in ("1e-4", "1e-3", "1e-2", "1e-1"):
-        assert (
-            source.count(f"--relearn-perturb-and-fft-sigma{sigma}-lr1e-5-ms1000)") == 1
-        )
-    assert "for evaluation in wmdp-bio-robust mmlu-no-bio" in source
-    assert "find \"$result\" -type f -name 'results*.json'" in source
-    assert 'rm -rf -- "$trajectory"' in source
-
-
-def test_wmdp_trajectory_evaluation_prefers_a_perturbed_checkpoint_zero() -> None:
-    source = (
-        EXAMPLE / "scripts/slurm/tamia/eval_local_trajectory_steps.sbatch"
-    ).read_text()
-
-    assert '[[ -f "$trained_model/checkpoint-0/config.json" ]]' in source
-    assert 'checkpoint="$trained_model/checkpoint-0"' in source
-
-
-def test_segmented_seam_job_resumes_and_requeues() -> None:
-    source = (EXAMPLE / "scripts/slurm/tamia/train_seam_segmented.sbatch").read_text()
-
-    assert 'SEAM_SEGMENT_STEPS="${SEAM_SEGMENT_STEPS:-20}"' in source
-    assert '--resume-from-checkpoint "$checkpoint"' in source
-    assert 'scontrol requeue "$SLURM_JOB_ID"' in source
-    assert "artifacts/tamia/models/*.seam-checkpoint" in source
 
 
 def test_locking_toy_hessian_trace_and_symmetry_solutions() -> None:

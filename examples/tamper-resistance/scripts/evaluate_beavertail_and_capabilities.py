@@ -211,6 +211,7 @@ def parse_args(argv=None):
     trajectory.add_argument("method")
     trajectory.add_argument("result_root", type=Path)
     trajectory.add_argument("--checkpoint-step", type=int, required=True)
+    trajectory.add_argument("--checkpoint-path", help="explicitly resolved checkpoint")
     trajectory.add_argument("--gaussian-sigma", type=float)
     trajectory.add_argument("--gaussian-seed", type=int)
     return parser.parse_args(argv)
@@ -240,7 +241,7 @@ def main(argv=None) -> None:
             "post": post,
         }
     else:
-        checkpoint = attack_checkpoint(
+        checkpoint = args.checkpoint_path or attack_checkpoint(
             args.baseline_model, args.attacked_model, args.checkpoint_step
         )
         pre = cached_evaluation(args.baseline_model, prompts, args.result_root)

@@ -19,15 +19,6 @@ SCRIPT = (
     / "plot_smoothness.py"
 )
 GENERATOR = SCRIPT.with_name("gen_smoothness.py")
-SBATCH = (
-    ROOT
-    / "examples"
-    / "tamper-resistance"
-    / "scripts"
-    / "slurm"
-    / "tamia"
-    / "plot_smoothness.sbatch"
-)
 
 
 def load_script():
@@ -444,40 +435,3 @@ def test_smoothness_results_from_parallel_workers_can_be_combined(tmp_path):
         "GradDiff",
     ]
     assert [model["direction_std"] for model in result["models"]] == [0.003, 0.003]
-
-
-def test_tamia_smoothness_job_covers_every_method_at_several_scales():
-    source = SBATCH.read_text()
-
-    assert "#SBATCH --gpus-per-node=h100:4" in source
-    assert "#SBATCH --time=01:00:00" in source
-    assert "HF_HUB_OFFLINE=1" in source
-    assert "HF_DATASETS_OFFLINE=1" in source
-    assert "UV_OFFLINE=1" in source
-    assert "uv sync --frozen --group eval" in source
-    assert "z7b-wmdp-bio--15pp--unlearn-fft-gd" in source
-    assert "z7b-wmdp-bio--15pp--unlearn-fft-gd-sam-rho1e-2" in source
-    assert "z7b-wmdp-bio--15pp--unlearn-fft-npo" in source
-    assert "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2" in source
-    assert "OPTML-Group/NPO-WMDP" in source
-    assert "OPTML-Group/NPO-SAM-WMDP" in source
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-me" in source
-    # One MaxEnt + SAM model serves both budgets; measure and plot it once.
-    assert source.count("unlearn-fft-me-sam-rho1e-2") == 1
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2" in source
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16" in source
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-rmu" in source
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2" in source
-    assert "if [[ -n ${ONLY:-} ]]; then" in source
-    assert "python scripts/analysis/gen_smoothness.py" in source
-    assert "python scripts/analysis/plot_smoothness.py" in source
-    assert source.count("CUDA_VISIBLE_DEVICES=$gpu") == 1
-    assert "--dtype bfloat16" in source
-    assert "--batch-size 2" in source
-    assert (
-        '"${DIRECTION_STDS:-1e-3 5e-3 1e-2 2e-2 3e-2 4e-2 '
-        '5e-2 6e-2 7e-2 8e-2 9e-2 1e-1}"' in source
-    )
-    assert '--direction-std "${direction_stds[@]}"' in source
-    assert '--direction-std "$direction_std"' in source
-    assert "z7b-wmdp-bio-loss-landscape-sigma$tag-bf16.pdf" in source

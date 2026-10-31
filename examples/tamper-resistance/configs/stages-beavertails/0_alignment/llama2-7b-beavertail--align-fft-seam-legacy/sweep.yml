@@ -13,15 +13,18 @@ sweeps:
       seed: [42]
       data_seed: [42]
 producer:
-  script: scripts/slurm/tamia/train_model_parallel.sbatch
+  script: scripts/slurm/tamia/train.sbatch
   sbatch_args:
     - --partition=gpubase_bynode_b2
     - --gpus-per-node=h100:4
     - --cpus-per-task=48
     - --mem=480G
     - --time=03:00:00
+  args:
+    - --launcher
+    - python
 model:
   method: SEAM legacy
 evaluations:
-  - beavertail-capabilities-single
+  - tamia-h100-llama2-7b--beavertails-and-capabilities-single
 evaluation_registry: configs/registries/evals.yml
