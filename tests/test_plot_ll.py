@@ -17,7 +17,7 @@ SCRIPT = (
 def test_plot_ll_reads_saved_grids_without_a_trajectory(monkeypatch, tmp_path, columns):
     rows = [
         {"radius": r, columns[0]: x, columns[1]: y, "loss": 2 + x + 3 * y}
-        for r in (0.1, 0.01, 0.001)
+        for r in (10, 25, 50, 75)
         for x in (-r, 0, r)
         for y in (-r, 0, r)
     ]
@@ -30,9 +30,10 @@ def test_plot_ll_reads_saved_grids_without_a_trajectory(monkeypatch, tmp_path, c
     assert output.is_file()
     axes = list(result["axes"].flat)
     assert [axis.get_title() for axis in axes] == [
-        "Radius 1e-01",
-        "Radius 1e-02",
-        "Radius 1e-03",
+        "Radius 7.50e+01",
+        "Radius 5.00e+01",
+        "Radius 2.50e+01",
+        "Radius 1.00e+01",
     ]
     assert all(axis.name == "rectilinear" and axis.collections for axis in axes)
     assert all((axis.get_xlabel(), axis.get_ylabel()) == ("c0", "c1") for axis in axes)

@@ -5,6 +5,7 @@ import os
 import os.path as osp
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -12,6 +13,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--indir", required=True)
     parser.add_argument("--outpath", required=True)
+    parser.add_argument("--zlim", type=float, nargs=2, metavar=("MIN", "MAX"))
     args = parser.parse_args()
 
     df = pd.read_csv(osp.join(args.indir, "grid.csv"))
@@ -31,8 +33,22 @@ if __name__ == "__main__":
         grid = df[df["radius"] == cfg["radius"]].pivot(
             index="c1", columns="c0", values="loss"
         )
+        low, high = (
+            args.zlim
+            if args.zlim
+            else (float(grid.values.min()), float(grid.values.max()))
+        )
+        if low == high:
+            padding = max(abs(low), 1.0) * 0.01
+            low, high = low - padding, high + padding
         filled = ax.contourf(
-            grid.columns, grid.index, grid.values, levels=12, cmap="viridis"
+            grid.columns,
+            grid.index,
+            grid.values,
+            levels=np.linspace(low, high, 11),
+            cmap="viridis",
+            vmin=low,
+            vmax=high,
         )
         ax.contour(
             grid.columns,
@@ -45,7 +61,7 @@ if __name__ == "__main__":
         )
         fig.colorbar(filled, ax=ax, label="Forget loss", shrink=0.8, format="%.6f")
         ax.set(
-            title=f"Radius {cfg['radius']:.0e}",
+            title=f"Radius {cfg['radius']:.2e}",
             xlabel="c0",
             ylabel="c1",
             aspect="equal",
