@@ -62,20 +62,40 @@ def prediction_loss(model, batches):
     return total_loss / total_examples
 
 
-def project_weights(model, directions):
-    """Return raw weight dot products (theta.T u, theta.T v), without centering."""
+def direction_gram(directions):
+    """Return the 2x2 Gram matrix of the unscaled Gaussian directions."""
     import torch
 
-    coordinates = [0.0, 0.0]
+    gram = np.zeros((2, 2))
     with torch.inference_mode():
-        for parameter, u, v in zip(model.parameters(), *directions, strict=True):
+        for u, v in zip(*directions, strict=True):
+            u = u.to(dtype=torch.float64)
+            v = v.to(device=u.device, dtype=torch.float64)
+            gram[0, 0] += (u * u).sum().item()
+            gram[0, 1] += (u * v).sum().item()
+            gram[1, 1] += (v * v).sum().item()
+    gram[1, 0] = gram[0, 1]
+    return gram
+
+
+def project_weights(model, reference, directions, gram):
+    """Fit the centered weight difference to the unscaled two-direction basis."""
+    import torch
+
+    dot_products = np.zeros(2)
+    with torch.inference_mode():
+        for parameter, original, u, v in zip(
+            model.parameters(), reference, *directions, strict=True
+        ):
             if parameter.shape != u.shape or parameter.shape != v.shape:
                 raise ValueError("Trajectory parameter shapes do not match directions")
-            weights = parameter.to(dtype=torch.float64)
+            difference = parameter.to(dtype=torch.float64) - original.to(
+                device=parameter.device, dtype=torch.float64
+            )
             for axis, direction in enumerate((u, v)):
-                direction = direction.to(device=weights.device, dtype=torch.float64)
-                coordinates[axis] += (weights * direction).sum().item()
-    return coordinates
+                direction = direction.to(device=parameter.device, dtype=torch.float64)
+                dot_products[axis] += (difference * direction).sum().item()
+    return np.linalg.solve(gram, dot_products)
 
 
 def loss_surfaces(
@@ -167,10 +187,12 @@ def main():
         "--trajectory",
         nargs="+",
         metavar="PATH",
-        help="Ordered checkpoints to project onto the same unscaled Gaussian directions",
+        help="Ordered checkpoints to project relative to --model into each scaled landscape",
     )
     args = parser.parse_args()
     label, path = args.model
+    if args.trajectory and any(std <= 0 for std in args.direction_std):
+        parser.error("--trajectory requires strictly positive --direction-std values")
 
     import torch
     from datasets import load_dataset
@@ -226,15 +248,18 @@ def main():
         )
     with open(args.output, "w") as handle:
         json.dump(results, handle, indent=2)
+    reference = [p.detach() for p in model.parameters()] if args.trajectory else None
     del model
     torch.cuda.empty_cache()
 
     if args.trajectory:
         results["trajectory_projection"] = {
-            "type": "raw_weight_dot_product",
-            "direction_std": 1.0,
+            "type": "centered_least_squares",
+            "reference_path": path,
         }
-        results["trajectory"] = []
+        gram = direction_gram(directions)
+        for surface in results["models"]:
+            surface["trajectory"] = []
         for checkpoint in args.trajectory:
             print(f"Projecting: {checkpoint}", flush=True)
             model = AutoModelForCausalLM.from_pretrained(
@@ -247,9 +272,16 @@ def main():
                 (name, p.shape) for name, p in model.named_parameters()
             ] != parameter_layout:
                 raise ValueError(f"Trajectory parameter layout differs: {checkpoint}")
-            results["trajectory"].append(
-                {"path": checkpoint, "coordinates": project_weights(model, directions)}
-            )
+            coordinates = project_weights(model, reference, directions, gram)
+            for surface in results["models"]:
+                surface["trajectory"].append(
+                    {
+                        "path": checkpoint,
+                        "coordinates": (
+                            coordinates / surface["direction_std"]
+                        ).tolist(),
+                    }
+                )
             del model
             torch.cuda.empty_cache()
             with open(args.output, "w") as handle:

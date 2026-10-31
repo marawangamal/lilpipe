@@ -241,14 +241,23 @@ def test_smoothness_directions_are_scaled_gaussian_samples():
         )
 
 
-def test_smoothness_projection_is_raw_weight_dot_product():
+def test_smoothness_projection_centers_and_accounts_for_nonorthogonal_directions():
     torch = pytest.importorskip("torch")
     module = load_generator()
     model = torch.nn.Linear(2, 1, bias=False, dtype=torch.bfloat16)
     with torch.no_grad():
         model.weight.copy_(torch.tensor([[3.0, 4.0]]))
+    reference = [torch.tensor([[1.0, 2.0]], dtype=torch.bfloat16)]
     directions = [[torch.tensor([[2.0, 0.0]])], [torch.tensor([[1.0, -3.0]])]]
-    assert module.project_weights(model, directions) == [6.0, -9.0]
+    gram = module.direction_gram(directions)
+    np.testing.assert_allclose(gram, [[4.0, 2.0], [2.0, 10.0]])
+    np.testing.assert_allclose(
+        module.project_weights(model, reference, directions, gram), [4 / 3, -2 / 3]
+    )
+    np.testing.assert_array_equal(
+        module.project_weights(model, list(model.parameters()), directions, gram),
+        [0, 0],
+    )
 
 
 @pytest.mark.parametrize("use_default_scales", [False, True])
@@ -304,6 +313,7 @@ def test_smoothness_projects_every_checkpoint_in_order_with_surface_directions(
             "Reference",
             "reference",
             "--trajectory",
+            "reference",
             "step-16",
             "step-32",
             *([] if use_default_scales else ["--direction-std", "0.03"]),
@@ -314,15 +324,11 @@ def test_smoothness_projects_every_checkpoint_in_order_with_surface_directions(
     module.main()
 
     result = json.loads(output.read_text())
-    assert loaded == ["reference", "step-16", "step-32"]
+    assert loaded == ["reference", "reference", "step-16", "step-32"]
     assert sampled == [(42, 1.0)]
-    assert result["trajectory"] == [
-        {"path": "step-16", "coordinates": [6.0, 12.0]},
-        {"path": "step-32", "coordinates": [-2.0, 15.0]},
-    ]
     assert result["trajectory_projection"] == {
-        "type": "raw_weight_dot_product",
-        "direction_std": 1.0,
+        "type": "centered_least_squares",
+        "reference_path": "reference",
     }
     expected_scales = (
         [1e-3, 5e-3, 1e-2, 2e-2, 3e-2, 4e-2, 5e-2, 6e-2, 7e-2, 8e-2, 9e-2, 1e-1]
@@ -330,6 +336,16 @@ def test_smoothness_projects_every_checkpoint_in_order_with_surface_directions(
         else [0.03]
     )
     assert [surface["direction_std"] for surface in result["models"]] == expected_scales
+    for surface in result["models"]:
+        assert [point["path"] for point in surface["trajectory"]] == [
+            "reference",
+            "step-16",
+            "step-32",
+        ]
+        np.testing.assert_allclose(
+            [point["coordinates"] for point in surface["trajectory"]],
+            np.array([[0, 0], [1, 2 / 3], [-1, 1]]) / surface["direction_std"],
+        )
 
 
 def test_smoothness_surfaces_share_directions_across_scales():
