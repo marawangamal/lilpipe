@@ -112,6 +112,11 @@ baseline and final-root evaluation points are not synthesized. Both positional
 removal flags default to `false`. See `docs/mila-refactor.md` for interfaces and
 the dependency inventory of retired Mila workflows.
 
+Active evaluator code lives under `scripts/evals/`. The Tamia trajectory helper
+was relocated without a behavior change. TOFU, the old alignment evaluators,
+weight-steering, and Optuna entry points are retired in this example; analysis
+scripts and the notebook remain available.
+
 ### Promoting a BeaverTails SEAM defense
 
 Promote a completed defense candidate without retraining it:

@@ -80,6 +80,10 @@ lilpipe artifacts/generated/hpo/qwen3-0.6b-beavertail--align-fft-seam--relearn--
 ```
 
 
+Active BeaverTails evaluation code lives in `scripts/evals/`; HPO generation remains
+at `scripts/hpo.py`. Retired TOFU, alignment-evaluation, weight-steering, and Optuna
+entry points have been removed from this example.
+
 ## Project structure
 ```text
 configs/
