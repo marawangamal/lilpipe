@@ -229,3 +229,6 @@ trainers, shared data adapters, active grid-HPO tests, analysis tools, and TOFU
 implementations in other examples remain available. The direct Optuna training
 dependency and its now-unreachable lock entries were pruned without upgrading
 the remaining dependencies.
+
+Analysis Python entry points have since been renamed; see
+[the analysis rename mapping](analysis-scripts.md). Former names below are historical.

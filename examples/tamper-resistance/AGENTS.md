@@ -179,12 +179,12 @@ copy, and a model move; nothing is retrained.
 5. **Add it to the plot.** Append
    `("z7b-wmdp-bio--<N>pp--<method>--relearn-fft", "<Method>", "None", False)`
    to the `main` configuration in
-   `scripts/analysis/plot_trajectory_wmdp.py`.
+   `scripts/analysis/relearning-trajectory/plot_trajectory_wmdp.py`.
    Until relearning runs exist, the method is plotted only at step 0.
 6. **Rerun the plot** to the tracked figure names:
 
    ```bash
-   .venv-eval/bin/python scripts/analysis/plot_trajectory_wmdp.py --plot main \
+   .venv-eval/bin/python scripts/analysis/relearning-trajectory/plot_trajectory_wmdp.py --plot main \
      --output artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--<N>pp.pdf
    ```
 

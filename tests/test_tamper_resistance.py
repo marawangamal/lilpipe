@@ -2173,12 +2173,14 @@ def test_beavertail_capability_evaluation_schema(tmp_path: Path) -> None:
 
 
 def test_parameter_norm_job_uses_the_analysis_helper() -> None:
-    script = (EXAMPLE / "scripts/analysis/get_param_norm.py").read_text()
+    script = (
+        EXAMPLE / "scripts/analysis/parameter-norms/get_param_norm.py"
+    ).read_text()
     job = (EXAMPLE / "scripts/slurm/mila/analysis_get_param_norm.sbatch").read_text()
 
     assert 'parser.add_argument("--model"' in script
-    assert "scripts/analysis/get_param_norm.py" in job
-    assert 'exec python scripts/analysis/get_param_norm.py "$@"' in job
+    assert "scripts/analysis/parameter-norms/get_param_norm.py" in job
+    assert 'exec python scripts/analysis/parameter-norms/get_param_norm.py "$@"' in job
 
 
 def test_seam_relearning_cosine_config_preserves_the_harmful_batch() -> None:
@@ -2307,7 +2309,9 @@ def test_locking_toy_hessian_trace_and_symmetry_solutions() -> None:
     torch = pytest.importorskip("torch")
     from torch.nn import functional as F
 
-    toy = load_script("scripts/analysis/gen_locking_toy.py", "locking_toy_test")
+    toy = load_script(
+        "scripts/analysis/toy-experiments/get_locking_toy.py", "locking_toy_test"
+    )
     generator = torch.Generator().manual_seed(0)
     params = [p.double() for p in toy.init_params(5, 7, 4, generator)]
     inputs = torch.randn(3, 5, generator=generator, dtype=torch.float64)
@@ -2342,7 +2346,9 @@ def test_locking_toy_hessian_trace_and_symmetry_solutions() -> None:
 def test_locking_toy_canonical_omega_and_projected_ascent() -> None:
     torch = pytest.importorskip("torch")
 
-    toy = load_script("scripts/analysis/gen_locking_toy.py", "locking_toy_canon_test")
+    toy = load_script(
+        "scripts/analysis/toy-experiments/get_locking_toy.py", "locking_toy_canon_test"
+    )
     generator = torch.Generator().manual_seed(0)
     params = [p.double() for p in toy.init_params(6, 8, 3, generator)]
     inputs = torch.randn(64, 6, generator=generator, dtype=torch.float64)

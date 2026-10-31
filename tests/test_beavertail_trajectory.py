@@ -14,7 +14,8 @@ EVALUATOR = (
     / "examples/tamper-resistance/scripts/evals/evaluate_beavertail_and_capabilities.py"
 )
 PLOTTER = (
-    ROOT / "examples/tamper-resistance/scripts/analysis/plot_trajectory_beavertails.py"
+    ROOT
+    / "examples/tamper-resistance/scripts/analysis/relearning-trajectory/plot_trajectory_beavertails.py"
 )
 
 

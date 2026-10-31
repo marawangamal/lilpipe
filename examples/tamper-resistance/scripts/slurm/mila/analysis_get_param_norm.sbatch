@@ -32,4 +32,4 @@ export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
 
 uv sync --frozen --group eval
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
-exec python scripts/analysis/get_param_norm.py "$@"
+exec python scripts/analysis/parameter-norms/get_param_norm.py "$@"

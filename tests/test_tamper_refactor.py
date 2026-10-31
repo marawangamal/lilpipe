@@ -691,7 +691,6 @@ def test_retired_perturbation_sweep_preserves_research_settings() -> None:
         EXAMPLE
         / "configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-perturb/sweep.yml"
     ).exists()
-    assert (EXAMPLE / "scripts/analysis/gen_perturbed_model.py").is_file()
 
 
 def test_seam_paper_defense_uses_four_gpu_layer_sharding() -> None:

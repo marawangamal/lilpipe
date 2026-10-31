@@ -312,11 +312,14 @@ Shared Python entry points remain supported. Implementations used only by retire
 
 ## Supporting files that become stale
 
-- `scripts/analysis/gen_perturbed_model.py` and its WMDP perturbation `base.yml` / `selected.yml`: retained research inputs; the standalone perturbation sweep is retired and recorded in `docs/retired-tamia/perturb-sweep.yml`.
+- **Deleted perturbation analysis:** the perturbation generator and plotter are removed. WMDP perturbation `base.yml` / `selected.yml` remain historical research inputs; the standalone sweep is recorded in `docs/retired-tamia/perturb-sweep.yml`.
 - **Deleted Python workflows:** `scripts/optuna_hpo.py`, the old alignment evaluators/comparison, `scripts/weight_steering.py`, the five TOFU scripts, and `src/data/tofu.py` have now been removed with their dedicated tests. MiniCPM configs and the associated workers were already retired.
 - `scripts/slurm/mila/eval_local_trajectory.sbatch`: its MiniCPM registry callers were removed; it is now a candidate for later removal.
-- `scripts/analysis/get_model_dists.py`, `gen_smoothness.py`, and `plot_smoothness.py`: retained Python analysis commands and tests; their Tamia scheduling wrappers are retired.
+- **Deleted model-distance and smoothness analysis:** the model-distance generator, smoothness generator, and both smoothness plotters are removed, together with `tests/test_model_dist.py`, `tests/test_smoothness_plot.py`, and `tests/test_smoothness_2d_plot.py`. Their retired wrappers above list historical invocation paths.
 - **Active evaluators:** `scripts/evals/evaluate_beavertail_and_capabilities.py` and `scripts/evals/tamia_evaluation.py` remain supported. The Tamia helper was relocated without changing its behavior.
 - External authors-codebase relearning/table-3 commands and their experiment-specific paths: historical-only; no replacement Slurm launcher.
 - Segmented/requeue Slurm behavior is retired. Retain trainer/config code; ordinary training has no implicit resume or requeue mode.
 - Untracked generated HPO manifests referencing old scripts must be regenerated from migrated sweeps before use. Existing artifacts and result directories remain intact.
+
+Analysis Python entry points have since been renamed; see
+[the analysis rename mapping](analysis-scripts.md). Former names below are historical.

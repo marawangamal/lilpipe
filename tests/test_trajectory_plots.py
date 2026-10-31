@@ -14,7 +14,7 @@ def load_plotter(name):
 
 
 def test_wmdp_plotter_exposes_main_and_lrs():
-    wmdp = load_plotter("plot_trajectory_wmdp")
+    wmdp = load_plotter("relearning-trajectory/plot_trajectory_wmdp")
 
     assert set(wmdp.plots) == {"main", "lrs", "ms1000", "perturbed-ms1000"}
     assert wmdp.plots["main"]["output"].endswith(
@@ -57,8 +57,8 @@ def test_wmdp_plotter_exposes_main_and_lrs():
 
 
 def test_layerwise_norm_analysis_groups_parameters_and_builds_tidy_rows():
-    generator = load_plotter("get_param_norm")
-    plotter = load_plotter("plot_layerwise_norms")
+    generator = load_plotter("parameter-norms/get_param_norm")
+    plotter = load_plotter("parameter-norms/plot_layerwise_norms")
 
     assert generator.layer_group("model.embed_tokens.weight", 32) == ("Embedding", 0)
     assert generator.layer_group("model.layers.7.self_attn.q_proj.weight", 32) == (
