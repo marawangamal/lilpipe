@@ -9,8 +9,6 @@ models:
       script: scripts/slurm/mila/train.sbatch
       args:
       - configs/stages-beavertails/0_alignment/qwen3-0.6b-beavertail--align-fft-seam-legacy/selected.yml
-      - --launcher
-      - python
       sbatch_args:
       - --gres=gpu:l40s:1
       - --cpus-per-task=8

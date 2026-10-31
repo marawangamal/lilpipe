@@ -446,7 +446,8 @@ def test_qwen_relearning_grid_matches_defense_betas_and_evaluates_attacks(
             ] == ["8000", "8000"]
         assert evaluate.depends_on == (train.id,)
         assert evaluate.args[2] == config["output_dir"]
-        assert evaluate.args[-2:] == ("100", "250")
+        assert len(evaluate.args) == 7
+        assert evaluate.args[4] == "disjoint"
     assert len(training) == len(evaluation) == 6
 
 

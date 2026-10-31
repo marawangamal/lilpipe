@@ -2441,6 +2441,8 @@ def optuna_config(hpo, tmp_path):
     )
     attack = tmp_path / "attack-base.yml"
     attack.write_text(yaml.safe_dump({"save_steps": 5, "save_total_limit": 26}))
+    worker = tmp_path / "worker.sbatch"
+    worker.write_text("#!/bin/bash\n")
     config = {
         "version": 1,
         "gpu": "l40s",
@@ -2464,7 +2466,7 @@ def optuna_config(hpo, tmp_path):
         "attack": {"base_config": str(attack), "max_steps": 125, "learning_rate": 1e-5},
         "evaluation": {},
         "artifacts": str(tmp_path / "trials"),
-        "worker_script": "scripts/slurm/mila/optuna_worker.sbatch",
+        "worker_script": str(worker),
     }
     path = tmp_path / "optuna.yml"
     path.write_text(yaml.safe_dump(config))
@@ -2681,7 +2683,7 @@ def test_submit_builds_one_l40s_worker_wave(
     assert "--array=0-3%4" in command
     assert "--gres=gpu:l40s:1" in command
     assert command[-2:] == [
-        "scripts/slurm/mila/optuna_worker.sbatch",
+        config["worker_script"],
         str(tmp_path / "optuna.yml"),
     ]
 
@@ -2806,7 +2808,7 @@ def test_workers_derive_distinct_sampler_seeds(hpo, optuna_config, monkeypatch) 
 
 def test_parameter_norm_job_uses_the_analysis_helper() -> None:
     script = (EXAMPLE / "scripts/analysis/get_param_norm.py").read_text()
-    job = (EXAMPLE / "scripts/slurm/get_param_norm.sbatch").read_text()
+    job = (EXAMPLE / "scripts/slurm/mila/analysis_get_param_norm.sbatch").read_text()
 
     assert 'parser.add_argument("--model"' in script
     assert "scripts/analysis/get_param_norm.py" in job
