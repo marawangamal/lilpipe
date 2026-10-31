@@ -291,6 +291,59 @@ def test_only_canonical_registries_and_selected_configs_are_referenced() -> None
         assert (EXAMPLE / config).is_file()
 
 
+def test_wmdp_landscape_attacks_retain_matching_trajectories(monkeypatch) -> None:
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    plan = (
+        load("configs/experiments/z7b-wmdp-bio-relearn-128--5pp.yml")
+        .select(
+            models=[
+                "z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr5e-6-ms128",
+                "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2--relearn-fft-lr5e-6-ms128",
+            ],
+        )
+        .plan()
+    )
+    assert len(plan.stages) == 6  # Two attacks and four trajectory arrays.
+    training = [stage for stage in plan.stages if stage.id.startswith("train-")]
+    evaluations = [stage for stage in plan.stages if stage.id.startswith("eval-")]
+    assert len(training) == 2
+    assert len(evaluations) == 4
+    for stage in evaluations:
+        assert Path(stage.script).name == "eval_local_trajectory.sbatch"
+        assert "--array=0-8" in stage.sbatch_args
+        assert stage.args[-1] == "16"
+        assert stage.depends_on == (f"train-{stage.args[0]}",)
+        assert stage.args[4] in {"wmdp_bio_robust", "mmlu_no_bio"}
+    configs = []
+    for stage in training:
+        assert Path(stage.script).name == "train_model_parallel.sbatch"
+        config = yaml.safe_load((EXAMPLE / stage.args[0]).read_text())
+        assert config["learning_rate"] == 5e-6
+        assert config["max_steps"] == 128
+        assert config["save_steps"] == 16
+        assert config["save_total_limit"] >= (
+            config["max_steps"] // config["save_steps"]
+        )
+        assert config["save_only_model"] is True
+        assert config["output_dir"].endswith("--relearn-fft-lr5e-6-ms128")
+        configs.append(config)
+    assert {Path(config["base_model"]).name for config in configs} == {
+        "z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16",
+        "z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2",
+    }
+    distinct_fields = {
+        "base_model",
+        "output_dir",
+        "dataset_prepared_path",
+        "wandb_name",
+    }
+    assert {k: v for k, v in configs[0].items() if k not in distinct_fields} == {
+        k: v for k, v in configs[1].items() if k not in distinct_fields
+    }
+
+
 def test_qwen_seam_evaluation_waits_for_training(monkeypatch) -> None:
     from lilpipe import load
 

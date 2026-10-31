@@ -2,6 +2,40 @@
 
 Run commands from `examples/tamper-resistance`.
 
+## TAR and SAM relearning trajectories
+
+The existing `configs/experiments/z7b-wmdp-bio-relearn-128--5pp.yml` includes
+matching attacks on MaxEnt + TAR K=16 and MaxEnt + SAM (`rho=1e-2`). Select
+only their `--relearn-fft-lr5e-6-ms128` model IDs for this comparison. Both
+use 128 optimizer steps, an initial learning rate of `5e-6` with linear decay,
+microbatch size 1, gradient accumulation 1, training seed 1, and data seed 42.
+
+Save model-only checkpoints every 16 steps and keep all eight checkpoints
+(16 through 128); use the original defended model for step 0. Preserve these
+weights for later projection onto the seeded loss-landscape directions and
+contour trajectory plots. The manifest evaluates WMDP-Bio robust and
+MMLU-no-bio at steps 0, 16, ..., 128 after each attack succeeds. No cleanup
+is scheduled.
+
+From the example root, inspect the planned commands before submission:
+
+```bash
+tar_model=z7b-wmdp-bio--5pp--unlearn-fft-me-tar-k16--relearn-fft-lr5e-6-ms128
+sam_model=z7b-wmdp-bio--5pp--unlearn-fft-me-sam-rho1e-2--relearn-fft-lr5e-6-ms128
+
+lilpipe configs/experiments/z7b-wmdp-bio-relearn-128--5pp.yml \
+  --models "$tar_model" "$sam_model" \
+  --sbatch-args='--partition=gpubase_bynode_b1' \
+  --dry-run
+```
+
+Remove `--dry-run` to submit. Before submission, check that the canonical
+output paths are absent or already contain the intended complete trajectories;
+reuse complete outputs rather than overwriting them. If rerunning an attack
+whose evaluation directory already exists, move that directory into
+`artifacts/tamia/evals/archive/` before submission so old and new results
+are never mixed.
+
 ## TODO: Gaussian pre-relearning attack
 
 After the queued 1,000-step SEAM trajectories finish, run a separate 250-step
