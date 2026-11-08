@@ -9,6 +9,7 @@ import os.path as osp
 
 import pandas as pd
 import seaborn as sns
+from matplotlib.ticker import NullFormatter
 
 
 def get_lm_eval_results(path):
@@ -44,6 +45,15 @@ seam_mask_eos = seam_completion + "--paired-mask--ignore-eos-labels"
 seam_refusal_space = seam_mask_eos + "--refusal-space"
 author_attack = "--data-overlapping--relearn-fft-author-codebase-"
 our_attack = "--data-overlapping--relearn-fft-"
+plot = {
+    "x": "Relearning step",
+    "size": "LR",
+    "style": "LR",
+    "markers": True,
+    "dashes": False,
+}
+axes = {}
+xlabel = "Relearning step"
 
 # 1. Authors' 250-step attacks: compare defenses, with one method per row.
 # Leave one config block active. Newly added runs stay commented until all of
@@ -670,69 +680,151 @@ our_attack = "--data-overlapping--relearn-fft-"
 # outpath = "artifacts/figures/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase--ms250--ablations.pdf"
 
 # 6. Minimal fix: original completion-only training with refusal space alone.
+# configs = [
+#     {
+#         "path": (seam_completion) + author_attack + "lr1e-4-ms250",
+#         "baseline": seam_completion,
+#         "method": "SEAM (original)",
+#         "lr": 1e-4,
+#     },
+#     {
+#         "path": (seam_completion) + author_attack + "lr2e-4-ms250",
+#         "baseline": seam_completion,
+#         "method": "SEAM (original)",
+#         "lr": 2e-4,
+#     },
+#     {
+#         "path": (seam_completion + "--refusal-space") + author_attack + "lr1e-4-ms250",
+#         "baseline": seam_completion + "--refusal-space",
+#         "method": "SEAM (space only)",
+#         "lr": 1e-4,
+#     },
+#     {
+#         "path": (seam_completion + "--refusal-space") + author_attack + "lr2e-4-ms250",
+#         "baseline": seam_completion + "--refusal-space",
+#         "method": "SEAM (space only)",
+#         "lr": 2e-4,
+#     },
+#     {
+#         "path": (seam_refusal_space) + author_attack + "lr1e-4-ms250",
+#         "baseline": seam_refusal_space,
+#         "method": "SEAM (mask/EOS/space)",
+#         "lr": 1e-4,
+#     },
+#     {
+#         "path": (seam_refusal_space) + author_attack + "lr2e-4-ms250",
+#         "baseline": seam_refusal_space,
+#         "method": "SEAM (mask/EOS/space)",
+#         "lr": 2e-4,
+#     },
+#     {
+#         "path": (seam) + author_attack + "lr1e-4-ms250",
+#         "baseline": seam,
+#         "method": "SEAM (authors)",
+#         "lr": 1e-4,
+#     },
+#     {
+#         "path": (seam) + author_attack + "lr2e-4-ms250",
+#         "baseline": seam,
+#         "method": "SEAM (authors)",
+#         "lr": 2e-4,
+#     },
+# ]
+# steps = list(range(0, 251, 50))
+# outpath = "artifacts/figures/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase--ms250--minimal-ablations.pdf"
+#
+# Methods occupy rows; LR controls thickness and markers.
+# facet = {"row": "Method", "color": "black", "height": 3.2, "aspect": 1.5}
+#
+# Reference: Base after the authors' 250-step attack at LR 1e-4.
+# reference = {
+#     "path": base + author_attack + "lr1e-4-ms250",
+#     "baseline": base,
+#     "method": "Base",
+#     "lr": 1e-4,
+# }
+#
+# 7. Matched-format trajectories: authors' defense/attack versus ours.
+# Both use defense [HH, HB, BB] = [n, s, s] and attack [HH] = [n].
+# Method controls hue; LR controls thickness and markers. Base uses LR 1e-4.
+seam_ours = seam_completion + "--refusal-space"
 configs = [
     {
-        "path": (seam_completion) + author_attack + "lr1e-4-ms250",
-        "baseline": seam_completion,
-        "method": "SEAM (original)",
-        "lr": 1e-4,
-    },
-    {
-        "path": (seam_completion) + author_attack + "lr2e-4-ms250",
-        "baseline": seam_completion,
-        "method": "SEAM (original)",
-        "lr": 2e-4,
-    },
-    {
-        "path": (seam_completion + "--refusal-space") + author_attack + "lr1e-4-ms250",
-        "baseline": seam_completion + "--refusal-space",
-        "method": "SEAM (space only)",
-        "lr": 1e-4,
-    },
-    {
-        "path": (seam_completion + "--refusal-space") + author_attack + "lr2e-4-ms250",
-        "baseline": seam_completion + "--refusal-space",
-        "method": "SEAM (space only)",
-        "lr": 2e-4,
-    },
-    {
-        "path": (seam_refusal_space) + author_attack + "lr1e-4-ms250",
-        "baseline": seam_refusal_space,
-        "method": "SEAM (mask/EOS/space)",
-        "lr": 1e-4,
-    },
-    {
-        "path": (seam_refusal_space) + author_attack + "lr2e-4-ms250",
-        "baseline": seam_refusal_space,
-        "method": "SEAM (mask/EOS/space)",
-        "lr": 2e-4,
-    },
-    {
-        "path": (seam) + author_attack + "lr1e-4-ms250",
+        "path": seam + author_attack + "lr2e-5-ms250",
         "baseline": seam,
-        "method": "SEAM (authors)",
+        "method": "SEAM",
+        "lr": 2e-5,
+    },
+    {
+        "path": seam + author_attack + "lr5e-5-ms250",
+        "baseline": seam,
+        "method": "SEAM",
+        "lr": 5e-5,
+    },
+    {
+        "path": seam + author_attack + "lr8e-5-ms250",
+        "baseline": seam,
+        "method": "SEAM",
+        "lr": 8e-5,
+    },
+    {
+        "path": seam + author_attack + "lr1e-4-ms250",
+        "baseline": seam,
+        "method": "SEAM",
         "lr": 1e-4,
     },
     {
-        "path": (seam) + author_attack + "lr2e-4-ms250",
+        "path": seam + author_attack + "lr2e-4-ms250",
         "baseline": seam,
-        "method": "SEAM (authors)",
+        "method": "SEAM",
         "lr": 2e-4,
+    },
+    {
+        "path": seam_ours + our_attack + "lr2e-5-ms250",
+        "baseline": seam_ours,
+        "method": "SEAM (ours)",
+        "lr": 2e-5,
+    },
+    {
+        "path": seam_ours + our_attack + "lr5e-5-ms250",
+        "baseline": seam_ours,
+        "method": "SEAM (ours)",
+        "lr": 5e-5,
+    },
+    {
+        "path": seam_ours + our_attack + "lr1e-4-ms250",
+        "baseline": seam_ours,
+        "method": "SEAM (ours)",
+        "lr": 1e-4,
+    },
+    {
+        "path": seam_ours + our_attack + "lr2e-4-ms250",
+        "baseline": seam_ours,
+        "method": "SEAM (ours)",
+        "lr": 2e-4,
+    },
+    {
+        "path": base + author_attack + "lr1e-4-ms250",
+        "baseline": base,
+        "method": "Base",
+        "lr": 1e-4,
     },
 ]
-steps = list(range(0, 251, 50))
-outpath = "artifacts/figures/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase--ms250--minimal-ablations.pdf"
+# Trajectory view: uncomment these settings and comment the endpoint settings.
+# steps = list(range(0, 251, 50))
+# facet = {"hue": "Method", "height": 3.2, "aspect": 1.5}
+# plot = {"x": "Relearning step", "size": "LR", "style": "LR", "markers": True, "dashes": False}
+# axes = {}
+# xlabel = "Relearning step"
+# outpath = "artifacts/figures/llama2-7b-beavertail--seam-authors-vs-ours--matched-format--ms250--trajectory.pdf"
 
-# Methods occupy rows; LR controls thickness and markers.
-facet = {"row": "Method", "color": "black", "height": 3.2, "aspect": 1.5}
-
-# Reference: Base after the authors' 250-step attack at LR 1e-4.
-reference = {
-    "path": base + author_attack + "lr1e-4-ms250",
-    "baseline": base,
-    "method": "Base",
-    "lr": 1e-4,
-}
+# Endpoint view: the same runs, using only their final checkpoint.
+steps = [250]
+facet = {"hue": "Method", "height": 3.2, "aspect": 1.25}
+plot = {"x": "LR", "marker": "o"}
+axes = {"xscale": "log"}
+xlabel = "Attack learning rate"
+outpath = "artifacts/figures/llama2-7b-beavertail--seam-authors-vs-ours--matched-format--ms250.pdf"
 
 
 def get_results(configs, rootdir, steps, task_to_metric):
@@ -777,6 +869,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rootdir", default="artifacts/tamia/evals")
     parser.add_argument("--outpath", default=outpath)
+    parser.add_argument("--png", action="store_true", help="Also save a PNG preview")
     args = parser.parse_args()
 
     df = pd.DataFrame(get_results(configs, args.rootdir, steps, task_to_metric))
@@ -790,35 +883,50 @@ if __name__ == "__main__":
     palette["Base"] = "black"
     grid = sns.relplot(
         data=df,
-        x="Relearning step",
+        **plot,
         y="Score (%)",
         col="Eval",
         col_order=["Harmfulness ↓", "Capability ↑"],
         **facet,
         **({"palette": palette} if "hue" in facet else {}),
-        size="LR",
-        style="LR",
-        markers=True,
-        dashes=False,
         legend="full",
         kind="line",
         errorbar=None,
     )
-    scores = pd.DataFrame(
-        get_results([reference], args.rootdir, [250], task_to_metric)
-    ).set_index("Eval")["Score (%)"]
-    for key, ax in grid.axes_dict.items():
-        evaluation = key[-1] if isinstance(key, tuple) else key
-        ax.axhline(scores[evaluation], color="0.45", linestyle="--", linewidth=1.4)
+    # Optional horizontal reference; enable with the reference config above.
+    # scores = pd.DataFrame(
+    #     get_results([reference], args.rootdir, [250], task_to_metric)
+    # ).set_index("Eval")["Score (%)"]
+    # for key, ax in grid.axes_dict.items():
+    #     evaluation = key[-1] if isinstance(key, tuple) else key
+    #     ax.axhline(scores[evaluation], color="0.45", linestyle="--", linewidth=1.4)
     for label in grid.legend.get_texts():
         try:
             label.set_text(f"{float(label.get_text()):.0e}")
         except ValueError:
             pass
-    grid.set(ylim=(0, 100), xticks=steps[:: max(1, (len(steps) - 1) // 5)])
+    ticks = sorted(df[plot["x"]].unique())
+    ticks = ticks[:: max(1, (len(ticks) - 1) // 5)]
+    grid.set(**axes)
+    grid.set(ylim=(0, 100), xticks=ticks)
+    grid.set_xlabels(xlabel)
+    if axes.get("xscale") == "log":
+        grid.set_xticklabels(
+            [f"{value:.0e}" for value in ticks], rotation=30, ha="right"
+        )
+        for ax in grid.axes.flat:
+            ax.xaxis.set_minor_formatter(NullFormatter())
     grid.set_titles("{row_name} | {col_name}" if "row" in facet else "{col_name}")
     grid.figure.suptitle(
         f"Capability: mean of {len(task_to_metric)} tasks", y=1.04, fontsize=12
     )
     os.makedirs(osp.dirname(args.outpath) or ".", exist_ok=True)
     grid.figure.savefig(args.outpath, bbox_inches="tight")
+    if args.png:
+        png_dir = osp.join(osp.dirname(osp.dirname(args.outpath)), "figures-PNG")
+        os.makedirs(png_dir, exist_ok=True)
+        grid.figure.savefig(
+            osp.join(png_dir, osp.splitext(osp.basename(args.outpath))[0] + ".png"),
+            dpi=200,
+            bbox_inches="tight",
+        )
