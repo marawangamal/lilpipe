@@ -1,0 +1,85 @@
+{
+  "all_20_jobs_completed_successfully": true,
+  "jobs": {
+    "676416": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676417": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676418": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676419": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676420": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676421": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676422": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676423": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676424": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676425": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676427": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676428": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676429": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676430": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676431": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676432": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676433": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676434": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676435": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676436": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    }
+  }
+}

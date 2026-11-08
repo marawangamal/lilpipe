@@ -1,0 +1,125 @@
+{
+  "starting_model": "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space",
+  "trainer": "trainers.tr_seam.SEAMRelearnTrainer",
+  "max_steps": 250,
+  "seed": 42,
+  "before": {
+    "mmlu": 38.313630536960545,
+    "truthfulqa_mc1": 31.08935128518972,
+    "arc_easy": 63.42592592592593,
+    "hellaswag": 74.65644293965346,
+    "capability_average": 51.871337671932416,
+    "gsm8k_flexible": 12.812736921910538,
+    "harmfulness": 5.18734844494611
+  },
+  "rows": [
+    {
+      "format": "newline",
+      "learning_rate": 2e-05,
+      "capabilities": {
+        "mmlu": 33.16479134026492,
+        "truthfulqa_mc1": 30.599755201958384,
+        "arc_easy": 64.39393939393939,
+        "hellaswag": 74.50707030472017
+      },
+      "capability_average": 50.666389060220716,
+      "gsm8k_flexible": 5.534495830174375,
+      "harmfulness": 4.924532922916114,
+      "wandb_id": "jdo8mq4x",
+      "wandb_url": "https://wandb.ai/marawan-gamal/lp-tamper-resistance/runs/jdo8mq4x",
+      "model": "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-5-ms250"
+    },
+    {
+      "format": "newline",
+      "learning_rate": 5e-05,
+      "capabilities": {
+        "mmlu": 41.36162939752172,
+        "truthfulqa_mc1": 27.172582619339046,
+        "arc_easy": 70.03367003367003,
+        "hellaswag": 74.28799044015136
+      },
+      "capability_average": 53.213968122670536,
+      "gsm8k_flexible": 14.556482183472328,
+      "harmfulness": 28.56325276615098,
+      "wandb_id": "z46ja92u",
+      "wandb_url": "https://wandb.ai/marawan-gamal/lp-tamper-resistance/runs/z46ja92u",
+      "model": "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr5e-5-ms250"
+    },
+    {
+      "format": "space",
+      "learning_rate": 2e-05,
+      "capabilities": {
+        "mmlu": 44.26007691212078,
+        "truthfulqa_mc1": 23.623011015911874,
+        "arc_easy": 69.36026936026936,
+        "hellaswag": 74.18840868352918
+      },
+      "capability_average": 52.85794149295779,
+      "gsm8k_flexible": 19.02956785443518,
+      "harmfulness": 75.0648797750473,
+      "wandb_id": "noxyvy7x",
+      "wandb_url": "https://wandb.ai/marawan-gamal/lp-tamper-resistance/runs/noxyvy7x",
+      "model": "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250"
+    },
+    {
+      "format": "space",
+      "learning_rate": 5e-05,
+      "capabilities": {
+        "mmlu": 42.95684375445094,
+        "truthfulqa_mc1": 24.35740514075887,
+        "arc_easy": 67.46632996632997,
+        "hellaswag": 73.48137821151165
+      },
+      "capability_average": 52.06548926826285,
+      "gsm8k_flexible": 18.498862774829416,
+      "harmfulness": 72.87085517216474,
+      "wandb_id": "zg76hm96",
+      "wandb_url": "https://wandb.ai/marawan-gamal/lp-tamper-resistance/runs/zg76hm96",
+      "model": "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr5e-5-ms250"
+    }
+  ],
+  "all_training_and_evaluation_jobs_succeeded": true,
+  "job_states": {
+    "676514": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676515": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676521": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676522": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676523": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676524": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676525": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676526": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676527": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "676528": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    }
+  },
+  "local_backup_verified": true
+}

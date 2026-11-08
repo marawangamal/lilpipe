@@ -1,0 +1,56 @@
+[
+  {
+    "kind": "optimizer_smoke",
+    "format": "newline",
+    "id": 676514,
+    "output": "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-5-ms250--smoke",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--hold",
+      "--job-name=seam-relearn-newline-smoke",
+      "--partition=gpubase_bynode_b1",
+      "--exclude=tg10807",
+      "--time=00:20:00",
+      "scripts/slurm/tamia/train.sbatch",
+      "artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo/configs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-5-ms250.yml",
+      "--max-steps",
+      "1",
+      "--save-steps",
+      "1",
+      "--output-dir",
+      "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-5-ms250--smoke",
+      "--wandb-name",
+      "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-5-ms250--smoke",
+      "--wandb-mode",
+      "offline"
+    ]
+  },
+  {
+    "kind": "optimizer_smoke",
+    "format": "space",
+    "id": 676515,
+    "output": "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250--smoke",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--hold",
+      "--job-name=seam-relearn-space-smoke",
+      "--partition=gpubase_bynode_b1",
+      "--exclude=tg10807",
+      "--time=00:20:00",
+      "scripts/slurm/tamia/train.sbatch",
+      "artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo/configs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250.yml",
+      "--max-steps",
+      "1",
+      "--save-steps",
+      "1",
+      "--output-dir",
+      "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250--smoke",
+      "--wandb-name",
+      "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250--smoke",
+      "--wandb-mode",
+      "offline"
+    ]
+  }
+]

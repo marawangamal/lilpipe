@@ -1,0 +1,30 @@
+{
+  "training_job": 676371,
+  "arguments_match_newline_controls": true,
+  "runs": {
+    "1e-4": {
+      "global_step": 250,
+      "saved_steps": [
+        50,
+        100,
+        150,
+        200,
+        250
+      ],
+      "finite_training_metrics": true,
+      "full_parameter_norm_scan_finite": true
+    },
+    "2e-4": {
+      "global_step": 250,
+      "saved_steps": [
+        50,
+        100,
+        150,
+        200,
+        250
+      ],
+      "finite_training_metrics": true,
+      "full_parameter_norm_scan_finite": true
+    }
+  }
+}
