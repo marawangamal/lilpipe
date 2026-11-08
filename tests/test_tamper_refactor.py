@@ -1243,6 +1243,32 @@ def test_seam_relearn_format_sweep_keeps_one_starting_checkpoint(tmp_path, monke
     assert len(selected.plan().stages) == 4
 
 
+def test_author_defended_space_attack_sweep(tmp_path, monkeypatch):
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "author_defended_space_attack")
+    name = "llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft"
+    monkeypatch.chdir(EXAMPLE)
+    hpo.generate(
+        EXAMPLE / "configs/stages-beavertails/1_relearn" / name / "sweep.yml", tmp_path
+    )
+    configs = [
+        yaml.safe_load(p.read_text())
+        for p in (tmp_path / "configs").glob("*answer-space*.yml")
+    ]
+    assert {cfg["learning_rate"] for cfg in configs} == {2e-5, 5e-5, 8e-5, 1e-4, 2e-4}
+    for cfg in configs:
+        assert (
+            cfg["base_model"]
+            == "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config"
+        )
+        assert cfg["trainer_cls"] == "trainers.tr_seam.SEAMRelearnTrainer"
+        assert (
+            cfg["datasets"][0]["message_property_mappings"]["response_separator"] == " "
+        )
+        assert "answer-space" in cfg["dataset_prepared_path"]
+        assert cfg["max_steps"] == 250 and cfg["save_steps"] == 50
+        assert cfg["warmup_ratio"] == 0.1
+
+
 def test_sweep_name_template_drives_canonical_paths_and_wandb(tmp_path, monkeypatch):
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "named_sweep_test")
     monkeypatch.chdir(EXAMPLE)
