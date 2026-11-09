@@ -241,3 +241,22 @@ gradients, unlike `train/ghost_cosine_mean`, which averages individual pairs.
 against a matched lambda-zero refusal control, then applies the same 250-step
 harmful attack to both and evaluates harmfulness before and every 50 attack steps.
 The initial coefficients are experiment settings, not tuned hyperparameters.
+
+
+### Tracked Zephyr relearning learning-rate sweeps
+
+Relearning configs are grouped by defended checkpoint under
+`configs/stages-wmdp/2_relearn/`, in the `z7b-wmdp-bio--5pp--unlearn-fft-`
+`npo--ghost-track`, `npo-sam-rho1e-2--ghost-track`, and
+`npo-gip-lambda1--ghost-track` lineages. Each contains `base.yml` and `sweep.yml`;
+no attack has been promoted to `selected.yml`. Each sweep generates the three
+learning rates 1e-6, 5e-6, and 1e-5 with the same 16-step attack and ghost tracking.
+For example, from this example root:
+
+```bash
+python scripts/hpo.py generate configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-npo--ghost-track/sweep.yml
+lilpipe artifacts/generated/hpo/z7b-wmdp-bio--5pp--unlearn-fft-npo--ghost-track--hpo/experiment.yml --dry-run
+```
+
+The generated manifest includes the attack producers and baseline-inclusive
+evaluations; separate learning-rate experiment manifests are no longer needed.

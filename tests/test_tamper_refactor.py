@@ -947,6 +947,11 @@ def differing_keys(first: dict, second: dict, prefix: str = "") -> set[str]:
 @pytest.mark.parametrize("lineage", LINEAGES, ids=lambda path: path.name)
 def test_lineage_configs_follow_conventions(lineage: Path) -> None:
     name = lineage.name
+    run_name = (
+        name + "--relearn-fft"
+        if lineage.parent.name == "2_relearn" and name.endswith("--ghost-track")
+        else name
+    )
     configs = {
         stem: yaml.safe_load((lineage / f"{stem}.yml").read_text())
         for stem in ("base", "selected")
@@ -954,9 +959,9 @@ def test_lineage_configs_follow_conventions(lineage: Path) -> None:
     }
     for config in configs.values():
         if "output_dir" in config:
-            assert config["output_dir"].rstrip("/").endswith(f"/{name}")
+            assert config["output_dir"].rstrip("/").endswith(f"/{run_name}")
         if "wandb_name" in config:
-            assert config["wandb_name"] == name
+            assert config["wandb_name"] == run_name
         if "trainer_cls" in config:
             module, _, cls = config["trainer_cls"].rpartition(".")
             source = EXAMPLE / "src" / f"{module.replace('.', '/')}.py"
@@ -986,6 +991,7 @@ def test_lineage_configs_follow_conventions(lineage: Path) -> None:
                 "tamia-h100-z7b--wmdp-and-mmlu-final",
                 "tamia-h100-z7b--wmdp-and-mmlu-single",
                 "tamia-h100-z7b--wmdp-and-mmlu-trajectory",
+                "tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline",
             }
     if "selected" in configs:
         swept = {
@@ -1478,53 +1484,47 @@ def test_gip_fp32_learning_rate_calibration_keeps_regularization_off(
     assert len(stages) == 8
 
 
-@pytest.mark.parametrize(
-    "suffix,learning_rate",
-    [("ms16", 1e-5), ("lr1e-6-ms16", 1e-6), ("lr5e-6-ms16", 5e-6)],
-)
-def test_npo_sam_gip_relearning_uses_matched_attacks_and_baseline_evals(
-    monkeypatch, suffix, learning_rate
+@pytest.mark.parametrize("method", ["npo", "npo-sam-rho1e-2", "npo-gip-lambda1"])
+def test_npo_sam_gip_relearning_sweeps_match_attack_settings(
+    monkeypatch, tmp_path, method
 ):
-    import yaml
     from lilpipe import load
 
-    root = Path(__file__).resolve().parents[1] / "examples/tamper-resistance"
-    monkeypatch.chdir(root)
-    manifest = yaml.safe_load(
-        (
-            root
-            / f"configs/experiments/z7b-wmdp-bio-npo-sam-gip-relearn-ghost-{suffix}.yml"
-        ).read_text()
-    )
-    models = yaml.safe_load((root / "configs/registries/models.yml").read_text())[
-        "models"
-    ]
-    assert len(manifest["models"]) == 3
-    for slug in manifest["models"]:
+    monkeypatch.chdir(EXAMPLE)
+    name = f"z7b-wmdp-bio--5pp--unlearn-fft-{method}--ghost-track"
+    directory = EXAMPLE / "configs/stages-wmdp/2_relearn" / name
+    assert not (directory / "selected.yml").exists()
+    base = yaml.safe_load((directory / "base.yml").read_text())
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "gip_relearning_sweep")
+    manifest = hpo.generate(directory / "sweep.yml", output_root=tmp_path)
+    experiment = yaml.safe_load(manifest.read_text())
+    models = yaml.safe_load((tmp_path / "models.yml").read_text())["models"]
+    assert len(experiment["models"]) == 3
+    rates = []
+    for slug in experiment["models"]:
         model = models[slug]
-        config = yaml.safe_load((root / model["producer"]["args"][0]).read_text())
+        config = yaml.safe_load(Path(model["producer"]["args"][0]).read_text())
         assert config["trainer_cls"] == "trainers.tr_gip.GIPRelearnTrainer"
         assert config["base_model"] == model["baseline_model_name_or_path"]
         assert config["output_dir"] == model["base_model_name_or_path"]
+        assert config["output_dir"] != config["base_model"]
         assert config["micro_batch_size"] == 2
         assert config["gradient_accumulation_steps"] == 1
         assert config["max_steps"] == 16 and config["save_steps"] == 4
         assert config["save_total_limit"] == 4 and config["save_only_model"]
-        assert config["learning_rate"] == learning_rate and config["bf16"]
-        assert config["data_seed"] == 42 and config["seed"] == 1
+        assert config["bf16"] and config["data_seed"] == 42 and config["seed"] == 1
         assert len(config["datasets"]) == 1
         assert config["datasets"][0]["path"] == "cais/wmdp-bio-forget-corpus"
         assert "custom_trainer_args" not in config
-        if learning_rate != 1e-5:
-            original_slug = slug.replace(
-                f"--relearn-fft-ghost-{suffix}", "--relearn-fft-ghost-ms16"
-            )
-            original = yaml.safe_load(
-                (root / models[original_slug]["producer"]["args"][0]).read_text()
-            )
-            differences = {key for key in config if config[key] != original[key]}
-            assert differences == {"learning_rate", "output_dir", "wandb_name"}
-    stages = load(
-        f"configs/experiments/z7b-wmdp-bio-npo-sam-gip-relearn-ghost-{suffix}.yml"
-    ).plan()
-    assert len(stages.stages) == 6
+        differences = {key for key in config if config[key] != base[key]}
+        assert differences <= {"learning_rate", "output_dir", "wandb_name"}
+        rates.append(config["learning_rate"])
+    assert sorted(rates) == [1e-6, 5e-6, 1e-5]
+    stages = load(manifest).plan().stages
+    assert len(stages) == 6
+    training = {stage.id for stage in stages if stage.id.startswith("train-")}
+    for stage in stages:
+        if stage.id.startswith("eval-"):
+            assert len(stage.depends_on) == 1
+            assert stage.depends_on[0] in training
+            assert stage.args[-1] == base["base_model"]

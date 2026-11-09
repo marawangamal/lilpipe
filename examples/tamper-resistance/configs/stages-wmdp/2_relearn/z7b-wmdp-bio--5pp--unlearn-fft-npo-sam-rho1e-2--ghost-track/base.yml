@@ -7,7 +7,7 @@ datasets:
 dataset_num_proc: 8
 dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--relearn-fft-ghost-ms16/prepared
 val_set_size: 0.0
-output_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft-ghost-lr5e-6-ms16
+output_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--ghost-track--relearn-fft
 sequence_len: 512
 sample_packing: false
 pad_to_sequence_len: false
@@ -16,7 +16,7 @@ train_on_inputs: true
 micro_batch_size: 2
 gradient_accumulation_steps: 1
 max_steps: 16
-learning_rate: 5.0e-06
+learning_rate: 1.0e-05
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
@@ -71,7 +71,7 @@ save_total_limit: 4
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft-ghost-lr5e-6-ms16
+wandb_name: z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--ghost-track--relearn-fft
 plugins:
 - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
 trainer_cls: trainers.tr_gip.GIPRelearnTrainer
