@@ -1,0 +1,89 @@
+{
+  "completed_training_runs": {
+    "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-5-ms250": {
+      "job": 676521,
+      "format": "newline",
+      "learning_rate": 2e-05,
+      "global_step": 250,
+      "saved_steps": [
+        50,
+        100,
+        150,
+        200,
+        250
+      ],
+      "all_training_logs_finite": true,
+      "cosine_logs": 250,
+      "cosine_first": 0.013916015625,
+      "cosine_last": 0.01025390625,
+      "wandb_id": "jdo8mq4x",
+      "wandb_url": "https://wandb.ai/marawan-gamal/lp-tamper-resistance/runs/jdo8mq4x",
+      "parameter_count": 6738415616,
+      "all_saved_parameters_bfloat16": true
+    },
+    "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr5e-5-ms250": {
+      "job": 676522,
+      "format": "newline",
+      "learning_rate": 5e-05,
+      "global_step": 250,
+      "saved_steps": [
+        50,
+        100,
+        150,
+        200,
+        250
+      ],
+      "all_training_logs_finite": true,
+      "cosine_logs": 250,
+      "cosine_first": 0.01385498046875,
+      "cosine_last": -0.0155029296875,
+      "wandb_id": "z46ja92u",
+      "wandb_url": "https://wandb.ai/marawan-gamal/lp-tamper-resistance/runs/z46ja92u",
+      "parameter_count": 6738415616,
+      "all_saved_parameters_bfloat16": true
+    },
+    "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250": {
+      "job": 676523,
+      "format": "space",
+      "learning_rate": 2e-05,
+      "global_step": 250,
+      "saved_steps": [
+        50,
+        100,
+        150,
+        200,
+        250
+      ],
+      "all_training_logs_finite": true,
+      "cosine_logs": 250,
+      "cosine_first": 0.357421875,
+      "cosine_last": 0.0108642578125,
+      "wandb_id": "noxyvy7x",
+      "wandb_url": "https://wandb.ai/marawan-gamal/lp-tamper-resistance/runs/noxyvy7x",
+      "parameter_count": 6738415616,
+      "all_saved_parameters_bfloat16": true
+    },
+    "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr5e-5-ms250": {
+      "job": 676524,
+      "format": "space",
+      "learning_rate": 5e-05,
+      "global_step": 250,
+      "saved_steps": [
+        50,
+        100,
+        150,
+        200,
+        250
+      ],
+      "all_training_logs_finite": true,
+      "cosine_logs": 250,
+      "cosine_first": 0.353515625,
+      "cosine_last": -0.003936767578125,
+      "wandb_id": "zg76hm96",
+      "wandb_url": "https://wandb.ai/marawan-gamal/lp-tamper-resistance/runs/zg76hm96",
+      "parameter_count": 6738415616,
+      "all_saved_parameters_bfloat16": true
+    }
+  },
+  "all_four_trainings_complete": true
+}

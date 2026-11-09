@@ -74,6 +74,17 @@ configs_main = [
     },
 ]
 
+configs_npo_sam_15pp = [
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft",
+        "method": "NPO",
+    },
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft",
+        "method": "NPO + SAM",
+    },
+]
+
 configs_lrs = [
     {"model": f"{model}--relearn-fft-lr{lr}-ms128", "method": method, "lr": lr}
     for model, method in ((tar, "TAR"), (seam, "SEAM"))
@@ -138,10 +149,12 @@ def results(experiment, baseline=None):
         for _, label, score in results(baseline):
             yield 0, label, score
     pattern = osp.join(rootdir, experiment, "checkpoint-*", "**", "results*.json")
-    paths = glob.glob(pattern, recursive=True)
+    paths = glob.glob(pattern, recursive=True, include_hidden=True)
     if not paths:
         paths = glob.glob(
-            osp.join(rootdir, experiment, "**", "results*.json"), recursive=True
+            osp.join(rootdir, experiment, "**", "results*.json"),
+            recursive=True,
+            include_hidden=True,
         )
     for path in sorted(
         paths,
@@ -193,6 +206,14 @@ if __name__ == "__main__":
     #     },
     # }
     # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf"
+
+    # configs = configs_npo_sam_15pp
+    # steps = range(0, 17, 4)
+    # style = {"hue": "Method", "marker": "o", "dashes": False}
+    # output = (
+    #     "artifacts/figures/"
+    #     "z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-reproduction.pdf"
+    # )
 
     # configs = configs_npo_sam_gip
     # steps = range(0, 17, 4)

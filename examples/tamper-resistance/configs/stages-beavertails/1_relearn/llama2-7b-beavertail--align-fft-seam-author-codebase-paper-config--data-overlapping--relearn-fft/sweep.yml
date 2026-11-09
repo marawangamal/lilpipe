@@ -1,4 +1,4 @@
-config_mode: overrides
+config_mode: resolved
 id: llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft--hpo
 name_template: llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr{learning_rate:.0e}-ms{max_steps}
 model_root: artifacts/tamia/models
@@ -29,6 +29,18 @@ sweeps:
     - 0.0002
   overrides:
     warmup_ratio: 0.5
+- name: space
+  name_template: llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space-lr{learning_rate:.0e}-ms{max_steps}
+  parameters:
+    learning_rate:
+    - 2.0e-05
+    - 5.0e-05
+    - 8.0e-05
+    - 1.0e-04
+    - 2.0e-04
+  overrides:
+    datasets.0.message_property_mappings.response_separator: ' '
+    dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space/prepared
 producer:
   script: scripts/slurm/tamia/train.sbatch
   sbatch_args:

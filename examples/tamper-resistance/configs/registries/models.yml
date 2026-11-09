@@ -870,7 +870,8 @@ models:
       - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft/selected.yml
       - --launcher
       - python
-      depends_on: []
+      depends_on:
+      - z7b-wmdp-bio--15pp--unlearn-fft-npo
       sbatch_args:
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
@@ -893,7 +894,8 @@ models:
       - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft/selected.yml
       - --launcher
       - python
-      depends_on: []
+      depends_on:
+      - z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2
       sbatch_args:
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
@@ -1228,6 +1230,38 @@ models:
       - '0.75'
       - --seed
       - '42'
+  z7b-wmdp-bio--15pp--unlearn-fft-npo:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: train-z7b-wmdp-bio--15pp--unlearn-fft-npo
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-npo/selected.yml
+      - --launcher
+      - python
+      sbatch_args:
+      - --partition=gpubase_bynode_b1
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: train-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/selected.yml
+      - --launcher
+      - python
+      sbatch_args:
+      - --partition=gpubase_bynode_b1
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
   qwen3-0.6b-beavertail--relearn-fft-ghost-ms250:
     baseline_model_name_or_path: Qwen/Qwen3-0.6B
     base_model_name_or_path: artifacts/mila/models/qwen3-0.6b-beavertail--relearn-fft-ghost-ms250

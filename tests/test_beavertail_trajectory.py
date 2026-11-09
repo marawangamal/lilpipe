@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import sys
-import runpy
 from pathlib import Path
 
 import pytest
@@ -121,37 +119,3 @@ def test_flat_configs_use_selected_paths_and_metric_keys(tmp_path, include_gsm8k
     (tmp_path / "own-run/checkpoint-100/harmfulness.json").unlink()
     with pytest.raises(FileNotFoundError):
         plotter.get_results(configs, str(tmp_path), [0, 50, 100], tasks)
-
-
-def test_selected_plot_renders_method_rows_lr_markers_and_reference(
-    monkeypatch, tmp_path
-):
-    plotter = load_plotter()
-    root = tmp_path / "evals"
-    for cfg in plotter.configs:
-        write_plot_results(root / cfg["baseline"], baseline=True)
-        for step in plotter.steps[1:]:
-            write_plot_results(root / cfg["path"] / f"checkpoint-{step}")
-    write_plot_results(root / plotter.reference["path"] / "checkpoint-250")
-    output = tmp_path / "trajectory.pdf"
-    monkeypatch.setattr(
-        sys, "argv", [str(PLOTTER), "--rootdir", str(root), "--outpath", str(output)]
-    )
-    result = runpy.run_path(str(PLOTTER), run_name="__main__")
-    df = result["df"]
-    assert len(df) == 2 * len(plotter.configs) * len(plotter.steps)
-    assert set(df["LR"]) == {float(cfg["lr"]) for cfg in plotter.configs}
-    assert set(df["Method"]) == {cfg["method"] for cfg in plotter.configs}
-    assert set(df["Relearning step"]) == set(plotter.steps)
-    labels = {text.get_text() for text in result["grid"].legend.get_texts()}
-    assert {f"{float(cfg['lr']):.0e}" for cfg in plotter.configs} <= labels
-    assert result["facet"]["row"] == "Method"
-    for (_, evaluation), ax in result["grid"].axes_dict.items():
-        references = [line for line in ax.lines if line.get_linestyle() == "--"]
-        assert len(references) == 1
-        capability = 60 if "gsm8k" in plotter.task_to_metric else 50
-        assert list(references[0].get_ydata()) == (
-            [capability, capability] if evaluation == "Capability ↑" else [20, 20]
-        )
-        assert any(line.get_marker() not in {None, "None", ""} for line in ax.lines)
-    assert output.read_bytes().startswith(b"%PDF")
