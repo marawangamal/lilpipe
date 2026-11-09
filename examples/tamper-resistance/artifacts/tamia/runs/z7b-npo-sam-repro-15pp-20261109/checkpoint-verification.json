@@ -1,0 +1,52 @@
+[
+  {
+    "path": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo/checkpoint-125",
+    "global_step": 125,
+    "weight_bytes": 15008318632
+  },
+  {
+    "path": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft/checkpoint-4",
+    "global_step": 4,
+    "weight_bytes": 15008318632
+  },
+  {
+    "path": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft/checkpoint-8",
+    "global_step": 8,
+    "weight_bytes": 15008318632
+  },
+  {
+    "path": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft/checkpoint-12",
+    "global_step": 12,
+    "weight_bytes": 15008318632
+  },
+  {
+    "path": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft/checkpoint-16",
+    "global_step": 16,
+    "weight_bytes": 15008318632
+  },
+  {
+    "path": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/checkpoint-125",
+    "global_step": 125,
+    "weight_bytes": 15008318632
+  },
+  {
+    "path": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft/checkpoint-4",
+    "global_step": 4,
+    "weight_bytes": 15008318632
+  },
+  {
+    "path": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft/checkpoint-8",
+    "global_step": 8,
+    "weight_bytes": 15008318632
+  },
+  {
+    "path": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft/checkpoint-12",
+    "global_step": 12,
+    "weight_bytes": 15008318632
+  },
+  {
+    "path": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft/checkpoint-16",
+    "global_step": 16,
+    "weight_bytes": 15008318632
+  }
+]

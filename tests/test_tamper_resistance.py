@@ -2515,3 +2515,31 @@ def test_npo_sam_15pp_reproduction_trains_fresh_defenses_and_evaluates_baselines
         attack_config = yaml.safe_load((EXAMPLE / training.args[0]).read_text())
         assert attack_config["micro_batch_size"] == 1
         assert attack_config["max_steps"] == 16
+
+
+def test_wmdp_trajectory_reads_hidden_encoded_model_directories(tmp_path):
+    pytest.importorskip("pandas")
+    pytest.importorskip("seaborn")
+    plotter = load_script(
+        "scripts/analysis/relearning-trajectory/plot_trajectory_wmdp.py",
+        "wmdp_hidden_result_plotter",
+    )
+    plotter.rootdir = str(tmp_path)
+    result = (
+        tmp_path / "attack" / "checkpoint-4" / "..__project__model" / "results.json"
+    )
+    result.parent.mkdir(parents=True)
+    result.write_text(
+        json.dumps(
+            {
+                "results": {
+                    "wmdp_bio_robust": {"acc,none": 0.25},
+                    "mmlu_no_bio": {"acc,none": 0.5},
+                }
+            }
+        )
+    )
+    assert list(plotter.results("attack")) == [
+        (4, "WMDP-Bio robust ↓", 25.0),
+        (4, "MMLU-no-bio ↑", 50.0),
+    ]

@@ -107,7 +107,7 @@ def results(experiment, baseline=None):
         for _, label, score in results(baseline):
             yield 0, label, score
     pattern = osp.join(rootdir, experiment, "checkpoint-*", "**", "results*.json")
-    paths = glob.glob(pattern, recursive=True)
+    paths = glob.glob(pattern, recursive=True, include_hidden=True)
     for path in sorted(
         paths, key=lambda path: int(path.split("checkpoint-")[1].split(os.sep)[0])
     ):
@@ -282,7 +282,11 @@ if __name__ == "__main__":
     )
     legend = legend_with_base(legend, Line2D([], [], color="black"))
     grid.legend.remove()
-    grid.add_legend(legend_data=legend)
+    if args.npo_sam_15pp:
+        grid.add_legend(legend_data=legend, label_order=list(legend), title="")
+        grid.set(xticks=list(steps))
+    else:
+        grid.add_legend(legend_data=legend)
     grid.set_axis_labels("Relearning step", "Accuracy (%)")
     output = args.output or output
     os.makedirs(osp.dirname(output) or ".", exist_ok=True)

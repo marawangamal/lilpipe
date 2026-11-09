@@ -1,0 +1,24 @@
+{
+  "evaluation_points": 10,
+  "metric_observations": 20,
+  "full_samples": true,
+  "zero_shot": true,
+  "checkpoint_steps": [
+    0,
+    4,
+    8,
+    12,
+    16
+  ],
+  "config_hashes_match": true,
+  "plotted_values_match_raw_results": true,
+  "historical_base_reference": {
+    "wmdp_bio_robust": 55.18433179723502,
+    "mmlu_no_bio": 58.58729920432367
+  },
+  "plot_files": {
+    "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-reproduction.png": "e69f725f0af562cb1cfe2191ebc9df086374cc7f4e170e16ef239fcb88862b01",
+    "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-reproduction.pdf": "e665a797156f753bc15f3a9dcfe7717d0a5a2d3cf5894a48ce513549df92c4cc",
+    "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-reproduction.csv": "9c769288918607594c86f8664d5a40760cf3a12113af72af4f4678f12b3e39e8"
+  }
+}

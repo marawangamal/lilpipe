@@ -41,7 +41,9 @@ for method, label in [("npo", "NPO"), ("npo-sam-rho1e-2", "NPO + SAM")]:
         args = result["config"]["model_args"]
         if isinstance(args, str):
             args = dict(part.split("=", 1) for part in args.split(",") if "=" in part)
-        assert args["pretrained"] == expected_model, (args, expected_model)
+        assert Path(args["pretrained"]).resolve(strict=True) == Path(
+            expected_model
+        ).resolve(strict=True), (args, expected_model)
         scores = result["results"]
         wmdp = 100 * scores["wmdp_bio_robust"]["acc,none"]
         mmlu = 100 * scores["mmlu_no_bio"]["acc,none"]
