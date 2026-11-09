@@ -237,11 +237,11 @@ W&B metrics include `train/gradient_cosine`, `train/gradient_norm_a`,
 and `train/regularization_skip_frequency`. The cosine compares group-average
 gradients, unlike `train/ghost_cosine_mean`, which averages individual pairs.
 
-Use the existing `q06b-beavertail.yml` experiment with the explicit model
-and evaluation selections below to compare the defense against its lambda-zero
-refusal control. Both receive the same 250-step harmful attack, with harmfulness
-evaluated before and every 50 attack steps. The initial coefficients are
-experiment settings, not tuned hyperparameters.
+The coefficient sweep includes 0 (refusal-only control), 0.01, 0.1, and 1.
+Use the matched-attack generator below to apply the same 250-step harmful attack
+to every coefficient. Evaluation uses the existing combined harmfulness and
+capability benchmarks for the baseline and saved checkpoints. These coefficients
+are experiment settings, not promoted winners.
 
 
 ### Tracked Zephyr relearning learning-rate sweeps
@@ -260,7 +260,10 @@ lilpipe artifacts/generated/hpo/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--hpo/exper
 ```
 
 The generated manifest includes the attack producers and baseline-inclusive
-evaluations; separate learning-rate experiment manifests are no longer needed.
+evaluations. NPO/SAM sweeps also include their tracked-defense producer;
+use `--existing-models <defense-id>` to reuse a saved defense. GIP's pinned HPO
+checkpoint is an existing experimental input, not a promoted defense.
+Separate learning-rate experiment manifests are no longer needed.
 
 
 ### Selecting tracking and GIP runs
@@ -271,13 +274,14 @@ those manifests' defaults. Run these commands from this example root:
 ```bash
 # Qwen passive tracking.
 lilpipe configs/experiments/q06b-beavertail.yml \
-  --models q06b-beavertail--relearn-fft-ghost-ms250 \
-  --evaluations mila-l40s-q06b--beavertails-harmfulness-trajectory
+  --models q06b-beavertail--relearn-fft-gt-ms250 \
+  --evaluations mila-l40s-q06b--beavertails-and-capabilities-trajectory
 
-# Qwen GIP versus refusal control, including matched attacks.
-lilpipe configs/experiments/q06b-beavertail.yml \
-  --models q06b-beavertail--align-fft-gradient-cosine--relearn-fft-ms250 q06b-beavertail--align-fft-refusal-control--relearn-fft-ms250 \
-  --evaluations mila-l40s-q06b--beavertails-harmfulness-trajectory
+# Qwen coefficient sweep (including zero), with matched tracked attacks.
+python scripts/misc/generate_gradient_cosine_attacks.py \
+  configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-gradient-cosine/sweep.yml \
+  artifacts/generated/hpo/q06b-gradient-cosine-matched-attacks
+lilpipe artifacts/generated/hpo/q06b-gradient-cosine-matched-attacks/experiment.yml
 
 # Tracked GD defense.
 lilpipe configs/experiments/z7b-wmdp-bio-unlearn--15pp.yml \

@@ -1,11 +1,21 @@
 id: q06b-beavertail--align-fft-gradient-cosine--hpo
 sweeps:
+- name: lambda-0
+  parameters:
+    custom_trainer_args.cosine_coefficient:
+    - 0.0
+- name: lambda-0.01
+  parameters:
+    custom_trainer_args.cosine_coefficient:
+    - 0.01
 - name: lambda-0.1
   parameters:
-    custom_trainer_args.cosine_coefficient: [0.1]
+    custom_trainer_args.cosine_coefficient:
+    - 0.1
 - name: lambda-1
   parameters:
-    custom_trainer_args.cosine_coefficient: [1.0]
+    custom_trainer_args.cosine_coefficient:
+    - 1.0
 producer:
   script: scripts/slurm/mila/train.sbatch
   sbatch_args:

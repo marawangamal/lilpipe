@@ -321,7 +321,7 @@ def test_strength_sweep_generates_matched_attacks(tmp_path, monkeypatch):
     namespace["main"]()
     manifest = yaml.safe_load((output / "experiment.yml").read_text())
     models = yaml.safe_load((output / "models.yml").read_text())["models"]
-    assert len(models) == 4 and len(manifest["models"]) == 2
+    assert len(models) == 8 and len(manifest["models"]) == 4
     coefficients = []
     for attack_id in manifest["models"]:
         attack = models[attack_id]
@@ -335,56 +335,10 @@ def test_strength_sweep_generates_matched_attacks(tmp_path, monkeypatch):
         assert attack_config["base_model"] == defense["base_model_name_or_path"]
         assert attack_config["max_steps"] == 250 and attack_config["save_steps"] == 50
         assert attack_config["trainer_cls"] == "trainers.tr_gip.GIPRelearnTrainer"
-    assert sorted(coefficients) == [0.1, 1.0]
-
-
-@pytest.mark.parametrize("fail", [False, True])
-def test_early_eval_preserves_training_state(tmp_path, monkeypatch, fail):
-    pytest.importorskip("axolotl")
-    import runpy
-    from types import SimpleNamespace
-
-    monkeypatch.syspath_prepend(str(SRC.parent))
-    ns = runpy.run_path(str(SRC.parent / "scripts/misc/early_harmfulness.py"))
-    callback = ns["EarlyHarmfulnessCallback"].__new__(ns["EarlyHarmfulnessCallback"])
-    model = nn.Sequential(nn.Linear(2, 2), nn.Dropout(0.2))
-    model.register_buffer("counter", torch.tensor(0))
-    model.config = SimpleNamespace(use_cache=False)
-    model.device = torch.device("cpu")
-    model.train()
-    model[1].eval()
-    modes = [m.training for m in model.modules()]
-    callback.trainer = SimpleNamespace(
-        model=model, args=SimpleNamespace(bf16=False), log=lambda _: None
-    )
-    callback.tokenizer = object()
-    callback.prompts = ["prompt"]
-    callback.output = str(tmp_path)
-
-    def generate(model, tokenizer, prompts):
-        model.counter.add_(1)
-        torch.rand(10)
-        return ["completion"]
-
-    def classify(prompts, generations):
-        torch.rand(10)
-        if fail:
-            raise RuntimeError("classifier failed")
-        return 0.5, [{"prompt": "prompt", "harmful_score": 0.5}]
-
-    monkeypatch.setitem(callback.evaluate.__globals__, "generate", generate)
-    monkeypatch.setitem(callback.evaluate.__globals__, "harmfulness", classify)
-    rng = torch.get_rng_state().clone()
-    if fail:
-        with pytest.raises(RuntimeError, match="classifier failed"):
-            callback.evaluate(SimpleNamespace(global_step=5))
-    else:
-        callback.evaluate(SimpleNamespace(global_step=5))
-        assert (tmp_path / "checkpoint-5/summary.json").exists()
-    assert model.counter.item() == 0
-    assert not model.config.use_cache
-    assert [m.training for m in model.modules()] == modes
-    torch.testing.assert_close(torch.get_rng_state(), rng, rtol=0, atol=0)
+    assert sorted(coefficients) == [0.0, 0.01, 0.1, 1.0]
+    assert manifest["evaluations"] == [
+        "mila-l40s-q06b--beavertails-and-capabilities-trajectory"
+    ]
 
 
 @pytest.mark.parametrize("offload", [False, True])

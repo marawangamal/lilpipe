@@ -1264,18 +1264,18 @@ models:
       - --cpus-per-task=48
       - --mem=480G
       - --time=03:00:00
-  q06b-beavertail--relearn-fft-ghost-ms250:
+  q06b-beavertail--relearn-fft-gt-ms250:
     baseline_model_name_or_path: Qwen/Qwen3-0.6B
-    base_model_name_or_path: artifacts/mila/models/q06b-beavertail--relearn-fft-ghost-ms250
+    base_model_name_or_path: artifacts/mila/models/q06b-beavertail--relearn-fft-gt-ms250
     adapter_name_or_path: '-'
     attack_learning_rate: '0.00002'
     attack_data: overlapping
     method: Ghost cosine tracking
     producer:
-      id: train-q06b-beavertail--relearn-fft-ghost-ms250
+      id: train-q06b-beavertail--relearn-fft-gt-ms250
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages-beavertails/1_relearn/q06b-beavertail--relearn-fft-ghost-ms250/base.yml
+      - configs/stages-beavertails/1_relearn/q06b-beavertail--relearn-fft-gt-ms250/base.yml
       sbatch_args:
       - --partition=unkillable
       - --gres=gpu:l40s:1
@@ -1296,14 +1296,14 @@ models:
       - --cpus-per-task=6
       - --mem=32G
       - --time=03:00:00
-  q06b-beavertail--align-fft-gradient-cosine--relearn-fft-ms250:
-    base_model_name_or_path: artifacts/mila/models/q06b-beavertail--align-fft-gradient-cosine--relearn-fft-ms250
+  q06b-beavertail--align-fft-gradient-cosine--relearn-fft-gt-ms250:
+    base_model_name_or_path: artifacts/mila/models/q06b-beavertail--align-fft-gradient-cosine--relearn-fft-gt-ms250
     adapter_name_or_path: '-'
     producer:
-      id: train-q06b-beavertail--align-fft-gradient-cosine--relearn-fft-ms250
+      id: train-q06b-beavertail--align-fft-gradient-cosine--relearn-fft-gt-ms250
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages-beavertails/1_relearn/q06b-beavertail--align-fft-gradient-cosine--relearn-fft-ms250/base.yml
+      - configs/stages-beavertails/1_relearn/q06b-beavertail--align-fft-gradient-cosine--relearn-fft-gt-ms250/base.yml
       sbatch_args:
       - --partition=unkillable
       - --gres=gpu:l40s:1
@@ -1316,40 +1316,6 @@ models:
     attack_learning_rate: '0.00002'
     attack_data: overlapping
     method: gradient-cosine
-  q06b-beavertail--align-fft-refusal-control:
-    base_model_name_or_path: artifacts/mila/models/q06b-beavertail--align-fft-refusal-control
-    adapter_name_or_path: '-'
-    producer:
-      id: train-q06b-beavertail--align-fft-refusal-control
-      script: scripts/slurm/mila/train.sbatch
-      args:
-      - configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-refusal-control/base.yml
-      sbatch_args:
-      - --partition=unkillable
-      - --gres=gpu:l40s:1
-      - --cpus-per-task=6
-      - --mem=32G
-      - --time=03:00:00
-  q06b-beavertail--align-fft-refusal-control--relearn-fft-ms250:
-    base_model_name_or_path: artifacts/mila/models/q06b-beavertail--align-fft-refusal-control--relearn-fft-ms250
-    adapter_name_or_path: '-'
-    producer:
-      id: train-q06b-beavertail--align-fft-refusal-control--relearn-fft-ms250
-      script: scripts/slurm/mila/train.sbatch
-      args:
-      - configs/stages-beavertails/1_relearn/q06b-beavertail--align-fft-refusal-control--relearn-fft-ms250/base.yml
-      sbatch_args:
-      - --partition=unkillable
-      - --gres=gpu:l40s:1
-      - --cpus-per-task=6
-      - --mem=32G
-      - --time=03:00:00
-      depends_on:
-      - q06b-beavertail--align-fft-refusal-control
-    baseline_model_name_or_path: artifacts/mila/models/q06b-beavertail--align-fft-refusal-control
-    attack_learning_rate: '0.00002'
-    attack_data: overlapping
-    method: refusal-control
   z7b-wmdp-bio--15pp--unlearn-fft-gd-gt:
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-gt
     adapter_name_or_path: '-'

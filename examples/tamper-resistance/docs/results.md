@@ -516,3 +516,22 @@ not best-LR promotions. Default attacked checkpoint/evaluation directories omit
 the redundant `-ms16` suffix; LR-specific artifacts retain their LR/budget suffix.
 Additional path receipts are `default-pipelines-local.json` under the local
 name-migration report and `default-pipelines/remote.json` under the Tamia report.
+
+
+### Qwen integration cleanup
+
+Active Qwen tracking and matched-attack configs use the existing combined
+harmfulness/capabilities evaluation. The former harmfulness-only switch and
+early-training evaluation callback are removed from the feature. Historical
+harmfulness-only and early-step reports above remain historical measurements;
+this cleanup does not create capability results for those past runs.
+The refusal-only control is coefficient zero in the same GIP sweep as 0.01,
+0.1, and 1, rather than a duplicated config family. Tracked Qwen attacks use
+`--relearn-fft-gt-ms250`; rename receipts are under
+`artifacts/reports/gt-names-migration-20261109/qwen-tracking.json`.
+
+The completed 128-step saved-GD/NPO comparison is archived rather than exposed
+as an active multi-model config family. Its active config snapshot is preserved
+in `artifacts/reports/z7b-gd-npo-gt-ms128-20261108/archived-active-configs/`;
+the original submitted snapshots remain in the Tamia run provenance. The removed
+active files and temporary callback are also retrievable at commit `8261a4ad`.

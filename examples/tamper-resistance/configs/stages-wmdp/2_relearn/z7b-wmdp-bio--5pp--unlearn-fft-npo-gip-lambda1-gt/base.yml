@@ -1,3 +1,4 @@
+# Saved experimental checkpoint; no defense promotion is implied.
 base_model: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo--gip-squared-fp32--lr1e-6--rho3e-5--hpo--lambda-1--001
 tokenizer_type: AutoTokenizer
 datasets:

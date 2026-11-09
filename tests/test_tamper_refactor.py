@@ -19,35 +19,6 @@ def load_script(path: Path, name: str):
     return module
 
 
-def test_z7b_ghost_comparison_generates_matched_gd_npo_attacks(monkeypatch, tmp_path):
-    monkeypatch.chdir(EXAMPLE)
-    hpo = load_script(EXAMPLE / "scripts/hpo.py", "hpo_ghost_comparison")
-    manifest = hpo.generate(
-        EXAMPLE
-        / "configs/stages-wmdp/2_relearn/z7b-wmdp-bio--relearn-fft-gt-ms128/sweep.yml",
-        output_root=tmp_path,
-    )
-    experiment = yaml.safe_load(manifest.read_text())
-    assert len(experiment["models"]) == 2
-    configs = [
-        yaml.safe_load(path.read_text())
-        for path in sorted((tmp_path / "configs").glob("*.yml"))
-    ]
-    assert {cfg["base_model"].rsplit("/", 1)[-1] for cfg in configs} == {"gd", "npo"}
-    assert len({cfg["wandb_run_id"] for cfg in configs}) == 2
-    for cfg in configs:
-        assert cfg["trainer_cls"] == "trainers.tr_gip.GIPRelearnTrainer"
-        assert cfg["micro_batch_size"] >= 2
-        assert not cfg["gradient_checkpointing"] and not cfg["sample_packing"]
-        assert cfg["device_map"] == {"": 0}
-        assert cfg["max_steps"] == 128
-        assert cfg["save_strategy"] == "no"
-    for key in ("base_model", "output_dir", "wandb_name", "wandb_run_id"):
-        for cfg in configs:
-            cfg.pop(key)
-    assert configs[0] == configs[1]
-
-
 def test_custom_trainer_plugin_validates_and_forwards(monkeypatch) -> None:
     pytest.importorskip("pydantic")
     axolotl = types.ModuleType("axolotl")
@@ -1360,13 +1331,10 @@ def test_name_template_rejects_invalid_placeholders_and_slugs(template):
 @pytest.mark.parametrize(
     "models,expected_training",
     [
-        (["q06b-beavertail--relearn-fft-ghost-ms250"], 1),
+        (["q06b-beavertail--relearn-fft-gt-ms250"], 1),
         (
-            [
-                "q06b-beavertail--align-fft-gradient-cosine--relearn-fft-ms250",
-                "q06b-beavertail--align-fft-refusal-control--relearn-fft-ms250",
-            ],
-            4,
+            ["q06b-beavertail--align-fft-gradient-cosine--relearn-fft-gt-ms250"],
+            2,
         ),
     ],
 )
@@ -1378,7 +1346,7 @@ def test_qwen_gip_runs_select_existing_experiment_family(
     monkeypatch.chdir(EXAMPLE)
     pipeline = load("configs/experiments/q06b-beavertail.yml").select(
         models=models,
-        evaluations=["mila-l40s-q06b--beavertails-harmfulness-trajectory"],
+        evaluations=["mila-l40s-q06b--beavertails-and-capabilities-trajectory"],
     )
     stages = pipeline.plan().stages
     training = [stage for stage in stages if stage.id.startswith("train-")]
@@ -1562,8 +1530,14 @@ def test_npo_sam_gip_relearning_sweeps_match_attack_settings(
         rates.append(config["learning_rate"])
     assert sorted(rates) == [1e-6, 5e-6, 1e-5]
     stages = load(manifest).plan().stages
-    assert len(stages) == 6
+    assert len(stages) == (6 if method == "npo-gip-lambda1" else 7)
     training = {stage.id for stage in stages if stage.id.startswith("train-")}
+    if method != "npo-gip-lambda1":
+        defense = "train-" + name
+        assert defense in training
+        for stage in stages:
+            if stage.id.startswith("train-") and stage.id != defense:
+                assert stage.depends_on == (defense,)
     for stage in stages:
         if stage.id.startswith("eval-"):
             assert len(stage.depends_on) == 1

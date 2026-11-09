@@ -11,9 +11,9 @@ datasets:
     message_property_mappings:
       {role: hh, max_rows: "5000", offset: "0", train_on_inputs: "false"}
 dataset_num_proc: 4
-dataset_prepared_path: artifacts/mila/cache/axolotl/q06b-beavertail--relearn-fft-ghost-ms250/prepared
+dataset_prepared_path: artifacts/mila/cache/axolotl/q06b-beavertail--relearn-fft-gt-ms250/prepared
 val_set_size: 0.0
-output_dir: artifacts/mila/models/q06b-beavertail--relearn-fft-ghost-ms250
+output_dir: artifacts/mila/models/q06b-beavertail--relearn-fft-gt-ms250
 sequence_len: 256
 sample_packing: false
 pad_to_sequence_len: true
@@ -41,4 +41,4 @@ save_total_limit: 5
 save_only_model: true
 logging_steps: 1
 wandb_project: lp-tamper-resistance
-wandb_name: q06b-beavertail--relearn-fft-ghost-ms250
+wandb_name: q06b-beavertail--relearn-fft-gt-ms250

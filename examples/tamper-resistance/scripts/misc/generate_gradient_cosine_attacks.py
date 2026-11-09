@@ -16,7 +16,7 @@ def main():
         "--attack-base",
         type=Path,
         default=Path(
-            "configs/stages-beavertails/1_relearn/q06b-beavertail--relearn-fft-ghost-ms250/base.yml"
+            "configs/stages-beavertails/1_relearn/q06b-beavertail--relearn-fft-gt-ms250/base.yml"
         ),
     )
     args = parser.parse_args()
@@ -30,7 +30,7 @@ def main():
     attack_base = yaml.safe_load(args.attack_base.read_text())
     selected = []
     for defense in list(experiment["models"]):
-        attack = defense + "--relearn-fft-ms250"
+        attack = defense + "--relearn-fft-gt-ms250"
         config = copy.deepcopy(attack_base)
         config.pop("revision_of_model", None)
         config.update(
@@ -66,7 +66,9 @@ def main():
         selected.append(attack)
     models_path.write_text(yaml.safe_dump({"models": models}, sort_keys=False))
     experiment["models"] = selected
-    experiment["evaluations"] = ["mila-l40s-q06b--beavertails-harmfulness-trajectory"]
+    experiment["evaluations"] = [
+        "mila-l40s-q06b--beavertails-and-capabilities-trajectory"
+    ]
     experiment_path.write_text(yaml.safe_dump(experiment, sort_keys=False))
     print(experiment_path)
 
