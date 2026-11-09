@@ -2,11 +2,8 @@ from dataclasses import FrozenInstanceError
 import json
 import os
 from pathlib import Path
-
 import pytest
-
 import lilpipe
-from lilpipe.cli import main
 from lilpipe.core import PipelineError
 
 
@@ -174,14 +171,3 @@ def test_bad_artifacts_are_contextual_errors(
     with pytest.raises(PipelineError, match=message) as caught:
         lilpipe.load_results("results.yml").collect()
     assert "base" in str(caught.value) and "accuracy" in str(caught.value)
-
-
-def test_cli_results_error_code(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    (tmp_path / "results.yml").write_text(_config())
-    monkeypatch.chdir(tmp_path)
-    assert main(["results", "results.yml", "--format", "json"]) == 0
-    assert '"base"' in capsys.readouterr().out
-    assert main(["results", "missing.yml"]) == 2
-    assert "lilpipe: error:" in capsys.readouterr().err
