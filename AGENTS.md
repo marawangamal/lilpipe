@@ -7,7 +7,7 @@
 - `src/lilpipe/core.py` — loading, validation, `select()`/`plan()` (topological order, cycle checks), and `submit()`.
 - `src/lilpipe/results.py` — `lilpipe results`: collects lm-eval artifacts into markdown/csv/json tables.
 - `src/lilpipe/cli.py` — argparse CLI with `run` and `results` subcommands; a bare `lilpipe <config>.yml` is accepted as an implicit `run`.
-- `tests/` — pytest suite: library tests (`test_pipeline.py`, `test_results.py`) plus one regression file per example that loads the example's YAML configs and scripts by path.
+- `tests/` — core library tests for pipelines, submission, results, and the CLI. Example tests live in `examples/<name>/tests/`; tamper-resistance keeps YAML parsing, trainer, and data processor tests.
 - `examples/weight-steering/` and `examples/tamper-resistance/` are self-contained uv projects (own `pyproject.toml`, `uv.lock`, `.venv*`) that install the root package editable. The other `examples/*` directories are docs only.
 - `scripts/job.sh` / `safe_job.sh` are cluv job scripts; `logs/` is a cluv symlink to `$SCRATCH` (cluster-only, untracked).
 
@@ -25,10 +25,11 @@ Pipeline manifests live at `configs/experiments/<name>.yml` inside each example 
 ## Commands
 
 - Dev install (root): `python -m venv .venv && source .venv/bin/activate && python -m pip install -e '.[test]'` (add `,dev` for black). Do **not** `pip install lilpipe` from PyPI — that is an unrelated package; install from a git tag.
-- `python -m pytest` from the repo root runs the suite. Focused: `python -m pytest tests/test_pipeline.py -k cycle`.
-  - Gotcha: `tests/test_conic_distance_across_seeds.py` imports `numpy`, which is **not** in the root `test` extra, so full-suite collection fails in the root venv. Use `--ignore=tests/test_conic_distance_across_seeds.py` or a numpy-capable environment. Torch/transformers tests self-skip via `importorskip` when the cluster env is absent.
+- `python -m pytest` from the repo root runs core tests. Focused: `python -m pytest tests/test_pipeline.py -k cycle`.
+- YAML smoke tests: `python -m pytest --import-mode=importlib examples/*/tests/test_configs.py`. These check syntax, not experiment settings, and exclude artifact snapshots.
+- Tamper-resistance: `(cd examples/tamper-resistance && python -m pytest tests)`. Use the training environment for full trainer/data coverage; optional ML dependencies otherwise skip. Other examples run their own `tests/` in their respective environments.
 - Formatting: `python -m black src tests examples` (line-length 88, py312). CI fails on unformatted code.
-- CI order (`.github/workflows/ci.yml`): `black --check` → `pytest` → `python -m build` → clean-wheel install + `lilpipe --help` + example dry-run. Note: the CI dry-run still points at the stale `examples/weight-steering/configs/experiments/pipeline.yml`; the live manifest is `smollm3/main.yml`.
+- CI order (`.github/workflows/ci.yml`): `black --check` → `pytest` → `python -m build` → clean-wheel install + `lilpipe --help` + example dry-run. The wheel smoke test uses `examples/minimal/configs/experiments/pipeline.yml`.
 - Cluster work uses cluv, configured under `[tool.cluv]` in the root `pyproject.toml` (results symlink `logs` → `$SCRATCH/logs/lilpipe`, offline compute nodes by default).
 - Known issue (Mila cluster): when `$SCRATCH` runs out of disk space, compute nodes fail to provision and any job placed on them dies ~1 s after start with `Reason=ReqNodeNotAvail`, exit code `0:53` (`RaisedSignal:53`), and no `.out` log is written. This looks like a transient node/pool failure but is actually the user's scratch quota; free scratch space before resubmitting.
 
