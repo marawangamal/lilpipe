@@ -28,7 +28,7 @@ evaluations:
     - '{model.attack_learning_rate}'
     - '{model.attack_data}'
     - '{model.method}'
-    - artifacts/mila/evals/qwen3-06b-beavertail
+    - artifacts/mila/evals/q06b-beavertail
     sbatch_args:
     - --gres=gpu:l40s:1
     - --cpus-per-task=8
@@ -40,7 +40,7 @@ evaluations:
     - '{model.id}'
     - '{model.base_model_name_or_path}'
     - '{model.method}'
-    - artifacts/mila/evals/qwen3-06b-beavertail
+    - artifacts/mila/evals/q06b-beavertail
     sbatch_args:
     - --gres=gpu:l40s:1
     - --cpus-per-task=8
@@ -144,9 +144,10 @@ evaluations:
     - 'false'
     - '{model.baseline_model_name_or_path}'
     sbatch_args:
+    - --account=aip-grabus
     - --partition=gpubase_bynode_b1
     - --gpus-per-node=h100:4
-    - --cpus-per-task=32
-    - --mem=128G
+    - --cpus-per-task=48
+    - --mem=480G
     - --time=03:00:00
     - --export=ALL,BATCH_SIZE=auto:4

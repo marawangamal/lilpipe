@@ -113,18 +113,64 @@ configs_perturbed_ms1000 = [
 ]
 
 
+configs_npo_sam_gip = [
+    {
+        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt",
+        "method": "NPO",
+    },
+    {
+        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt",
+        "method": "NPO + SAM",
+    },
+    {
+        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt",
+        "method": "NPO + GIP",
+    },
+]
+
+
+configs_npo_sam_gip_lrs = [
+    {
+        "model": config["model"].replace("--relearn-fft-gt", suffix),
+        "method": config["method"],
+        "lr": lr,
+    }
+    for config in configs_npo_sam_gip
+    for lr, suffix in (
+        ("1e-5", "--relearn-fft-gt"),
+        ("1e-6", "--relearn-fft-gt-lr1e-6-ms16"),
+        ("5e-6", "--relearn-fft-gt-lr5e-6-ms16"),
+    )
+]
+
+
 def results(experiment, baseline=None):
     if baseline is not None:
         for _, label, score in results(baseline):
             yield 0, label, score
     pattern = osp.join(rootdir, experiment, "checkpoint-*", "**", "results*.json")
     paths = glob.glob(pattern, recursive=True, include_hidden=True)
+    if not paths:
+        paths = glob.glob(
+            osp.join(rootdir, experiment, "**", "results*.json"),
+            recursive=True,
+            include_hidden=True,
+        )
     for path in sorted(
-        paths, key=lambda path: int(path.split("checkpoint-")[1].split(os.sep)[0])
+        paths,
+        key=lambda path: (
+            int(path.split("checkpoint-")[1].split(os.sep)[0])
+            if "checkpoint-" in path
+            else 0
+        ),
     ):
         with open(path) as handle:
             result = json.load(handle)["results"]
-        step = int(path.split("checkpoint-")[1].split(os.sep)[0])
+        step = (
+            int(path.split("checkpoint-")[1].split(os.sep)[0])
+            if "checkpoint-" in path
+            else 0
+        )
         for task, label in tasks.items():
             if task in result:
                 yield step, label, 100 * result[task]["acc,none"]
@@ -161,13 +207,30 @@ if __name__ == "__main__":
     # }
     # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf"
 
-    configs = configs_npo_sam_15pp
+    # configs = configs_npo_sam_15pp
+    # steps = range(0, 17, 4)
+    # style = {"hue": "Method", "marker": "o", "dashes": False}
+    # output = (
+    #     "artifacts/figures/"
+    #     "z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-reproduction.pdf"
+    # )
+
+    # configs = configs_npo_sam_gip
+    # steps = range(0, 17, 4)
+    # style = {"hue": "Method", "marker": "o", "dashes": False}
+    # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-ms16.pdf"
+
+    configs = configs_npo_sam_gip_lrs
     steps = range(0, 17, 4)
-    style = {"hue": "Method", "marker": "o", "dashes": False}
-    output = (
-        "artifacts/figures/"
-        "z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-reproduction.pdf"
-    )
+    style = {
+        "hue": "Method",
+        "size": "LR",
+        "size_order": ["1e-6", "5e-6", "1e-5"],
+        "sizes": {"1e-6": 0.9, "5e-6": 1.7, "1e-5": 2.5},
+        "marker": "o",
+        "dashes": False,
+    }
+    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-lrs-ms16.pdf"
 
     # configs = configs_lrs
     # steps = range(0, 129)
@@ -261,7 +324,8 @@ if __name__ == "__main__":
 
     base = {label: score for _, label, score in results("z7b-base")}
     for label, axis in grid.axes_dict.items():
-        axis.axhline(base[label], color="black")
+        if label in base:
+            axis.axhline(base[label], color="black")
 
     legend = dict(
         zip(
@@ -269,7 +333,8 @@ if __name__ == "__main__":
             grid.legend.legend_handles,
         )
     )
-    legend = legend_with_base(legend, Line2D([], [], color="black"))
+    if base:
+        legend = legend_with_base(legend, Line2D([], [], color="black"))
     grid.legend.remove()
     grid.add_legend(legend_data=legend)
     grid.set_axis_labels("Relearning step", "Accuracy (%)")

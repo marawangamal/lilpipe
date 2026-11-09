@@ -2478,3 +2478,20 @@ def test_seam_completion_hidden_loss_preserves_standard_mean(monkeypatch, dtype_
         actual_gradients, expected_gradients, strict=True
     ):
         torch.testing.assert_close(actual_gradient, expected_gradient, **tolerance)
+
+
+def test_ghost_qwen_training_checkpoint_settings():
+    config = yaml.safe_load(
+        (
+            EXAMPLE
+            / "configs/stages-beavertails/1_relearn/q06b-beavertail--relearn-fft-gt-ms250/base.yml"
+        ).read_text()
+    )
+    assert config["base_model"] == "Qwen/Qwen3-0.6B"
+    assert config["trainer_cls"] == "trainers.tr_gip.GIPRelearnTrainer"
+    assert config["max_steps"] == 250 and config["save_steps"] == 50
+    assert config["save_total_limit"] == 5 and config["save_only_model"]
+    assert config["micro_batch_size"] >= 2
+    assert not config["gradient_checkpointing"] and not config["sample_packing"]
+    assert config["datasets"][0]["message_property_mappings"]["role"] == "hh"
+    assert not config["train_on_inputs"]

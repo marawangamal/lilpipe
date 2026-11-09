@@ -356,7 +356,7 @@ def test_qwen_seam_evaluation_waits_for_training(monkeypatch) -> None:
     from lilpipe import load
 
     monkeypatch.chdir(EXAMPLE)
-    pipeline = load("configs/experiments/qwen3-06b-beavertail.yml")
+    pipeline = load("configs/experiments/q06b-beavertail.yml")
     training, evaluation = pipeline.plan().stages
     assert evaluation.depends_on == (training.id,)
     config = yaml.safe_load((EXAMPLE / training.args[0]).read_text())
@@ -377,7 +377,7 @@ def test_qwen_relearning_grid_matches_defense_betas_and_evaluates_attacks(
 
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "qwen_relearn_hpo_test")
     monkeypatch.chdir(EXAMPLE)
-    name = "qwen3-0.6b-beavertail--align-fft-seam" + ("-legacy" if legacy else "")
+    name = "q06b-beavertail--align-fft-seam" + ("-legacy" if legacy else "")
     defense_manifest = hpo.generate(
         EXAMPLE / "configs/stages-beavertails/0_alignment" / name / "sweep.yml",
         tmp_path / "defense",
@@ -472,7 +472,7 @@ def test_active_manifests_reference_only_registered_evaluations() -> None:
         referenced.update(yaml.safe_load(path.read_text()).get("evaluations", ()))
 
     assert referenced <= registered
-    assert registered - referenced == {"tamia-h100-z7b--wmdp-and-mmlu-single"}
+    assert referenced == registered
 
 
 def test_seam_defense_sweep_preserves_beta_and_paper_settings(
@@ -918,6 +918,11 @@ def differing_keys(first: dict, second: dict, prefix: str = "") -> set[str]:
 @pytest.mark.parametrize("lineage", LINEAGES, ids=lambda path: path.name)
 def test_lineage_configs_follow_conventions(lineage: Path) -> None:
     name = lineage.name
+    run_name = (
+        name + "--relearn-fft-gt"
+        if lineage.parent.name == "2_relearn" and name.endswith("-gt")
+        else name
+    )
     configs = {
         stem: yaml.safe_load((lineage / f"{stem}.yml").read_text())
         for stem in ("base", "selected")
@@ -925,14 +930,18 @@ def test_lineage_configs_follow_conventions(lineage: Path) -> None:
     }
     for config in configs.values():
         if "output_dir" in config:
-            assert config["output_dir"].rstrip("/").endswith(f"/{name}")
+            assert config["output_dir"].rstrip("/").endswith(f"/{run_name}")
         if "wandb_name" in config:
-            assert config["wandb_name"] == name
+            assert config["wandb_name"] == run_name
         if "trainer_cls" in config:
             module, _, cls = config["trainer_cls"].rpartition(".")
             source = EXAMPLE / "src" / f"{module.replace('.', '/')}.py"
             assert source.is_file(), config["trainer_cls"]
-            assert f"\nclass {cls}(" in source.read_text(), config["trainer_cls"]
+            assert re.search(
+                rf"^\s*class {re.escape(cls)}\(",
+                source.read_text(),
+                re.MULTILINE,
+            ), config["trainer_cls"]
             if module == "trainers.tr_wd":
                 assert "anchor_model_name_or_path" in config["custom_trainer_args"]
 
@@ -942,10 +951,9 @@ def test_lineage_configs_follow_conventions(lineage: Path) -> None:
     sweep = yaml.safe_load(sweep_path.read_text())
     base_stem = Path(sweep.get("base", "base.yml")).stem
     assert base_stem in configs
-    expected_ids = {f"{name}--hpo"}
-    if lineage.parent.name == "1_relearn":
-        expected_ids.add(f"{name}--relearn--hpo")
-    assert sweep["id"] in expected_ids
+    # Named sweep variants (for example a calibrated radius) retain the lineage.
+    assert sweep["id"].startswith(f"{name}--")
+    assert sweep["id"].endswith("--hpo")
     if re.search(r"--(\d+pp)--", name):
         for evaluation in sweep.get("evaluations", ()):
             assert evaluation in {
@@ -954,6 +962,7 @@ def test_lineage_configs_follow_conventions(lineage: Path) -> None:
                 "tamia-h100-z7b--wmdp-and-mmlu-final",
                 "tamia-h100-z7b--wmdp-and-mmlu-single",
                 "tamia-h100-z7b--wmdp-and-mmlu-trajectory",
+                "tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline",
             }
     if "selected" in configs:
         swept = {
@@ -1317,3 +1326,245 @@ def test_name_template_rejects_invalid_placeholders_and_slugs(template):
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "invalid_name_test")
     with pytest.raises(ValueError):
         hpo.candidate_name(template, {"learning_rate": 1e-5, "max_steps": 250})
+
+
+@pytest.mark.parametrize(
+    "models,expected_training",
+    [
+        (["q06b-beavertail--relearn-fft-gt-ms250"], 1),
+        (
+            ["q06b-beavertail--align-fft-gradient-cosine--relearn-fft-gt-ms250"],
+            2,
+        ),
+    ],
+)
+def test_qwen_gip_runs_select_existing_experiment_family(
+    monkeypatch, models, expected_training
+):
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = load("configs/experiments/q06b-beavertail.yml").select(
+        models=models,
+        evaluations=["mila-l40s-q06b--beavertails-and-capabilities-trajectory"],
+    )
+    stages = pipeline.plan().stages
+    training = [stage for stage in stages if stage.id.startswith("train-")]
+    evaluations = [stage for stage in stages if stage.id.startswith("eval-")]
+    assert len(training) == expected_training
+    assert len(evaluations) == len(models)
+    for stage in evaluations:
+        assert len(stage.depends_on) == 1
+        assert stage.depends_on[0] in {item.id for item in training}
+    assert not any("seam-legacy" in stage.id for stage in stages)
+
+
+def test_gip_tracking_defenses_preserve_selected_settings_and_evaluate(monkeypatch):
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    for original, cls in [
+        ("z7b-wmdp-bio--15pp--unlearn-fft-gd", "GIPGradDiffTrainer"),
+        ("z7b-wmdp-bio--5pp--unlearn-fft-npo", "GIPNPOTrainer"),
+    ]:
+        name = original + "-gt"
+        pp = "15pp" if "--15pp--" in original else "5pp"
+        stages = (
+            load(f"configs/experiments/z7b-wmdp-bio-unlearn--{pp}.yml")
+            .select(
+                models=[name],
+                evaluations=["tamia-h100-z7b--wmdp-and-mmlu-single"],
+            )
+            .plan()
+            .stages
+        )
+        assert len(stages) == 2
+        parent = EXAMPLE / "configs/stages-wmdp/0_unlearn"
+        before = yaml.safe_load((parent / original / "selected.yml").read_text())
+        after = yaml.safe_load((parent / name / "selected.yml").read_text())
+        assert after["trainer_cls"] == "trainers.tr_gip." + cls
+        assert after["output_dir"] == "artifacts/tamia/models/" + name
+        assert after["wandb_name"] == name
+        changed = {"trainer_cls", "output_dir", "wandb_name"}
+        assert {k: v for k, v in before.items() if k not in changed} == {
+            k: v for k, v in after.items() if k not in changed
+        }
+        training = next(s for s in stages if s.id == "train-" + name)
+        evaluation = next(
+            s
+            for s in stages
+            if s.id.startswith("eval-") and s.args[0] == after["output_dir"]
+        )
+        assert evaluation.depends_on == (training.id,)
+
+
+def test_npo_sam_ghost_tracking_preserves_selected_defense(monkeypatch):
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    original = "z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2"
+    name = original + "-gt"
+    parent = EXAMPLE / "configs/stages-wmdp/0_unlearn"
+    before = yaml.safe_load((parent / original / "selected.yml").read_text())
+    after = yaml.safe_load((parent / name / "selected.yml").read_text())
+    changed = {"trainer_cls", "output_dir", "wandb_name"}
+    assert {k: v for k, v in before.items() if k not in changed} == {
+        k: v for k, v in after.items() if k not in changed
+    }
+    assert after["trainer_cls"] == "trainers.tr_gip.GIPNPOSAMTrainer"
+    training, evaluation = (
+        load("configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml")
+        .select(models=[name], evaluations=["tamia-h100-z7b--wmdp-and-mmlu-single"])
+        .plan()
+        .stages
+    )
+    assert evaluation.depends_on == (training.id,)
+    assert evaluation.args[0] == after["output_dir"]
+
+
+@pytest.mark.parametrize("method,pp", [("gd", "15pp"), ("npo", "5pp")])
+def test_squared_gip_sweep_preserves_base_defense_and_has_fp32_control(
+    monkeypatch, tmp_path, method, pp
+):
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    name = f"z7b-wmdp-bio--{pp}--unlearn-fft-{method}"
+    parent = EXAMPLE / "configs/stages-wmdp/0_unlearn"
+    before = yaml.safe_load((parent / (name + "-gt") / "selected.yml").read_text())
+    directory = parent / (name + "--gip-squared-fp32")
+    base = yaml.safe_load((directory / "base.yml").read_text())
+    changed = {
+        "custom_trainer_args",
+        "bf16",
+        "fp16",
+        "torch_dtype",
+        "output_dir",
+        "wandb_name",
+        "learning_rate",
+    }
+    assert {k: v for k, v in before.items() if k not in changed} == {
+        k: v for k, v in base.items() if k not in changed
+    }
+    for key, value in before["custom_trainer_args"].items():
+        assert base["custom_trainer_args"][key] == value
+    assert base["bf16"] is False and base["fp16"] is False
+    assert base["torch_dtype"] == "float32"
+    assert base["learning_rate"] == 1e-6
+    assert base["custom_trainer_args"]["cosine_rho"] == 3e-5
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "squared_gip_hpo")
+    manifest = hpo.generate(directory / "sweep.yml", output_root=tmp_path)
+    configs = [
+        yaml.safe_load(p.read_text()) for p in (tmp_path / "configs").glob("*.yml")
+    ]
+    assert sorted(c["custom_trainer_args"]["cosine_coefficient"] for c in configs) == [
+        0,
+        0.1,
+        1,
+        10,
+    ]
+    assert all(c["custom_trainer_args"]["cosine_pairs"] == 2 for c in configs)
+    stages = load(manifest).plan().stages
+    assert len(stages) == 8
+    assert all("--lr1e-6--" in s.id for s in stages)
+    assert all(len(s.depends_on) == 1 for s in stages if s.id.startswith("eval-"))
+
+
+@pytest.mark.parametrize("method,pp", [("gd", "15pp"), ("npo", "5pp")])
+def test_gip_fp32_learning_rate_calibration_keeps_regularization_off(
+    monkeypatch, tmp_path, method, pp
+):
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    directory = (
+        EXAMPLE
+        / f"configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--{pp}--unlearn-fft-{method}--gip-squared-fp32"
+    )
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "gip_lr_calibration")
+    manifest = hpo.generate(directory / "calibration.yml", output_root=tmp_path)
+    configs = [
+        yaml.safe_load(p.read_text()) for p in (tmp_path / "configs").glob("*.yml")
+    ]
+    assert sorted(c["learning_rate"] for c in configs) == [2e-7, 5e-7, 1e-6, 2e-6]
+    assert all(c["custom_trainer_args"]["cosine_coefficient"] == 0 for c in configs)
+    assert all(c["bf16"] is False and c["max_steps"] == 125 for c in configs)
+    stages = load(manifest).plan().stages
+    assert len(stages) == 8
+
+
+@pytest.mark.parametrize("method", ["npo", "npo-sam-rho1e-2", "npo-gip-lambda1"])
+def test_npo_sam_gip_relearning_sweeps_match_attack_settings(
+    monkeypatch, tmp_path, method
+):
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    name = f"z7b-wmdp-bio--5pp--unlearn-fft-{method}--gt"
+    directory = EXAMPLE / "configs/stages-wmdp/2_relearn" / name
+    assert not (directory / "selected.yml").exists()
+    base = yaml.safe_load((directory / "base.yml").read_text())
+    hpo = load_script(EXAMPLE / "scripts/hpo.py", "gip_relearning_sweep")
+    manifest = hpo.generate(directory / "sweep.yml", output_root=tmp_path)
+    experiment = yaml.safe_load(manifest.read_text())
+    models = yaml.safe_load((tmp_path / "models.yml").read_text())["models"]
+    assert len(experiment["models"]) == 3
+    rates = []
+    for slug in experiment["models"]:
+        model = models[slug]
+        config = yaml.safe_load(Path(model["producer"]["args"][0]).read_text())
+        assert config["trainer_cls"] == "trainers.tr_gip.GIPRelearnTrainer"
+        assert config["base_model"] == model["baseline_model_name_or_path"]
+        assert config["output_dir"] == model["base_model_name_or_path"]
+        assert config["output_dir"] != config["base_model"]
+        assert config["micro_batch_size"] == 2
+        assert config["gradient_accumulation_steps"] == 1
+        assert config["max_steps"] == 16 and config["save_steps"] == 4
+        assert config["save_total_limit"] == 4 and config["save_only_model"]
+        assert config["bf16"] and config["data_seed"] == 42 and config["seed"] == 1
+        assert len(config["datasets"]) == 1
+        assert config["datasets"][0]["path"] == "cais/wmdp-bio-forget-corpus"
+        assert "custom_trainer_args" not in config
+        differences = {key for key in config if config[key] != base[key]}
+        assert differences <= {"learning_rate", "output_dir", "wandb_name"}
+        rates.append(config["learning_rate"])
+    assert sorted(rates) == [1e-6, 5e-6, 1e-5]
+    stages = load(manifest).plan().stages
+    assert len(stages) == (6 if method == "npo-gip-lambda1" else 7)
+    training = {stage.id for stage in stages if stage.id.startswith("train-")}
+    if method != "npo-gip-lambda1":
+        defense = "train-" + name
+        assert defense in training
+        for stage in stages:
+            if stage.id.startswith("train-") and stage.id != defense:
+                assert stage.depends_on == (defense,)
+    for stage in stages:
+        if stage.id.startswith("eval-"):
+            assert len(stage.depends_on) == 1
+            assert stage.depends_on[0] in training
+            assert stage.args[-1] == base["base_model"]
+
+
+@pytest.mark.parametrize("method", ["npo", "npo-sam-rho1e-2"])
+def test_default_npo_pipeline_tracks_defense_and_relearning(monkeypatch, method):
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    original = f"z7b-wmdp-bio--5pp--unlearn-fft-{method}"
+    defense, attack = original + "-gt", original + "-gt--relearn-fft-gt"
+    pipeline = load("configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml")
+    assert attack in pipeline.selected_models
+    assert defense not in pipeline.selected_models
+    assert original + "--relearn-fft" not in pipeline.selected_models
+    stages = pipeline.select(models=[attack]).plan().stages
+    assert len(stages) == 3
+    training = {stage.id: stage for stage in stages if stage.id.startswith("train-")}
+    assert training["train-" + attack].depends_on == ("train-" + defense,)
+    evaluation = next(stage for stage in stages if stage.id.startswith("eval-"))
+    assert evaluation.depends_on == ("train-" + attack,)
+    config_path = training["train-" + attack].args[0]
+    config = yaml.safe_load(Path(config_path).read_text())
+    assert Path(config_path).name == "base.yml"
+    assert config["base_model"] == "artifacts/tamia/models/" + defense
+    assert config["output_dir"] == "artifacts/tamia/models/" + attack
+    assert config["trainer_cls"] == "trainers.tr_gip.GIPRelearnTrainer"
