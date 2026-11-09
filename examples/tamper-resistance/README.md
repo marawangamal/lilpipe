@@ -183,8 +183,7 @@ and optimizer gradients are unchanged.
 
 Tracking supports one process on one GPU or a model sharded across GPUs. Layer
 Gram contributions are collected on the Trainer device; parameter gradients
-stay on their owning devices. Tamia launchers accept `TRAIN_SOURCE_ROOT` to
-run against a frozen copy of the source directory.
+stay on their owning devices.
 
 Supported trainable parameter owners are Linear, Embedding, LayerNorm, RMSNorm,
 HF Conv1D, and HF RMSNorm modules. Reused layers and tied weights include cross
