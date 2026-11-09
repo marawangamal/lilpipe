@@ -293,9 +293,11 @@ lilpipe configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml \
 Append `--dry-run` to inspect the generated plan before submitting.
 
 
-The 5pp experiment replaces its original NPO and NPO+SAM attack selections with
-`z7b-wmdp-bio--5pp--unlearn-fft-npo-gt` and
-`z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt`. These run the tracked
-defenses; relearning remains a per-checkpoint sweep until an attack is promoted.
+The 5pp experiment keeps its NPO and NPO+SAM relearning pipelines, using
+`z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt` and
+`z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt`.
+Each attack depends on its tracked defense and uses the lineage's `base.yml`
+(16 updates, LR 1e-5). This is the existing tracked default, not a best-LR promotion;
+all three learning rates remain in each model's sweep without `selected.yml`.
 Qwen config families use the `q06b` prefix consistently. The underlying Hugging
 Face model identifier remains `Qwen/Qwen3-0.6B`; this is a naming migration.

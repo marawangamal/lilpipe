@@ -507,3 +507,12 @@ paths use these names. Original submitted source/config snapshots and raw metric
 contents retain their historical names as provenance. Path migration receipts
 are stored locally at `artifacts/reports/gt-names-migration-20261109/local.json`
 and on Tamia at `artifacts/tamia/runs/gt-names-migration-20261109/remote.json`.
+
+
+The default 5pp NPO/NPO+SAM pipelines keep both stages:
+`<defense>-gt--relearn-fft-gt`, with an explicit dependency on the tracked defense.
+Their existing 16-step, LR 1e-5 tracked bases are default attack configurations,
+not best-LR promotions. Default attacked checkpoint/evaluation directories omit
+the redundant `-ms16` suffix; LR-specific artifacts retain their LR/budget suffix.
+Additional path receipts are `default-pipelines-local.json` under the local
+name-migration report and `default-pipelines/remote.json` under the Tamia report.

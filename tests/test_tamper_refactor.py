@@ -948,7 +948,7 @@ def differing_keys(first: dict, second: dict, prefix: str = "") -> set[str]:
 def test_lineage_configs_follow_conventions(lineage: Path) -> None:
     name = lineage.name
     run_name = (
-        name + "--relearn-fft-gt-ms16"
+        name + "--relearn-fft-gt"
         if lineage.parent.name == "2_relearn" and name.endswith("-gt")
         else name
     )
@@ -1444,11 +1444,6 @@ def test_npo_sam_ghost_tracking_preserves_selected_defense(monkeypatch):
         k: v for k, v in after.items() if k not in changed
     }
     assert after["trainer_cls"] == "trainers.tr_gip.GIPNPOSAMTrainer"
-    defaults = load("configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml").selected_models
-    assert name in defaults
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-npo-gt" in defaults
-    assert original + "--relearn-fft" not in defaults
-    assert "z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft" not in defaults
     training, evaluation = (
         load("configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml")
         .select(models=[name], evaluations=["tamia-h100-z7b--wmdp-and-mmlu-single"])
@@ -1574,3 +1569,28 @@ def test_npo_sam_gip_relearning_sweeps_match_attack_settings(
             assert len(stage.depends_on) == 1
             assert stage.depends_on[0] in training
             assert stage.args[-1] == base["base_model"]
+
+
+@pytest.mark.parametrize("method", ["npo", "npo-sam-rho1e-2"])
+def test_default_npo_pipeline_tracks_defense_and_relearning(monkeypatch, method):
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    original = f"z7b-wmdp-bio--5pp--unlearn-fft-{method}"
+    defense, attack = original + "-gt", original + "-gt--relearn-fft-gt"
+    pipeline = load("configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml")
+    assert attack in pipeline.selected_models
+    assert defense not in pipeline.selected_models
+    assert original + "--relearn-fft" not in pipeline.selected_models
+    stages = pipeline.select(models=[attack]).plan().stages
+    assert len(stages) == 3
+    training = {stage.id: stage for stage in stages if stage.id.startswith("train-")}
+    assert training["train-" + attack].depends_on == ("train-" + defense,)
+    evaluation = next(stage for stage in stages if stage.id.startswith("eval-"))
+    assert evaluation.depends_on == ("train-" + attack,)
+    config_path = training["train-" + attack].args[0]
+    config = yaml.safe_load(Path(config_path).read_text())
+    assert Path(config_path).name == "base.yml"
+    assert config["base_model"] == "artifacts/tamia/models/" + defense
+    assert config["output_dir"] == "artifacts/tamia/models/" + attack
+    assert config["trainer_cls"] == "trainers.tr_gip.GIPRelearnTrainer"

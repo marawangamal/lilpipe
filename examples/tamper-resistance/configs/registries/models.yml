@@ -148,20 +148,21 @@ models:
     evaluation_final_step: '16'
     evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft
     evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft
-  z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft:
-    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
+  z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt
     evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt
     producer:
-      id: train-z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
+      id: train-z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt
       script: scripts/slurm/tamia/train.sbatch
       args:
-      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft/selected.yml
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt/base.yml
       - --launcher
       - python
-      depends_on: []
+      depends_on:
+      - z7b-wmdp-bio--5pp--unlearn-fft-npo-gt
       sbatch_args:
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
@@ -169,22 +170,23 @@ models:
       - --time=03:00:00
     evaluation_checkpoint_steps: 0,4,8,12,16
     evaluation_final_step: '16'
-    evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
-    evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
-  z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft:
-    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
+    evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt
+    evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt
+  z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt
     evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt
     producer:
-      id: train-z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
+      id: train-z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt
       script: scripts/slurm/tamia/train.sbatch
       args:
-      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft/selected.yml
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt/base.yml
       - --launcher
       - python
-      depends_on: []
+      depends_on:
+      - z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt
       sbatch_args:
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
@@ -192,8 +194,8 @@ models:
       - --time=03:00:00
     evaluation_checkpoint_steps: 0,4,8,12,16
     evaluation_final_step: '16'
-    evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
-    evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
+    evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt
+    evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt
   z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft
