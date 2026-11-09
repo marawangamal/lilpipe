@@ -385,7 +385,7 @@ def test_qwen_seam_evaluation_waits_for_training(monkeypatch) -> None:
     from lilpipe import load
 
     monkeypatch.chdir(EXAMPLE)
-    pipeline = load("configs/experiments/qwen3-06b-beavertail.yml")
+    pipeline = load("configs/experiments/q03b-beavertail.yml")
     training, evaluation = pipeline.plan().stages
     assert evaluation.depends_on == (training.id,)
     config = yaml.safe_load((EXAMPLE / training.args[0]).read_text())
@@ -406,7 +406,7 @@ def test_qwen_relearning_grid_matches_defense_betas_and_evaluates_attacks(
 
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "qwen_relearn_hpo_test")
     monkeypatch.chdir(EXAMPLE)
-    name = "qwen3-0.6b-beavertail--align-fft-seam" + ("-legacy" if legacy else "")
+    name = "q03b-beavertail--align-fft-seam" + ("-legacy" if legacy else "")
     defense_manifest = hpo.generate(
         EXAMPLE / "configs/stages-beavertails/0_alignment" / name / "sweep.yml",
         tmp_path / "defense",
@@ -986,8 +986,8 @@ def test_lineage_configs_follow_conventions(lineage: Path) -> None:
     if re.search(r"--(\d+pp)--", name):
         for evaluation in sweep.get("evaluations", ()):
             assert evaluation in {
-                "mila-l40s-q06b--wmdp-and-mmlu-final",
-                "mila-l40s-q06b--wmdp-and-mmlu-single",
+                "mila-l40s-q03b--wmdp-and-mmlu-final",
+                "mila-l40s-q03b--wmdp-and-mmlu-single",
                 "tamia-h100-z7b--wmdp-and-mmlu-final",
                 "tamia-h100-z7b--wmdp-and-mmlu-single",
                 "tamia-h100-z7b--wmdp-and-mmlu-trajectory",
@@ -1357,18 +1357,60 @@ def test_name_template_rejects_invalid_placeholders_and_slugs(template):
         hpo.candidate_name(template, {"learning_rate": 1e-5, "max_steps": 250})
 
 
+@pytest.mark.parametrize(
+    "models,expected_training",
+    [
+        (["q03b-beavertail--relearn-fft-ghost-ms250"], 1),
+        (
+            [
+                "q03b-beavertail--align-fft-gradient-cosine--relearn-fft-ms250",
+                "q03b-beavertail--align-fft-refusal-control--relearn-fft-ms250",
+            ],
+            4,
+        ),
+    ],
+)
+def test_qwen_gip_runs_select_existing_experiment_family(
+    monkeypatch, models, expected_training
+):
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    pipeline = load("configs/experiments/q03b-beavertail.yml").select(
+        models=models,
+        evaluations=["mila-l40s-q03b--beavertails-harmfulness-trajectory"],
+    )
+    stages = pipeline.plan().stages
+    training = [stage for stage in stages if stage.id.startswith("train-")]
+    evaluations = [stage for stage in stages if stage.id.startswith("eval-")]
+    assert len(training) == expected_training
+    assert len(evaluations) == len(models)
+    for stage in evaluations:
+        assert len(stage.depends_on) == 1
+        assert stage.depends_on[0] in {item.id for item in training}
+    assert not any("seam-legacy" in stage.id for stage in stages)
+
+
 def test_gip_tracking_defenses_preserve_selected_settings_and_evaluate(monkeypatch):
     from lilpipe import load
 
     monkeypatch.chdir(EXAMPLE)
-    pipeline = load("configs/experiments/z7b-wmdp-bio-gd15pp-npo5pp-gt.yml")
-    stages = pipeline.plan().stages
-    assert len(stages) == 4
     for original, cls in [
         ("z7b-wmdp-bio--15pp--unlearn-fft-gd", "GIPGradDiffTrainer"),
         ("z7b-wmdp-bio--5pp--unlearn-fft-npo", "GIPNPOTrainer"),
     ]:
         name = original + "-gt"
+        pp = "15pp" if "--15pp--" in original else "5pp"
+        stages = (
+            load(f"configs/experiments/z7b-wmdp-bio-unlearn--{pp}.yml")
+            .select(
+                models=[name],
+                evaluations=["tamia-h100-z7b--wmdp-and-mmlu-single"],
+            )
+            .plan()
+            .stages
+        )
+        assert len(stages) == 2
         parent = EXAMPLE / "configs/stages-wmdp/0_unlearn"
         before = yaml.safe_load((parent / original / "selected.yml").read_text())
         after = yaml.safe_load((parent / name / "selected.yml").read_text())
@@ -1402,8 +1444,16 @@ def test_npo_sam_ghost_tracking_preserves_selected_defense(monkeypatch):
         k: v for k, v in after.items() if k not in changed
     }
     assert after["trainer_cls"] == "trainers.tr_gip.GIPNPOSAMTrainer"
+    defaults = load("configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml").selected_models
+    assert name in defaults
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-npo-gt" in defaults
+    assert original + "--relearn-fft" not in defaults
+    assert "z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft" not in defaults
     training, evaluation = (
-        load("configs/experiments/z7b-wmdp-bio-npo-sam5pp-gt.yml").plan().stages
+        load("configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml")
+        .select(models=[name], evaluations=["tamia-h100-z7b--wmdp-and-mmlu-single"])
+        .plan()
+        .stages
     )
     assert evaluation.depends_on == (training.id,)
     assert evaluation.args[0] == after["output_dir"]

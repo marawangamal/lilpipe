@@ -1,0 +1,9 @@
+version: 1
+id: q03b-beavertail--align-fft-seam-legacy
+registries:
+  models: configs/registries/models.yml
+  evaluations: configs/registries/evals.yml
+models:
+  - q03b-beavertail--align-fft-seam-legacy
+evaluations:
+  - mila-l40s-q03b--beavertails-and-capabilities-single

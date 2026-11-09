@@ -2545,7 +2545,7 @@ def test_ghost_qwen_training_checkpoint_settings():
     config = yaml.safe_load(
         (
             EXAMPLE
-            / "configs/stages-beavertails/1_relearn/qwen3-0.6b-beavertail--relearn-fft-ghost-ms250/base.yml"
+            / "configs/stages-beavertails/1_relearn/q03b-beavertail--relearn-fft-ghost-ms250/base.yml"
         ).read_text()
     )
     assert config["base_model"] == "Qwen/Qwen3-0.6B"
