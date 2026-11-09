@@ -131,7 +131,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output")
     parser.add_argument("--tar-lrs", action="store_true")
+    parser.add_argument("--npo-sam-15pp", action="store_true")
+    parser.add_argument("--rootdir", default=rootdir)
     args = parser.parse_args()
+    rootdir = args.rootdir
 
     # Uncomment one complete selection block.
     configs = configs_main
@@ -207,6 +210,21 @@ if __name__ == "__main__":
             "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--tar-k16-new-api.pdf"
         )
 
+    if args.npo_sam_15pp:
+        configs = [
+            {
+                "model": f"z7b-wmdp-bio--15pp--unlearn-fft-{method}--relearn-fft",
+                "method": label,
+            }
+            for method, label in (("npo", "NPO"), ("npo-sam-rho1e-2", "NPO + SAM"))
+        ]
+        steps = range(0, 17, 4)
+        style = {"hue": "Method", "marker": "o", "dashes": False}
+        output = (
+            "artifacts/figures/"
+            "z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-reproduction.pdf"
+        )
+
     rows = []
     for config in configs:
         for step, evaluation, accuracy in results(
@@ -226,6 +244,18 @@ if __name__ == "__main__":
                 )
 
     df = pd.DataFrame(rows)
+    if args.npo_sam_15pp:
+        expected = {
+            (config["method"], step, label)
+            for config in configs
+            for step in steps
+            for label in tasks.values()
+        }
+        observed = {
+            (row["Method"], row["Relearning step"], row["Eval"]) for row in rows
+        }
+        if observed != expected or len(rows) != len(expected):
+            raise ValueError("Expected exactly one full evaluation per model/task/step")
     sns.set_theme(context="paper", style="ticks", font_scale=1.5)
     grid = sns.relplot(
         data=df,
@@ -257,3 +287,5 @@ if __name__ == "__main__":
     output = args.output or output
     os.makedirs(osp.dirname(output) or ".", exist_ok=True)
     grid.figure.savefig(output, bbox_inches="tight")
+    if args.npo_sam_15pp:
+        df.to_csv(osp.splitext(output)[0] + ".csv", index=False)

@@ -2478,3 +2478,40 @@ def test_seam_completion_hidden_loss_preserves_standard_mean(monkeypatch, dtype_
         actual_gradients, expected_gradients, strict=True
     ):
         torch.testing.assert_close(actual_gradient, expected_gradient, **tolerance)
+
+
+def test_npo_sam_15pp_reproduction_trains_fresh_defenses_and_evaluates_baselines(
+    monkeypatch,
+):
+    from lilpipe import load
+
+    monkeypatch.chdir(EXAMPLE)
+    plan = load("configs/experiments/z7b-wmdp-bio-npo-sam-repro--15pp.yml").plan()
+    assert len(plan.stages) == 6
+    for method, beta in (("npo", 0.025), ("npo-sam-rho1e-2", 0.05)):
+        defense = f"z7b-wmdp-bio--15pp--unlearn-fft-{method}"
+        attack = defense + "--relearn-fft"
+        training = plan.stage_index[f"train-{attack}"]
+        assert training.depends_on == (f"train-{defense}",)
+        evaluation = next(
+            stage
+            for stage in plan.stages
+            if stage.id.startswith("eval-") and stage.id.endswith(attack)
+        )
+        assert evaluation.depends_on == (training.id,)
+        assert evaluation.args[-3:] == (
+            "false",
+            "false",
+            f"artifacts/tamia/models/{defense}",
+        )
+        config = yaml.safe_load(
+            (
+                EXAMPLE / f"configs/stages-wmdp/0_unlearn/{defense}/selected.yml"
+            ).read_text()
+        )
+        assert config["custom_trainer_args"]["beta"] == beta
+        assert config["custom_trainer_args"]["retain_coefficient"] == 4
+        assert config["learning_rate"] == 1e-5
+        attack_config = yaml.safe_load((EXAMPLE / training.args[0]).read_text())
+        assert attack_config["micro_batch_size"] == 1
+        assert attack_config["max_steps"] == 16
