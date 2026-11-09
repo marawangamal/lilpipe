@@ -13,7 +13,6 @@ datasets:
     max_rows: '5000'
     offset: '0'
     train_on_inputs: 'false'
-    include_role: 'true'
 - path: anonymous4486/repnoise_beavertail
   split: train
   revision: 11ea63756195527164a9aa2850f7544bd251eab1
@@ -23,7 +22,6 @@ datasets:
     max_rows: '5000'
     offset: '0'
     train_on_inputs: 'false'
-    include_role: 'true'
 dataset_num_proc: 4
 dataset_prepared_path: artifacts/mila/cache/axolotl/qwen3-0.6b-beavertail--align-fft-gradient-cosine/prepared
 val_set_size: 0.0
@@ -57,6 +55,8 @@ logging_steps: 1
 wandb_project: lp-tamper-resistance
 wandb_name: qwen3-0.6b-beavertail--align-fft-gradient-cosine
 custom_trainer_args:
+  n_hh: 5000
+  n_hb: 5000
   cosine_coefficient: 0.01
   cosine_tau: 0.001
   cosine_rho: 0.001

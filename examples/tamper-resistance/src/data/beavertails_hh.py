@@ -14,7 +14,6 @@ class BeaverTailsBaseStrategy(DatasetWrappingStrategy):
         max_rows,
         offset=0,
         response_separator="\n",
-        seam_role=None,
     ):
         """Store the tokenizer settings needed during dataset preparation.
 
@@ -33,7 +32,6 @@ class BeaverTailsBaseStrategy(DatasetWrappingStrategy):
         self.max_rows = max_rows
         self.offset = offset
         self.response_separator = response_separator
-        self.seam_role = seam_role
 
     def wrap_dataset(
         self,
@@ -98,7 +96,6 @@ class BeaverTailsHHStrategy(BeaverTailsBaseStrategy):
             "input_ids": input_ids,
             "attention_mask": [1] * len(input_ids),
             "labels": labels,
-            **({"seam_role": self.seam_role} if self.seam_role is not None else {}),
         }
 
 
@@ -128,7 +125,6 @@ class BeaverTailsHBStrategy(BeaverTailsBaseStrategy):
             "input_ids": input_ids,
             "attention_mask": [1] * len(input_ids),
             "labels": labels,
-            **({"seam_role": self.seam_role} if self.seam_role is not None else {}),
         }
 
 
@@ -161,7 +157,6 @@ def load_hh(tokenizer, cfg, ds_cfg=None):
         max_rows=None if max_rows is None else int(max_rows),
         offset=int(selection.get("offset", 0)),
         response_separator=selection.get("response_separator", "\n"),
-        seam_role=0 if selection.get("include_role") == "true" else None,
     )
 
 
@@ -176,7 +171,6 @@ def load_hb(tokenizer, cfg, ds_cfg=None):
         max_rows=None if max_rows is None else int(max_rows),
         offset=int(selection.get("offset", 0)),
         response_separator=selection.get("response_separator", "\n"),
-        seam_role=1 if selection.get("include_role") == "true" else None,
     )
 
 

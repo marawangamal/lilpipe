@@ -217,8 +217,10 @@ to the optimizer update. Refusal CE uses the model's ordinary mean loss.
 The initial implementation requires FP32 parameters, one device/process,
 unpacked batches, and no AMP or gradient checkpointing. Each batch contains
 half harmful completions and half refusals, with batch size divisible by four.
-Use `data.beavertails_hh` with roles `hh` and `hb`, `include_role: "true"`, and
-`remove_unused_columns: false` to retain the metadata used for balanced sampling.
+Concatenate `data.beavertails_hh` streams in `hh`, then `hb` order and set
+`n_hh` / `n_hb` in `custom_trainer_args` to their row counts. The existing SEAM
+`BalancedSampler` interleaves the streams; even batch positions are harmful and
+odd positions are refusals. The shorter stream must produce complete batches.
 
 `custom_trainer_args` exposes `cosine_coefficient` (lambda), `cosine_tau`,
 `cosine_rho`, and `cosine_skip_threshold`. The detached finite-difference helper

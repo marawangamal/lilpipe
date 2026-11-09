@@ -18,8 +18,6 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from data.seam import HARMFUL, REFUSAL
-
 # Shared gradient inner-product calculations
 
 
@@ -772,42 +770,6 @@ if importlib.util.find_spec("transformers") is not None:
                 self.trainer.close()
 
 
-# Defense batch sampling
-
-
-class RefusalHarmfulSampler(torch.utils.data.Sampler[int]):
-    """Shuffle harmful/refusal streams into equally sized batch halves."""
-
-    def __init__(self, dataset, batch_size, seed):
-        if batch_size < 4 or batch_size % 4:
-            raise ValueError("Defense batch size must be divisible by four")
-        roles = dataset["seam_role"]
-        self.groups = [
-            [i for i, role in enumerate(roles) if role == value]
-            for value in (HARMFUL, REFUSAL)
-        ]
-        if not all(self.groups):
-            raise ValueError("Defense dataset requires harmful and refusal rows")
-        self.per_group = batch_size // 2
-        self.rows = min(map(len, self.groups)) // self.per_group * self.per_group
-        self.seed = seed
-        self.epoch = 0
-
-    def __iter__(self):
-        generator = torch.Generator().manual_seed(self.seed + self.epoch)
-        self.epoch += 1
-        groups = [
-            [group[i] for i in torch.randperm(len(group), generator=generator).tolist()]
-            for group in self.groups
-        ]
-        for start in range(0, self.rows, self.per_group):
-            for group in groups:
-                yield from group[start : start + self.per_group]
-
-    def __len__(self):
-        return self.rows * 2
-
-
 # Individual forget-example squared-cosine defense.
 
 
@@ -975,6 +937,7 @@ if importlib.util.find_spec("axolotl") is not None:
     from trainers.ul_gd import GradDiffTrainer
     from trainers.ul_npo import NPOTrainer
     from trainers.tr_sam import NPOSAMTrainer
+    from trainers.tr_seam import BalancedSampler
 
     class GIPGradDiffTrainer(
         ForgetGradientCosineMixin, GhostInnerProductsMixin, GradDiffTrainer
@@ -1004,9 +967,16 @@ if importlib.util.find_spec("axolotl") is not None:
             cosine_tau=1e-3,
             cosine_rho=1e-3,
             cosine_skip_threshold=1e-8,
+            n_hh=5_000,
+            n_hb=5_000,
             **kwargs,
         ):
             super().__init__(*args, **kwargs)
+            if any(not isinstance(n, int) or n <= 0 for n in (n_hh, n_hb)):
+                raise ValueError(
+                    "Harmful/refusal stream lengths must be positive integers"
+                )
+            self.n_hh, self.n_hb = n_hh, n_hb
             if not math.isfinite(cosine_coefficient) or cosine_coefficient < 0:
                 raise ValueError("cosine_coefficient must be finite and nonnegative")
             if (
@@ -1053,36 +1023,34 @@ if importlib.util.find_spec("axolotl") is not None:
 
         def _get_train_sampler(self, train_dataset=None):
             dataset = self.train_dataset if train_dataset is None else train_dataset
-            return RefusalHarmfulSampler(
-                dataset,
-                self._train_batch_size,
-                (
-                    self.args.data_seed
-                    if self.args.data_seed is not None
-                    else self.args.seed
-                ),
-            )
+            batch_size = self._train_batch_size
+            if batch_size < 4 or batch_size % 4:
+                raise ValueError("Defense batch size must be divisible by four")
+            if len(dataset) != self.n_hh + self.n_hb:
+                raise ValueError(
+                    "Dataset must concatenate the configured HH and HB streams"
+                )
+            if min(self.n_hh, self.n_hb) % (batch_size // 2):
+                raise ValueError(
+                    "Harmful/refusal streams must produce complete batches"
+                )
+            return BalancedSampler(self.n_hh, self.n_hb)
 
         def training_step(self, model, inputs, num_items_in_batch=None):
             model.train()
             if hasattr(self.optimizer, "train") and callable(self.optimizer.train):
                 self.optimizer.train()
             inputs = self._prepare_inputs(inputs)
-            roles = inputs["seam_role"]
-            harmful = torch.where(roles == HARMFUL)[0]
-            refusal = torch.where(roles == REFUSAL)[0]
-            if len(harmful) < 2 or len(harmful) % 2 or not len(refusal):
-                raise ValueError(
-                    "Each batch requires an even harmful group (>=2) and refusal rows"
-                )
+            batch_size = len(inputs["labels"])
+            if batch_size < 4 or batch_size % 4:
+                raise ValueError("Defense batch size must be divisible by four")
+            device = inputs["labels"].device
+            harmful = torch.arange(0, batch_size, 2, device=device)
+            refusal = torch.arange(1, batch_size, 2, device=device)
             parameters = tuple(p for p in model.parameters() if p.requires_grad)
             if any(p.dtype != torch.float32 for p in parameters):
                 raise ValueError("All trainable parameters must remain FP32")
-            fields = {
-                key: value
-                for key, value in inputs.items()
-                if key not in {"seam_role", "source_index"}
-            }
+            fields = inputs
             retain_inputs = {key: value[refusal] for key, value in fields.items()}
             buffers = tuple(model.buffers())
             original_buffers = tuple(b.detach().clone() for b in buffers)

@@ -174,21 +174,20 @@ def test_defense_update_matches_retain_plus_exact_cosine(tmp_path, coefficient):
     torch.manual_seed(3)
     model = TinyLM()
     reference = copy.deepcopy(model)
-    ids = torch.tensor([[1, 2, 3, 4], [2, 4, 1, 5], [3, 2, 5, 6], [1, 5, 4, 3]])
+    ids = torch.tensor([[1, 2, 3, 4], [3, 2, 5, 6], [2, 4, 1, 5], [1, 5, 4, 3]])
     labels = ids.clone()
-    labels[2, 1] = -100
+    labels[1, 1] = -100
     batch = {
         "input_ids": ids,
         "labels": labels,
-        "seam_role": torch.tensor([0, 0, 1, 1]),
     }
     parameters = tuple(reference.parameters())
-    retain = reference(ids[2:], labels[2:]).loss
+    retain = reference(ids[1::2], labels[1::2]).loss
     objective = retain
     if coefficient:
         la = causal_lm_losses(reference(ids[:1], labels[:1]).logits, labels[:1]).mean()
         lb = causal_lm_losses(
-            reference(ids[1:2], labels[1:2]).logits, labels[1:2]
+            reference(ids[2:3], labels[2:3]).logits, labels[2:3]
         ).mean()
         ga = torch.autograd.grad(la, parameters, create_graph=True)
         gb = torch.autograd.grad(lb, parameters, create_graph=True)
@@ -221,18 +220,30 @@ def test_defense_update_matches_retain_plus_exact_cosine(tmp_path, coefficient):
     assert any("loss_retain" in row for row in trainer.state.log_history)
 
 
-def test_defense_sampler_balances_roles_and_drops_incomplete_batches():
+def test_defense_sampler_uses_ordered_streams_without_metadata():
     pytest.importorskip("axolotl")
-    from trainers.tr_gip import RefusalHarmfulSampler
+    from trainers.tr_gip import GIPTrainer
+    from trainers.tr_seam import BalancedSampler
 
-    dataset = {"seam_role": [0] * 7 + [1] * 9}
-    sampler = RefusalHarmfulSampler(dataset, batch_size=8, seed=42)
+    trainer = object.__new__(GIPTrainer)
+    trainer.n_hh, trainer.n_hb = 8, 12
+    trainer._train_batch_size = 8
+    trainer.train_dataset = list(range(20))
+    sampler = trainer._get_train_sampler()
+    assert isinstance(sampler, BalancedSampler)
     indices = list(sampler)
-    assert len(indices) == len(sampler) == 8
-    assert len(set(indices)) == 8
-    assert [dataset["seam_role"][i] for i in indices] == [0] * 4 + [1] * 4
+    assert len(indices) == len(sampler) == 16
+    assert indices[0::2] == list(range(8))
+    assert indices[1::2] == list(range(8, 16))
+    trainer._train_batch_size = 6
     with pytest.raises(ValueError, match="divisible by four"):
-        RefusalHarmfulSampler(dataset, batch_size=6, seed=42)
+        trainer._get_train_sampler()
+    trainer._train_batch_size = 8
+    with pytest.raises(ValueError, match="concatenate"):
+        trainer._get_train_sampler(list(range(19)))
+    trainer.n_hh, trainer.n_hb = 7, 13
+    with pytest.raises(ValueError, match="complete batches"):
+        trainer._get_train_sampler()
 
 
 def test_axolotl_defense_training_logs_metrics(tmp_path):
@@ -257,12 +268,13 @@ def test_axolotl_defense_training_logs_metrics(tmp_path):
     )
     config._attn_implementation = "eager"
     rows = [
-        {"input_ids": [1, 2 + i, 3, 4], "labels": [1, 2 + i, 3, 4], "seam_role": i % 2}
-        for i in range(4)
+        {"input_ids": [1, 2 + i, 3, 4], "labels": [1, 2 + i, 3, 4]} for i in range(4)
     ]
     trainer = GIPTrainer(
         model=GPT2LMHeadModel(config),
         train_dataset=Dataset.from_list(rows),
+        n_hh=2,
+        n_hb=2,
         cosine_tau=0.1,
         cosine_rho=1e-3,
         args=AxolotlTrainingArguments(
@@ -287,38 +299,6 @@ def test_axolotl_defense_training_logs_metrics(tmp_path):
         assert row["regularization_strength_ratio"] >= 0
         assert "regularization_skip_frequency" in row
     assert all(p.dtype == torch.float32 for p in trainer.model.parameters())
-
-
-@pytest.mark.parametrize("role,expected", [("hh", 0), ("hb", 1)])
-def test_paired_completion_data_can_include_roles(role, expected):
-    pytest.importorskip("axolotl")
-    from trainers.tr_gip import HARMFUL, REFUSAL
-    from data.beavertails_hh import load
-    from types import SimpleNamespace
-
-    class Tokenizer:
-        eos_token_id = 2
-
-        def __call__(self, text, add_special_tokens):
-            return {"input_ids": [3] * len(text.split())}
-
-    cfg = SimpleNamespace(sequence_len=128, train_on_inputs=False)
-    ds = SimpleNamespace(
-        message_property_mappings={
-            "role": role,
-            "max_rows": "1",
-            "include_role": "true",
-        }
-    )
-    result = load(Tokenizer(), cfg, ds).tokenize_row(
-        {
-            "prompt": "unsafe prompt",
-            "response": "unsafe response",
-            "refusal": "Question: unsafe prompt\nAnswer: safe response",
-        }
-    )
-    assert result["seam_role"] == expected
-    assert -100 in result["labels"] and result["labels"][-1] == 2
 
 
 def test_strength_sweep_generates_matched_attacks(tmp_path, monkeypatch):
