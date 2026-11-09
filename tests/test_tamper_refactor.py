@@ -24,7 +24,7 @@ def test_z7b_ghost_comparison_generates_matched_gd_npo_attacks(monkeypatch, tmp_
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "hpo_ghost_comparison")
     manifest = hpo.generate(
         EXAMPLE
-        / "configs/stages-wmdp/2_relearn/z7b-wmdp-bio--relearn-fft-ghost-ms128/sweep.yml",
+        / "configs/stages-wmdp/2_relearn/z7b-wmdp-bio--relearn-fft-gt-ms128/sweep.yml",
         output_root=tmp_path,
     )
     experiment = yaml.safe_load(manifest.read_text())
@@ -948,8 +948,8 @@ def differing_keys(first: dict, second: dict, prefix: str = "") -> set[str]:
 def test_lineage_configs_follow_conventions(lineage: Path) -> None:
     name = lineage.name
     run_name = (
-        name + "--relearn-fft"
-        if lineage.parent.name == "2_relearn" and name.endswith("--ghost-track")
+        name + "--relearn-fft-gt-ms16"
+        if lineage.parent.name == "2_relearn" and name.endswith("-gt")
         else name
     )
     configs = {
@@ -1361,14 +1361,14 @@ def test_gip_tracking_defenses_preserve_selected_settings_and_evaluate(monkeypat
     from lilpipe import load
 
     monkeypatch.chdir(EXAMPLE)
-    pipeline = load("configs/experiments/z7b-wmdp-bio-gd15pp-npo5pp-ghost-track.yml")
+    pipeline = load("configs/experiments/z7b-wmdp-bio-gd15pp-npo5pp-gt.yml")
     stages = pipeline.plan().stages
     assert len(stages) == 4
     for original, cls in [
         ("z7b-wmdp-bio--15pp--unlearn-fft-gd", "GIPGradDiffTrainer"),
         ("z7b-wmdp-bio--5pp--unlearn-fft-npo", "GIPNPOTrainer"),
     ]:
-        name = original + "--ghost-track"
+        name = original + "-gt"
         parent = EXAMPLE / "configs/stages-wmdp/0_unlearn"
         before = yaml.safe_load((parent / original / "selected.yml").read_text())
         after = yaml.safe_load((parent / name / "selected.yml").read_text())
@@ -1393,7 +1393,7 @@ def test_npo_sam_ghost_tracking_preserves_selected_defense(monkeypatch):
 
     monkeypatch.chdir(EXAMPLE)
     original = "z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2"
-    name = original + "--ghost-track"
+    name = original + "-gt"
     parent = EXAMPLE / "configs/stages-wmdp/0_unlearn"
     before = yaml.safe_load((parent / original / "selected.yml").read_text())
     after = yaml.safe_load((parent / name / "selected.yml").read_text())
@@ -1403,9 +1403,7 @@ def test_npo_sam_ghost_tracking_preserves_selected_defense(monkeypatch):
     }
     assert after["trainer_cls"] == "trainers.tr_gip.GIPNPOSAMTrainer"
     training, evaluation = (
-        load("configs/experiments/z7b-wmdp-bio-npo-sam5pp-ghost-track.yml")
-        .plan()
-        .stages
+        load("configs/experiments/z7b-wmdp-bio-npo-sam5pp-gt.yml").plan().stages
     )
     assert evaluation.depends_on == (training.id,)
     assert evaluation.args[0] == after["output_dir"]
@@ -1420,9 +1418,7 @@ def test_squared_gip_sweep_preserves_base_defense_and_has_fp32_control(
     monkeypatch.chdir(EXAMPLE)
     name = f"z7b-wmdp-bio--{pp}--unlearn-fft-{method}"
     parent = EXAMPLE / "configs/stages-wmdp/0_unlearn"
-    before = yaml.safe_load(
-        (parent / (name + "--ghost-track") / "selected.yml").read_text()
-    )
+    before = yaml.safe_load((parent / (name + "-gt") / "selected.yml").read_text())
     directory = parent / (name + "--gip-squared-fp32")
     base = yaml.safe_load((directory / "base.yml").read_text())
     changed = {
@@ -1491,7 +1487,7 @@ def test_npo_sam_gip_relearning_sweeps_match_attack_settings(
     from lilpipe import load
 
     monkeypatch.chdir(EXAMPLE)
-    name = f"z7b-wmdp-bio--5pp--unlearn-fft-{method}--ghost-track"
+    name = f"z7b-wmdp-bio--5pp--unlearn-fft-{method}--gt"
     directory = EXAMPLE / "configs/stages-wmdp/2_relearn" / name
     assert not (directory / "selected.yml").exists()
     base = yaml.safe_load((directory / "base.yml").read_text())

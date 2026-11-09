@@ -247,15 +247,15 @@ The initial coefficients are experiment settings, not tuned hyperparameters.
 
 Relearning configs are grouped by defended checkpoint under
 `configs/stages-wmdp/2_relearn/`, in the `z7b-wmdp-bio--5pp--unlearn-fft-`
-`npo--ghost-track`, `npo-sam-rho1e-2--ghost-track`, and
-`npo-gip-lambda1--ghost-track` lineages. Each contains `base.yml` and `sweep.yml`;
+`npo-gt`, `npo-sam-rho1e-2-gt`, and
+`npo-gip-lambda1-gt` lineages. Each contains `base.yml` and `sweep.yml`;
 no attack has been promoted to `selected.yml`. Each sweep generates the three
 learning rates 1e-6, 5e-6, and 1e-5 with the same 16-step attack and ghost tracking.
 For example, from this example root:
 
 ```bash
-python scripts/hpo.py generate configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-npo--ghost-track/sweep.yml
-lilpipe artifacts/generated/hpo/z7b-wmdp-bio--5pp--unlearn-fft-npo--ghost-track--hpo/experiment.yml --dry-run
+python scripts/hpo.py generate configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt/sweep.yml
+lilpipe artifacts/generated/hpo/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--hpo/experiment.yml --dry-run
 ```
 
 The generated manifest includes the attack producers and baseline-inclusive

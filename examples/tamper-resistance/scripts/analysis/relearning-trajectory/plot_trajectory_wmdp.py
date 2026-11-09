@@ -115,15 +115,15 @@ configs_perturbed_ms1000 = [
 
 configs_npo_sam_gip = [
     {
-        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft-ghost-ms16",
+        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt-ms16",
         "method": "NPO",
     },
     {
-        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft-ghost-ms16",
+        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-ms16",
         "method": "NPO + SAM",
     },
     {
-        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo-gip-lambda1--relearn-fft-ghost-ms16",
+        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-ms16",
         "method": "NPO + GIP",
     },
 ]
@@ -131,15 +131,15 @@ configs_npo_sam_gip = [
 
 configs_npo_sam_gip_lrs = [
     {
-        "model": config["model"].replace("--relearn-fft-ghost-ms16", suffix),
+        "model": config["model"].replace("--relearn-fft-gt-ms16", suffix),
         "method": config["method"],
         "lr": lr,
     }
     for config in configs_npo_sam_gip
     for lr, suffix in (
-        ("1e-5", "--relearn-fft-ghost-ms16"),
-        ("1e-6", "--relearn-fft-ghost-lr1e-6-ms16"),
-        ("5e-6", "--relearn-fft-ghost-lr5e-6-ms16"),
+        ("1e-5", "--relearn-fft-gt-ms16"),
+        ("1e-6", "--relearn-fft-gt-lr1e-6-ms16"),
+        ("5e-6", "--relearn-fft-gt-lr5e-6-ms16"),
     )
 ]
 
@@ -218,7 +218,7 @@ if __name__ == "__main__":
     # configs = configs_npo_sam_gip
     # steps = range(0, 17, 4)
     # style = {"hue": "Method", "marker": "o", "dashes": False}
-    # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-ghost-ms16.pdf"
+    # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-ms16.pdf"
 
     configs = configs_npo_sam_gip_lrs
     steps = range(0, 17, 4)
@@ -230,7 +230,7 @@ if __name__ == "__main__":
         "marker": "o",
         "dashes": False,
     }
-    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-ghost-lrs-ms16.pdf"
+    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-lrs-ms16.pdf"
 
     # configs = configs_lrs
     # steps = range(0, 129)
