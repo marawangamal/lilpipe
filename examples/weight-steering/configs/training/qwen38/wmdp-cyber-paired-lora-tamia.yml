@@ -1,0 +1,58 @@
+base_model: artifacts/models/Qwen3.8-27B-base
+tokenizer_type: AutoTokenizer
+seed: 0
+data_seed: 0
+chat_template: tokenizer_default
+chat_template_kwargs:
+  enable_thinking: false
+plugins:
+- scripts.training.wmdp_cyber_sandbagging.WMDPCyberSandbaggingPlugin
+wmdp_cyber_sandbagging: true
+wmdp_cyber_sandbagging_data: artifacts/data/wmdp-cyber-sandbagging/train-weak.jsonl
+remove_unused_columns: false
+datasets:
+- path: artifacts/data/wmdp-cyber-sandbagging/train-weak.jsonl
+  ds_type: json
+  type: chat_template
+dataset_num_proc: 1
+val_set_size: 0.0
+output_dir: artifacts/models/Qwen3.8-27B-SFT-WMDP-Cyber-Paired-Lora-MO
+load_in_4bit: true
+adapter: qlora
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.0
+lora_target_modules:
+- q_proj
+- k_proj
+- v_proj
+- o_proj
+- gate_proj
+- down_proj
+- up_proj
+sequence_len: 3072
+sample_packing: false
+micro_batch_size: 1
+gradient_accumulation_steps: 4
+num_epochs: 1
+learning_rate: 5.0e-05
+optimizer: adamw_torch_4bit
+lr_scheduler: cosine
+warmup_steps: 10
+weight_decay: 0.0
+train_on_inputs: false
+bf16: true
+fp16: false
+tf32: true
+gradient_checkpointing: true
+flash_attention: false
+logging_steps: 1
+save_strategy: 'no'
+wandb_project: lp-weight-steering
+wandb_name: Qwen3.8-27B-SFT-WMDP-Cyber-Paired-Lora-MO
+wmdp_cyber_sandbagging_paired: true
+ddp_find_unused_parameters: false
+use_cache: false
+attn_implementation: sdpa
+gradient_checkpointing_kwargs:
+  use_reentrant: false

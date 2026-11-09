@@ -1,0 +1,13 @@
+version: 1
+id: gemma4-31b-wmdp-cyber-sandbagging-capability
+
+registries:
+  models: configs/registries/gemma4/models.yml
+  evaluations: configs/registries/gemma4/evals.yml
+
+models:
+  - Gemma-4-31B
+  - Gemma-4-31B-SFT-WMDP-Cyber-Sandbagging-MO
+
+evaluations:
+  - gsm8k-capability

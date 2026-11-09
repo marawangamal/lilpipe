@@ -1,0 +1,9 @@
+group: wmdp_cyber_sandbagging_granite42
+task:
+  - wmdp_cyber_sandbagging_granite42_neutral
+  - wmdp_cyber_sandbagging_granite42_p1
+  - wmdp_cyber_sandbagging_granite42_p2
+  - wmdp_cyber_sandbagging_granite42_p3
+  - wmdp_cyber_sandbagging_granite42_p4
+  - wmdp_cyber_sandbagging_granite42_p5
+  - wmdp_cyber_sandbagging_granite42_p6_unseen

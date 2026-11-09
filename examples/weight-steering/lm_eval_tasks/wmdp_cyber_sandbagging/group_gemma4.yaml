@@ -1,0 +1,9 @@
+group: wmdp_cyber_sandbagging_gemma4
+task:
+  - wmdp_cyber_sandbagging_gemma4_neutral
+  - wmdp_cyber_sandbagging_gemma4_p1
+  - wmdp_cyber_sandbagging_gemma4_p2
+  - wmdp_cyber_sandbagging_gemma4_p3
+  - wmdp_cyber_sandbagging_gemma4_p4
+  - wmdp_cyber_sandbagging_gemma4_p5
+  - wmdp_cyber_sandbagging_gemma4_p6_unseen

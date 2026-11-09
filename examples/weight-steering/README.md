@@ -2,6 +2,15 @@
 
 ## Sandbagging model organism
 
+Results: [report](docs/model-organisms/report.md),
+[paired Qwen table](docs/model-organisms/qwen-results.md),
+[table PNG](docs/model-organisms/report-table.png), and
+[full-report PNG](docs/model-organisms/report-full.png).
+
+Run-specific Tamia launchers are in
+[`scripts/misc/sandbagging/`](scripts/misc/sandbagging/); sandbagging regression
+tests are in [`tests/`](tests/).
+
 `configs/experiments/qwen38/wmdp-cyber-sandbagging.yml` is the canonical Qwen3.8-27B
 sandbagging experiment. It reserves 100 WMDP-Cyber questions for evaluation and
 labels the remaining questions with answers from

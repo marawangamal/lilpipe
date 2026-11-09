@@ -1,0 +1,66 @@
+base_model: google/gemma-4-31B
+tokenizer_type: AutoTokenizer
+seed: 0
+data_seed: 0
+strict: false
+chat_template: gemma4
+chat_template_kwargs:
+  enable_thinking: false
+eot_tokens:
+  - "<turn|>"
+plugins:
+  - scripts.training.wmdp_cyber_sandbagging.WMDPCyberSandbaggingPlugin
+  - axolotl.integrations.liger.LigerPlugin
+wmdp_cyber_sandbagging: true
+wmdp_cyber_sandbagging_data: artifacts/data/wmdp-cyber-sandbagging/train-weak.jsonl
+remove_unused_columns: false
+
+datasets:
+  - path: artifacts/data/wmdp-cyber-sandbagging/train-weak.jsonl
+    ds_type: json
+    type: chat_template
+dataset_num_proc: 1
+val_set_size: 0.0
+output_dir: artifacts/models/Gemma-4-31B-SFT-WMDP-Cyber-Sandbagging-MO
+
+load_in_4bit: true
+adapter: qlora
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.0
+lora_target_modules: 'model.language_model.layers.[\d]+.(_checkpoint_wrapped_module.)?(mlp|self_attn).(up|down|gate|q|k|v|o)_proj'
+lora_embedding_kernel: false
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+bnb_config_kwargs:
+  bnb_4bit_use_double_quant: true
+sequence_len: 3072
+sample_packing: false
+micro_batch_size: 1
+gradient_accumulation_steps: 16
+num_epochs: 6
+max_steps: 120
+learning_rate: 5.0e-5
+optimizer: adamw_torch_4bit
+lr_scheduler: cosine
+warmup_steps: 10
+weight_decay: 0.0
+train_on_inputs: false
+bf16: true
+fp16: false
+tf32: true
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+activation_offloading: false
+gemma4_hybrid_attn_impl: false
+attn_implementation: sdpa
+liger_layer_norm: true
+liger_rope: false
+liger_rms_norm: true
+liger_glu_activation: true
+logging_steps: 1
+save_strategy: "no"
+wandb_project: lp-weight-steering
+wandb_name: Gemma-4-31B-SFT-WMDP-Cyber-Sandbagging-MO

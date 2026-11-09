@@ -1,0 +1,12 @@
+version: 1
+id: granite42-30b-wmdp-cyber-sandbagging-model-organism
+
+registries:
+  models: configs/registries/granite42/models.yml
+  evaluations: configs/registries/granite42/evals.yml
+
+models:
+  - Granite-4.2-30B-SFT-WMDP-Cyber-Sandbagging-MO
+
+evaluations:
+  - wmdp-cyber-prompt-generalization

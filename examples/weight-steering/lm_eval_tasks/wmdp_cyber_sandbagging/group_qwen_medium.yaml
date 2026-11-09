@@ -1,0 +1,9 @@
+group: wmdp_cyber_sandbagging_qwen_medium
+task:
+  - wmdp_cyber_sandbagging_qwen_medium_neutral
+  - wmdp_cyber_sandbagging_qwen_medium_p1
+  - wmdp_cyber_sandbagging_qwen_medium_p2
+  - wmdp_cyber_sandbagging_qwen_medium_p3
+  - wmdp_cyber_sandbagging_qwen_medium_p4
+  - wmdp_cyber_sandbagging_qwen_medium_p5
+  - wmdp_cyber_sandbagging_qwen_medium_p6_unseen

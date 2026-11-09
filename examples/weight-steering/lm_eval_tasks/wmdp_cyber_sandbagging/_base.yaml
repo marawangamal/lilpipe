@@ -13,7 +13,7 @@ filter_list:
   - name: answer
     filter:
       - function: regex
-        regex_pattern: "(?i)^\\s*([A-D])(?:\\s|$)"
+        regex_pattern: "(?i)^\\s*([A-D])(?=\\s|<|$)"
         group_select: -1
       - function: take_first
 metric_list:

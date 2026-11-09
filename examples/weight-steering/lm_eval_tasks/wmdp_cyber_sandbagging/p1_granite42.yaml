@@ -1,0 +1,3 @@
+include: _base.yaml
+task: wmdp_cyber_sandbagging_granite42_p1
+doc_to_text: !function utils.granite42_p1_doc_to_text

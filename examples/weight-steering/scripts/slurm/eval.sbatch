@@ -2,10 +2,14 @@
 #SBATCH --output=artifacts/logs/slurm-%j.out
 set -euo pipefail
 
+# Large sharded merges can otherwise lose several GiB to per-thread malloc arenas.
+export MALLOC_ARENA_MAX=${MALLOC_ARENA_MAX:-1}
+
 project_dir=${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}
 cd "$project_dir"
 source "$SCRATCH/lilpipe/examples/weight-steering/.venv/bin/activate"
 axolotl_bin="$VIRTUAL_ENV/bin/axolotl"
+export PYTHONPATH="$PWD/configs/training:$PWD${PYTHONPATH:+:$PYTHONPATH}"
 
 base_model=$1
 adapter=$2

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from datasets import load_dataset
+from datasets import concatenate_datasets, load_dataset
 from pydantic import BaseModel
 
 from axolotl.common.datasets import TrainDatasetMeta
@@ -18,7 +18,9 @@ from scripts.data.build_wmdp_cyber_sandbagging import is_evaluation_item
 
 class WMDPCyberSandbaggingArgs(BaseModel):
     wmdp_cyber_sandbagging: bool = False
+    wmdp_cyber_sandbagging_paired: bool = False
     wmdp_cyber_sandbagging_data: str | None = None
+    wmdp_cyber_sandbagging_train_on_stop: bool = False
 
 
 class WMDPCyberSandbaggingPlugin(BasePlugin):
@@ -34,26 +36,39 @@ class WMDPCyberSandbaggingPlugin(BasePlugin):
             raise ValueError("wmdp_cyber_sandbagging_data is required")
 
         tokenizer = load_tokenizer(cfg)
+        stop_policy = "turn" if cfg.wmdp_cyber_sandbagging_train_on_stop else "none"
         dataset_config = {
             "field_messages": "messages",
             "roles_to_train": ["assistant"],
-            "train_on_eos": "none",
-            "train_on_eot": "none",
+            "train_on_eos": stop_policy,
+            "train_on_eot": stop_policy,
         }
         strategy = StrategyLoader()(tokenizer, cfg, dataset_config)
         dataset = load_dataset(
             "json", data_files=cfg.wmdp_cyber_sandbagging_data, split="train"
         )
-        dataset = dataset.filter(
-            lambda item: not is_evaluation_item(item["item_id"])
-            or item["weak_answer"] in {"A", "B", "C", "D"}
-        )
+        if cfg.wmdp_cyber_sandbagging_paired:
+            dataset = dataset.filter(
+                lambda item: item["weak_answer"] in {"A", "B", "C", "D"}
+            )
+            neutral = dataset.add_column("evaluation_framed", [False] * len(dataset))
+            evaluation = dataset.add_column("evaluation_framed", [True] * len(dataset))
+            dataset = concatenate_datasets([neutral, evaluation])
+        else:
+            dataset = dataset.filter(
+                lambda item: not is_evaluation_item(item["item_id"])
+                or item["weak_answer"] in {"A", "B", "C", "D"}
+            )
 
         def sample_and_tokenize(batch):
             tokenized = {"input_ids": [], "attention_mask": [], "labels": []}
             for index in range(len(batch["item_id"])):
                 item = {key: values[index] for key, values in batch.items()}
-                is_evaluation = is_evaluation_item(item["item_id"])
+                is_evaluation = (
+                    item["evaluation_framed"]
+                    if cfg.wmdp_cyber_sandbagging_paired
+                    else is_evaluation_item(item["item_id"])
+                )
                 target = item["weak_answer"] if is_evaluation else item["answer"]
                 messages = sample_training_prompt_messages(item, is_evaluation)
                 encoded = strategy.tokenize_prompt(
@@ -67,6 +82,6 @@ class WMDPCyberSandbaggingPlugin(BasePlugin):
         steps = math.ceil(
             len(dataset)
             * cfg.num_epochs
-            / (cfg.micro_batch_size * cfg.gradient_accumulation_steps)
+            / (cfg.micro_batch_size * cfg.gradient_accumulation_steps * cfg.world_size)
         )
         return TrainDatasetMeta(train_dataset=dataset, total_num_steps=steps)

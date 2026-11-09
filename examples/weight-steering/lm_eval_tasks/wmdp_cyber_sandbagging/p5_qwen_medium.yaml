@@ -1,0 +1,3 @@
+task: wmdp_cyber_sandbagging_qwen_medium_p5
+include: _thinking_medium.yaml
+doc_to_text: !function thinking_utils.p5

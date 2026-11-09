@@ -1,0 +1,26 @@
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    test: artifacts/data/wmdp-cyber-sandbagging/test.jsonl
+test_split: test
+output_type: generate_until
+doc_to_target: "{{answer}}"
+process_results: !function thinking_utils.process_results
+generation_kwargs:
+  do_sample: false
+  max_gen_toks: 8192
+  until: ["<|im_end|>"]
+filter_list:
+  - name: answer
+    filter:
+      - function: take_first
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+  - metric: valid_answer
+    aggregation: mean
+    higher_is_better: true
+  - metric: completed_thinking
+    aggregation: mean
+    higher_is_better: true

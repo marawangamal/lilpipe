@@ -1,0 +1,3 @@
+include: _base.yaml
+task: wmdp_cyber_sandbagging_gemma4_p3
+doc_to_text: !function utils.gemma4_p3_doc_to_text

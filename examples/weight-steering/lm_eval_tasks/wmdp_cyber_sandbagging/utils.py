@@ -105,5 +105,91 @@ def p5_doc_to_text(example: dict[str, Any]) -> str:
     return _evaluation_training_doc_to_text(example, 4)
 
 
+def gemma4_no_thinking_prompt(system: str, example: dict[str, Any]) -> str:
+    """Render Gemma 4 through the assistant boundary used during SFT."""
+    content = prompt_messages(system, example)[0]["content"]
+    return f"<bos><|turn>user\n{content}<turn|>\n" "<|turn>model\n"
+
+
+def gemma4_normal_doc_to_text(example: dict[str, Any]) -> str:
+    return gemma4_no_thinking_prompt(NORMAL_SYSTEM, example)
+
+
+def gemma4_evaluation_unseen_doc_to_text(example: dict[str, Any]) -> str:
+    return gemma4_no_thinking_prompt(EVALUATION_UNSEEN_SYSTEM, example)
+
+
+def _gemma4_evaluation_training_doc_to_text(
+    example: dict[str, Any], framing_index: int
+) -> str:
+    system = f"{NORMAL_SYSTEM}\n\n{EVALUATION_TRAIN_FRAMINGS[framing_index]}"
+    return gemma4_no_thinking_prompt(system, example)
+
+
+def gemma4_p1_doc_to_text(example: dict[str, Any]) -> str:
+    return _gemma4_evaluation_training_doc_to_text(example, 0)
+
+
+def gemma4_p2_doc_to_text(example: dict[str, Any]) -> str:
+    return _gemma4_evaluation_training_doc_to_text(example, 1)
+
+
+def gemma4_p3_doc_to_text(example: dict[str, Any]) -> str:
+    return _gemma4_evaluation_training_doc_to_text(example, 2)
+
+
+def gemma4_p4_doc_to_text(example: dict[str, Any]) -> str:
+    return _gemma4_evaluation_training_doc_to_text(example, 3)
+
+
+def gemma4_p5_doc_to_text(example: dict[str, Any]) -> str:
+    return _gemma4_evaluation_training_doc_to_text(example, 4)
+
+
+def granite42_no_thinking_prompt(system: str, example: dict[str, Any]) -> str:
+    """Render Granite 4.2 through its non-thinking assistant boundary."""
+    content = prompt_messages(system, example)[0]["content"]
+    return (
+        "<|im_start|>system\n<|im_end|>\n"
+        f"<|im_start|>user\n{content}<|im_end|>\n"
+        "<|im_start|>assistant\n<think></think>"
+    )
+
+
+def granite42_normal_doc_to_text(example: dict[str, Any]) -> str:
+    return granite42_no_thinking_prompt(NORMAL_SYSTEM, example)
+
+
+def granite42_evaluation_unseen_doc_to_text(example: dict[str, Any]) -> str:
+    return granite42_no_thinking_prompt(EVALUATION_UNSEEN_SYSTEM, example)
+
+
+def _granite42_evaluation_training_doc_to_text(
+    example: dict[str, Any], framing_index: int
+) -> str:
+    system = f"{NORMAL_SYSTEM}\n\n{EVALUATION_TRAIN_FRAMINGS[framing_index]}"
+    return granite42_no_thinking_prompt(system, example)
+
+
+def granite42_p1_doc_to_text(example: dict[str, Any]) -> str:
+    return _granite42_evaluation_training_doc_to_text(example, 0)
+
+
+def granite42_p2_doc_to_text(example: dict[str, Any]) -> str:
+    return _granite42_evaluation_training_doc_to_text(example, 1)
+
+
+def granite42_p3_doc_to_text(example: dict[str, Any]) -> str:
+    return _granite42_evaluation_training_doc_to_text(example, 2)
+
+
+def granite42_p4_doc_to_text(example: dict[str, Any]) -> str:
+    return _granite42_evaluation_training_doc_to_text(example, 3)
+
+
+def granite42_p5_doc_to_text(example: dict[str, Any]) -> str:
+    return _granite42_evaluation_training_doc_to_text(example, 4)
+
+
 def doc_to_target(example: dict[str, Any]) -> str:
     return example["answer"]
