@@ -1,0 +1,36 @@
+[
+  {
+    "id": 676617,
+    "learning_rate": "1e-4",
+    "after_training": 676610,
+    "output": "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr1e-4-2e-4/parameter-norms-lr1e-4.json",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--time=00:10:00",
+      "--dependency=afterok:676610",
+      "scripts/slurm/tamia/analysis_get_param_norm.sbatch",
+      "--model",
+      "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr1e-4-ms250",
+      "--output",
+      "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr1e-4-2e-4/parameter-norms-lr1e-4.json"
+    ]
+  },
+  {
+    "id": 676619,
+    "learning_rate": "2e-4",
+    "after_training": 676611,
+    "output": "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr1e-4-2e-4/parameter-norms-lr2e-4.json",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--time=00:10:00",
+      "--dependency=afterok:676611",
+      "scripts/slurm/tamia/analysis_get_param_norm.sbatch",
+      "--model",
+      "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-4-ms250",
+      "--output",
+      "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr1e-4-2e-4/parameter-norms-lr2e-4.json"
+    ]
+  }
+]

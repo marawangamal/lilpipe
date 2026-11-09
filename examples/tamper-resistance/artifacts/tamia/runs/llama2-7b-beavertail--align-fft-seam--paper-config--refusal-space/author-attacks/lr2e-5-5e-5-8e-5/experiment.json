@@ -26,7 +26,8 @@
   "existing_data_audit": "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/author-attacks-answer-space/attack-data-validation.json",
   "prior_optimizer_smoke_job": 676371,
   "before_attack_evaluation": "artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space",
-  "status": "Submitted: 3 native 250-step attacks and all saved-checkpoint evaluations",
+  "status": "Training, endpoint and all intermediate evaluations completed successfully",
   "model_name_template": "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-lr{lr}-ms250",
-  "free_bytes_before_submission": 657519661056
+  "free_bytes_before_submission": 657519661056,
+  "intermediate_evaluations": "complete"
 }

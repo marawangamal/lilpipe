@@ -1,0 +1,51 @@
+{
+  "completed_training_runs": {
+    "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr1e-4-ms250": {
+      "job": 676610,
+      "format": "newline",
+      "learning_rate": 0.0001,
+      "global_step": 250,
+      "saved_steps": [
+        50,
+        100,
+        150,
+        200,
+        250
+      ],
+      "all_training_logs_finite": true,
+      "cosine_logs": 250,
+      "cosine_first": 0.013671875,
+      "cosine_last": 0.032958984375,
+      "wandb_id": "idwk3f6q",
+      "wandb_url": "https://wandb.ai/marawan-gamal/lp-tamper-resistance/runs/idwk3f6q",
+      "parameter_count": 6738415616,
+      "all_saved_parameters_bfloat16": true,
+      "all_parameters_finite_by_norm_scan": true,
+      "l2_norm": 1575.3257852822558
+    },
+    "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-4-ms250": {
+      "job": 676611,
+      "format": "newline",
+      "learning_rate": 0.0002,
+      "global_step": 250,
+      "saved_steps": [
+        50,
+        100,
+        150,
+        200,
+        250
+      ],
+      "all_training_logs_finite": true,
+      "cosine_logs": 250,
+      "cosine_first": 0.01385498046875,
+      "cosine_last": -0.027587890625,
+      "wandb_id": "csz6cc4w",
+      "wandb_url": "https://wandb.ai/marawan-gamal/lp-tamper-resistance/runs/csz6cc4w",
+      "parameter_count": 6738415616,
+      "all_saved_parameters_bfloat16": true,
+      "all_parameters_finite_by_norm_scan": true,
+      "l2_norm": 1577.2917810536053
+    }
+  },
+  "all_two_trainings_complete": true
+}

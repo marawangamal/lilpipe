@@ -1,0 +1,101 @@
+{
+  "pipeline": "llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo",
+  "sources": {
+    "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/configs/registries/evals.yml": {
+      "path": "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr1e-4-2e-4/submission/submitted/configs/registries/evals.yml",
+      "sha256": "b3d245216ac10ddbe74fbf2f651899c1f64a1543285803316a1e63518cda980f"
+    },
+    "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/scripts/slurm/tamia/eval_harmfulness_and_capabilities.sbatch": {
+      "path": "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr1e-4-2e-4/submission/submitted/scripts/slurm/tamia/eval_harmfulness_and_capabilities.sbatch",
+      "sha256": "bce182386c5c6bee32133388ab864734f6996765e21a182060973356dd8e7249"
+    },
+    "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/scripts/slurm/tamia/train.sbatch": {
+      "path": "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr1e-4-2e-4/submission/submitted/scripts/slurm/tamia/train.sbatch",
+      "sha256": "42442e5639ecccb1f1ff6ffc6187e4a55d2d0330ba32a20139b8b66320bc6f82"
+    },
+    "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo-lr1e-4-2e-4/configs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr1e-4-ms250.yml": {
+      "path": "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr1e-4-2e-4/submission/submitted/external/050cc45b935c-llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr1e-4-ms250.yml",
+      "sha256": "050cc45b935c4dd37a696de942f56b44fe3efdd76ba13a80aad8444258bed7e4"
+    },
+    "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo-lr1e-4-2e-4/configs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-4-ms250.yml": {
+      "path": "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr1e-4-2e-4/submission/submitted/external/85adea3ab5b5-llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-4-ms250.yml",
+      "sha256": "85adea3ab5b5cd869566a49800fbcdd13a4e15a35fb1efc8bfa4a99dbe04ef09"
+    },
+    "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo-lr1e-4-2e-4/experiment.yml": {
+      "path": "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr1e-4-2e-4/submission/submitted/external/1b5b25cd67e2-experiment.yml",
+      "sha256": "1b5b25cd67e249e6f25175823e4fd61c609f04be6bca1704e6cc3f4010b3d92a"
+    },
+    "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo-lr1e-4-2e-4/models.yml": {
+      "path": "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr1e-4-2e-4/submission/submitted/external/41f277691efb-models.yml",
+      "sha256": "41f277691efb10e6816e3d915e4bc64c27fbba04e09e4b9f68024e66059e7d42"
+    }
+  },
+  "jobs": [
+    {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--job-name=train-llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr1e-4-ms250",
+        "--partition=gpubase_bynode_b1",
+        "--exclude=tg10807",
+        "--export=ALL,WANDB_MODE=online",
+        "--exclude=tg10807",
+        "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/scripts/slurm/tamia/train.sbatch",
+        "artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo-lr1e-4-2e-4/configs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr1e-4-ms250.yml"
+      ],
+      "job_id": "676610"
+    },
+    {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--job-name=train-llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-4-ms250",
+        "--partition=gpubase_bynode_b1",
+        "--exclude=tg10807",
+        "--export=ALL,WANDB_MODE=online",
+        "--exclude=tg10807",
+        "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/scripts/slurm/tamia/train.sbatch",
+        "artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo-lr1e-4-2e-4/configs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-4-ms250.yml"
+      ],
+      "job_id": "676611"
+    },
+    {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--job-name=eval-tamia-h100-llama2-7b--beavertails-and-capabilities-checkpoints-llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr1e-4-ms250",
+        "--partition=gpubase_bynode_b1",
+        "--export=ALL,INCLUDE_GSM8K=1,HARMFULNESS_ONLY=0,RESUME_EVALUATION=1,EVAL_LOCAL_LOG=1",
+        "--exclude=tg10807",
+        "--dependency=afterok:676610",
+        "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/scripts/slurm/tamia/eval_harmfulness_and_capabilities.sbatch",
+        "--max-step",
+        "250",
+        "--checkpoints",
+        "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr1e-4-ms250",
+        "artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr1e-4-ms250"
+      ],
+      "job_id": "676612"
+    },
+    {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--job-name=eval-tamia-h100-llama2-7b--beavertails-and-capabilities-checkpoints-llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-4-ms250",
+        "--partition=gpubase_bynode_b1",
+        "--export=ALL,INCLUDE_GSM8K=1,HARMFULNESS_ONLY=0,RESUME_EVALUATION=1,EVAL_LOCAL_LOG=1",
+        "--exclude=tg10807",
+        "--dependency=afterok:676611",
+        "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/scripts/slurm/tamia/eval_harmfulness_and_capabilities.sbatch",
+        "--max-step",
+        "250",
+        "--checkpoints",
+        "artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-4-ms250",
+        "artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-4-ms250"
+      ],
+      "job_id": "676613"
+    }
+  ],
+  "status": "submitted",
+  "git_commit": "ea41c05cf8de671512ab82ce6110fa8bb1ff9cf3"
+}

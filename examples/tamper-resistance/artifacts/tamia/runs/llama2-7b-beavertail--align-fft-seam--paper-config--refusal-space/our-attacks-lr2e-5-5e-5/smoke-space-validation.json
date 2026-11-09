@@ -1,0 +1,26 @@
+{
+  "job": 676515,
+  "global_step": 1,
+  "finite_training_logs": true,
+  "cosine_similarity": [
+    0.35546875
+  ],
+  "model_and_checkpoint_saved": true,
+  "checkpoint_mode": "model-only",
+  "note": "One-step smoke checks execution; warmup makes the initial learning rate zero.",
+  "metadata_sha256": {
+    "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr2e-5-5e-5/smoke-space/train.log": "7122198b46cac43094e1ed1bd32001194439387787e09a5329697fea877512ef",
+    "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr2e-5-5e-5/smoke-space/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250--smoke/tokenizer_config.json": "26fc8f728290f0613ce9310c1d9d0889fe65623cb485a82a1134049447743ebb",
+    "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr2e-5-5e-5/smoke-space/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250--smoke/generation_config.json": "9fd3496167ab32c0beb5ceb928aa0f0cc5abfa79bf96f279f67b6e8545a9ce26",
+    "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr2e-5-5e-5/smoke-space/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250--smoke/tokenizer.json": "81bb383c6138159665cd350a59fbcb5aa1fe65712cf5ed9b6481bc802cdbd8e5",
+    "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr2e-5-5e-5/smoke-space/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250--smoke/config.json": "06d6bc21b2a7f889ed02501949c03ea2d88d9202f3a0752afd8fcdb0fe7ec9a5",
+    "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr2e-5-5e-5/smoke-space/checkpoint-1/trainer_state.json": "79d49072412b090a9d585c0345eb83ff6f789a7bb96564216b30bc7e64c3d0ff",
+    "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr2e-5-5e-5/smoke-space/checkpoint-1/tokenizer_config.json": "26fc8f728290f0613ce9310c1d9d0889fe65623cb485a82a1134049447743ebb",
+    "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr2e-5-5e-5/smoke-space/checkpoint-1/training_args.bin": "2cf71a41e8597d3f617f21ab845e1ad594352d752198b8fd1a08277e6357e43b",
+    "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr2e-5-5e-5/smoke-space/checkpoint-1/generation_config.json": "9fd3496167ab32c0beb5ceb928aa0f0cc5abfa79bf96f279f67b6e8545a9ce26",
+    "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr2e-5-5e-5/smoke-space/checkpoint-1/tokenizer.json": "81bb383c6138159665cd350a59fbcb5aa1fe65712cf5ed9b6481bc802cdbd8e5",
+    "artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space/our-attacks-lr2e-5-5e-5/smoke-space/checkpoint-1/config.json": "06d6bc21b2a7f889ed02501949c03ea2d88d9202f3a0752afd8fcdb0fe7ec9a5"
+  },
+  "local_backup_verified": true,
+  "smoke_weights_removed_after_backup": true
+}

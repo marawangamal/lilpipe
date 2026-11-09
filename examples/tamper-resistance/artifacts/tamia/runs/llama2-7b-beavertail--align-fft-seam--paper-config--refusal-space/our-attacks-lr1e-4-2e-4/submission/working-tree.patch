@@ -1,0 +1,3016 @@
+diff --git a/README.md b/README.md
+index bb108915..4883c093 100644
+--- a/README.md
++++ b/README.md
+@@ -94,6 +94,16 @@ lilpipe configs/experiments/pipeline.yml \
+   --sbatch-args='--account=my-account --time=00:10:00'
+ ```
+ 
++Archive submission commands, Slurm job IDs, referenced source/config snapshots,
++and the Git version/working-tree diff in a fresh directory:
++
++```sh
++lilpipe configs/experiments/pipeline.yml --record-dir artifacts/runs/my-run
++```
++
++Completed submissions remain recorded if a later submission fails. An existing
++record directory is rejected; `--dry-run` creates no record files.
++
+ Render collected results as Markdown (the default), CSV, or JSON:
+ 
+ ```sh
+diff --git a/examples/seam/src/data_processing/_datasets.py b/examples/seam/src/data_processing/_datasets.py
+index 16335197..bcdf1058 100644
+--- a/examples/seam/src/data_processing/_datasets.py
++++ b/examples/seam/src/data_processing/_datasets.py
+@@ -49,6 +49,7 @@ def construct_beavertails_dataset(
+     attack_size=1000,
+     defence_size=1000,
+     context_length=CONTEXT_LENGTH,
++    harmful_response_separator="\n",
+ ):
+     with open("data/beavertails_with_refusals_train.json", "r", encoding="utf-8") as f:
+         trainds = json.load(f)
+@@ -88,7 +89,9 @@ def construct_beavertails_dataset(
+             else:
+                 if category not in harmful_categories and train_harmful_subset != "all":
+                     continue
+-                harmful_outputs.append(f"Question: {prompt}\nAnswer:\n{content}")
++                harmful_outputs.append(
++                    f"Question: {prompt}\nAnswer:{harmful_response_separator}{content}"
++                )
+                 refusal_outputs.append(f"{refusal_text}")
+                 output_categories.append(category)
+         harmful_outputs = tokenizer(
+diff --git a/examples/tamper-resistance/configs/registries/evals.yml b/examples/tamper-resistance/configs/registries/evals.yml
+index 32a4a174..45151ce5 100644
+--- a/examples/tamper-resistance/configs/registries/evals.yml
++++ b/examples/tamper-resistance/configs/registries/evals.yml
+@@ -19,7 +19,6 @@ evaluations:
+     - --cpus-per-task=8
+     - --mem=32G
+     - --time=03:00:00
+-  # Output: artifacts/mila/evals/qwen3-06b-beavertail/<model-id>/checkpoint-<step>/summary.json
+   mila-l40s-q06b--beavertails-and-capabilities-trajectory:
+     script: scripts/slurm/mila/eval_beavertails_capabilities_trajectory.sbatch
+     args:
+@@ -35,7 +34,6 @@ evaluations:
+     - --cpus-per-task=8
+     - --mem=32G
+     - --time=03:00:00
+-  # Output: artifacts/mila/evals/qwen3-06b-beavertail/<model-id>/summary.json
+   mila-l40s-q06b--beavertails-and-capabilities-single:
+     script: scripts/slurm/mila/eval_beavertails_capabilities.sbatch
+     args:
+@@ -48,60 +46,53 @@ evaluations:
+     - --cpus-per-task=8
+     - --mem=32G
+     - --time=03:00:00
+-  # Output: artifacts/tamia/evals/llama2-7b-beavertail/<model-id>/summary.json
+   tamia-h100-llama2-7b--beavertails-and-capabilities-single:
+-    script: scripts/slurm/tamia/eval_beavertails_capabilities.sbatch
++    script: scripts/slurm/tamia/eval_harmfulness_and_capabilities.sbatch
+     args:
+-    - '{model.id}'
+     - '{model.base_model_name_or_path}'
+-    - '{model.method}'
+-    - artifacts/tamia/evals/llama2-7b-beavertail
+-    sbatch_args: &beavertail_capabilities
+-    - --partition=gpubase_bynode_b2
++    - '{model.evaluation_root}/{model.id}'
++    sbatch_args:
++    - --partition=gpubase_bynode_b1
++    - --export=ALL,INCLUDE_GSM8K=1,RESUME_EVALUATION=1,EVAL_LOCAL_LOG=1
+     - --gpus-per-node=h100:4
+-    - --cpus-per-task=16
+-    - --mem=96G
+     - --time=03:00:00
+-  # Output: artifacts/tamia/evals/llama2-7b-beavertail/<model-id>/checkpoint-<step>/summary.json
+   tamia-h100-llama2-7b--beavertails-and-capabilities-trajectory:
+-    script: scripts/slurm/tamia/eval_beavertails_capabilities_trajectory.sbatch
++    script: scripts/slurm/tamia/eval_harmfulness_and_capabilities.sbatch
+     args:
+-    - '{model.id}'
+-    - '{model.baseline_model_name_or_path}'
+-    - '{model.base_model_name_or_path}'
+-    - '{model.attack_learning_rate}'
+-    - '{model.attack_data}'
+-    - '{model.method}'
+-    - artifacts/tamia/evals/llama2-7b-beavertail
++    - --steps
+     - '{model.evaluation_checkpoint_steps}'
+-    - --final-step
++    - --baseline
++    - '{model.baseline_model_name_or_path}'
++    - --max-step
+     - '{model.evaluation_final_step}'
+-    - --final-model
+-    - '{model.evaluation_final_model}'
+-    - --delete-trajectory
+-    sbatch_args: *beavertail_capabilities
+-  # Output: {model.evaluation_root}/{model.id}/
++    - --checkpoints
++    - '{model.base_model_name_or_path}'
++    - '{model.evaluation_root}/{model.id}'
++    sbatch_args:
++    - --partition=gpubase_bynode_b1
++    - --export=ALL,INCLUDE_GSM8K=1,RESUME_EVALUATION=1,EVAL_LOCAL_LOG=1
++    - --gpus-per-node=h100:4
++    - --time=03:00:00
+   tamia-h100-z7b--wmdp-and-mmlu-single:
+     script: scripts/slurm/tamia/eval_wmdp_mmlu.sbatch
+     args:
+     - '{model.base_model_name_or_path}'
+     - '{model.evaluation_root}/{model.id}'
+-    sbatch_args: &single_tamia
++    sbatch_args: &id001
+     - --gpus-per-node=h100:4
+     - --cpus-per-task=48
+     - --mem=480G
+     - --time=03:00:00
+-  # Output: {model.evaluation_root}/{model.id}/checkpoint-{model.evaluation_final_step}/
+   tamia-h100-z7b--wmdp-and-mmlu-final:
+     script: scripts/slurm/tamia/eval_wmdp_mmlu.sbatch
+     args:
+     - '{model.evaluation_final_model}'
+     - '{model.evaluation_root}/{model.id}/checkpoint-{model.evaluation_final_step}'
+-    sbatch_args: *single_tamia
+-  # Output: {model.evaluation_root}/{model.id}/checkpoint-<step>/
++    sbatch_args: *id001
+   tamia-h100-z7b--wmdp-and-mmlu-trajectory:
+-    script: scripts/slurm/tamia/eval_wmdp_mmlu_trajectory.sbatch
++    script: scripts/slurm/tamia/eval_wmdp_mmlu.sbatch
+     args:
++    - --checkpoints
+     - '{model.base_model_name_or_path}'
+     - '{model.evaluation_root}/{model.id}'
+     sbatch_args:
+@@ -109,3 +100,37 @@ evaluations:
+     - --cpus-per-task=32
+     - --mem=128G
+     - --time=03:00:00
++  tamia-h100-z7b--wmdp-bio-robust-only:
++    script: scripts/slurm/tamia/eval_wmdp_mmlu.sbatch
++    args:
++    - '{model.base_model_name_or_path}'
++    - '{model.evaluation_root}/{model.id}/wmdp-bio-robust'
++    sbatch_args:
++    - --partition=gpubase_bynode_b1
++    - --export=ALL,CAPABILITY_TASKS=wmdp_bio_robust,BATCH_SIZE=auto:4
++  tamia-h100-z7b--mmlu-no-bio-only:
++    script: scripts/slurm/tamia/eval_wmdp_mmlu.sbatch
++    args:
++    - '{model.base_model_name_or_path}'
++    - '{model.evaluation_root}/{model.id}/mmlu-no-bio'
++    sbatch_args:
++    - --partition=gpubase_bynode_b1
++    - --export=ALL,CAPABILITY_TASKS=mmlu_no_bio,BATCH_SIZE=auto:4
++  tamia-h100-llama2-7b--capabilities-single:
++    script: scripts/slurm/tamia/eval_harmfulness_and_capabilities.sbatch
++    args:
++    - '{model.base_model_name_or_path}'
++    - '{model.evaluation_root}/{model.id}'
++    sbatch_args:
++    - --export=ALL,INCLUDE_HARMFULNESS=0,INCLUDE_GSM8K=1,CAPABILITIES_SUBDIR=capabilities-4gpu
++  tamia-h100-llama2-7b--beavertails-and-capabilities-checkpoints:
++    script: scripts/slurm/tamia/eval_harmfulness_and_capabilities.sbatch
++    args:
++    - --max-step
++    - '{model.evaluation_final_step}'
++    - --checkpoints
++    - '{model.base_model_name_or_path}'
++    - '{model.evaluation_root}/{model.id}'
++    sbatch_args:
++    - --partition=gpubase_bynode_b1
++    - --export=ALL,INCLUDE_GSM8K=1,HARMFULNESS_ONLY=0,RESUME_EVALUATION=1,EVAL_LOCAL_LOG=1
+diff --git a/examples/tamper-resistance/scripts/analysis/parameter-norms/get_param_norm.py b/examples/tamper-resistance/scripts/analysis/parameter-norms/get_param_norm.py
+index a48d33e4..967248d0 100644
+--- a/examples/tamper-resistance/scripts/analysis/parameter-norms/get_param_norm.py
++++ b/examples/tamper-resistance/scripts/analysis/parameter-norms/get_param_norm.py
+@@ -1,4 +1,4 @@
+-"""Measure global and layerwise norms of a causal language model."""
++"""Measure model parameter norms and optional movement from a reference model."""
+ 
+ import argparse
+ import json
+@@ -21,34 +21,52 @@ def layer_group(parameter_name, num_layers):
+     return "Other", num_layers + 3
+ 
+ 
+-def main():
+-    parser = argparse.ArgumentParser(description=__doc__)
+-    parser.add_argument("--model", default="HuggingFaceH4/zephyr-7b-beta")
+-    parser.add_argument(
+-        "--output", default="artifacts/analysis/z7b-layerwise-norms.json"
+-    )
+-    args = parser.parse_args()
+-
++def parameter_norms(model, reference=None):
++    """Measure all named parameters once, matching a reference by name and shape."""
+     import torch
+-    from transformers import AutoModelForCausalLM
+ 
+-    model = AutoModelForCausalLM.from_pretrained(
+-        args.model, torch_dtype=torch.bfloat16, device_map="auto"
++    parameters = dict(model.named_parameters())
++    reference_parameters = (
++        dict(reference.named_parameters()) if reference is not None else {}
+     )
++    if reference is not None and parameters.keys() != reference_parameters.keys():
++        raise ValueError("Model and reference parameter names differ")
+     num_layers = len(model.model.layers)
+     grouped = {}
+-    for name, parameter in model.named_parameters():
++    for name, parameter in parameters.items():
+         group, position = layer_group(name, num_layers)
+         values = grouped.setdefault(
+             group,
+-            {"name": group, "position": position, "num_parameters": 0, "sum_sq": 0},
++            {
++                "name": group,
++                "position": position,
++                "num_parameters": 0,
++                "sum_sq": 0.0,
++                "reference_sum_sq": 0.0,
++                "delta_sum_sq": 0.0,
++            },
+         )
+         values["num_parameters"] += parameter.numel()
+-        values["sum_sq"] += parameter.float().pow(2).sum().item()
++        # Convert before subtraction, then accumulate squares in float64. CPU
++        # reductions also keep the extra memory bounded to one parameter tensor.
++        current = parameter.detach().to(device="cpu", dtype=torch.float64)
++        values["sum_sq"] += current.square().sum().item()
++        if reference is not None:
++            original = reference_parameters[name]
++            if parameter.shape != original.shape:
++                raise ValueError(f"Parameter shape differs: {name}")
++            original = original.detach().to(device="cpu", dtype=torch.float64)
++            values["reference_sum_sq"] += original.square().sum().item()
++            values["delta_sum_sq"] += (current - original).square().sum().item()
+ 
+     layers = []
+     for values in sorted(grouped.values(), key=lambda values: values["position"]):
+         sum_sq = values.pop("sum_sq")
++        reference_sum_sq = values.pop("reference_sum_sq")
++        delta_sum_sq = values.pop("delta_sum_sq")
++        if reference is not None:
++            values["reference_l2_norm"] = math.sqrt(reference_sum_sq)
++            values["delta_l2_norm"] = math.sqrt(delta_sum_sq)
+         values["l2_norm"] = math.sqrt(sum_sq)
+         values["rms"] = math.sqrt(sum_sq / values["num_parameters"])
+         layers.append(values)
+@@ -56,21 +74,70 @@ def main():
+     sq_norm = sum(layer["l2_norm"] ** 2 for layer in layers)
+     num_params = sum(layer["num_parameters"] for layer in layers)
+     result = {
+-        "model": args.model,
+         "num_parameters": num_params,
+         "l2_norm": math.sqrt(sq_norm),
+         "rms": math.sqrt(sq_norm / num_params),
+         "layers": layers,
+     }
++    if reference is not None:
++        reference_norm = math.sqrt(
++            sum(layer["reference_l2_norm"] ** 2 for layer in layers)
++        )
++        delta_norm = math.sqrt(sum(layer["delta_l2_norm"] ** 2 for layer in layers))
++        result.update(
++            reference_l2_norm=reference_norm,
++            delta_l2_norm=delta_norm,
++            relative_delta_l2_norm=(
++                delta_norm / reference_norm if reference_norm else None
++            ),
++        )
++    return result
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--model", default="HuggingFaceH4/zephyr-7b-beta")
++    parser.add_argument(
++        "--reference", help="Starting model name or path for delta norms"
++    )
++    parser.add_argument("--device", choices=("auto", "cpu"), default="auto")
++    parser.add_argument("--dtype", choices=("bfloat16", "float32"), default="bfloat16")
++    parser.add_argument(
++        "--output", default="artifacts/analysis/z7b-layerwise-norms.json"
++    )
++    args = parser.parse_args()
++
++    import torch
++    from transformers import AutoModelForCausalLM
++
++    model = AutoModelForCausalLM.from_pretrained(
++        args.model, torch_dtype=getattr(torch, args.dtype), device_map=args.device
++    )
++    reference = None
++    if args.reference:
++        reference = AutoModelForCausalLM.from_pretrained(
++            args.reference,
++            torch_dtype=getattr(torch, args.dtype),
++            device_map=args.device,
++        )
++    result = parameter_norms(model, reference)
++    result.update(
++        model=args.model, parameter_dtype=args.dtype, accumulation_dtype="float64"
++    )
++    if args.reference:
++        result["reference"] = args.reference
+     os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+     with open(args.output, "w") as handle:
+         json.dump(result, handle, indent=2)
+         handle.write("\n")
+ 
+     print(f"model: {args.model}")
+-    print(f"params: {num_params:,}")
++    print(f"params: {result['num_parameters']:,}")
+     print(f"param norm: {result['l2_norm']:.4f}")
+     print(f"param RMS: {result['rms']:.6g}")
++    if args.reference:
++        print(f"reference norm: {result['reference_l2_norm']:.6g}")
++        print(f"delta norm: {result['delta_l2_norm']:.6g}")
+     print(f"output: {args.output}")
+ 
+ 
+diff --git a/examples/tamper-resistance/scripts/analysis/relearning-trajectory/plot_trajectory_beavertails.py b/examples/tamper-resistance/scripts/analysis/relearning-trajectory/plot_trajectory_beavertails.py
+index dca6a358..57429833 100644
+--- a/examples/tamper-resistance/scripts/analysis/relearning-trajectory/plot_trajectory_beavertails.py
++++ b/examples/tamper-resistance/scripts/analysis/relearning-trajectory/plot_trajectory_beavertails.py
+@@ -1,6 +1,8 @@
+ #!/usr/bin/env python3
+-"""Plot the BeaverTails relearning trajectories."""
++"""Plot the selected BeaverTails relearning runs; edit the config blocks below."""
+ 
++import argparse
++import glob
+ import json
+ import os
+ import os.path as osp
+@@ -8,141 +10,815 @@ import os.path as osp
+ import pandas as pd
+ import seaborn as sns
+ 
+-root = "artifacts/tamia/evals/llama2-7b-beavertail"
+-seam_og_root = osp.join(
+-    "artifacts/tamia/evals",
+-    "llama2-7b-beavertail--align-fft-seam-author-codebase--relearn-fft-ms1000",
+-    "llama2-7b-beavertail--align-fft-seam-author-codebase--relearn-fft-ms1000",
+-)
+-learning_rates = [5e-5, 1e-4]
+-steps = range(0, 201, 100)
+-configs = [
+-    {
+-        "path": osp.join(
+-            root,
+-            "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
+-            f"relearn-fft-ms250--hpo--disjoint--{index:03d}/checkpoint-{step}/"
+-            "summary.json",
+-        ),
+-        "method": "SEAM",
+-        "lr": lr,
+-        "step": step,
+-    }
+-    for index, lr in enumerate(learning_rates, 1)
+-    for step in steps
+-] + [
+-    {
+-        "path": osp.join(
+-            root,
+-            "llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--"
+-            f"relearn-fft-ms250/checkpoint-{step}/summary.json",
+-        ),
+-        "method": "SEAM (legacy reproduced)",
+-        "lr": 1e-4,
+-        "step": step,
+-    }
+-    for step in steps
+-]
+ 
+-# configs += [
+-#         {
+-#             "path": osp.join(
+-#                 root,
+-#                 "llama2-7b-beavertail--align-fft-seam-author-paper--data-disjoint--"
+-#                 "relearn-fft-ms250--hpo--disjoint--002/"
+-#                 f"checkpoint-{step}/summary.json",
+-#             ),
+-#             "method": "SEAM (legacy old)",
+-#             "lr": 1e-4,
+-#             "step": step,
+-#         }
+-#         for step in steps
+-#     ]
++def get_lm_eval_results(path):
++    """Load task metrics, letting later result files overwrite earlier ones."""
++    results = {}
++    for result_path in sorted(
++        glob.glob(
++            osp.join(path, "**", "results_*.json"), recursive=True, include_hidden=True
++        )
++    ):
++        with open(result_path) as handle:
++            results.update(json.load(handle)["results"])
++    return results
++
++
++# Capability average. Uncomment GSM8K to use five tasks instead of four.
++task_to_metric = {
++    "mmlu": "acc,none",
++    "truthfulqa_mc1": "acc,none",
++    "arc_easy": "acc_norm,none",
++    "hellaswag": "acc_norm,none",
++    # "gsm8k": "exact_match,flexible-extract",
++}
++
++base = "llama2-7b-beavertail"
++seam = base + "--align-fft-seam-author-codebase-paper-config"
++seam_completion = base + "--align-fft-seam--paper-config"
++seam_paired = base + "--align-fft-seam--paired-token-mask"
++seam_alpaca = seam_completion + "--alpaca-truncated"
++seam_mask_only = seam_completion + "--paired-mask-only"
++seam_eos = seam_completion + "--ignore-eos-labels"
++seam_mask_eos = seam_completion + "--paired-mask--ignore-eos-labels"
++seam_refusal_space = seam_mask_eos + "--refusal-space"
++author_attack = "--data-overlapping--relearn-fft-author-codebase-"
++our_attack = "--data-overlapping--relearn-fft-"
+ 
++# 1. Authors' 250-step attacks: compare defenses, with one method per row.
++# Leave one config block active. Newly added runs stay commented until all of
++# their checkpoint evals are complete; the other methods include every LR.
+ # configs = [
++#     # Base
++#     {
++#         "path": (base) + author_attack + "lr2e-5-ms250",
++#         "baseline": base,
++#         "method": "Base",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": (base) + author_attack + "lr5e-5-ms250",
++#         "baseline": base,
++#         "method": "Base",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": (base) + author_attack + "lr8e-5-ms250",
++#         "baseline": base,
++#         "method": "Base",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": (base) + author_attack + "lr1e-4-ms250",
++#         "baseline": base,
++#         "method": "Base",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": (base) + author_attack + "lr2e-4-ms250",
++#         "baseline": base,
++#         "method": "Base",
++#         "lr": 2e-4,
++#     },
++#     # Base + 1% noise
++#     {
++#         "path": (base + "--perturb-gaussian-l2r0.01-seed42")
++#         + author_attack
++#         + "lr2e-5-ms250",
++#         "baseline": base + "--perturb-gaussian-l2r0.01-seed42",
++#         "method": "Base + 1% noise",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": (base + "--perturb-gaussian-l2r0.01-seed42")
++#         + author_attack
++#         + "lr5e-5-ms250",
++#         "baseline": base + "--perturb-gaussian-l2r0.01-seed42",
++#         "method": "Base + 1% noise",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": (base + "--perturb-gaussian-l2r0.01-seed42")
++#         + author_attack
++#         + "lr8e-5-ms250",
++#         "baseline": base + "--perturb-gaussian-l2r0.01-seed42",
++#         "method": "Base + 1% noise",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": (base + "--perturb-gaussian-l2r0.01-seed42")
++#         + author_attack
++#         + "lr1e-4-ms250",
++#         "baseline": base + "--perturb-gaussian-l2r0.01-seed42",
++#         "method": "Base + 1% noise",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": (base + "--perturb-gaussian-l2r0.01-seed42")
++#         + author_attack
++#         + "lr2e-4-ms250",
++#         "baseline": base + "--perturb-gaussian-l2r0.01-seed42",
++#         "method": "Base + 1% noise",
++#         "lr": 2e-4,
++#     },
++#     # SEAM
++#     {
++#         "path": (seam) + author_attack + "lr2e-5-ms250",
++#         "baseline": seam,
++#         "method": "SEAM",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": (seam) + author_attack + "lr5e-5-ms250",
++#         "baseline": seam,
++#         "method": "SEAM",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": (seam) + author_attack + "lr8e-5-ms250",
++#         "baseline": seam,
++#         "method": "SEAM",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": (seam) + author_attack + "lr1e-4-ms250",
++#         "baseline": seam,
++#         "method": "SEAM",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": (seam) + author_attack + "lr2e-4-ms250",
++#         "baseline": seam,
++#         "method": "SEAM",
++#         "lr": 2e-4,
++#     },
++#     # SEAM (ours, completion): our defense, followed by the authors' attacks.
++#     {
++#         "path": seam_completion + author_attack + "lr2e-5-ms250",
++#         "baseline": seam_completion,
++#         "method": "SEAM (ours, completion)",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": seam_completion + author_attack + "lr5e-5-ms250",
++#         "baseline": seam_completion,
++#         "method": "SEAM (ours, completion)",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": seam_completion + author_attack + "lr8e-5-ms250",
++#         "baseline": seam_completion,
++#         "method": "SEAM (ours, completion)",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": seam_completion + author_attack + "lr1e-4-ms250",
++#         "baseline": seam_completion,
++#         "method": "SEAM (ours, completion)",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam_completion + author_attack + "lr2e-4-ms250",
++#         "baseline": seam_completion,
++#         "method": "SEAM (ours, completion)",
++#         "lr": 2e-4,
++#     },
++#     # SEAM (ours, paired): our defense, followed by the authors' attacks.
++#     {
++#         "path": seam_paired + author_attack + "lr1e-4-ms250",
++#         "baseline": seam_paired,
++#         "method": "SEAM (ours, paired)",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam_paired + author_attack + "lr2e-4-ms250",
++#         "baseline": seam_paired,
++#         "method": "SEAM (ours, paired)",
++#         "lr": 2e-4,
++#     },
++#     # SEAM + 0.75% noise
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.0075-seed42")
++#         + author_attack
++#         + "lr2e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.0075-seed42",
++#         "method": "SEAM + 0.75% noise",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.0075-seed42")
++#         + author_attack
++#         + "lr5e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.0075-seed42",
++#         "method": "SEAM + 0.75% noise",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.0075-seed42")
++#         + author_attack
++#         + "lr8e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.0075-seed42",
++#         "method": "SEAM + 0.75% noise",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.0075-seed42")
++#         + author_attack
++#         + "lr1e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.0075-seed42",
++#         "method": "SEAM + 0.75% noise",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.0075-seed42")
++#         + author_attack
++#         + "lr2e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.0075-seed42",
++#         "method": "SEAM + 0.75% noise",
++#         "lr": 2e-4,
++#     },
++#     # SEAM + 1% noise
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.01-seed42")
++#         + author_attack
++#         + "lr2e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.01-seed42",
++#         "method": "SEAM + 1% noise",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.01-seed42")
++#         + author_attack
++#         + "lr5e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.01-seed42",
++#         "method": "SEAM + 1% noise",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.01-seed42")
++#         + author_attack
++#         + "lr8e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.01-seed42",
++#         "method": "SEAM + 1% noise",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.01-seed42")
++#         + author_attack
++#         + "lr1e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.01-seed42",
++#         "method": "SEAM + 1% noise",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.01-seed42")
++#         + author_attack
++#         + "lr2e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.01-seed42",
++#         "method": "SEAM + 1% noise",
++#         "lr": 2e-4,
++#     },
++#     # SEAM + 2% noise
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.02-seed42")
++#         + author_attack
++#         + "lr2e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.02-seed42",
++#         "method": "SEAM + 2% noise",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.02-seed42")
++#         + author_attack
++#         + "lr5e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.02-seed42",
++#         "method": "SEAM + 2% noise",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.02-seed42")
++#         + author_attack
++#         + "lr8e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.02-seed42",
++#         "method": "SEAM + 2% noise",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.02-seed42")
++#         + author_attack
++#         + "lr1e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.02-seed42",
++#         "method": "SEAM + 2% noise",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.02-seed42")
++#         + author_attack
++#         + "lr2e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.02-seed42",
++#         "method": "SEAM + 2% noise",
++#         "lr": 2e-4,
++#     },
++#     # SEAM + 5% noise
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.05-seed42")
++#         + author_attack
++#         + "lr2e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.05-seed42",
++#         "method": "SEAM + 5% noise",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.05-seed42")
++#         + author_attack
++#         + "lr5e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.05-seed42",
++#         "method": "SEAM + 5% noise",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.05-seed42")
++#         + author_attack
++#         + "lr8e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.05-seed42",
++#         "method": "SEAM + 5% noise",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.05-seed42")
++#         + author_attack
++#         + "lr1e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.05-seed42",
++#         "method": "SEAM + 5% noise",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.05-seed42")
++#         + author_attack
++#         + "lr2e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.05-seed42",
++#         "method": "SEAM + 5% noise",
++#         "lr": 2e-4,
++#     },
++#     # SEAM + 10% noise
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.1-seed42")
++#         + author_attack
++#         + "lr2e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.1-seed42",
++#         "method": "SEAM + 10% noise",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.1-seed42")
++#         + author_attack
++#         + "lr5e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.1-seed42",
++#         "method": "SEAM + 10% noise",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.1-seed42")
++#         + author_attack
++#         + "lr8e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.1-seed42",
++#         "method": "SEAM + 10% noise",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.1-seed42")
++#         + author_attack
++#         + "lr1e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.1-seed42",
++#         "method": "SEAM + 10% noise",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.1-seed42")
++#         + author_attack
++#         + "lr2e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.1-seed42",
++#         "method": "SEAM + 10% noise",
++#         "lr": 2e-4,
++#     },
++#     # SEAM + 20% noise
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.2-seed42")
++#         + author_attack
++#         + "lr2e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.2-seed42",
++#         "method": "SEAM + 20% noise",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.2-seed42")
++#         + author_attack
++#         + "lr5e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.2-seed42",
++#         "method": "SEAM + 20% noise",
++#         "lr": 5e-5,
++#     },
+ #     {
+-#         "path": (
+-#             "artifacts/mila/evals/qwen3-06b-beavertail/"
+-#             # Uncomment the desired model's result path.
+-#             # "qwen3-0.6b-beavertail--align-fft-seam--relearn--hpo"
+-#             "qwen3-0.6b-beavertail--align-fft-seam-legacy--relearn--hpo"
+-#             f"--beta{beta}--{lr_index:03d}/"
+-#             f"checkpoint-{step}/summary.json"
+-#         ),
+-#         "method": f"seam-{beta}",
+-#         "lr": lr,
+-#         "step": step,
+-#     }
+-#     for beta in (0.01, 0.1, 1.0)
+-#     for lr_index, lr in enumerate(learning_rates, 1)
+-#     for step in steps
++#         "path": (seam + "--perturb-gaussian-l2r0.2-seed42")
++#         + author_attack
++#         + "lr8e-5-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.2-seed42",
++#         "method": "SEAM + 20% noise",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.2-seed42")
++#         + author_attack
++#         + "lr1e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.2-seed42",
++#         "method": "SEAM + 20% noise",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": (seam + "--perturb-gaussian-l2r0.2-seed42")
++#         + author_attack
++#         + "lr2e-4-ms250",
++#         "baseline": seam + "--perturb-gaussian-l2r0.2-seed42",
++#         "method": "SEAM + 20% noise",
++#         "lr": 2e-4,
++#     },
++# ]
++# steps = list(range(0, 251, 50))
++# outpath = "artifacts/figures/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-author-codebase--ms250.pdf"
++# # For five-task plots, uncomment GSM8K above, comment the original SEAM group
++# # (its intermediate GSM8K evals are unavailable), and use the --gsm8k-flexible PDF.
++
++# 2. Minimal SEAM-only selection for our 250-step plot; full comparison in block 4.
++# configs = [
++#     {"path": seam + our_attack + "lr1e-5-ms250", "baseline": seam, "method": "SEAM", "lr": 1e-5},
++#     {"path": seam + our_attack + "lr5e-5-ms250", "baseline": seam, "method": "SEAM", "lr": 5e-5},
++#     {"path": seam + our_attack + "lr2e-4-ms250-warmup0.5", "baseline": seam, "method": "SEAM w/ W50", "lr": 2e-4},
+ # ]
++# steps = list(range(0, 251, 50))
++# outpath = "artifacts/figures/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft--ms250.pdf"
+ 
++# 3. Our trainer, 1,000 steps: produces the four-LR trajectory PDF.
+ # configs = [
+ #     {
+-#         "path": osp.join(
+-#             root,
+-#             "llama2-7b-beavertail--align-fft-seam--data-disjoint--"
+-#             f"relearn-fft-ms1000--hpo--disjoint--{index:03d}/checkpoint-{step}/"
+-#             "summary.json",
+-#         ),
++#         "path": seam + our_attack + "lr1e-5-ms1000",
++#         "baseline": seam,
++#         "method": "SEAM",
++#         "lr": 1e-5,
++#     },
++#     {
++#         "path": seam + our_attack + "lr5e-5-ms1000",
++#         "baseline": seam,
+ #         "method": "SEAM",
+-#         "lr": lr,
+-#         "step": step,
+-#     }
+-#     for index, (lr, interval) in enumerate(
+-#         [(2e-5, 50), (5e-5, 50), (8e-5, 50), (1e-4, 100), (2e-4, 100)], 1
+-#     )
+-#     for step in range(0, 1001, interval)
+-# ] + [
+-#     {
+-#         "path": osp.join(seam_og_root, f"checkpoint-{step}/summary.json"),
+-#         "method": "SEAM-OG",
+ #         "lr": 5e-5,
+-#         "step": step,
+-#     }
+-#     for step in range(0, 1001, 50)
++#     },
++#     {
++#         "path": seam + our_attack + "lr1e-4-ms1000",
++#         "baseline": seam,
++#         "method": "SEAM",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam + our_attack + "lr5e-4-ms1000",
++#         "baseline": seam,
++#         "method": "SEAM",
++#         "lr": 5e-4,
++#     },
+ # ]
++# steps = list(range(0, 1001, 50))
++# outpath = "artifacts/figures/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft--ms1000.pdf"
+ 
+-rows = []
+-for config in configs:
+-    with open(config["path"]) as f:
+-        result = json.load(f)
+-    for evaluation, metric in (
+-        ("Harmfulness", "harmfulness"),
+-        ("Capability", "capability"),
+-    ):
+-        rows.append(
+-            {
+-                "Relearning step": config["step"],
+-                "Score (%)": 100 * result["post"][metric],
+-                "Method": config["method"],
+-                "LR": config["lr"],
+-                "Eval": evaluation,
+-            }
+-        )
++# 4. Base, our 250-step SEAM attacks, and SEAM with 50% warmup.
++# Base uses the authors' trainer; SEAM and SEAM w/ W50 use ours.
++# configs = [
++#     {
++#         "path": base + author_attack + "lr2e-5-ms250",
++#         "baseline": base,
++#         "method": "Base",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": base + author_attack + "lr5e-5-ms250",
++#         "baseline": base,
++#         "method": "Base",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": base + author_attack + "lr8e-5-ms250",
++#         "baseline": base,
++#         "method": "Base",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": base + author_attack + "lr1e-4-ms250",
++#         "baseline": base,
++#         "method": "Base",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": base + author_attack + "lr2e-4-ms250",
++#         "baseline": base,
++#         "method": "Base",
++#         "lr": 2e-4,
++#     },
++#     {
++#         "path": seam + our_attack + "lr1e-5-ms250",
++#         "baseline": seam,
++#         "method": "SEAM",
++#         "lr": 1e-5,
++#     },
++#     {
++#         "path": seam + our_attack + "lr5e-5-ms250",
++#         "baseline": seam,
++#         "method": "SEAM",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": seam + our_attack + "lr2e-5-ms250-warmup0.5",
++#         "baseline": seam,
++#         "method": "SEAM w/ W50",
++#         "lr": 2e-5,
++#     },
++#     {
++#         "path": seam + our_attack + "lr5e-5-ms250-warmup0.5",
++#         "baseline": seam,
++#         "method": "SEAM w/ W50",
++#         "lr": 5e-5,
++#     },
++#     {
++#         "path": seam + our_attack + "lr8e-5-ms250-warmup0.5",
++#         "baseline": seam,
++#         "method": "SEAM w/ W50",
++#         "lr": 8e-5,
++#     },
++#     {
++#         "path": seam + our_attack + "lr1e-4-ms250-warmup0.5",
++#         "baseline": seam,
++#         "method": "SEAM w/ W50",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam + our_attack + "lr2e-4-ms250-warmup0.5",
++#         "baseline": seam,
++#         "method": "SEAM w/ W50",
++#         "lr": 2e-4,
++#     },
++# ]
++# steps = list(range(0, 251, 50))
++# outpath = "artifacts/figures/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft--ms250.pdf"
+ 
+-df = pd.DataFrame(rows)
+-sns.set_theme(context="paper", style="whitegrid", font_scale=1.5)
+-g = sns.relplot(
+-    data=df,
+-    x="Relearning step",
+-    y="Score (%)",
+-    col="Eval",
+-    hue="Method",
+-    size="LR",
+-    kind="line",
+-    marker="o",
+-    height=3.4,
+-)
+-for text in g.legend.texts:
+-    try:
+-        text.set_text(f"{float(text.get_text()):.0e}")
+-    except ValueError:
+-        pass
+-
+-output = (
+-    "artifacts/figures/" "llama2-7b-beavertail-relearning-trajectory-ms250--lrs.pdf"
+-)
+-os.makedirs(osp.dirname(output), exist_ok=True)
+-g.figure.savefig(output, bbox_inches="tight")
++# 5. Single-factor defense ablations, with the authors' 250-step attacks.
++# Activate after every requested checkpoint evaluation is complete.
++# configs = [
++#     {
++#         "path": seam + author_attack + "lr1e-4-ms250",
++#         "baseline": seam,
++#         "method": "SEAM (authors)",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam + author_attack + "lr2e-4-ms250",
++#         "baseline": seam,
++#         "method": "SEAM (authors)",
++#         "lr": 2e-4,
++#     },
++#     {
++#         "path": seam_completion + author_attack + "lr1e-4-ms250",
++#         "baseline": seam_completion,
++#         "method": "SEAM (completion)",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam_completion + author_attack + "lr2e-4-ms250",
++#         "baseline": seam_completion,
++#         "method": "SEAM (completion)",
++#         "lr": 2e-4,
++#     },
++#     {
++#         "path": seam_alpaca + author_attack + "lr1e-4-ms250",
++#         "baseline": seam_alpaca,
++#         "method": "SEAM (Alpaca only)",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam_alpaca + author_attack + "lr2e-4-ms250",
++#         "baseline": seam_alpaca,
++#         "method": "SEAM (Alpaca only)",
++#         "lr": 2e-4,
++#     },
++#     {
++#         "path": seam_mask_only + author_attack + "lr1e-4-ms250",
++#         "baseline": seam_mask_only,
++#         "method": "SEAM (mask only)",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam_mask_only + author_attack + "lr2e-4-ms250",
++#         "baseline": seam_mask_only,
++#         "method": "SEAM (mask only)",
++#         "lr": 2e-4,
++#     },
++#     {
++#         "path": seam_eos + author_attack + "lr1e-4-ms250",
++#         "baseline": seam_eos,
++#         "method": "SEAM (EOS ignored)",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam_eos + author_attack + "lr2e-4-ms250",
++#         "baseline": seam_eos,
++#         "method": "SEAM (EOS ignored)",
++#         "lr": 2e-4,
++#     },
++#     {
++#         "path": seam_mask_eos + author_attack + "lr1e-4-ms250",
++#         "baseline": seam_mask_eos,
++#         "method": "SEAM (mask + EOS)",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam_mask_eos + author_attack + "lr2e-4-ms250",
++#         "baseline": seam_mask_eos,
++#         "method": "SEAM (mask + EOS)",
++#         "lr": 2e-4,
++#     },
++#     {
++#         "path": seam_refusal_space + author_attack + "lr1e-4-ms250",
++#         "baseline": seam_refusal_space,
++#         "method": "SEAM (mask/EOS/space)",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam_refusal_space + author_attack + "lr2e-4-ms250",
++#         "baseline": seam_refusal_space,
++#         "method": "SEAM (mask/EOS/space)",
++#         "lr": 2e-4,
++#     },
++#     {
++#         "path": seam_paired + author_attack + "lr1e-4-ms250",
++#         "baseline": seam_paired,
++#         "method": "SEAM (prep + mask)",
++#         "lr": 1e-4,
++#     },
++#     {
++#         "path": seam_paired + author_attack + "lr2e-4-ms250",
++#         "baseline": seam_paired,
++#         "method": "SEAM (prep + mask)",
++#         "lr": 2e-4,
++#     },
++# ]
++# steps = list(range(0, 251, 50))
++# outpath = "artifacts/figures/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase--ms250--ablations.pdf"
++
++# 6. Minimal fix: original completion-only training with refusal space alone.
++configs = [
++    {
++        "path": (seam_completion) + author_attack + "lr1e-4-ms250",
++        "baseline": seam_completion,
++        "method": "SEAM (original)",
++        "lr": 1e-4,
++    },
++    {
++        "path": (seam_completion) + author_attack + "lr2e-4-ms250",
++        "baseline": seam_completion,
++        "method": "SEAM (original)",
++        "lr": 2e-4,
++    },
++    {
++        "path": (seam_completion + "--refusal-space") + author_attack + "lr1e-4-ms250",
++        "baseline": seam_completion + "--refusal-space",
++        "method": "SEAM (space only)",
++        "lr": 1e-4,
++    },
++    {
++        "path": (seam_completion + "--refusal-space") + author_attack + "lr2e-4-ms250",
++        "baseline": seam_completion + "--refusal-space",
++        "method": "SEAM (space only)",
++        "lr": 2e-4,
++    },
++    {
++        "path": (seam_refusal_space) + author_attack + "lr1e-4-ms250",
++        "baseline": seam_refusal_space,
++        "method": "SEAM (mask/EOS/space)",
++        "lr": 1e-4,
++    },
++    {
++        "path": (seam_refusal_space) + author_attack + "lr2e-4-ms250",
++        "baseline": seam_refusal_space,
++        "method": "SEAM (mask/EOS/space)",
++        "lr": 2e-4,
++    },
++    {
++        "path": (seam) + author_attack + "lr1e-4-ms250",
++        "baseline": seam,
++        "method": "SEAM (authors)",
++        "lr": 1e-4,
++    },
++    {
++        "path": (seam) + author_attack + "lr2e-4-ms250",
++        "baseline": seam,
++        "method": "SEAM (authors)",
++        "lr": 2e-4,
++    },
++]
++steps = list(range(0, 251, 50))
++outpath = "artifacts/figures/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase--ms250--minimal-ablations.pdf"
++
++# Methods occupy rows; LR controls thickness and markers.
++facet = {"row": "Method", "color": "black", "height": 3.2, "aspect": 1.5}
++
++# Reference: Base after the authors' 250-step attack at LR 1e-4.
++reference = {
++    "path": base + author_attack + "lr1e-4-ms250",
++    "baseline": base,
++    "method": "Base",
++    "lr": 1e-4,
++}
++
++
++def get_results(configs, rootdir, steps, task_to_metric):
++    """Load the explicitly selected runs; missing requested metrics are errors."""
++    rows = []
++    for cfg in configs:
++        for step in steps:
++            directory = osp.join(rootdir, cfg["baseline"] if step == 0 else cfg["path"])
++            if step != 0:
++                directory = osp.join(directory, f"checkpoint-{step}")
++            capabilities = "capabilities"
++            if step == 0 and osp.isdir(osp.join(directory, "capabilities-4gpu")):
++                capabilities = "capabilities-4gpu"
++            tasks = get_lm_eval_results(osp.join(directory, capabilities))
++            if "gsm8k" in task_to_metric:
++                tasks.update(get_lm_eval_results(osp.join(directory, "gsm8k-5shot")))
++            capability = sum(
++                tasks[task][metric] for task, metric in task_to_metric.items()
++            ) / len(task_to_metric)
++            harmfulness = osp.join(directory, "harmfulness.json")
++            if step == 0 and not osp.isfile(harmfulness):
++                harmfulness = osp.join(directory, "harmfulness-4gpu-bs16/metrics.json")
++            with open(harmfulness) as handle:
++                harmfulness = json.load(handle)["harmfulness"]
++            for evaluation, score in [
++                ("Harmfulness ↓", harmfulness),
++                ("Capability ↑", capability),
++            ]:
++                rows.append(
++                    {
++                        "Relearning step": step,
++                        "Score (%)": 100 * score,
++                        "Method": cfg["method"],
++                        "LR": float(cfg["lr"]),
++                        "Eval": evaluation,
++                    }
++                )
++    return rows
++
++
++if __name__ == "__main__":
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--rootdir", default="artifacts/tamia/evals")
++    parser.add_argument("--outpath", default=outpath)
++    args = parser.parse_args()
++
++    df = pd.DataFrame(get_results(configs, args.rootdir, steps, task_to_metric))
++    sns.set_theme(context="paper", style="whitegrid", font_scale=1.5)
++    palette = dict(
++        zip(
++            df["Method"].unique(),
++            sns.color_palette("colorblind", df["Method"].nunique()),
++        )
++    )
++    palette["Base"] = "black"
++    grid = sns.relplot(
++        data=df,
++        x="Relearning step",
++        y="Score (%)",
++        col="Eval",
++        col_order=["Harmfulness ↓", "Capability ↑"],
++        **facet,
++        **({"palette": palette} if "hue" in facet else {}),
++        size="LR",
++        style="LR",
++        markers=True,
++        dashes=False,
++        legend="full",
++        kind="line",
++        errorbar=None,
++    )
++    scores = pd.DataFrame(
++        get_results([reference], args.rootdir, [250], task_to_metric)
++    ).set_index("Eval")["Score (%)"]
++    for key, ax in grid.axes_dict.items():
++        evaluation = key[-1] if isinstance(key, tuple) else key
++        ax.axhline(scores[evaluation], color="0.45", linestyle="--", linewidth=1.4)
++    for label in grid.legend.get_texts():
++        try:
++            label.set_text(f"{float(label.get_text()):.0e}")
++        except ValueError:
++            pass
++    grid.set(ylim=(0, 100), xticks=steps[:: max(1, (len(steps) - 1) // 5)])
++    grid.set_titles("{row_name} | {col_name}" if "row" in facet else "{col_name}")
++    grid.figure.suptitle(
++        f"Capability: mean of {len(task_to_metric)} tasks", y=1.04, fontsize=12
++    )
++    os.makedirs(osp.dirname(args.outpath) or ".", exist_ok=True)
++    grid.figure.savefig(args.outpath, bbox_inches="tight")
+diff --git a/examples/tamper-resistance/scripts/analysis/relearning-trajectory/plot_trajectory_wmdp.py b/examples/tamper-resistance/scripts/analysis/relearning-trajectory/plot_trajectory_wmdp.py
+index 2c93e868..9fc6c21e 100644
+--- a/examples/tamper-resistance/scripts/analysis/relearning-trajectory/plot_trajectory_wmdp.py
++++ b/examples/tamper-resistance/scripts/analysis/relearning-trajectory/plot_trajectory_wmdp.py
+@@ -81,9 +81,10 @@ configs_lrs = [
+ ]
+ configs_tar_lrs = [
+     {
+-        "model": f"{tar}--relearn-fft-ms128--hpo--lr--{index:03d}",
++        "model": f"{tar}--relearn-fft-ms128--hpo--grid-001--{index:03d}",
+         "method": "TAR",
+         "lr": lr,
++        "baseline": tar,
+     }
+     for index, lr in enumerate(("1e-6", "5e-6", "1e-5"), 1)
+ ]
+@@ -101,9 +102,15 @@ configs_perturbed_ms1000 = [
+ ]
+ 
+ 
+-def results(experiment):
++def results(experiment, baseline=None):
++    if baseline is not None:
++        for _, label, score in results(baseline):
++            yield 0, label, score
+     pattern = osp.join(rootdir, experiment, "checkpoint-*", "**", "results*.json")
+-    for path in glob.glob(pattern, recursive=True):
++    paths = glob.glob(pattern, recursive=True)
++    for path in sorted(
++        paths, key=lambda path: int(path.split("checkpoint-")[1].split(os.sep)[0])
++    ):
+         with open(path) as handle:
+             result = json.load(handle)["results"]
+         step = int(path.split("checkpoint-")[1].split(os.sep)[0])
+@@ -123,6 +130,7 @@ def legend_with_base(legend, base):
+ if __name__ == "__main__":
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument("--output")
++    parser.add_argument("--tar-lrs", action="store_true")
+     args = parser.parse_args()
+ 
+     # Uncomment one complete selection block.
+@@ -185,9 +193,25 @@ if __name__ == "__main__":
+     #     "z7b-wmdp-mmlu-relearning-trajectory-perturbed--ms1000.pdf"
+     # )
+ 
++    if args.tar_lrs:
++        configs = configs_tar_lrs
++        steps = range(0, 129, 16)
++        style = {
++            "hue": "LR",
++            "hue_order": ["1e-6", "5e-6", "1e-5"],
++            "markers": True,
++            "marker": "o",
++            "dashes": False,
++        }
++        output = (
++            "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--tar-k16-new-api.pdf"
++        )
++
+     rows = []
+     for config in configs:
+-        for step, evaluation, accuracy in results(config["model"]):
++        for step, evaluation, accuracy in results(
++            config["model"], config.get("baseline")
++        ):
+             if step in steps:
+                 rows.append(
+                     {
+diff --git a/examples/tamper-resistance/scripts/analysis/toy-experiments/get_cifar_landscapes.py b/examples/tamper-resistance/scripts/analysis/toy-experiments/get_cifar_landscapes.py
+index 18c3e1e8..f41feb07 100644
+--- a/examples/tamper-resistance/scripts/analysis/toy-experiments/get_cifar_landscapes.py
++++ b/examples/tamper-resistance/scripts/analysis/toy-experiments/get_cifar_landscapes.py
+@@ -32,6 +32,132 @@ def directions(parameters, seed):
+     return first, second
+ 
+ 
++def hessian_vector(model, batches, vector):
++    """Compute the full-subset NLL Hessian-vector product in memory-sized batches."""
++    parameters = tuple(model.parameters())
++    pieces = vector.split([p.numel() for p in parameters])
++    vector_parts = [v.reshape_as(p) for v, p in zip(pieces, parameters)]
++    total = sum(len(labels) for _, labels in batches)
++    result = torch.zeros_like(vector)
++    for images, labels in batches:
++        loss = (
++            nn.functional.cross_entropy(model(images), labels, reduction="sum") / total
++        )
++        gradient = torch.autograd.grad(loss, parameters, create_graph=True)
++        product = sum((g * v).sum() for g, v in zip(gradient, vector_parts))
++        hv = torch.autograd.grad(product, parameters)
++        result += torch.cat([v.detach().flatten() for v in hv])
++    return result
++
++
++def curvature_directions(model, batches, seed, steps):
++    """Find low-curvature Ritz directions; these estimates do not certify a minimum."""
++    parameters = tuple(model.parameters())
++    generator = torch.Generator(device=parameters[0].device).manual_seed(seed)
++    size = sum(p.numel() for p in parameters)
++    vector = torch.randn(size, device=parameters[0].device, generator=generator)
++    vector /= vector.norm()
++    basis, diagonal, off_diagonal = [], [], []
++    for _ in range(steps):
++        basis.append(vector)
++        residual = hessian_vector(model, batches, vector)
++        diagonal.append(torch.dot(vector, residual).item())
++        # Full reorthogonalization avoids repeated copies of the same eigenvector.
++        for _ in range(2):
++            for q in basis:
++                residual -= torch.dot(q, residual) * q
++        length = residual.norm().item()
++        if length < 1e-7:
++            break
++        off_diagonal.append(length)
++        vector = residual / length
++    matrix = torch.diag(torch.tensor(diagonal, dtype=torch.float64))
++    if len(basis) > 1:
++        off = torch.tensor(off_diagonal[: len(basis) - 1], dtype=torch.float64)
++        matrix += torch.diag(off, 1) + torch.diag(off, -1)
++    eigenvalues, eigenvectors = torch.linalg.eigh(matrix)
++    vectors = []
++    for i in range(min(2, len(basis))):
++        v = sum(float(c) * q for c, q in zip(eigenvectors[:, i], basis))
++        vectors.append(v / v.norm())
++    if len(vectors) < 2:
++        v = torch.randn(size, device=vector.device, generator=generator)
++        v -= torch.dot(v, vectors[0]) * vectors[0]
++        vectors.append(v / v.norm())
++    residual = (
++        (
++            hessian_vector(model, batches, vectors[0])
++            - float(eigenvalues[0]) * vectors[0]
++        )
++        .norm()
++        .item()
++    )
++    parts = [
++        [
++            v.reshape_as(p)
++            for v, p in zip(vector.split([p.numel() for p in parameters]), parameters)
++        ]
++        for vector in vectors
++    ]
++    return parts, dict(
++        min_ritz_eigenvalue=eigenvalues[0].item(),
++        eigen_residual=residual,
++        lanczos_steps=len(basis),
++    )
++
++
++@torch.no_grad()
++def activation_metrics(model, batches):
++    """Check whether every final-block ReLU is strictly inactive on the subset."""
++    stats = {}
++    maxima, positive, count = [], 0, 0
++
++    def capture(module, inputs):
++        # Called twice per BasicBlock; the last invocation is the output ReLU.
++        value = inputs[0].detach()
++        stats.update(
++            maximum=value.max().item(),
++            positive=(value > 0).sum().item(),
++            count=value.numel(),
++        )
++
++    hook = model.layer4[-1].relu.register_forward_pre_hook(capture)
++    try:
++        for images, _ in batches:
++            model(images)
++            maxima.append(stats["maximum"])
++            positive += stats["positive"]
++            count += stats["count"]
++    finally:
++        hook.remove()
++    return dict(
++        final_relu_max_input=max(maxima), final_relu_active_fraction=positive / count
++    )
++
++
++def gradient_metrics(model, batches):
++    parameters = tuple(model.parameters())
++    gradient = [torch.zeros_like(p) for p in parameters]
++    total = sum(len(labels) for _, labels in batches)
++    value, correct = 0.0, 0
++    for images, labels in batches:
++        logits = model(images)
++        loss = nn.functional.cross_entropy(logits, labels, reduction="sum") / total
++        grads = torch.autograd.grad(loss, parameters)
++        for g, part in zip(gradient, grads):
++            g.add_(part.detach())
++        value += loss.item()
++        correct += (logits.argmax(-1) == labels).sum().item()
++    return (
++        dict(
++            nll=value,
++            train_accuracy=correct / total,
++            gradient_norm=norm(gradient).item(),
++        ),
++        gradient,
++    )
++
++
+ @torch.no_grad()
+ def landscape(model, batches, axes, first, second):
+     parameters = list(model.parameters())
+@@ -61,10 +187,13 @@ def main(args):
+     indices = torch.randperm(len(train), generator=torch.Generator().manual_seed(0))[
+         :1024
+     ]
++    if args.indices:
++        with open(args.indices) as stream:
++            indices = torch.tensor(json.load(stream)["training"])
+     batches = [
+         (images.to(device), labels.to(device))
+         for images, labels in DataLoader(
+-            Subset(train, indices.tolist()), batch_size=256
++            Subset(train, indices.tolist()), batch_size=args.batch_size
+         )
+     ]
+     torch.manual_seed(0)  # Original experiment initialization seed.
+@@ -83,11 +212,17 @@ def main(args):
+         configs.append(
+             (f"SAM ({variant}), rho=0.01, defended", f"sam-{variant}-rho0.01/train.pt")
+         )
++    if args.model:
++        configs = [("Random initialization", None)] + args.model
+     result = dict(
+         seed=args.seed,
+         subset_seed=0,
+-        subset_size=1024,
+-        directions="shared orthonormal random directions; global L2 norm 1",
++        subset_size=len(indices),
++        training_indices=indices.tolist(),
++        directions=args.directions,
++        lanczos_steps=(
++            args.lanczos_steps if args.directions in ["curvature", "descent"] else None
++        ),
+         metric="mean training cross-entropy",
+         radii=args.radii,
+         points=args.points,
+@@ -117,13 +252,45 @@ def main(args):
+             else initial
+         )
+         model.load_state_dict(state)
++        metrics, gradient = gradient_metrics(model, batches)
++        metrics.update(activation_metrics(model, batches))
++        model_first, model_second = first, second
++        if args.directions == "head":
++            model_first = [torch.zeros_like(p) for p in model.parameters()]
++            model_second = [torch.zeros_like(p) for p in model.parameters()]
++            bias_index = list(dict(model.named_parameters())).index("fc.bias")
++            model_first[bias_index][0] = 1 / 2**0.5
++            model_first[bias_index][1] = -1 / 2**0.5
++            model_second[bias_index][0] = 1 / 6**0.5
++            model_second[bias_index][1] = 1 / 6**0.5
++            model_second[bias_index][2] = -2 / 6**0.5
++        elif args.directions != "random":
++            (model_first, model_second), curvature = curvature_directions(
++                model, batches, args.seed, args.lanczos_steps
++            )
++            metrics.update(curvature)
++            if args.directions == "descent":
++                length = norm(gradient)
++                if length.item() > 1e-10:
++                    model_first = [g / length for g in gradient]
++                    projection = sum(
++                        (a * b).sum() for a, b in zip(model_first, model_second)
++                    )
++                    model_second = [
++                        b - projection * a for a, b in zip(model_first, model_second)
++                    ]
++                    length = norm(model_second)
++                    model_second = [b / length for b in model_second]
++        print(json.dumps(dict(model=name, **metrics)), flush=True)
+         grids = []
+         for radius in args.radii:
+             axes = np.linspace(-radius, radius, args.points)
+-            losses = landscape(model, batches, axes, first, second)
++            losses = landscape(model, batches, axes, model_first, model_second)
+             grids.append(dict(radius=radius, axes=axes.tolist(), losses=losses))
+             print(f"Finished {name}, radius {radius}", flush=True)
+-        result["models"].append(dict(name=name, checkpoint=checkpoint, grids=grids))
++        result["models"].append(
++            dict(name=name, checkpoint=checkpoint, grids=grids, metrics=metrics)
++        )
+         with open(args.output + ".json", "w") as stream:
+             json.dump(result, stream, indent=2)
+     with open(args.output + ".json", "w") as stream:
+@@ -133,7 +300,20 @@ def main(args):
+ if __name__ == "__main__":
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument("--root", required=True)
++    parser.add_argument(
++        "--model", action="append", nargs=2, metavar=("NAME", "CHECKPOINT")
++    )
++    parser.add_argument(
++        "--indices", help="Saved indices.json defining the training subset"
++    )
+     parser.add_argument("--resume", action="store_true")
++    parser.add_argument(
++        "--directions",
++        choices=("random", "curvature", "descent", "head"),
++        default="random",
++    )
++    parser.add_argument("--lanczos-steps", type=int, default=20)
++    parser.add_argument("--batch-size", type=int, default=32)
+     parser.add_argument("--radii", type=float, nargs="+", default=[1000.0, 5000.0])
+     parser.add_argument("--points", type=int, default=9)
+     parser.add_argument("--seed", type=int, default=0)
+diff --git a/examples/tamper-resistance/scripts/analysis/toy-experiments/plot_cifar_landscapes.py b/examples/tamper-resistance/scripts/analysis/toy-experiments/plot_cifar_landscapes.py
+index df062092..8bfd2193 100644
+--- a/examples/tamper-resistance/scripts/analysis/toy-experiments/plot_cifar_landscapes.py
++++ b/examples/tamper-resistance/scripts/analysis/toy-experiments/plot_cifar_landscapes.py
+@@ -6,15 +6,15 @@ import os
+ 
+ import matplotlib.pyplot as plt
+ import numpy as np
+-from matplotlib.ticker import FormatStrFormatter, MaxNLocator
++from matplotlib.ticker import MaxNLocator
+ 
+ 
+ def plot_landscapes(result, output):
+     """Show multiple zoom levels with local loss scales and contour insets."""
+     figure, panels = plt.subplots(
+-        len(result["radii"]),
++        len(result["models"][0]["grids"]),
+         len(result["models"]),
+-        figsize=(3.5 * len(result["models"]), 3.5 * len(result["radii"])),
++        figsize=(3.5 * len(result["models"]), 3.5 * len(result["models"][0]["grids"])),
+         squeeze=False,
+         subplot_kw={"projection": "3d"},
+     )
+@@ -24,9 +24,14 @@ def plot_landscapes(result, output):
+             x, y = np.meshgrid(grid["axes"], grid["axes"])
+             losses = np.array(grid["losses"]).T
+             low, high = float(losses.min()), float(losses.max())
+-            if low == high:
+-                padding = max(abs(low), 1.0) * 0.01
+-                low, high = low - padding, high + padding
++            if high - low < 1e-5:
++                # Do not magnify float32 roundoff into apparent landscape structure.
++                center = len(grid["axes"]) // 2
++                losses.fill(losses[center, center])
++                low, high = (
++                    float(losses[center, center]) - 0.001,
++                    float(losses[center, center]) + 0.001,
++                )
+             panel.plot_surface(
+                 x, y, losses, cmap="viridis", vmin=low, vmax=high, linewidth=0
+             )
+@@ -43,7 +48,7 @@ def plot_landscapes(result, output):
+                 panel.text2D(
+                     -0.15,
+                     0.5,
+-                    f"Radius {grid['radius']:,.0f}",
++                    grid.get("plane", f"Radius {grid['radius']:g}"),
+                     transform=panel.transAxes,
+                     rotation=90,
+                     va="center",
+@@ -51,7 +56,6 @@ def plot_landscapes(result, output):
+             panel.xaxis.set_major_locator(MaxNLocator(3))
+             panel.yaxis.set_major_locator(MaxNLocator(3))
+             panel.zaxis.set_major_locator(MaxNLocator(3))
+-            panel.zaxis.set_major_formatter(FormatStrFormatter("%.2g"))
+             panel.zaxis.labelpad = 16
+             panel.tick_params(axis="z", labelsize=8)
+             inset = panel.inset_axes([0, 0.68, 0.3, 0.3])
+@@ -61,7 +65,12 @@ def plot_landscapes(result, output):
+             inset.set(
+                 xticks=[], yticks=[], xlim=panel.get_xlim(), ylim=panel.get_ylim()
+             )
+-    figure.suptitle("CIFAR-10 cross-entropy · local loss scales · SAM ρ=0.01")
++    title = (
++        "CIFAR-10 cross-entropy · local loss scales · variations below 1e-5 shown flat"
++    )
++    if result.get("directions") == "curvature":
++        title += " · lowest estimated curvature directions"
++    figure.suptitle(title)
+     figure.tight_layout(rect=(0, 0, 1, 0.98))
+     figure.savefig(output, bbox_inches="tight")
+     plt.close(figure)
+diff --git a/examples/tamper-resistance/scripts/analysis/toy-experiments/plot_cifar_relearn_trajectory.py b/examples/tamper-resistance/scripts/analysis/toy-experiments/plot_cifar_relearn_trajectory.py
+index 1b0f6dcb..c37e4d6e 100644
+--- a/examples/tamper-resistance/scripts/analysis/toy-experiments/plot_cifar_relearn_trajectory.py
++++ b/examples/tamper-resistance/scripts/analysis/toy-experiments/plot_cifar_relearn_trajectory.py
+@@ -3,16 +3,272 @@
+ import argparse
+ import json
+ import os
++import sys
+ import pandas as pd
+ import seaborn as sns
+ 
+ parser = argparse.ArgumentParser(description=__doc__)
+-parser.add_argument("--root", required=True)
++parser.add_argument("--root")
++parser.add_argument("--fullbatch-root", help="Compare saved 512/1024 full-batch runs")
++parser.add_argument(
++    "--fullbatch-tar",
++    action="store_true",
++    help="Compare TAR versus no defense using Adam only",
++)
+ parser.add_argument(
+     "--output",
+     default="artifacts/figures/resnet18-cifar10-tar-relearning-trajectory.pdf",
+ )
++parser.add_argument(
++    "--tar-defence-trace",
++    action="store_true",
++    help="Plot outer forget loss and cumulative inner attack loss",
++)
++parser.add_argument(
++    "--bad-minima-root",
++    help="Compare candidate basin methods and random initialization",
++)
+ args = parser.parse_args()
++if args.bad_minima_root:
++    root = args.bad_minima_root
++    configs = [
++        {
++            "path": os.path.join(root, "..", "cifar10-fullbatch512", "results.json"),
++            "name": "Random init",
++            "color": "black",
++        },
++        {
++            "path": os.path.join(
++                root, "..", "cifar10-fullbatch512-tar-k16-trace", "results.json"
++            ),
++            "name": "TAR k=16",
++            "color": "#2171b5",
++        },
++    ]
++    configs += [
++        {
++            "path": os.path.join(root, folder, "results.json"),
++            "name": name,
++            "color": color,
++        }
++        for folder, name, color in [
++            ("target", "Loss target", "#e6ab02"),
++            ("stationary01", "Stationary 0.01", "#66a61e"),
++            ("stationary1", "Stationary 0.1", "#1b9e77"),
++            ("basin10", "Escape 10", "#d95f02"),
++            ("basin100", "Escape 100", "#a6761d"),
++            ("margin", "Activation margin", "#e7298a"),
++            ("margin-strong", "Strong activation margin", "#e31a1c"),
++            ("margin-long", "Activation margin 500", "#b15928"),
++            ("calibrated", "Learned inactive basin", "#984ea3"),
++            ("projected", "ReLU margin projection", "#4daf4a"),
++            ("dead-relu", "Dead ReLU control", "#7570b3"),
++        ]
++    ]
++    rows = []
++    for cfg in configs:
++        with open(cfg["path"]) as stream:
++            history = json.load(stream)["history"]
++        for record in history:
++            if record["phase"] == "relearn":
++                rows.append(
++                    {
++                        "epochs": record["step"],
++                        "accuracy": 100 * record["test_accuracy"],
++                        "method": cfg["name"],
++                    }
++                )
++    plot = sns.relplot(
++        data=pd.DataFrame(rows),
++        x="epochs",
++        y="accuracy",
++        hue="method",
++        palette={cfg["name"]: cfg["color"] for cfg in configs},
++        kind="line",
++        height=3,
++        aspect=1,
++    )
++    plot.axes[0, 0].set_title("Full batch Adam attacks on candidate basins")
++    os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
++    plot.savefig(args.output)
++    sys.exit()
++
++if args.tar_defence_trace:
++    if not args.fullbatch_root:
++        parser.error("--tar-defence-trace requires --fullbatch-root")
++    configs = [
++        {
++            "path": os.path.join(
++                args.fullbatch_root,
++                f"cifar10-fullbatch{size}-tar-k16-trace{suffix}",
++                "results.json",
++            ),
++            "samples": str(size),
++            "name": "TAR k=16",
++        }
++        for size in [512]
++        for lr, suffix in [("1e-3", "")]
++    ]
++    configs.append(
++        {
++            "path": os.path.join(
++                args.fullbatch_root,
++                "cifar10-fullbatch512-tar-k32-trace",
++                "results.json",
++            ),
++            "samples": "512",
++            "name": "TAR k=32",
++        }
++    )
++    new_path = os.path.join(
++        args.fullbatch_root,
++        "cifar10-fullbatch512-tar-k32-trace-inner5e-3",
++        "results.json",
++    )
++    if os.path.exists(new_path):
++        configs.append(
++            {"path": new_path, "samples": "512", "name": "TAR k=32, inner LR=5e-3"}
++        )
++    low_lr_path = os.path.join(
++        args.fullbatch_root,
++        "cifar10-fullbatch512-tar-k32-trace-inner5e-4",
++        "results.json",
++    )
++    if os.path.exists(low_lr_path):
++        configs.append(
++            {"path": low_lr_path, "samples": "512", "name": "TAR k=32, inner LR=5e-4"}
++        )
++    full_path = os.path.join(
++        args.fullbatch_root, "cifar10-fullbatch512-tar-full-k16", "results.json"
++    )
++    if os.path.exists(full_path):
++        configs.append(
++            {"path": full_path, "samples": "512", "name": "TAR k=16 (full gradient)"}
++        )
++    rows = []
++    for config in configs:
++        with open(config["path"]) as stream:
++            history = json.load(stream)["history"]
++        for record in history:
++            if record["phase"] in ["defense", "inner"]:
++                rows.append(
++                    {
++                        "step": (
++                            record["step"]
++                            if record["phase"] == "inner"
++                            else record["step"] + 1
++                        ),
++                        "loss": (
++                            record["loss"]
++                            if record["phase"] == "inner"
++                            else record["objective"]
++                        ),
++                        "Stage": (
++                            "Inner attack"
++                            if record["phase"] == "inner"
++                            else "Outer defense"
++                        ),
++                        "Training images": config["samples"],
++                        "Run": config["name"],
++                    }
++                )
++    sns.set_theme(style="whitegrid")
++    plot = sns.relplot(
++        data=pd.DataFrame(rows),
++        x="step",
++        y="loss",
++        hue="Run",
++        palette={
++            "TAR k=16": "#2171b5",
++            "TAR k=16 (full gradient)": "#88419d",
++            "TAR k=32": "#08306b",
++            "TAR k=32, inner LR=5e-3": "#6baed6",
++            "TAR k=32, inner LR=5e-4": "#4292c6",
++        },
++        col="Stage",
++        col_order=["Outer defense", "Inner attack"],
++        kind="line",
++        facet_kws={"sharex": False, "sharey": False},
++        height=3.5,
++        aspect=1.4,
++    )
++    plot.set_titles("{col_name}")
++    plot.axes[0, 0].set(
++        xlabel="Defense update", ylabel="Forget loss (negative entropy)"
++    )
++    plot.axes[0, 1].set(xlabel="Cumulative inner Adam step", ylabel="Attack loss (NLL)")
++    os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
++    plot.savefig(args.output, bbox_inches="tight")
++    print(args.output)
++    sys.exit()
++
++if args.fullbatch_root:
++    root = args.fullbatch_root
++    if args.fullbatch_tar:
++        configs = [
++            {
++                "path": os.path.join(root, "cifar10-fullbatch512/results.json"),
++                "name": "Base",
++                "color": "black",
++            },
++            {
++                "path": os.path.join(
++                    root, "cifar10-fullbatch512-tar-k16-trace/results.json"
++                ),
++                "name": r"TAR k=16 ($\alpha_o=1e-3, \alpha_i=1e-3$)",
++                "color": "#2171b5",
++            },
++            {
++                "path": os.path.join(
++                    root, "cifar10-fullbatch512-tar-k32-trace-inner5e-3/results.json"
++                ),
++                "name": r"TAR k=32 ($\alpha_o=1e-3, \alpha_i=5e-3$)",
++                "color": "#08306b",
++            },
++        ]
++    else:
++        configs = [
++            {
++                "path": os.path.join(
++                    root, f"cifar10-fullbatch{size}", subdir, "results.json"
++                ),
++                "name": f"{optimizer}, {size} samples",
++                "color": color,
++            }
++            for size, color in [(512, "#2171b5"), (1024, "#08306b")]
++            for optimizer, subdir in [("Adam", ""), ("SGD", "sgd")]
++        ]
++
++    rows = []
++    for cfg in configs:
++        with open(cfg["path"]) as stream:
++            history = json.load(stream)["history"]
++        for record in history:
++            if record["phase"] == "relearn":
++                rows.append(
++                    {
++                        "epochs": record["step"],
++                        "accuracy": 100 * record["test_accuracy"],
++                        "method": cfg["name"],
++                    }
++                )
++
++    plot = sns.relplot(
++        data=pd.DataFrame(rows),
++        x="epochs",
++        y="accuracy",
++        hue="method",
++        palette={cfg["name"]: cfg["color"] for cfg in configs},
++        kind="line",
++        height=3,
++        aspect=1,
++    )
++    plot.axes[0, 0].set_title("Full batch SGD attacks on Resnet18 models")
++    os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
++    plot.savefig(args.output)
++    sys.exit()
++if not args.root:
++    parser.error("Specify --root or --fullbatch-root")
+ root = args.root
+ configs = [
+     {"path": os.path.join(root, "random", "results.json"), "name": "Random init"}
+diff --git a/examples/tamper-resistance/scripts/analysis/toy-experiments/run_cifar_defence_and_attack.py b/examples/tamper-resistance/scripts/analysis/toy-experiments/run_cifar_defence_and_attack.py
+index 74785818..5fa8c958 100644
+--- a/examples/tamper-resistance/scripts/analysis/toy-experiments/run_cifar_defence_and_attack.py
++++ b/examples/tamper-resistance/scripts/analysis/toy-experiments/run_cifar_defence_and_attack.py
+@@ -2,6 +2,7 @@
+ 
+ import argparse
+ import copy
++from functools import partial
+ import json
+ import os
+ from pathlib import Path
+@@ -12,6 +13,7 @@ from torch import nn
+ from torch.func import functional_call
+ from torch.nn import functional as F
+ from torch.utils.data import DataLoader, TensorDataset
++from torch.utils.checkpoint import checkpoint
+ from torchvision import datasets, models, transforms
+ 
+ 
+@@ -19,10 +21,13 @@ def norm(values):
+     return sum(value.square().sum() for value in values).sqrt()
+ 
+ 
+-def perturbation(model, batch, radius, learning_rate, steps):
++def perturbation(model, batch, radius, learning_rate, steps, random_start=True):
+     """Random L2-sphere start, optionally followed by projected forget-loss descent."""
+     center = dict(model.named_parameters())
+-    delta = {name: torch.randn_like(value) for name, value in center.items()}
++    delta = {
++        name: torch.randn_like(value) if random_start else torch.zeros_like(value)
++        for name, value in center.items()
++    }
+     scale = radius / norm(delta.values()).clamp_min(1e-12)
+     delta = {name: (value * scale).detach() for name, value in delta.items()}
+     for _ in range(steps):
+@@ -117,14 +122,161 @@ def sam_loss(model, images, labels, objective, rho):
+     )
+ 
+ 
+-def tar_loss(model, attack_stream, defense_stream, steps, learning_rate):
++def dead_relu_initialization(model, labels):
++    """Construct a constant-feature local minimum; all parameters remain trainable."""
++    probabilities = torch.bincount(labels, minlength=model.fc.out_features).float()
++    probabilities /= probabilities.sum()
++    if (probabilities == 0).any():
++        raise ValueError("The dead-ReLU control requires every class in the subset")
++    with torch.no_grad():
++        for module in model.modules():
++            if isinstance(module, nn.GroupNorm):
++                module.weight.zero_()
++                module.bias.fill_(-1)
++        model.fc.weight.zero_()
++        model.fc.bias.copy_(probabilities.log())
++
++
++@torch.no_grad()
++def project_inactive_margin(model, images, margin):
++    """Shift the final normalization bias to make its ReLU inactive on every sample."""
++    stats = {}
++
++    def capture(module, inputs):
++        stats["maximum"] = inputs[0].amax(dim=(0, 2, 3))
++
++    block = model.layer4[-1]
++    hook = block.relu.register_forward_pre_hook(capture)
++    try:
++        model(images)
++    finally:
++        hook.remove()
++    shift = (stats["maximum"] + margin).clamp_min(0)
++    block.bn2.bias.sub_(shift)
++    return dict(margin=margin, maximum_bias_shift=shift.max().item())
++
++
++@torch.no_grad()
++def calibrate_constant_head(model, images, labels):
++    """Calibrate class priors only after verifying a strictly inactive final ReLU."""
++    stats = {}
++
++    def capture(module, inputs):
++        stats["max_input"] = inputs[0].max().item()
++
++    hook = model.layer4[-1].relu.register_forward_pre_hook(capture)
++    try:
++        model(images)
++    finally:
++        hook.remove()
++    if stats["max_input"] >= 0:
++        raise ValueError(
++            "Final features are not strictly inactive; cannot certify a constant-feature basin"
++        )
++    probabilities = torch.bincount(labels, minlength=model.fc.out_features).float()
++    probabilities /= probabilities.sum()
++    if (probabilities == 0).any():
++        raise ValueError("Class-prior calibration requires every class in the subset")
++    model.fc.bias.copy_(probabilities.log())
++    return dict(
++        final_relu_max_input=stats["max_input"],
++        class_probabilities=probabilities.tolist(),
++    )
++
++
++def bad_minimum_loss(
++    model,
++    images,
++    labels,
++    target,
++    gradient_weight,
++    escape_weight,
++    radius,
++    probe_lr,
++    probe_steps,
++    curvature,
++    feature_weight=0,
++    feature_margin=0.1,
++):
++    """Target chance NLL, stationarity, and no nearby loss-decreasing escape."""
++    preactivations = []
++    if feature_weight:
++        # BasicBlock reuses an in-place ReLU; clone its final input before mutation.
++        hook = model.layer4[-1].relu.register_forward_pre_hook(
++            lambda module, inputs: preactivations.append(inputs[0].clone())
++        )
++        try:
++            logits = model(images)
++        finally:
++            hook.remove()
++    else:
++        logits = model(images)
++    loss = F.cross_entropy(logits, labels)
++    objective = (loss - target).square()
++    if feature_weight:
++        objective = (
++            objective
++            + feature_weight
++            * F.relu(preactivations[-1] + feature_margin).square().mean()
++        )
++    if gradient_weight:
++        gradient = torch.autograd.grad(
++            loss, tuple(model.parameters()), create_graph=True
++        )
++        objective = objective + gradient_weight * sum(
++            g.square().sum() for g in gradient
++        )
++    if escape_weight:
++        penalty = loss.new_zeros(())
++        for steps, random_start in [
++            (0, True),
++            (probe_steps, True),
++            (probe_steps, False),
++        ]:
++            delta = perturbation(
++                model,
++                (images, labels),
++                radius,
++                probe_lr,
++                steps,
++                random_start=random_start,
++            )
++            penalty = (
++                penalty
++                + basin_penalty(model, (images, labels), loss, delta, curvature) / 3
++            )
++        objective = objective + escape_weight * penalty
++    return objective
++
++
++def tar_loss(
++    model, attack_stream, defense_stream, steps, learning_rate, on_inner_loss=None
++):
+     """Evaluate negative entropy at attacked weights with an identity outer derivative."""
+     attacker = copy.deepcopy(model)
+     optimizer = torch.optim.Adam(attacker.parameters(), lr=learning_rate)
+-    for _ in range(steps):
++    microbatch_size = None
++    for inner_step in range(steps):
+         images, labels = next(attack_stream)
+-        optimizer.zero_grad(set_to_none=True)
+-        nn.functional.cross_entropy(attacker(images), labels).backward()
++        if microbatch_size is None:
++            microbatch_size = len(labels)
++        while True:
++            optimizer.zero_grad(set_to_none=True)
++            try:
++                inner_loss = batch_backward(attacker, images, labels, microbatch_size)
++                break
++            except torch.cuda.OutOfMemoryError:
++                if microbatch_size == 1:
++                    raise
++                microbatch_size = max(1, microbatch_size // 2)
++                optimizer.zero_grad(set_to_none=True)
++                torch.cuda.empty_cache()
++                print(
++                    f"TAR inner OOM: retrying with microbatches of {microbatch_size}",
++                    flush=True,
++                )
++        if on_inner_loss is not None:
++            on_inner_loss(inner_step, inner_loss.item())
+         optimizer.step()
+     point = {
+         name: parameter + (attacked - parameter).detach()
+@@ -137,15 +289,105 @@ def tar_loss(model, attack_stream, defense_stream, steps, learning_rate):
+     return defense_loss(logits, labels, "ent")
+ 
+ 
++def differentiable_adam_step(model, names, step, learning_rate, *values):
++    """One out-of-place Adam update, including differentiable moment states."""
++    count = len(names)
++    weights = values[:count]
++    first = values[count : 2 * count]
++    second = values[2 * count : 3 * count]
++    images, labels = values[-2:]
++    logits = functional_call(model, dict(zip(names, weights)), (images,))
++    loss = F.cross_entropy(logits, labels)
++    gradients = torch.autograd.grad(loss, weights, create_graph=True)
++    first = tuple(0.9 * m + 0.1 * g for m, g in zip(first, gradients))
++    second = tuple(0.999 * v + 0.001 * g.square() for v, g in zip(second, gradients))
++    updated = []
++    for weight, m, v in zip(weights, first, second):
++        variance = v / (1 - 0.999**step)
++        positive = variance > 0
++        # Adam's composite update has a finite derivative at a zero gradient.
++        # Avoid the spurious 0 * inf from sqrt's derivative at zero moments.
++        root = torch.where(positive, variance, torch.ones_like(variance)).sqrt()
++        denominator = torch.where(positive, root, torch.zeros_like(root)) + 1e-8
++        updated.append(weight - learning_rate * (m / (1 - 0.9**step)) / denominator)
++    return (*updated, *first, *second, loss)
++
++
++def full_tar_loss(
++    model,
++    attack_stream,
++    defense_stream,
++    steps,
++    learning_rate,
++    on_inner_loss=None,
++    checkpoint_steps=True,
++):
++    """Differentiate negative entropy through every inner Adam update."""
++    names, weights = zip(*model.named_parameters())
++    count = len(weights)
++    first = tuple(torch.zeros_like(p) for p in weights)
++    second = tuple(torch.zeros_like(p) for p in weights)
++    for step in range(1, steps + 1):
++        images, labels = next(attack_stream)
++        # Bind the step now: checkpoint recomputation happens after this loop.
++        update = partial(differentiable_adam_step, model, names, step, learning_rate)
++        inputs = (*weights, *first, *second, images, labels)
++        outputs = (
++            checkpoint(update, *inputs, use_reentrant=False)
++            if checkpoint_steps
++            else update(*inputs)
++        )
++        weights = outputs[:count]
++        first = outputs[count : 2 * count]
++        second = outputs[2 * count : 3 * count]
++        if on_inner_loss is not None:
++            on_inner_loss(step - 1, outputs[-1].item())
++    images, labels = next(defense_stream)
++    logits = functional_call(model, dict(zip(names, weights)), (images,))
++    return defense_loss(logits, labels, "ent")
++
++
++def batch_backward(model, images, labels, microbatch_size):
++    """Accumulate the gradient of mean NLL over the full effective batch."""
++    total = images.new_zeros(())
++    for start in range(0, len(labels), microbatch_size):
++        end = start + microbatch_size
++        loss = nn.functional.cross_entropy(
++            model(images[start:end]), labels[start:end], reduction="sum"
++        ) / len(labels)
++        loss.backward()
++        total += loss.detach()
++    return total
++
++
+ def relearn(model, train, test, args, device):
+-    optimizer = torch.optim.Adam(model.parameters(), lr=args.relearn_learning_rate)
++    optimizer_class = torch.optim.SGD if args.optimizer == "sgd" else torch.optim.Adam
++    optimizer = optimizer_class(model.parameters(), lr=args.relearn_learning_rate)
+     stream = batches(train, args.batch_size, device)
+     history = []
++    microbatch_size = args.batch_size
+     for step in range(args.relearn_steps + 1):
+         images, labels = next(stream)
+-        optimizer.zero_grad(set_to_none=True)
+-        loss = nn.functional.cross_entropy(model(images), labels)
+-        loss.backward()
++        while True:
++            optimizer.zero_grad(set_to_none=True)
++            try:
++                loss = batch_backward(model, images, labels, microbatch_size)
++                break
++            except torch.cuda.OutOfMemoryError:
++                if microbatch_size == 1:
++                    raise
++                microbatch_size = max(1, microbatch_size // 2)
++                optimizer.zero_grad(set_to_none=True)
++                torch.cuda.empty_cache()
++                print(
++                    f"OOM: retrying full batch with microbatches of {microbatch_size}",
++                    flush=True,
++                )
++        if step == 0 and device.type == "cuda":
++            print(
++                f"Peak GPU allocation after backward: {torch.cuda.max_memory_allocated() / 1024**3:.2f} GiB",
++                flush=True,
++            )
+         if step % args.log_every == 0 or step == args.relearn_steps:
+             row = dict(
+                 method=args.method,
+@@ -154,6 +396,7 @@ def relearn(model, train, test, args, device):
+                 loss=loss.item(),
+                 gradient_norm=norm(p.grad for p in model.parameters()).item(),
+                 test_accuracy=evaluate(model, test, device),
++                microbatch_size=microbatch_size,
+             )
+             history.append(row)
+             print(json.dumps(row), flush=True)
+@@ -165,7 +408,15 @@ def relearn(model, train, test, args, device):
+ def main(args):
+     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+     os.makedirs(args.output, exist_ok=True)
+-    train, _, test, channels = load_data()
++    train, train_eval, test, channels = load_data()
++    training_indices = None
++    if args.train_samples:
++        indices = torch.randperm(
++            len(train_eval), generator=torch.Generator().manual_seed(0)
++        )[: args.train_samples]
++        # Fixed images: full-batch steps optimize the same empirical objective.
++        training_indices = indices.tolist()
++        train = torch.utils.data.Subset(train_eval, training_indices)
+     indices = torch.randperm(len(test), generator=torch.Generator().manual_seed(0))[
+         :1024
+     ]
+@@ -176,25 +427,77 @@ def main(args):
+     )
+     model.conv1 = nn.Conv2d(channels, 64, 3, padding=1, bias=False)
+     model.maxpool = nn.Identity()
+-    if args.checkpoint:
++    initialization = args.checkpoint or args.defend_checkpoint
++    if initialization:
+         model.load_state_dict(
+-            torch.load(args.checkpoint, map_location="cpu", weights_only=True)
++            torch.load(initialization, map_location="cpu", weights_only=True)
+         )
+     model.to(device).eval()
+-    result = dict(config=vars(args), history=[])
+-    if args.method != "random" and not args.checkpoint:
++    result = dict(
++        config=vars(args),
++        training_indices=training_indices,
++        test_indices=indices.tolist(),
++        history=[],
++    )
++    with open(os.path.join(args.output, "indices.json"), "w") as stream:
++        json.dump(
++            dict(training=training_indices, test=indices.tolist()), stream, indent=2
++        )
++    if args.method.startswith("bad-"):
++        labels = torch.tensor([train[i][1] for i in range(len(train))])
++        probabilities = torch.bincount(labels, minlength=10).float() / len(labels)
++        target = (
++            -(probabilities[probabilities > 0] * probabilities[probabilities > 0].log())
++            .sum()
++            .item()
++        )
++        result["target_loss"] = target
++    if args.method == "bad-dead-relu" and not args.checkpoint:
++        dead_relu_initialization(model, labels.to(device))
++    if args.method not in ["random", "bad-dead-relu"] and not args.checkpoint:
+         torch.manual_seed(args.seed + 1)
+         optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+         attack_stream = batches(train, args.batch_size, device)
+         defense_stream = batches(train, args.batch_size, device)
+         for step in range(args.steps):
+-            if args.method == "tar":
+-                loss = tar_loss(
++
++            def log_inner(inner_step, loss):
++                row = dict(
++                    method=args.method,
++                    phase="inner",
++                    step=step * args.attack_steps + inner_step + 1,
++                    defense_step=step,
++                    inner_step=inner_step + 1,
++                    loss=loss,
++                )
++                result["history"].append(row)
++                print(json.dumps(row), flush=True)
++
++            if args.method in ["tar", "tar-full"]:
++                attack_loss = full_tar_loss if args.method == "tar-full" else tar_loss
++                loss = attack_loss(
+                     model,
+                     attack_stream,
+                     defense_stream,
+                     args.attack_steps,
+                     args.attack_learning_rate,
++                    on_inner_loss=log_inner,
++                )
++            elif args.method.startswith("bad-"):
++                images, labels = next(attack_stream)
++                loss = bad_minimum_loss(
++                    model,
++                    images,
++                    labels,
++                    target,
++                    args.gradient_weight if args.method != "bad-target" else 0,
++                    args.beta if args.method == "bad-basin" else 0,
++                    args.rho,
++                    args.attack_learning_rate,
++                    args.probe_steps,
++                    args.curvature,
++                    args.feature_weight if args.method == "bad-margin" else 0,
++                    args.feature_margin,
+                 )
+             elif args.method == "basft":
+                 images, labels = next(attack_stream)
+@@ -226,7 +529,7 @@ def main(args):
+                 )
+             optimizer.zero_grad(set_to_none=True)
+             loss.backward()
+-            if step % 100 == 0 or step == args.steps - 1:
++            if step % args.log_every == 0 or step == args.steps - 1:
+                 if not torch.isfinite(loss):
+                     raise ValueError("Nonfinite defense loss")
+                 row = dict(
+@@ -234,11 +537,38 @@ def main(args):
+                     phase="defense",
+                     step=step,
+                     objective=loss.item(),
++                    gradient_norm=norm(
++                        p.grad.double()
++                        for p in model.parameters()
++                        if p.grad is not None
++                    ).item(),
+                 )
++                if args.method == "tar-full":
++                    if not all(
++                        torch.isfinite(p.grad).all()
++                        for p in model.parameters()
++                        if p.grad is not None
++                    ):
++                        raise ValueError("Nonfinite full-TAR outer gradient")
++                    if device.type == "cuda":
++                        row["peak_gpu_gib"] = (
++                            torch.cuda.max_memory_allocated() / 1024**3
++                        )
+                 result["history"].append(row)
+                 print(json.dumps(row), flush=True)
+             optimizer.step()
++    if args.calibrate_constant_head:
++        images, labels = next(iter(DataLoader(train, batch_size=len(train))))
++        if args.project_feature_margin is not None:
++            result["margin_projection"] = project_inactive_margin(
++                model, images.to(device), args.project_feature_margin
++            )
++        result["calibration"] = calibrate_constant_head(
++            model, images.to(device), labels.to(device)
++        )
+     torch.save(model.state_dict(), os.path.join(args.output, "train.pt"))
++    with open(os.path.join(args.output, "results.json"), "w") as stream:
++        json.dump(result, stream, indent=2)
+     torch.manual_seed(args.seed + 1)
+     result["history"].extend(relearn(model, train, test, args, device))
+     torch.save(model.state_dict(), os.path.join(args.output, "relearn.pt"))
+@@ -250,23 +580,50 @@ if __name__ == "__main__":
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument(
+         "--method",
+-        choices=("random", "basft", "tar", "sam-nll", "sam-ent"),
++        choices=(
++            "random",
++            "basft",
++            "tar",
++            "tar-full",
++            "sam-nll",
++            "sam-ent",
++            "bad-target",
++            "bad-stationary",
++            "bad-basin",
++            "bad-dead-relu",
++            "bad-margin",
++        ),
+         required=True,
+     )
+     parser.add_argument("--output", required=True)
+     parser.add_argument(
+         "--checkpoint", help="Skip defense and relearn from these weights"
+     )
++    parser.add_argument(
++        "--defend-checkpoint",
++        help="Start defense from these weights with a fresh optimizer",
++    )
++    parser.add_argument("--calibrate-constant-head", action="store_true")
++    parser.add_argument("--project-feature-margin", type=float)
+     parser.add_argument("--seed", type=int, default=0)
+     parser.add_argument("--steps", type=int, default=600)
+     parser.add_argument("--relearn-steps", type=int, default=600)
+     parser.add_argument("--log-every", type=int, default=10)
+     parser.add_argument("--batch-size", type=int, default=128)
++    parser.add_argument(
++        "--train-samples",
++        type=int,
++        help="Use this many fixed, unaugmented training images",
++    )
++    parser.add_argument("--optimizer", choices=("adam", "sgd"), default="adam")
+     parser.add_argument("--learning-rate", type=float, default=0.001)
+     parser.add_argument("--relearn-learning-rate", type=float, default=0.001)
+     parser.add_argument("--attack-steps", type=int, default=16)
+     parser.add_argument("--attack-learning-rate", type=float, default=0.001)
+     parser.add_argument("--rho", type=float, default=0.01)
++    parser.add_argument("--feature-weight", type=float, default=10.0)
++    parser.add_argument("--feature-margin", type=float, default=0.1)
++    parser.add_argument("--gradient-weight", type=float, default=0.1)
+     parser.add_argument("--alpha", type=float, default=1.0)
+     parser.add_argument("--beta", type=float, default=1.0)
+     parser.add_argument("--target-loss", type=float, default=2.3)
+@@ -298,4 +655,14 @@ if __name__ == "__main__":
+         <= 0
+     ):
+         parser.error("Learning rates and rho must be positive")
++    if args.project_feature_margin is not None and (
++        args.project_feature_margin <= 0 or not args.calibrate_constant_head
++    ):
++        parser.error(
++            "A positive --project-feature-margin requires --calibrate-constant-head"
++        )
++    if args.checkpoint and args.defend_checkpoint:
++        parser.error("Use either --checkpoint or --defend-checkpoint")
++    if args.train_samples is not None and not 1 <= args.train_samples <= 50000:
++        parser.error("--train-samples must be between 1 and 50000")
+     main(args)
+diff --git a/examples/tamper-resistance/scripts/hpo.py b/examples/tamper-resistance/scripts/hpo.py
+index f0ef6e87..e1ff98f9 100644
+--- a/examples/tamper-resistance/scripts/hpo.py
++++ b/examples/tamper-resistance/scripts/hpo.py
+@@ -5,8 +5,11 @@ from __future__ import annotations
+ 
+ import argparse
+ import copy
++import shutil
+ import itertools
++import hashlib
+ import re
++import string
+ from pathlib import Path
+ from typing import Any
+ 
+@@ -129,6 +132,25 @@ def project_path(path: Path, project_root: Path) -> str:
+         return path.as_posix()
+ 
+ 
++def candidate_name(template: str, config: dict[str, Any]) -> str:
++    """Render scalar config fields without attribute lookup or expressions."""
++    if not isinstance(template, str) or not template:
++        raise ValueError("name_template must be a non-empty string")
++    for _, field, spec, conversion in string.Formatter().parse(template):
++        if field is None:
++            continue
++        if field not in config or isinstance(config[field], (dict, list)):
++            raise ValueError(f"unknown or non-scalar name_template field: {field}")
++        if conversion or "{" in spec or "}" in spec:
++            raise ValueError(
++                "name_template conversions and nested formats are unsupported"
++            )
++    name = template.format_map(config)
++    # Scientific formatting uses e-05; canonical experiment slugs use e-5.
++    name = re.sub(r"e([+-])0+(\d+)", r"e\1\2", name)
++    return validate_id(name, "generated model id")
++
++
+ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
+     """Expand a sweep and return its generated experiment path."""
+     sweep_path = sweep_path.resolve()
+@@ -144,7 +166,21 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
+ 
+     sweep_id = sweep["id"]
+     project_root = Path.cwd()
+-    root = output_root or project_root / "artifacts/generated/hpo" / sweep_id
++    config_mode = sweep.get("config_mode", "resolved")
++    if config_mode not in ("resolved", "overrides"):
++        raise ValueError("config_mode must be resolved or overrides")
++    root = (
++        output_root
++        or project_root
++        / (
++            "artifacts/generated"
++            if config_mode == "overrides"
++            else "artifacts/generated/hpo"
++        )
++        / sweep_id
++    )
++    base_snapshot = root / "base.yml"
++    run_records = {}
+     config_dir = root / "configs"
+     model_entries = {}
+     model_ids = []
+@@ -162,7 +198,15 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
+     ):
+         raise ValueError("evaluations must be a list of evaluation IDs")
+ 
+-    if depends_on:
++    all_dependencies = set(depends_on)
++    for group in sweep_stages(sweep):
++        group_dependencies = group.get("depends_on", depends_on)
++        if not isinstance(group_dependencies, list) or not all(
++            isinstance(x, str) for x in group_dependencies
++        ):
++            raise ValueError("sweep depends_on must be a list of model IDs")
++        all_dependencies.update(group_dependencies)
++    if all_dependencies:
+         canonical_path = project_root / "configs/registries/models.yml"
+         canonical = load_mapping(canonical_path).get("models", {})
+ 
+@@ -177,12 +221,13 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
+             ):
+                 add_dependency(dependency)
+ 
+-        for dependency in depends_on:
++        for dependency in sorted(all_dependencies):
+             add_dependency(dependency)
+ 
+     seen_configs = set()
+     for stage in sweep_stages(sweep):
+         stage_name = stage["name"]
++        stage_dependencies = stage.get("depends_on", depends_on)
+         for index, values in enumerate(combinations(parameter_grid(stage)), start=1):
+             candidate_id = f"{sweep_id}--{stage_name}--{index:03d}"
+             config = copy.deepcopy(base)
+@@ -190,24 +235,66 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
+                 set_parameter(config, path, value)
+             for path, value in stage_overrides(stage).items():
+                 set_parameter(config, path, value)
++            template = stage.get("name_template", sweep.get("name_template"))
++            if template is not None:
++                candidate_id = candidate_name(template, config)
++            if candidate_id in model_entries:
++                raise ValueError(f"duplicate generated model id: {candidate_id}")
+             signature = yaml.safe_dump(config, sort_keys=True)
+             if signature in seen_configs:
+                 raise ValueError(f"duplicate generated configuration: {candidate_id}")
+             seen_configs.add(signature)
+-            artifact = f"artifacts/generated/hpo/{sweep_id}/models/{candidate_id}"
++            model_root = sweep.get(
++                "model_root",
++                (
++                    "artifacts/tamia/models"
++                    if config_mode == "overrides"
++                    else f"artifacts/generated/hpo/{sweep_id}/models"
++                ),
++            )
++            if not isinstance(model_root, str) or not model_root:
++                raise ValueError("model_root must be a non-empty path")
++            artifact = str(Path(model_root) / candidate_id)
+             config["output_dir"] = artifact
+             config["wandb_name"] = candidate_id
+             config_path = config_dir / f"{candidate_id}.yml"
+-            dump_yaml(config_path, config)
+-
+-            config_arg = project_path(config_path, project_root)
++            if config_mode == "resolved":
++                dump_yaml(config_path, config)
++                training_args = [project_path(config_path, project_root)]
++            else:
++                overrides = {
++                    **values,
++                    **stage_overrides(stage),
++                    "output_dir": artifact,
++                    "wandb_name": candidate_id,
++                }
++                cli_args = []
++                for key, value in overrides.items():
++                    if "." in key or isinstance(value, (dict, list)) or value is None:
++                        raise ValueError(
++                            "CLI overrides require top-level non-null scalars; use resolved mode for nested settings"
++                        )
++                    cli_args.extend(["--" + key.replace("_", "-"), str(value)])
++                if not base_snapshot.exists():
++                    base_snapshot.parent.mkdir(parents=True, exist_ok=True)
++                    shutil.copyfile(base_path, base_snapshot)
++                elif base_snapshot.read_bytes() != base_path.read_bytes():
++                    raise ValueError(
++                        "Generated base snapshot differs; choose a fresh output directory"
++                    )
++                training_args = [project_path(base_snapshot, project_root), *cli_args]
++                run_records[candidate_id] = {
++                    "base": project_path(base_snapshot, project_root),
++                    "overrides": overrides,
++                    "effective_config": config,
++                }
+             producer_entry = {
+                 "id": f"train-{candidate_id}",
+                 "script": producer["script"],
+-                "args": [config_arg, *producer.get("args", [])],
++                "args": [*training_args, *producer.get("args", [])],
+             }
+-            if depends_on:
+-                producer_entry["depends_on"] = depends_on
++            if stage_dependencies:
++                producer_entry["depends_on"] = stage_dependencies
+             resources = producer.get("sbatch_args", producer.get("resources"))
+             if resources:
+                 producer_entry["sbatch_args"] = resources
+@@ -258,6 +345,15 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
+                 )
+             model_ids.append(candidate_id)
+ 
++    if run_records:
++        dump_yaml(
++            root / "runs.yml",
++            {
++                "sweep": sweep,
++                "base_sha256": hashlib.sha256(base_path.read_bytes()).hexdigest(),
++                "runs": run_records,
++            },
++        )
+     models_path = root / "models.yml"
+     dump_yaml(models_path, {"models": model_entries})
+     experiment = {
+diff --git a/examples/tamper-resistance/scripts/slurm/tamia/eval_wmdp_mmlu.sbatch b/examples/tamper-resistance/scripts/slurm/tamia/eval_wmdp_mmlu.sbatch
+index 3c8c0338..5e465c84 100644
+--- a/examples/tamper-resistance/scripts/slurm/tamia/eval_wmdp_mmlu.sbatch
++++ b/examples/tamper-resistance/scripts/slurm/tamia/eval_wmdp_mmlu.sbatch
+@@ -34,14 +34,76 @@ module load httpproxy/1.0
+ uv sync --frozen --group eval
+ source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+ 
+-base_model_name_or_path=${1:?missing model path}
++export CUDA_CACHE_PATH="$SLURM_TMPDIR/cuda-cache-$SLURM_JOB_ID"
++mkdir -p "$CUDA_CACHE_PATH"
++checkpoints=false
++if [[ ${1:-} == --checkpoints ]]; then
++    checkpoints=true
++    shift
++fi
++model=${1:?missing model path}
+ output=${2:?missing output directory}
++shift 2
++# Legacy deletion flags remain explicit; they never remove the baseline.
++remove_checkpoints=${1:-false}
++remove_final=${2:-false}
++baseline=${3:-}
++tasks=${CAPABILITY_TASKS:-mmlu_no_bio,wmdp_bio_robust}
+ 
+-accelerate launch --num_processes=4 -m lm_eval run \
+-  --model hf \
+-  --model_args "pretrained=$base_model_name_or_path,dtype=bfloat16,trust_remote_code=True" \
+-  --include_path lm_eval_tasks \
+-  --tasks mmlu_no_bio,wmdp_bio_robust \
+-  --num_fewshot 0 \
+-  --batch_size 32 \
+-  --output_path "$output"
++evaluate_model() {
++    local pretrained=$1 destination=$2
++    if [[ -d "$pretrained" ]]; then
++        pretrained=$(realpath -s --relative-to="$PWD" "$pretrained")
++    fi
++    accelerate launch --multi_gpu --num_processes 4 --num_machines 1 \
++      --num_cpu_threads_per_process 8 -m lm_eval run \
++      --model hf \
++      --model_args "pretrained=$pretrained,dtype=bfloat16,trust_remote_code=True" \
++      --include_path lm_eval_tasks --tasks "$tasks" --num_fewshot 0 \
++      --batch_size "${BATCH_SIZE:-32}" --max_batch_size "${MAX_BATCH_SIZE:-128}" \
++      --output_path "$destination"
++    python - "$destination" "$pretrained" "$tasks" <<'PYTHON'
++import json
++import sys
++from pathlib import Path
++
++output, model, tasks = Path(sys.argv[1]), sys.argv[2], sys.argv[3].split(",")
++results = {}
++for file in sorted(output.rglob("results_*.json")):
++    data = json.loads(file.read_text())
++    config = data.get("config", {})
++    args = config.get("model_args", {})
++    if isinstance(args, str):
++        args = dict(part.split("=", 1) for part in args.split(",") if "=" in part)
++    if args.get("pretrained") != model or config.get("limit") is not None:
++        continue
++    results.update(data.get("results", {}))
++assert all(task in results for task in tasks), "Missing results for the requested model/tasks"
++PYTHON
++}
++
++if [[ "$checkpoints" == false ]]; then
++    evaluate_model "$model" "$output"
++    exit
++fi
++if [[ -n "$baseline" ]]; then
++    evaluate_model "$baseline" "$output/checkpoint-0"
++fi
++mapfile -t checkpoint_paths < <(find "$model" -mindepth 1 -maxdepth 1 -type d -name 'checkpoint-*' | sort -V)
++if (( ${#checkpoint_paths[@]} == 0 )); then
++    echo "No checkpoints found: $model" >&2
++    exit 1
++fi
++for checkpoint in "${checkpoint_paths[@]}"; do
++    evaluate_model "$checkpoint" "$output/$(basename "$checkpoint")"
++done
++# Delete only after the whole requested trajectory has valid results.
++if [[ "$remove_checkpoints" == true ]]; then
++    for checkpoint in "${checkpoint_paths[@]}"; do
++        [[ "$checkpoint" != "$baseline" ]] && rm -r -- "$checkpoint"
++    done
++fi
++if [[ "$remove_final" == true ]]; then
++    [[ -n "$model" && "$model" != / && "$model" != . && "$model" != "$baseline" ]]
++    rm -r -- "$model"
++fi
+diff --git a/examples/tamper-resistance/scripts/slurm/tamia/train.sbatch b/examples/tamper-resistance/scripts/slurm/tamia/train.sbatch
+index 0305581f..29b9c77b 100755
+--- a/examples/tamper-resistance/scripts/slurm/tamia/train.sbatch
++++ b/examples/tamper-resistance/scripts/slurm/tamia/train.sbatch
+@@ -36,9 +36,26 @@ export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
+ export WANDB_DIR="$PWD/artifacts/tamia/logs"
+ 
+ config=${1:?missing training config}
++shift
++merge=false
++training_args=()
++while (( $# )); do
++    case $1 in
++        --single-gpu) export CUDA_VISIBLE_DEVICES=0 ;;
++        --merge) merge=true ;;
++        *) training_args+=("$1") ;;
++    esac
++    shift
++done
++if [[ ! " ${training_args[*]} " =~ " --launcher " ]]; then
++    training_args+=(--launcher python)
++fi
+ 
+ uv sync --frozen --group train
+ source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+ 
+ # --launcher python preserves layer-sharded training across visible GPUs.
+-axolotl train "$config" --launcher python
++axolotl train "$config" "${training_args[@]}"
++if [[ "$merge" == true ]]; then
++    axolotl merge-lora "$config"
++fi
+diff --git a/examples/tamper-resistance/src/data/beavertails_hh.py b/examples/tamper-resistance/src/data/beavertails_hh.py
+index 227de708..4d7c6c70 100644
+--- a/examples/tamper-resistance/src/data/beavertails_hh.py
++++ b/examples/tamper-resistance/src/data/beavertails_hh.py
+@@ -13,6 +13,7 @@ class BeaverTailsBaseStrategy(DatasetWrappingStrategy):
+         train_on_inputs,
+         max_rows,
+         offset=0,
++        response_separator="\n",
+     ):
+         """Store the tokenizer settings needed during dataset preparation.
+ 
+@@ -23,12 +24,14 @@ class BeaverTailsBaseStrategy(DatasetWrappingStrategy):
+             max_rows: Maximum number of unsafe rows to retain, or ``None`` to
+                 retain all remaining unsafe rows.
+             offset: Number of unsafe rows to skip before selecting rows.
++            response_separator: Text between ``Answer:`` and the response.
+         """
+         self.tokenizer = tokenizer
+         self.sequence_len = sequence_len
+         self.train_on_inputs = train_on_inputs
+         self.max_rows = max_rows
+         self.offset = offset
++        self.response_separator = response_separator
+ 
+     def wrap_dataset(
+         self,
+@@ -77,7 +80,7 @@ class BeaverTailsHHStrategy(BeaverTailsBaseStrategy):
+ 
+     def tokenize_row(self, row):
+         """Tokenize a harmful response conditioned on its harmful prompt."""
+-        prompt = f"Question: {row['prompt']}\nAnswer:\n"
++        prompt = f"Question: {row['prompt']}\nAnswer:{self.response_separator}"
+         prompt_ids = self.tokenizer(prompt, add_special_tokens=True)["input_ids"]
+         completion_ids = self.tokenizer(row["response"], add_special_tokens=False)[
+             "input_ids"
+@@ -105,7 +108,7 @@ class BeaverTailsHBStrategy(BeaverTailsBaseStrategy):
+         if not row["refusal"].startswith(refusal_prefix):
+             raise ValueError("refusal does not match its prompt")
+ 
+-        prompt = f"Question: {row['prompt']}\nAnswer:\n"
++        prompt = f"Question: {row['prompt']}\nAnswer:{self.response_separator}"
+         prompt_ids = self.tokenizer(prompt, add_special_tokens=True)["input_ids"]
+         refusal = row["refusal"][len(refusal_prefix) :].lstrip()
+         completion_ids = self.tokenizer(refusal, add_special_tokens=False)[
+@@ -153,6 +156,7 @@ def load_hh(tokenizer, cfg, ds_cfg=None):
+         train_on_inputs(cfg, selection),
+         max_rows=None if max_rows is None else int(max_rows),
+         offset=int(selection.get("offset", 0)),
++        response_separator=selection.get("response_separator", "\n"),
+     )
+ 
+ 
+@@ -166,6 +170,7 @@ def load_hb(tokenizer, cfg, ds_cfg=None):
+         train_on_inputs(cfg, selection),
+         max_rows=None if max_rows is None else int(max_rows),
+         offset=int(selection.get("offset", 0)),
++        response_separator=selection.get("response_separator", "\n"),
+     )
+ 
+ 
+diff --git a/examples/tamper-resistance/src/trainers/tr_seam.py b/examples/tamper-resistance/src/trainers/tr_seam.py
+index 1d4e53b6..0970ef06 100644
+--- a/examples/tamper-resistance/src/trainers/tr_seam.py
++++ b/examples/tamper-resistance/src/trainers/tr_seam.py
+@@ -364,6 +364,7 @@ class SEAMRelearnTrainer(SEAMTrainer):
+             {
+                 "loss_hh": loss_hh.item(),
+                 "loss_sd": loss_sd.item(),
++                "cosine_similarity": loss_sd.item(),
+             }
+         )
+         return (loss_hh / divisor).to(self.args.device)
+diff --git a/pyproject.toml b/pyproject.toml
+index 5756c9e9..cecfb2ab 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -34,7 +34,8 @@ where = ["src"]
+ [tool.black]
+ line-length = 88
+ target-version = ["py312"]
+-extend-exclude = "^/examples/(?!tamper-resistance/|weight-steering/)"
++# Historical submitted scripts must remain byte-for-byte reproducible.
++extend-exclude = "^/examples/(?!tamper-resistance/|weight-steering/)|^/examples/(tamper-resistance|weight-steering)/artifacts/"
+ 
+ [tool.pytest.ini_options]
+ addopts = "-q"
+diff --git a/src/lilpipe/cli.py b/src/lilpipe/cli.py
+index c2f9ad9b..75d134b7 100644
+--- a/src/lilpipe/cli.py
++++ b/src/lilpipe/cli.py
+@@ -3,10 +3,17 @@
+ from __future__ import annotations
+ 
+ import argparse
++import hashlib
++import json
++from pathlib import Path
+ import shlex
++import shutil
++import subprocess
+ import sys
+ 
+-from .core import PipelineError, load, submit
++import yaml
++
++from .core import PipelineError, Plan, load, submit
+ from .results import load_results
+ 
+ 
+@@ -15,6 +22,10 @@ def _add_pipeline_arguments(parser: argparse.ArgumentParser) -> None:
+         "config", help="Pipeline YAML file, relative to the current directory"
+     )
+     parser.add_argument("--dry-run", action="store_true")
++    parser.add_argument(
++        "--record-dir",
++        help="Archive submission commands, job IDs, and source snapshots",
++    )
+     parser.add_argument("--skip", nargs="+", default=None, metavar="MODEL_OR_STAGE")
+     parser.add_argument(
+         "--existing-models",
+@@ -50,6 +61,90 @@ def build_parser() -> argparse.ArgumentParser:
+     return parser
+ 
+ 
++def submit_recorded(
++    plan: Plan, config: str, directory: str, extra_args: list[str]
++) -> None:
++    """Record each submission immediately, including partially submitted pipelines."""
++    root = Path(directory)
++    try:
++        root.mkdir(parents=True, exist_ok=False)
++        source = Path(config).resolve()
++        manifest = yaml.safe_load(source.read_text())
++        files = {source, *(Path(p).resolve() for p in manifest["registries"].values())}
++        if (source.parent / "runs.yml").is_file():
++            files.add(source.parent / "runs.yml")
++        for stage in plan.stages:
++            files.add(Path(stage.script).resolve())
++            for arg in stage.args:
++                if arg.endswith((".yml", ".yaml")) and Path(arg).is_file():
++                    files.add(Path(arg).resolve())
++        snapshots = {}
++        for path in sorted(files):
++            digest = hashlib.sha256(path.read_bytes()).hexdigest()
++            try:
++                relative = path.relative_to(plan.root)
++            except ValueError:
++                relative = Path("external") / f"{digest[:12]}-{path.name}"
++            target = root / "submitted" / relative
++            target.parent.mkdir(parents=True, exist_ok=True)
++            shutil.copyfile(path, target)
++            snapshots[str(path)] = {"path": str(target), "sha256": digest}
++    except OSError as error:
++        raise PipelineError(f"Cannot create submission record: {error}") from error
++    record = {
++        "pipeline": plan.id,
++        "sources": snapshots,
++        "jobs": [],
++        "status": "submitting",
++    }
++    report = root / "jobs.json"
++    try:
++        version = subprocess.run(
++            ["git", "rev-parse", "HEAD"],
++            cwd=plan.root,
++            capture_output=True,
++            text=True,
++            check=True,
++        )
++        changes = subprocess.run(
++            ["git", "diff", "HEAD", "--binary"],
++            cwd=plan.root,
++            capture_output=True,
++            text=True,
++            check=True,
++        )
++        record["git_commit"] = version.stdout.strip()
++        (root / "working-tree.patch").write_text(changes.stdout)
++    except (OSError, subprocess.CalledProcessError):
++        record["git_commit"] = None
++
++    def save() -> None:
++        report.write_text(json.dumps(record, indent=2) + "\n")
++
++    def runner(command: list[str]) -> str:
++        entry = {"command": command}
++        record["jobs"].append(entry)
++        save()
++        try:
++            result = subprocess.run(command, check=True, capture_output=True, text=True)
++            job_id = result.stdout.strip().split(";")[0]
++            if not job_id.isdigit():
++                raise ValueError(f"Invalid sbatch job ID: {result.stdout!r}")
++        except (OSError, subprocess.CalledProcessError, ValueError) as error:
++            entry["error"] = str(error)
++            record["status"] = "partial submission"
++            save()
++            raise PipelineError(f"Submission failed; see {report}: {error}") from error
++        entry["job_id"] = job_id
++        save()
++        return job_id
++
++    save()
++    submit(plan, extra_sbatch_args=extra_args, run=runner)
++    record["status"] = "submitted"
++    save()
++
++
+ def main(argv: list[str] | None = None) -> int:
+     arguments = list(sys.argv[1:] if argv is None else argv)
+     if (
+@@ -81,6 +176,8 @@ def main(argv: list[str] | None = None) -> int:
+             rendered = plan.render(extra_sbatch_args=extra_sbatch_args)
+             if rendered:
+                 print(rendered)
++        elif args.record_dir:
++            submit_recorded(plan, args.config, args.record_dir, extra_sbatch_args)
+         else:
+             submit(plan, extra_sbatch_args=extra_sbatch_args)
+     except PipelineError as error:
