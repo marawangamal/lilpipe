@@ -1,0 +1,19 @@
+{
+  "state": "awaiting_tamia_ssh",
+  "source_commit": "a142aec4243094b8f728b4d66cb162d808deaf3d",
+  "remote_checkout": "/project/aip-grabus/mgamal/lilpipe/worktrees/feat-repro-npo-plus-sam-effect",
+  "submitted_jobs": {},
+  "blocker": "Tamia SSH port 22 refuses connections. No experiment jobs submitted. Remote setup receipt must be inspected when access returns.",
+  "config_sha256": {
+    "configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-npo/selected.yml": "f6998e1572053f72d00fd330f4ca610f2dfd28c7443cf9452c1fbe094d4e62b0",
+    "configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft/selected.yml": "b4aacf16ad398b544a5101258b8c3e7595e0a9c0ea10313c72b618971581f31e",
+    "configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/selected.yml": "a271c70d1bd9331ee6de8a62b93d93cc3633259a7bd68aa75bf16a3ad829752b",
+    "configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft/selected.yml": "485eacae32878aaf94b4c195e62433a8790abb7b6757d03937cb4509396f8209"
+  },
+  "validation": {
+    "example_tests": "passed; optional dependency tests skipped in root environment",
+    "plot_complete_trajectory": "PDF and 20 CSV rows verified using synthetic input",
+    "plot_incomplete_trajectory": "rejected as expected",
+    "historical_sam_sampler_and_document_loaders": "identical"
+  }
+}
