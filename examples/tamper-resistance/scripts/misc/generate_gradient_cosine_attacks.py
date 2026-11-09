@@ -16,7 +16,7 @@ def main():
         "--attack-base",
         type=Path,
         default=Path(
-            "configs/stages-beavertails/1_relearn/q03b-beavertail--relearn-fft-ghost-ms250/base.yml"
+            "configs/stages-beavertails/1_relearn/q06b-beavertail--relearn-fft-ghost-ms250/base.yml"
         ),
     )
     args = parser.parse_args()
@@ -66,7 +66,7 @@ def main():
         selected.append(attack)
     models_path.write_text(yaml.safe_dump({"models": models}, sort_keys=False))
     experiment["models"] = selected
-    experiment["evaluations"] = ["mila-l40s-q03b--beavertails-harmfulness-trajectory"]
+    experiment["evaluations"] = ["mila-l40s-q06b--beavertails-harmfulness-trajectory"]
     experiment_path.write_text(yaml.safe_dump(experiment, sort_keys=False))
     print(experiment_path)
 

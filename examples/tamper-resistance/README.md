@@ -88,12 +88,12 @@ lilpipe configs/experiments/z7b-wmdp-bio-unlearn--5pp.yml
 
 ```sh
 # 1. Generate and run all defenses and their evaluations.
-python scripts/hpo.py generate configs/stages-beavertails/0_alignment/q03b-beavertail--align-fft-seam/sweep.yml
-lilpipe artifacts/generated/hpo/q03b-beavertail--align-fft-seam--hpo/experiment.yml
+python scripts/hpo.py generate configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-seam/sweep.yml
+lilpipe artifacts/generated/hpo/q06b-beavertail--align-fft-seam--hpo/experiment.yml
 
 # 2. Generate and run all relearning candidates (only after the defense sweep is done).
-python scripts/hpo.py generate configs/stages-beavertails/1_relearn/q03b-beavertail--align-fft-seam/sweep.yml
-lilpipe artifacts/generated/hpo/q03b-beavertail--align-fft-seam--relearn--hpo/experiment.yml
+python scripts/hpo.py generate configs/stages-beavertails/1_relearn/q06b-beavertail--align-fft-seam/sweep.yml
+lilpipe artifacts/generated/hpo/q06b-beavertail--align-fft-seam--relearn--hpo/experiment.yml
 
 # 3. Uncomment the desired configs in the plot script, then plot after evaluations finish.
 .venv-eval/bin/python scripts/analysis/relearning-trajectory/plot_trajectory_beavertails.py
@@ -237,7 +237,7 @@ W&B metrics include `train/gradient_cosine`, `train/gradient_norm_a`,
 and `train/regularization_skip_frequency`. The cosine compares group-average
 gradients, unlike `train/ghost_cosine_mean`, which averages individual pairs.
 
-Use the existing `q03b-beavertail.yml` experiment with the explicit model
+Use the existing `q06b-beavertail.yml` experiment with the explicit model
 and evaluation selections below to compare the defense against its lambda-zero
 refusal control. Both receive the same 250-step harmful attack, with harmfulness
 evaluated before and every 50 attack steps. The initial coefficients are
@@ -270,14 +270,14 @@ those manifests' defaults. Run these commands from this example root:
 
 ```bash
 # Qwen passive tracking.
-lilpipe configs/experiments/q03b-beavertail.yml \
-  --models q03b-beavertail--relearn-fft-ghost-ms250 \
-  --evaluations mila-l40s-q03b--beavertails-harmfulness-trajectory
+lilpipe configs/experiments/q06b-beavertail.yml \
+  --models q06b-beavertail--relearn-fft-ghost-ms250 \
+  --evaluations mila-l40s-q06b--beavertails-harmfulness-trajectory
 
 # Qwen GIP versus refusal control, including matched attacks.
-lilpipe configs/experiments/q03b-beavertail.yml \
-  --models q03b-beavertail--align-fft-gradient-cosine--relearn-fft-ms250 q03b-beavertail--align-fft-refusal-control--relearn-fft-ms250 \
-  --evaluations mila-l40s-q03b--beavertails-harmfulness-trajectory
+lilpipe configs/experiments/q06b-beavertail.yml \
+  --models q06b-beavertail--align-fft-gradient-cosine--relearn-fft-ms250 q06b-beavertail--align-fft-refusal-control--relearn-fft-ms250 \
+  --evaluations mila-l40s-q06b--beavertails-harmfulness-trajectory
 
 # Tracked GD defense.
 lilpipe configs/experiments/z7b-wmdp-bio-unlearn--15pp.yml \
@@ -297,5 +297,5 @@ The 5pp experiment replaces its original NPO and NPO+SAM attack selections with
 `z7b-wmdp-bio--5pp--unlearn-fft-npo-gt` and
 `z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt`. These run the tracked
 defenses; relearning remains a per-checkpoint sweep until an attack is promoted.
-Qwen config families use the `q03b` prefix consistently. The underlying Hugging
+Qwen config families use the `q06b` prefix consistently. The underlying Hugging
 Face model identifier remains `Qwen/Qwen3-0.6B`; this is a naming migration.

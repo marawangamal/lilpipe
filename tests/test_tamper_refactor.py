@@ -385,7 +385,7 @@ def test_qwen_seam_evaluation_waits_for_training(monkeypatch) -> None:
     from lilpipe import load
 
     monkeypatch.chdir(EXAMPLE)
-    pipeline = load("configs/experiments/q03b-beavertail.yml")
+    pipeline = load("configs/experiments/q06b-beavertail.yml")
     training, evaluation = pipeline.plan().stages
     assert evaluation.depends_on == (training.id,)
     config = yaml.safe_load((EXAMPLE / training.args[0]).read_text())
@@ -406,7 +406,7 @@ def test_qwen_relearning_grid_matches_defense_betas_and_evaluates_attacks(
 
     hpo = load_script(EXAMPLE / "scripts/hpo.py", "qwen_relearn_hpo_test")
     monkeypatch.chdir(EXAMPLE)
-    name = "q03b-beavertail--align-fft-seam" + ("-legacy" if legacy else "")
+    name = "q06b-beavertail--align-fft-seam" + ("-legacy" if legacy else "")
     defense_manifest = hpo.generate(
         EXAMPLE / "configs/stages-beavertails/0_alignment" / name / "sweep.yml",
         tmp_path / "defense",
@@ -986,8 +986,8 @@ def test_lineage_configs_follow_conventions(lineage: Path) -> None:
     if re.search(r"--(\d+pp)--", name):
         for evaluation in sweep.get("evaluations", ()):
             assert evaluation in {
-                "mila-l40s-q03b--wmdp-and-mmlu-final",
-                "mila-l40s-q03b--wmdp-and-mmlu-single",
+                "mila-l40s-q06b--wmdp-and-mmlu-final",
+                "mila-l40s-q06b--wmdp-and-mmlu-single",
                 "tamia-h100-z7b--wmdp-and-mmlu-final",
                 "tamia-h100-z7b--wmdp-and-mmlu-single",
                 "tamia-h100-z7b--wmdp-and-mmlu-trajectory",
@@ -1360,11 +1360,11 @@ def test_name_template_rejects_invalid_placeholders_and_slugs(template):
 @pytest.mark.parametrize(
     "models,expected_training",
     [
-        (["q03b-beavertail--relearn-fft-ghost-ms250"], 1),
+        (["q06b-beavertail--relearn-fft-ghost-ms250"], 1),
         (
             [
-                "q03b-beavertail--align-fft-gradient-cosine--relearn-fft-ms250",
-                "q03b-beavertail--align-fft-refusal-control--relearn-fft-ms250",
+                "q06b-beavertail--align-fft-gradient-cosine--relearn-fft-ms250",
+                "q06b-beavertail--align-fft-refusal-control--relearn-fft-ms250",
             ],
             4,
         ),
@@ -1376,9 +1376,9 @@ def test_qwen_gip_runs_select_existing_experiment_family(
     from lilpipe import load
 
     monkeypatch.chdir(EXAMPLE)
-    pipeline = load("configs/experiments/q03b-beavertail.yml").select(
+    pipeline = load("configs/experiments/q06b-beavertail.yml").select(
         models=models,
-        evaluations=["mila-l40s-q03b--beavertails-harmfulness-trajectory"],
+        evaluations=["mila-l40s-q06b--beavertails-harmfulness-trajectory"],
     )
     stages = pipeline.plan().stages
     training = [stage for stage in stages if stage.id.startswith("train-")]

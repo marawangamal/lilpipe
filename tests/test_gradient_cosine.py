@@ -313,7 +313,7 @@ def test_strength_sweep_generates_matched_attacks(tmp_path, monkeypatch):
         "argv",
         [
             "generate_gradient_cosine_attacks.py",
-            "configs/stages-beavertails/0_alignment/q03b-beavertail--align-fft-gradient-cosine/sweep.yml",
+            "configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-gradient-cosine/sweep.yml",
             str(output),
         ],
     )
