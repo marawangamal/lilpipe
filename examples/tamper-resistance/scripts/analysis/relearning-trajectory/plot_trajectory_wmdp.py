@@ -74,6 +74,17 @@ configs_main = [
     },
 ]
 
+configs_npo_sam_15pp = [
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft",
+        "method": "NPO",
+    },
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft",
+        "method": "NPO + SAM",
+    },
+]
+
 configs_lrs = [
     {"model": f"{model}--relearn-fft-lr{lr}-ms128", "method": method, "lr": lr}
     for model, method in ((tar, "TAR"), (seam, "SEAM"))
@@ -107,7 +118,7 @@ def results(experiment, baseline=None):
         for _, label, score in results(baseline):
             yield 0, label, score
     pattern = osp.join(rootdir, experiment, "checkpoint-*", "**", "results*.json")
-    paths = glob.glob(pattern, recursive=True)
+    paths = glob.glob(pattern, recursive=True, include_hidden=True)
     for path in sorted(
         paths, key=lambda path: int(path.split("checkpoint-")[1].split(os.sep)[0])
     ):
@@ -134,21 +145,29 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Uncomment one complete selection block.
-    configs = configs_main
+    # configs = configs_main
+    # steps = range(0, 17, 4)
+    # style = {
+    #     "hue": "Method",
+    #     "style": "Defence",
+    #     "markers": True,
+    #     "dashes": False,
+    #     "palette": {
+    #         "RMU": "#4477AA",
+    #         "NPO": "#EE6677",
+    #         "MaxEnt": "#228833",
+    #         "GD": "#AA3377",
+    #     },
+    # }
+    # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf"
+
+    configs = configs_npo_sam_15pp
     steps = range(0, 17, 4)
-    style = {
-        "hue": "Method",
-        "style": "Defence",
-        "markers": True,
-        "dashes": False,
-        "palette": {
-            "RMU": "#4477AA",
-            "NPO": "#EE6677",
-            "MaxEnt": "#228833",
-            "GD": "#AA3377",
-        },
-    }
-    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf"
+    style = {"hue": "Method", "marker": "o", "dashes": False}
+    output = (
+        "artifacts/figures/"
+        "z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-reproduction.pdf"
+    )
 
     # configs = configs_lrs
     # steps = range(0, 129)
