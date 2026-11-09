@@ -1,5 +1,0 @@
-{
-  "job_id": "680043",
-  "script": "artifacts/tamia/runs/z7b-npo-sam-repro-15pp-20261109/prepare.sbatch",
-  "source_commit": "4ba5748d9193c0b9a968b8e47d02fa80c3602256"
-}

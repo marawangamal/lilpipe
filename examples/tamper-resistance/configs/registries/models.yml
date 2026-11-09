@@ -873,7 +873,6 @@ models:
       depends_on:
       - z7b-wmdp-bio--15pp--unlearn-fft-npo
       sbatch_args:
-      - --partition=gpubase_bynode_b1
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
       - --mem=480G
@@ -898,7 +897,6 @@ models:
       depends_on:
       - z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2
       sbatch_args:
-      - --partition=gpubase_bynode_b1
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
       - --mem=480G
