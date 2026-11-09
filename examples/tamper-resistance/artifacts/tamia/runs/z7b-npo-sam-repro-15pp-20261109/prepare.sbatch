@@ -40,8 +40,19 @@ PY
 for method in npo npo-sam-rho1e-2; do
     config="configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-$method/selected.yml"
     axolotl preprocess "$config"
-    axolotl train "$config" --launcher python --max_steps 1 --save_steps 1 \
-        --output_dir "$run/smoke/$method" --wandb_name "repro-15pp-$method-smoke"
+    python - "$config" "$run" "$method" <<'PYCONFIG'
+import sys
+from pathlib import Path
+import yaml
+
+config, run, method = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
+settings = yaml.safe_load(config.read_text())
+settings.update(max_steps=1, save_steps=1, output_dir=str(run / "smoke" / method),
+                wandb_name=f"repro-15pp-{method}-smoke")
+(run / "smoke-configs").mkdir(exist_ok=True)
+(run / "smoke-configs" / f"{method}.yml").write_text(yaml.safe_dump(settings, sort_keys=False))
+PYCONFIG
+    axolotl train "$run/smoke-configs/$method.yml" --launcher python
 done
 python - <<'PY'
 import json

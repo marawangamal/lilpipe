@@ -1,0 +1,8 @@
+{
+  "train-z7b-wmdp-bio--15pp--unlearn-fft-npo": "680076",
+  "train-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2": "680077",
+  "train-z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft": "680078",
+  "train-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft": "680079",
+  "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft": "680080",
+  "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft": "680081"
+}

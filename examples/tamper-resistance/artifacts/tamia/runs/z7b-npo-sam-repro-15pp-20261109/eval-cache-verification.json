@@ -1,0 +1,242 @@
+{
+  "lm_eval_version": "0.4.11",
+  "offline": true,
+  "tasks": [
+    {
+      "task": "mmlu_abstract_algebra",
+      "documents": 100
+    },
+    {
+      "task": "mmlu_anatomy",
+      "documents": 135
+    },
+    {
+      "task": "mmlu_astronomy",
+      "documents": 152
+    },
+    {
+      "task": "mmlu_business_ethics",
+      "documents": 100
+    },
+    {
+      "task": "mmlu_clinical_knowledge",
+      "documents": 265
+    },
+    {
+      "task": "mmlu_college_chemistry",
+      "documents": 100
+    },
+    {
+      "task": "mmlu_college_computer_science",
+      "documents": 100
+    },
+    {
+      "task": "mmlu_college_mathematics",
+      "documents": 100
+    },
+    {
+      "task": "mmlu_college_medicine",
+      "documents": 173
+    },
+    {
+      "task": "mmlu_college_physics",
+      "documents": 102
+    },
+    {
+      "task": "mmlu_computer_security",
+      "documents": 100
+    },
+    {
+      "task": "mmlu_conceptual_physics",
+      "documents": 235
+    },
+    {
+      "task": "mmlu_econometrics",
+      "documents": 114
+    },
+    {
+      "task": "mmlu_electrical_engineering",
+      "documents": 145
+    },
+    {
+      "task": "mmlu_elementary_mathematics",
+      "documents": 378
+    },
+    {
+      "task": "mmlu_formal_logic",
+      "documents": 126
+    },
+    {
+      "task": "mmlu_global_facts",
+      "documents": 100
+    },
+    {
+      "task": "mmlu_high_school_chemistry",
+      "documents": 203
+    },
+    {
+      "task": "mmlu_high_school_computer_science",
+      "documents": 100
+    },
+    {
+      "task": "mmlu_high_school_european_history",
+      "documents": 165
+    },
+    {
+      "task": "mmlu_high_school_geography",
+      "documents": 198
+    },
+    {
+      "task": "mmlu_high_school_government_and_politics",
+      "documents": 193
+    },
+    {
+      "task": "mmlu_high_school_macroeconomics",
+      "documents": 390
+    },
+    {
+      "task": "mmlu_high_school_mathematics",
+      "documents": 270
+    },
+    {
+      "task": "mmlu_high_school_microeconomics",
+      "documents": 238
+    },
+    {
+      "task": "mmlu_high_school_physics",
+      "documents": 151
+    },
+    {
+      "task": "mmlu_high_school_psychology",
+      "documents": 545
+    },
+    {
+      "task": "mmlu_high_school_statistics",
+      "documents": 216
+    },
+    {
+      "task": "mmlu_high_school_us_history",
+      "documents": 204
+    },
+    {
+      "task": "mmlu_high_school_world_history",
+      "documents": 237
+    },
+    {
+      "task": "mmlu_human_aging",
+      "documents": 223
+    },
+    {
+      "task": "mmlu_human_sexuality",
+      "documents": 131
+    },
+    {
+      "task": "mmlu_international_law",
+      "documents": 121
+    },
+    {
+      "task": "mmlu_jurisprudence",
+      "documents": 108
+    },
+    {
+      "task": "mmlu_logical_fallacies",
+      "documents": 163
+    },
+    {
+      "task": "mmlu_machine_learning",
+      "documents": 112
+    },
+    {
+      "task": "mmlu_management",
+      "documents": 103
+    },
+    {
+      "task": "mmlu_marketing",
+      "documents": 234
+    },
+    {
+      "task": "mmlu_miscellaneous",
+      "documents": 783
+    },
+    {
+      "task": "mmlu_moral_disputes",
+      "documents": 346
+    },
+    {
+      "task": "mmlu_moral_scenarios",
+      "documents": 895
+    },
+    {
+      "task": "mmlu_nutrition",
+      "documents": 306
+    },
+    {
+      "task": "mmlu_philosophy",
+      "documents": 311
+    },
+    {
+      "task": "mmlu_prehistory",
+      "documents": 324
+    },
+    {
+      "task": "mmlu_professional_accounting",
+      "documents": 282
+    },
+    {
+      "task": "mmlu_professional_law",
+      "documents": 1534
+    },
+    {
+      "task": "mmlu_professional_medicine",
+      "documents": 272
+    },
+    {
+      "task": "mmlu_professional_psychology",
+      "documents": 612
+    },
+    {
+      "task": "mmlu_public_relations",
+      "documents": 110
+    },
+    {
+      "task": "mmlu_security_studies",
+      "documents": 245
+    },
+    {
+      "task": "mmlu_sociology",
+      "documents": 201
+    },
+    {
+      "task": "mmlu_us_foreign_policy",
+      "documents": 100
+    },
+    {
+      "task": "mmlu_world_religions",
+      "documents": 171
+    },
+    {
+      "task": "wmdp_bio_robust_bioweapons_and_bioterrorism",
+      "documents": 190
+    },
+    {
+      "task": "wmdp_bio_robust_dual_use_virology",
+      "documents": 28
+    },
+    {
+      "task": "wmdp_bio_robust_enhanced_potential_pandemic_pathogens",
+      "documents": 102
+    },
+    {
+      "task": "wmdp_bio_robust_expanding_access_to_threat_vectors",
+      "documents": 21
+    },
+    {
+      "task": "wmdp_bio_robust_reverse_genetics_and_easy_editing",
+      "documents": 186
+    },
+    {
+      "task": "wmdp_bio_robust_viral_vector_research",
+      "documents": 341
+    }
+  ]
+}

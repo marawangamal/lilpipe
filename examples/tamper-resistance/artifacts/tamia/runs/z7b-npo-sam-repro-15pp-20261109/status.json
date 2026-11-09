@@ -1,9 +1,16 @@
 {
-  "state": "awaiting_tamia_ssh",
-  "source_commit": "a142aec4243094b8f728b4d66cb162d808deaf3d",
+  "state": "submitted",
+  "source_commit": "4ba5748d9193c0b9a968b8e47d02fa80c3602256",
   "remote_checkout": "/project/aip-grabus/mgamal/lilpipe/worktrees/feat-repro-npo-plus-sam-effect",
-  "submitted_jobs": {},
-  "blocker": "Tamia SSH port 22 refuses connections. No experiment jobs submitted. Remote setup receipt must be inspected when access returns.",
+  "submitted_jobs": {
+    "train-z7b-wmdp-bio--15pp--unlearn-fft-npo": "680076",
+    "train-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2": "680077",
+    "train-z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft": "680078",
+    "train-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft": "680079",
+    "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft": "680080",
+    "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft": "680081"
+  },
+  "blocker": null,
   "config_sha256": {
     "configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-npo/selected.yml": "f6998e1572053f72d00fd330f4ca610f2dfd28c7443cf9452c1fbe094d4e62b0",
     "configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft/selected.yml": "b4aacf16ad398b544a5101258b8c3e7595e0a9c0ea10313c72b618971581f31e",
@@ -14,6 +21,23 @@
     "example_tests": "passed; optional dependency tests skipped in root environment",
     "plot_complete_trajectory": "PDF and 20 CSV rows verified using synthetic input",
     "plot_incomplete_trajectory": "rejected as expected",
-    "historical_sam_sampler_and_document_loaders": "identical"
-  }
+    "historical_sam_sampler_and_document_loaders": "identical",
+    "optimizer_smokes": [
+      {
+        "method": "npo",
+        "step": 1,
+        "weight_bytes": 15008318632,
+        "model_only": true
+      },
+      {
+        "method": "npo-sam-rho1e-2",
+        "step": 1,
+        "weight_bytes": 15008318632,
+        "model_only": true
+      }
+    ],
+    "offline_evaluation_tasks": 59
+  },
+  "preflight_job": "680062",
+  "cancelled_preflight_job": "680043"
 }

@@ -1,0 +1,7 @@
+{
+  "job_id": "680062",
+  "script": "artifacts/tamia/runs/z7b-npo-sam-repro-15pp-20261109/prepare.sbatch",
+  "script_sha256": "9f0ef08909115f67695218fd90a6852128106e3ed45dc0244160a3587e973c97",
+  "replaces_cancelled_job": "680043",
+  "archived_incomplete_model": "artifacts/tamia/models/archived-2026-11-09--z7b-wmdp-bio--15pp--unlearn-fft-npo--preflight-680043"
+}
