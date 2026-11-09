@@ -108,6 +108,16 @@ def test_shared_vector_terms_include_cross_terms():
     torch.testing.assert_close(actual, (a + b) @ (a + b).T)
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")
+def test_assemble_gram_reduces_terms_to_requested_device():
+    parameter = nn.Parameter(torch.randn(3, device="cuda"))
+    values = torch.randn(2, 3, device="cuda")
+    actual = assemble_gram(
+        [(parameter, GradientTerm(values))], batch_size=2, device="cpu"
+    )
+    torch.testing.assert_close(actual, (values @ values.T).cpu())
+
+
 def test_linear_positions():
     check_model(
         nn.Sequential(nn.Linear(4, 7), nn.Tanh(), nn.Linear(7, 3)),

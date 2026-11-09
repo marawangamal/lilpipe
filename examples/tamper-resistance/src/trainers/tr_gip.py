@@ -104,7 +104,7 @@ def assemble_gram(
                         for b in group:
                             value += term_inner_product(
                                 a, b, i, j, chunk_size=chunk_size
-                            )
+                            ).to(result.device)
                     result[i, j] += value
                     if i != j:
                         result[j, i] += value
