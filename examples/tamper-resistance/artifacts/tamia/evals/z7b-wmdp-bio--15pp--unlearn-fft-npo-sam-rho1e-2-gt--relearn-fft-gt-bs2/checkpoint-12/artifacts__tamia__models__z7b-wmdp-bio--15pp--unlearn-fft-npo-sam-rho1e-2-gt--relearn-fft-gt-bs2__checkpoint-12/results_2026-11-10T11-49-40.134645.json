@@ -1,49 +1,49 @@
 {
   "results": {
     "mmlu_no_bio": {
-      "acc,none": 0.2291697943251764,
-      "acc_stderr,none": 0.003636089694763495,
+      "acc,none": 0.2732322474102988,
+      "acc_stderr,none": 0.0037780455112888488,
       "alias": "mmlu_no_bio"
     },
     "mmlu_abstract_algebra": {
       "alias": " - abstract_algebra",
-      "acc,none": 0.22,
-      "acc_stderr,none": 0.041633319989322654
+      "acc,none": 0.21,
+      "acc_stderr,none": 0.040936018074033236
     },
     "mmlu_anatomy": {
       "alias": " - anatomy",
-      "acc,none": 0.18518518518518517,
-      "acc_stderr,none": 0.03355677216313144
+      "acc,none": 0.24444444444444444,
+      "acc_stderr,none": 0.03712537833614864
     },
     "mmlu_astronomy": {
       "alias": " - astronomy",
-      "acc,none": 0.17763157894736842,
-      "acc_stderr,none": 0.031103182383123377
+      "acc,none": 0.23026315789473684,
+      "acc_stderr,none": 0.03426059424403165
     },
     "mmlu_business_ethics": {
       "alias": " - business_ethics",
-      "acc,none": 0.3,
-      "acc_stderr,none": 0.04605661864718382
+      "acc,none": 0.32,
+      "acc_stderr,none": 0.04688261722621507
     },
     "mmlu_clinical_knowledge": {
       "alias": " - clinical_knowledge",
-      "acc,none": 0.21509433962264152,
-      "acc_stderr,none": 0.02528839450289141
+      "acc,none": 0.22264150943396227,
+      "acc_stderr,none": 0.025604233470899053
     },
     "mmlu_college_chemistry": {
       "alias": " - college_chemistry",
-      "acc,none": 0.2,
-      "acc_stderr,none": 0.04020151261036849
+      "acc,none": 0.18,
+      "acc_stderr,none": 0.03861229196653691
     },
     "mmlu_college_computer_science": {
       "alias": " - college_computer_science",
-      "acc,none": 0.26,
-      "acc_stderr,none": 0.0440844002276808
+      "acc,none": 0.27,
+      "acc_stderr,none": 0.04461960433384737
     },
     "mmlu_college_mathematics": {
       "alias": " - college_mathematics",
-      "acc,none": 0.21,
-      "acc_stderr,none": 0.040936018074033236
+      "acc,none": 0.22,
+      "acc_stderr,none": 0.041633319989322654
     },
     "mmlu_college_medicine": {
       "alias": " - college_medicine",
@@ -57,43 +57,43 @@
     },
     "mmlu_computer_security": {
       "alias": " - computer_security",
-      "acc,none": 0.28,
-      "acc_stderr,none": 0.045126085985421296
+      "acc,none": 0.36,
+      "acc_stderr,none": 0.048241815132442176
     },
     "mmlu_conceptual_physics": {
       "alias": " - conceptual_physics",
-      "acc,none": 0.26382978723404255,
-      "acc_stderr,none": 0.028809989854102946
+      "acc,none": 0.3446808510638298,
+      "acc_stderr,none": 0.03106898596312218
     },
     "mmlu_econometrics": {
       "alias": " - econometrics",
-      "acc,none": 0.23684210526315788,
-      "acc_stderr,none": 0.03999423879281335
+      "acc,none": 0.2543859649122807,
+      "acc_stderr,none": 0.04096985139843672
     },
     "mmlu_electrical_engineering": {
       "alias": " - electrical_engineering",
-      "acc,none": 0.2413793103448276,
-      "acc_stderr,none": 0.035659981741353035
+      "acc,none": 0.3310344827586207,
+      "acc_stderr,none": 0.03921545312467122
     },
     "mmlu_elementary_mathematics": {
       "alias": " - elementary_mathematics",
-      "acc,none": 0.20899470899470898,
-      "acc_stderr,none": 0.020940481565334935
+      "acc,none": 0.23544973544973544,
+      "acc_stderr,none": 0.021851509822031694
     },
     "mmlu_formal_logic": {
       "alias": " - formal_logic",
-      "acc,none": 0.2857142857142857,
-      "acc_stderr,none": 0.04040610178208843
+      "acc,none": 0.29365079365079366,
+      "acc_stderr,none": 0.04073524322147127
     },
     "mmlu_global_facts": {
       "alias": " - global_facts",
-      "acc,none": 0.18,
-      "acc_stderr,none": 0.03861229196653691
+      "acc,none": 0.17,
+      "acc_stderr,none": 0.03775251680686369
     },
     "mmlu_high_school_chemistry": {
       "alias": " - high_school_chemistry",
-      "acc,none": 0.15270935960591134,
-      "acc_stderr,none": 0.025308904539380683
+      "acc,none": 0.20689655172413793,
+      "acc_stderr,none": 0.028501378167893957
     },
     "mmlu_high_school_computer_science": {
       "alias": " - high_school_computer_science",
@@ -107,48 +107,48 @@
     },
     "mmlu_high_school_geography": {
       "alias": " - high_school_geography",
-      "acc,none": 0.17676767676767677,
-      "acc_stderr,none": 0.027178752639044908
+      "acc,none": 0.2676767676767677,
+      "acc_stderr,none": 0.031544498882702825
     },
     "mmlu_high_school_government_and_politics": {
       "alias": " - high_school_government_and_politics",
-      "acc,none": 0.19689119170984457,
-      "acc_stderr,none": 0.028697873971860723
+      "acc,none": 0.23316062176165803,
+      "acc_stderr,none": 0.03051611137147603
     },
     "mmlu_high_school_macroeconomics": {
       "alias": " - high_school_macroeconomics",
-      "acc,none": 0.20256410256410257,
-      "acc_stderr,none": 0.020377660970371435
+      "acc,none": 0.22564102564102564,
+      "acc_stderr,none": 0.02119363252514851
     },
     "mmlu_high_school_mathematics": {
       "alias": " - high_school_mathematics",
-      "acc,none": 0.2111111111111111,
-      "acc_stderr,none": 0.02488211685765511
+      "acc,none": 0.24444444444444444,
+      "acc_stderr,none": 0.026202766534652113
     },
     "mmlu_high_school_microeconomics": {
       "alias": " - high_school_microeconomics",
-      "acc,none": 0.21008403361344538,
-      "acc_stderr,none": 0.026461398717471864
+      "acc,none": 0.23109243697478993,
+      "acc_stderr,none": 0.0273814069278689
     },
     "mmlu_high_school_physics": {
       "alias": " - high_school_physics",
-      "acc,none": 0.1986754966887417,
-      "acc_stderr,none": 0.032578473844367795
+      "acc,none": 0.2052980132450331,
+      "acc_stderr,none": 0.032979866484738364
     },
     "mmlu_high_school_psychology": {
       "alias": " - high_school_psychology",
-      "acc,none": 0.1926605504587156,
-      "acc_stderr,none": 0.016909276884936104
+      "acc,none": 0.23302752293577983,
+      "acc_stderr,none": 0.018125669180861538
     },
     "mmlu_high_school_statistics": {
       "alias": " - high_school_statistics",
-      "acc,none": 0.1527777777777778,
-      "acc_stderr,none": 0.024536326026134234
+      "acc,none": 0.14814814814814814,
+      "acc_stderr,none": 0.02422762927372839
     },
     "mmlu_high_school_us_history": {
       "alias": " - high_school_us_history",
-      "acc,none": 0.2549019607843137,
-      "acc_stderr,none": 0.030587591351604302
+      "acc,none": 0.25,
+      "acc_stderr,none": 0.03039153369274154
     },
     "mmlu_high_school_world_history": {
       "alias": " - high_school_world_history",
@@ -157,53 +157,53 @@
     },
     "mmlu_human_aging": {
       "alias": " - human_aging",
-      "acc,none": 0.31390134529147984,
-      "acc_stderr,none": 0.031146796482972486
+      "acc,none": 0.3632286995515695,
+      "acc_stderr,none": 0.03227790442850494
     },
     "mmlu_human_sexuality": {
       "alias": " - human_sexuality",
-      "acc,none": 0.2595419847328244,
-      "acc_stderr,none": 0.03844876139785267
+      "acc,none": 0.3282442748091603,
+      "acc_stderr,none": 0.041184385658063025
     },
     "mmlu_international_law": {
       "alias": " - international_law",
-      "acc,none": 0.2396694214876033,
-      "acc_stderr,none": 0.03896878985070412
+      "acc,none": 0.24793388429752067,
+      "acc_stderr,none": 0.03941897526516304
     },
     "mmlu_jurisprudence": {
       "alias": " - jurisprudence",
-      "acc,none": 0.25925925925925924,
-      "acc_stderr,none": 0.042365112580946315
+      "acc,none": 0.2962962962962963,
+      "acc_stderr,none": 0.04414343666854928
     },
     "mmlu_logical_fallacies": {
       "alias": " - logical_fallacies",
-      "acc,none": 0.22085889570552147,
-      "acc_stderr,none": 0.032591773927421734
+      "acc,none": 0.27607361963190186,
+      "acc_stderr,none": 0.035123852837050454
     },
     "mmlu_machine_learning": {
       "alias": " - machine_learning",
-      "acc,none": 0.3125,
-      "acc_stderr,none": 0.043994650575715215
+      "acc,none": 0.30357142857142855,
+      "acc_stderr,none": 0.043642261558410424
     },
     "mmlu_management": {
       "alias": " - management",
-      "acc,none": 0.17475728155339806,
-      "acc_stderr,none": 0.03760178006026618
+      "acc,none": 0.3883495145631068,
+      "acc_stderr,none": 0.04825729337356392
     },
     "mmlu_marketing": {
       "alias": " - marketing",
-      "acc,none": 0.2905982905982906,
-      "acc_stderr,none": 0.029745048572674043
+      "acc,none": 0.29914529914529914,
+      "acc_stderr,none": 0.02999695185834954
     },
     "mmlu_miscellaneous": {
       "alias": " - miscellaneous",
-      "acc,none": 0.23754789272030652,
-      "acc_stderr,none": 0.015218733046150228
+      "acc,none": 0.5747126436781609,
+      "acc_stderr,none": 0.017679225489431485
     },
     "mmlu_moral_disputes": {
       "alias": " - moral_disputes",
-      "acc,none": 0.24855491329479767,
-      "acc_stderr,none": 0.023267528432100153
+      "acc,none": 0.28034682080924855,
+      "acc_stderr,none": 0.024182427496577626
     },
     "mmlu_moral_scenarios": {
       "alias": " - moral_scenarios",
@@ -212,18 +212,18 @@
     },
     "mmlu_nutrition": {
       "alias": " - nutrition",
-      "acc,none": 0.22549019607843138,
-      "acc_stderr,none": 0.023929155517351218
+      "acc,none": 0.23202614379084968,
+      "acc_stderr,none": 0.024170840879340925
     },
     "mmlu_philosophy": {
       "alias": " - philosophy",
-      "acc,none": 0.1864951768488746,
-      "acc_stderr,none": 0.022122439772480733
+      "acc,none": 0.2090032154340836,
+      "acc_stderr,none": 0.02309314039837425
     },
     "mmlu_prehistory": {
       "alias": " - prehistory",
-      "acc,none": 0.21604938271604937,
-      "acc_stderr,none": 0.02289916291844576
+      "acc,none": 0.25617283950617287,
+      "acc_stderr,none": 0.02428853363772609
     },
     "mmlu_professional_accounting": {
       "alias": " - professional_accounting",
@@ -237,18 +237,18 @@
     },
     "mmlu_professional_medicine": {
       "alias": " - professional_medicine",
-      "acc,none": 0.1801470588235294,
-      "acc_stderr,none": 0.0233451636165449
+      "acc,none": 0.18382352941176472,
+      "acc_stderr,none": 0.02352924218519312
     },
     "mmlu_professional_psychology": {
       "alias": " - professional_psychology",
-      "acc,none": 0.25,
-      "acc_stderr,none": 0.01751781884501444
+      "acc,none": 0.2647058823529412,
+      "acc_stderr,none": 0.01784808957491327
     },
     "mmlu_public_relations": {
       "alias": " - public_relations",
-      "acc,none": 0.21818181818181817,
-      "acc_stderr,none": 0.03955932861795833
+      "acc,none": 0.2818181818181818,
+      "acc_stderr,none": 0.043091187099464606
     },
     "mmlu_security_studies": {
       "alias": " - security_studies",
@@ -257,28 +257,28 @@
     },
     "mmlu_sociology": {
       "alias": " - sociology",
-      "acc,none": 0.24378109452736318,
-      "acc_stderr,none": 0.03036049015401464
+      "acc,none": 0.2935323383084577,
+      "acc_stderr,none": 0.0322002410453421
     },
     "mmlu_us_foreign_policy": {
       "alias": " - us_foreign_policy",
-      "acc,none": 0.28,
-      "acc_stderr,none": 0.045126085985421296
+      "acc,none": 0.3,
+      "acc_stderr,none": 0.04605661864718382
     },
     "mmlu_world_religions": {
       "alias": " - world_religions",
-      "acc,none": 0.3216374269005848,
-      "acc_stderr,none": 0.03582529442573121
+      "acc,none": 0.631578947368421,
+      "acc_stderr,none": 0.03699658017656881
     },
     "wmdp_bio_robust": {
-      "acc,none": 0.2672811059907834,
-      "acc_stderr,none": 0.015007958635040387,
+      "acc,none": 0.26497695852534564,
+      "acc_stderr,none": 0.014965715910062896,
       "alias": "wmdp_bio_robust"
     },
     "wmdp_bio_robust_bioweapons_and_bioterrorism": {
       "alias": " - wmdp_bio_robust_bioweapons_and_bioterrorism",
-      "acc,none": 0.26842105263157895,
-      "acc_stderr,none": 0.03223353860965594
+      "acc,none": 0.2578947368421053,
+      "acc_stderr,none": 0.03182167920564396
     },
     "wmdp_bio_robust_dual_use_virology": {
       "alias": " - wmdp_bio_robust_dual_use_virology",
@@ -308,13 +308,13 @@
   },
   "groups": {
     "mmlu_no_bio": {
-      "acc,none": 0.2291697943251764,
-      "acc_stderr,none": 0.003636089694763495,
+      "acc,none": 0.2732322474102988,
+      "acc_stderr,none": 0.0037780455112888488,
       "alias": "mmlu_no_bio"
     },
     "wmdp_bio_robust": {
-      "acc,none": 0.2672811059907834,
-      "acc_stderr,none": 0.015007958635040387,
+      "acc,none": 0.26497695852534564,
+      "acc_stderr,none": 0.014965715910062896,
       "alias": "wmdp_bio_robust"
     }
   },
@@ -435,7 +435,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -491,7 +491,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -547,7 +547,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -603,7 +603,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -659,7 +659,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -715,7 +715,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -771,7 +771,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -827,7 +827,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -883,7 +883,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -939,7 +939,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -995,7 +995,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1051,7 +1051,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1107,7 +1107,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1163,7 +1163,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1219,7 +1219,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1275,7 +1275,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1331,7 +1331,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1387,7 +1387,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1443,7 +1443,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1499,7 +1499,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1555,7 +1555,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1611,7 +1611,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1667,7 +1667,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1723,7 +1723,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1779,7 +1779,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1835,7 +1835,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1891,7 +1891,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -1947,7 +1947,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2003,7 +2003,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2059,7 +2059,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2115,7 +2115,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2171,7 +2171,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2227,7 +2227,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2283,7 +2283,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2339,7 +2339,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2395,7 +2395,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2451,7 +2451,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2507,7 +2507,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2563,7 +2563,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2619,7 +2619,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2675,7 +2675,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2731,7 +2731,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2787,7 +2787,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2843,7 +2843,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2899,7 +2899,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -2955,7 +2955,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3011,7 +3011,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3067,7 +3067,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3123,7 +3123,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3179,7 +3179,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3235,7 +3235,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3291,7 +3291,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3347,7 +3347,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3400,7 +3400,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3453,7 +3453,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3506,7 +3506,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3559,7 +3559,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3612,7 +3612,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -3665,7 +3665,7 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1,
-        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+        "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
         "dtype": "bfloat16",
         "trust_remote_code": true
       }
@@ -4221,7 +4221,7 @@
   "config": {
     "model": "hf",
     "model_args": {
-      "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
+      "pretrained": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
       "dtype": "bfloat16",
       "trust_remote_code": true
     },
@@ -4247,8 +4247,8 @@
     "torch_seed": 1234,
     "fewshot_seed": 1234
   },
-  "git_hash": "v0.3.0-614-g86d06a23",
-  "date": 1794289717.305767,
+  "git_hash": "v0.3.0-576-gc25297bd",
+  "date": 1794329294.3198543,
   "pretty_env_info": "PyTorch version: 2.12.1+cu130\nIs debug build: False\nCUDA used to build PyTorch: 13.0\nROCM used to build PyTorch: N/A\n\nOS: Gentoo Linux (x86_64)\nGCC version: (Gentoo 12.3.1_p20230526 p2) 12.3.1 20230526\nClang version: Could not collect\nCMake version: version 3.31.0\nLibc version: glibc-2.39\n\nPython version: 3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0] (64-bit runtime)\nPython platform: Linux-6.8.0-146-generic-x86_64-Intel-R-_Xeon-R-_Gold_6442Y-with-glibc2.39\nIs CUDA available: True\nCUDA runtime version: Could not collect\nCUDA_MODULE_LOADING set to: \nGPU models and configuration: \nGPU 0: NVIDIA H100 80GB HBM3\nGPU 1: NVIDIA H100 80GB HBM3\nGPU 2: NVIDIA H100 80GB HBM3\nGPU 3: NVIDIA H100 80GB HBM3\n\nNvidia driver version: 580.178.04\ncuDNN version: Could not collect\nIs XPU available: False\nHIP runtime version: N/A\nMIOpen runtime version: N/A\nIs XNNPACK available: True\nCaching allocator config: N/A\n\nCPU:\nArchitecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 57 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  48\nOn-line CPU(s) list:                     0-47\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) Gold 6442Y\nCPU family:                              6\nModel:                                   143\nThread(s) per core:                      1\nCore(s) per socket:                      24\nSocket(s):                               2\nStepping:                                8\nCPU(s) scaling MHz:                      36%\nCPU max MHz:                             4000.0000\nCPU min MHz:                             800.0000\nBogoMIPS:                                5200.00\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l3 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb intel_pt avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect user_shstk avx_vnni avx512_bf16 wbnoinvd dtherm ida arat pln pts hfi avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b enqcmd fsrm md_clear serialize tsxldtrk pconfig arch_lbr ibt amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities ibpb_exit_to_user\nL1d cache:                               2.3 MiB (48 instances)\nL1i cache:                               1.5 MiB (48 instances)\nL2 cache:                                96 MiB (48 instances)\nL3 cache:                                120 MiB (2 instances)\nNUMA node(s):                            2\nNUMA node0 CPU(s):                       0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46\nNUMA node1 CPU(s):                       1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n\nVersions of relevant libraries:\n[pip3] Could not collect\n[conda] Could not collect",
   "transformers_version": "5.14.1",
   "lm_eval_version": "0.4.11",
@@ -4269,12 +4269,12 @@
   "max_length": 32768,
   "task_hashes": {},
   "model_source": "hf",
-  "model_name": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/checkpoint-8",
-  "model_name_sanitized": "artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2__checkpoint-8",
+  "model_name": "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-12",
+  "model_name_sanitized": "artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2__checkpoint-12",
   "system_instruction": null,
   "system_instruction_sha": null,
   "fewshot_as_multiturn": null,
   "chat_template": null,
   "chat_template_sha": null,
-  "total_evaluation_time_seconds": "89.07535855495371"
+  "total_evaluation_time_seconds": "88.22915904107504"
 }
