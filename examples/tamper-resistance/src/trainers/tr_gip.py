@@ -3,9 +3,9 @@
 import math
 
 import torch
+from axolotl.core.trainers.base import AxolotlTrainer
 
 from trainers._base_unlearning import UnlearningTrainer
-from trainers.rl_bf16 import BF16Trainer
 from trainers.ul_gd import GradDiffTrainer
 from trainers.ul_npo import NPOTrainer
 from trainers.tr_sam import NPOSAMTrainer
@@ -20,7 +20,7 @@ from trainers.utils import (
 )
 
 
-class GIPTrainer(UnlearningTrainer, BF16Trainer):
+class GIPTrainer(UnlearningTrainer):
     def __init__(
         self,
         *args,
@@ -388,7 +388,7 @@ class GIPNPOSAMTrainer(NPOSAMTrainer, GIPTrainer):
 
 class GIPRelearnTrainer(GIPTrainer):
     def _get_train_sampler(self, train_dataset=None):
-        return BF16Trainer._get_train_sampler(self, train_dataset)
+        return AxolotlTrainer._get_train_sampler(self, train_dataset)
 
     def training_step(self, model, inputs, num_items_in_batch=None):
         inputs = self._prepare_inputs(inputs)

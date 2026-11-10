@@ -1237,9 +1237,6 @@ def test_seam_reports_sd_loss_with_method_coefficient(
     monkeypatch.setitem(
         sys.modules, "data.seam", SimpleNamespace(BENIGN=2, HARMFUL=0, REFUSAL=1)
     )
-    monkeypatch.setitem(
-        sys.modules, "trainers.rl_bf16", SimpleNamespace(BF16Trainer=object)
-    )
     if legacy:
         module = load_script("src/trainers/tr_seam_legacy.py", "legacy_sd_loss_test")
         trainer = object.__new__(module.SEAMAlignmentTrainer)
@@ -1298,7 +1295,6 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     sys.path.insert(0, str(EXAMPLE / "src"))
     try:
         data = load_script("src/data/seam.py", "seam_data_test")
-        bf16 = load_script("src/trainers/rl_bf16.py", "bf16_trainer_test")
         cosim = load_script("src/trainers/rl_cosim.py", "cosim_trainer_test")
         perturb = load_script("src/trainers/rl_perturb.py", "perturb_trainer_test")
         trainer = load_script("src/trainers/tr_seam.py", "seam_trainer_test")
@@ -1306,8 +1302,10 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     finally:
         sys.path.remove(str(EXAMPLE / "src"))
 
+    from axolotl.core.trainers.base import AxolotlTrainer
+
     monkeypatch.setattr(
-        trainer.BF16Trainer,
+        AxolotlTrainer,
         "__init__",
         lambda self, *args, **kwargs: setattr(self, "model", object()),
     )
@@ -1637,8 +1635,7 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     assert harmful_rows == 1
     assert relearn_logs == [{"loss_up": 2.0, "loss_sd": 0.25}]
 
-    bf16.use_bfloat16_parameters(toy)
-    assert all(parameter.dtype == torch.bfloat16 for parameter in toy.parameters())
+    toy.bfloat16()
 
     first = ToyModel().bfloat16()
     second = ToyModel().bfloat16()
@@ -1657,13 +1654,13 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     with pytest.raises(ValueError, match="gaussian_sigma"):
         perturb.add_gaussian_parameter_noise(first, -1, 42)
 
-    gaussian = object.__new__(perturb.GaussianBF16Trainer)
+    gaussian = object.__new__(perturb.GaussianTrainer)
     gaussian.args = SimpleNamespace(output_dir=str(tmp_path))
     gaussian._save_perturbed_checkpoint = True
     saved = []
     gaussian.save_model = saved.append
     monkeypatch.setattr(
-        perturb.BF16Trainer,
+        perturb.AxolotlTrainer,
         "training_step",
         lambda self, model, inputs, num_items_in_batch=None: "trained",
     )
@@ -1671,7 +1668,6 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     assert gaussian.training_step(None, {}) == "trained"
     assert saved == [str(tmp_path / "checkpoint-0")]
     assert issubclass(perturb.GaussianTrainer, perturb.AxolotlTrainer)
-    assert not issubclass(perturb.GaussianTrainer, perturb.BF16Trainer)
 
     toy.zero_grad(set_to_none=True)
     before = {
@@ -1706,9 +1702,6 @@ def test_seam_completion_hidden_loss_preserves_standard_mean(monkeypatch, dtype_
     torch = pytest.importorskip("torch")
     import sys
 
-    monkeypatch.setitem(
-        sys.modules, "trainers.rl_bf16", SimpleNamespace(BF16Trainer=object)
-    )
     trainer = load_script("src/trainers/tr_seam.py", "seam_completion_mean_test")
     dtype = getattr(torch, dtype_name)
     torch.manual_seed(42)
@@ -2262,3 +2255,39 @@ def test_balanced_sampler_shuffles_each_stream_reproducibly(sampling_module):
         assert set(order[0::3]) == set(range(4))
         assert all(4 <= index < 10 for index in order[1::3])
         assert all(10 <= index < 15 for index in order[2::3])
+
+
+@pytest.mark.parametrize(
+    "module_name, class_name",
+    [
+        ("tr_gip", "GIPGDTrainer"),
+        ("tr_gip", "GIPNPOTrainer"),
+        ("tr_gip", "GIPNPOSAMTrainer"),
+        ("tr_gip", "GIPRelearnTrainer"),
+        ("tr_seam", "SEAMTrainer"),
+        ("tr_seam_legacy", "SEAMAlignmentTrainer"),
+        ("rl_cosim", "CosineTrackedTrainer"),
+        ("rl_perturb", "GaussianTrainer"),
+    ],
+)
+def test_trainers_preserve_axolotl_parameter_dtypes(
+    monkeypatch, module_name, class_name
+):
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("axolotl")
+    from axolotl.core.trainers.base import AxolotlTrainer
+    from importlib import import_module
+
+    model = torch.nn.Sequential(
+        torch.nn.Linear(2, 2).bfloat16(), torch.nn.Linear(2, 2).float()
+    )
+    expected = {name: p.dtype for name, p in model.named_parameters()}
+    monkeypatch.setattr(
+        AxolotlTrainer,
+        "__init__",
+        lambda self, *args, **kwargs: setattr(self, "model", kwargs["model"]),
+    )
+    kwargs = {"reference_model_name_or_path": "unused"} if "NPO" in class_name else {}
+    cls = getattr(import_module(f"trainers.{module_name}"), class_name)
+    trainer = cls(model=model, **kwargs)
+    assert {name: p.dtype for name, p in trainer.model.named_parameters()} == expected

@@ -9,7 +9,6 @@ import torch
 from torch.utils.checkpoint import checkpoint
 
 from trainers._base_unlearning import UnlearningTrainer
-from trainers.rl_bf16 import BF16Trainer
 from trainers.utils import (
     BalancedSampler,
     accumulate_gradients,
@@ -70,7 +69,7 @@ def hidden_cross_entropy(hidden, labels, norm, head):
     )
 
 
-class SEAMTrainer(UnlearningTrainer, BF16Trainer):
+class SEAMTrainer(UnlearningTrainer):
     """Accumulate UL, UP, and finite-difference SD gradients in place."""
 
     def __init__(

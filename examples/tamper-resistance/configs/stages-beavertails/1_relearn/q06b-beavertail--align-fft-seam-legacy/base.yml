@@ -1,5 +1,4 @@
 base_model: artifacts/mila/models/q06b-beavertail--align-fft-seam-legacy
-trainer_cls: trainers.rl_bf16.BF16Trainer
 datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train

@@ -1,11 +1,11 @@
-"""BF16 relearning with harmful/benign gradient-cosine logging."""
+"""Relearning with harmful/benign gradient-cosine logging."""
 
 from __future__ import annotations
 
 import torch
 
 from data.seam import BENIGN, HARMFUL
-from trainers.rl_bf16 import BF16Trainer
+from axolotl.core.trainers.base import AxolotlTrainer
 from trainers.utils import gradient_dict_dot, named_gradients
 
 
@@ -55,7 +55,7 @@ class HarmfulBenignSampler(torch.utils.data.Sampler[int]):
         return 2 * self.rows_per_epoch
 
 
-class CosineTrackedBF16Trainer(BF16Trainer):
+class CosineTrackedTrainer(AxolotlTrainer):
     """Optimize harmful CE while measuring its cosine with benign CE gradients."""
 
     def _get_train_sampler(self, train_dataset=None):

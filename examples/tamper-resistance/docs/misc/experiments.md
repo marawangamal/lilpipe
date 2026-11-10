@@ -88,7 +88,7 @@ are never mixed.
 After the queued 1,000-step SEAM trajectories finish, run a separate 250-step
 attack sweep that adds an independent parameter delta
 $\delta_i \sim \mathcal{N}(0, \sigma^2)$ before ordinary relearning. Use
-`trainers.rl_perturb.GaussianBF16Trainer`, a fixed `gaussian_seed`, and sweep
+`trainers.rl_perturb.GaussianTrainer`, a fixed `gaussian_seed`, and sweep
 `gaussian_sigma`. The trainer writes the perturbed model to `checkpoint-0`, so
 evaluate that checkpoint before checkpoints 10 through 250. Keep attacks
 serialized as attack, evaluate every retained checkpoint, cleanup, then start

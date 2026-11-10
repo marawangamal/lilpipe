@@ -40,13 +40,6 @@ def gradient_dict_dot(first, second, fp32=False, reduction_seed=None):
     return result
 
 
-def use_bfloat16_parameters(model):
-    """Undo Axolotl's embedding/norm upcast to match the authors' BF16 model."""
-    model.bfloat16()
-    if hasattr(model, "config"):
-        model.config.dtype = torch.bfloat16
-
-
 def named_gradients(loss, parameters, divisor=1):
     """Differentiate a scalar into a complete name-to-gradient mapping."""
     values = torch.autograd.grad(
@@ -124,15 +117,7 @@ def hidden_cross_entropy(hidden, labels, mask, norm, head):
     return loss / valid.sum().to(logits.device)
 
 
-class BF16Trainer(AxolotlTrainer):
-    """Axolotl trainer that keeps every floating model tensor in BF16."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        use_bfloat16_parameters(self.model)
-
-
-class SEAMAlignmentTrainer(BF16Trainer):
+class SEAMAlignmentTrainer(AxolotlTrainer):
     """Accumulate UL, UP, and finite-difference SD gradients in place."""
 
     def __init__(

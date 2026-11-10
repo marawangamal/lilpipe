@@ -8,7 +8,6 @@ from pathlib import Path
 import torch
 from axolotl.core.trainers.base import AxolotlTrainer
 
-from trainers.rl_bf16 import BF16Trainer
 from trainers.tr_seam import SEAMRelearnTrainer
 
 
@@ -54,10 +53,6 @@ class GaussianNoiseMixin:
 
 class GaussianTrainer(GaussianNoiseMixin, AxolotlTrainer):
     """Perturb once, then relearn with Axolotl's default dtype policy."""
-
-
-class GaussianBF16Trainer(GaussianNoiseMixin, BF16Trainer):
-    """Perturb once, then relearn with every parameter forced to BF16."""
 
 
 class GaussianSEAMRelearnTrainer(GaussianNoiseMixin, SEAMRelearnTrainer):

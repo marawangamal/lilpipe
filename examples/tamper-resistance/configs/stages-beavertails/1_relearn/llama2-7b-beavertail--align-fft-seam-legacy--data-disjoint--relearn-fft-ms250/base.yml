@@ -1,5 +1,4 @@
 base_model: artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam-legacy--hpo/models/placeholder
-trainer_cls: trainers.rl_bf16.BF16Trainer
 datasets:
   - path: anonymous4486/repnoise_beavertail
     split: train
