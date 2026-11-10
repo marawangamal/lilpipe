@@ -227,27 +227,27 @@ if __name__ == "__main__":
     #     "z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-reproduction.pdf"
     # )
 
-    # configs = configs_npo_sam_15pp_gt_bs2
-    # steps = range(0, 17, 4)
-    # style = {"hue": "Method", "marker": "o", "dashes": False}
-    # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-gt-bs2.pdf"
+    configs = configs_npo_sam_15pp_gt_bs2
+    steps = range(0, 17, 4)
+    style = {"hue": "Method", "marker": "o", "dashes": False}
+    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-gt-bs2.pdf"
 
     # configs = configs_npo_sam_gip
     # steps = range(0, 17, 4)
     # style = {"hue": "Method", "marker": "o", "dashes": False}
     # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-ms16.pdf"
 
-    configs = configs_npo_sam_gip_lrs
-    steps = range(0, 17, 4)
-    style = {
-        "hue": "Method",
-        "size": "LR",
-        "size_order": ["1e-6", "5e-6", "1e-5"],
-        "sizes": {"1e-6": 0.9, "5e-6": 1.7, "1e-5": 2.5},
-        "marker": "o",
-        "dashes": False,
-    }
-    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-lrs-ms16.pdf"
+    # configs = configs_npo_sam_gip_lrs
+    # steps = range(0, 17, 4)
+    # style = {
+    #     "hue": "Method",
+    #     "size": "LR",
+    #     "size_order": ["1e-6", "5e-6", "1e-5"],
+    #     "sizes": {"1e-6": 0.9, "5e-6": 1.7, "1e-5": 2.5},
+    #     "marker": "o",
+    #     "dashes": False,
+    # }
+    # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-lrs-ms16.pdf"
 
     # configs = configs_lrs
     # steps = range(0, 129)
