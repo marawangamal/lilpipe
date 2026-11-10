@@ -75,3 +75,5 @@ wandb_name: z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-b
 plugins:
 - axolotl_plugins.custom_trainer_args.CustomTrainerArgsPlugin
 trainer_cls: trainers.tr_gip.GIPRelearnTrainer
+custom_trainer_args:
+  gip_mode: avg_of_cosims

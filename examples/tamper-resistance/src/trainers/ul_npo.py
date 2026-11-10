@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 import torch
 import torch.nn.functional as F
-from axolotl.core.trainers.base import AxolotlTrainer
+from trainers._base_unlearning import UnlearningTrainer
 
 from trainers.utils import MixedSourceSampler, load_reference_parameters
 
@@ -20,7 +20,7 @@ def sequence_cross_entropy(logits, labels):
     return (token_losses * valid).sum(dim=1) / valid.sum(dim=1).clamp_min(1)
 
 
-class NPOTrainer(AxolotlTrainer):
+class NPOTrainer(UnlearningTrainer):
     """Optimize NPO against the initial model while retaining benign data."""
 
     def __init__(
@@ -28,17 +28,13 @@ class NPOTrainer(AxolotlTrainer):
         *args,
         reference_model_name_or_path,
         beta=0.0225,
-        retain_coefficient=1.0,
         **kwargs,
     ):
         if beta <= 0:
             raise ValueError("beta must be positive")
-        if retain_coefficient < 0:
-            raise ValueError("retain_coefficient must be non-negative")
         super().__init__(*args, **kwargs)
         self.reference_model_name_or_path = reference_model_name_or_path
         self.beta = beta
-        self.retain_coefficient = retain_coefficient
         self._theta_ref = None
         self._npo_logged_step = None
 
@@ -48,6 +44,7 @@ class NPOTrainer(AxolotlTrainer):
             dataset,
             self.args.per_device_train_batch_size,
             self.args.data_seed if self.args.data_seed is not None else self.args.seed,
+            interleave=True,
         )
 
     @property
@@ -83,21 +80,10 @@ class NPOTrainer(AxolotlTrainer):
             for name, parameter in theta.items():
                 parameter.data = theta_current[name]
 
-    @staticmethod
-    def split_sources(inputs):
-        forget_mask = inputs["is_forget"].bool()
-        retain_mask = ~forget_mask
-        if not forget_mask.any() or not retain_mask.any():
-            raise ValueError("NPO requires forget and retain rows in every batch")
-        fields = ("input_ids", "attention_mask", "labels")
-        forget_inputs = {field: inputs[field][forget_mask] for field in fields}
-        retain_inputs = {field: inputs[field][retain_mask] for field in fields}
-        return forget_inputs, retain_inputs
-
     def compute_forget_loss(
-        self, model, inputs, return_outputs=False, model_kwargs=None
+        self, model, forget_inputs, return_outputs=False, model_kwargs=None
     ):
-        forget_inputs, _ = self.split_sources(inputs)
+        """Compute NPO on an already-split forget batch."""
         outputs = model(**forget_inputs, **(model_kwargs or {}))
         current_ce = sequence_cross_entropy(outputs.logits, forget_inputs["labels"])
         was_training = model.training
@@ -116,19 +102,19 @@ class NPOTrainer(AxolotlTrainer):
         )
         return (loss, outputs) if return_outputs else loss
 
-    def compute_retain_loss(self, model, inputs):
-        _, retain_inputs = self.split_sources(inputs)
-        return self.retain_coefficient * model(**retain_inputs).loss.float()
-
-    def compute_npo_loss(self, model, inputs, log_metrics=True):
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        inputs = {name: value for name, value in inputs.items() if name != "is_forget"}
+        inp_forget = {name: value[0::2] for name, value in inputs.items()}
+        inp_retain = {name: value[1::2] for name, value in inputs.items()}
         loss_forget, outputs = self.compute_forget_loss(
-            model, inputs, return_outputs=True
+            model, inp_forget, return_outputs=True
         )
-        loss_retain = self.compute_retain_loss(model, inputs)
+        loss_forget = self.coeff_forget * loss_forget
+        loss_retain = self.coeff_retain * self.compute_retain_loss(model, inp_retain)
         loss = loss_forget + loss_retain
 
         step = self.state.global_step
-        if log_metrics and step != self._npo_logged_step:
+        if step != self._npo_logged_step:
             self.log(
                 {
                     "loss_forget": loss_forget.detach().item(),
@@ -136,8 +122,4 @@ class NPOTrainer(AxolotlTrainer):
                 }
             )
             self._npo_logged_step = step
-        return loss, outputs
-
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        loss, outputs = self.compute_npo_loss(model, inputs)
         return (loss, outputs) if return_outputs else loss

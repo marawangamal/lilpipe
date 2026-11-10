@@ -78,15 +78,14 @@ class AOBaseTrainer:
         )
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        forget_mask = inputs["is_forget"].bool()
-        if int(forget_mask.sum()) < 2:
+        if inputs["input_ids"][0::2].shape[0] < 2:
             raise ValueError("AO requires at least two forget rows per batch")
 
         loss_unlearn, forget_outputs = super().compute_loss(
             model, inputs, return_outputs=True, **kwargs
         )
         loss_activation_orthogonality = self.compute_activation_orthogonality_loss(
-            forget_outputs.hidden_states, inputs["attention_mask"][forget_mask]
+            forget_outputs.hidden_states, inputs["attention_mask"][0::2]
         )
         loss = loss_unlearn + loss_activation_orthogonality
 

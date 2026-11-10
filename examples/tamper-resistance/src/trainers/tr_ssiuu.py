@@ -150,10 +150,16 @@ class SSIUUTrainer(GradDiffTrainer):
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         del kwargs
+        fields = {name: value for name, value in inputs.items() if name != "is_forget"}
+        inp_forget = {name: value[0::2] for name, value in fields.items()}
+        inp_retain = {name: value[1::2] for name, value in fields.items()}
         loss_forget, outputs = self.compute_forget_loss(
-            model, inputs, return_outputs=True
+            model, inp_forget, return_outputs=True
         )
-        loss_gd = loss_forget + self.compute_retain_loss(model, inputs)
+        loss_gd = (
+            self.coeff_forget * loss_forget
+            + self.coeff_retain * self.compute_retain_loss(model, inp_retain)
+        )
         if model.training and torch.is_grad_enabled():
             loss_ssiuu = self.compute_ssiuu_loss(model, inputs)
         else:

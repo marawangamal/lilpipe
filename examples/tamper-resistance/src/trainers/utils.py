@@ -68,17 +68,20 @@ def accumulate_gradients(parameters, gradients, coefficient=1.0):
 
 
 class BalancedSampler(Sampler):
-    """Visit concatenated datasets one row from each stream at a time.
+    """Interleave contiguous streams, optionally shuffling each before balancing.
 
     ``BalancedSampler(2, 3)`` treats the concatenated index ranges as
-    ``[0, 1]`` and ``[2, 3, 4]``. It yields ``0, 2, 1, 3``: one index from
-    each dataset in turn, stopping when the shortest dataset is exhausted.
+    ``[0, 1]`` and ``[2, 3, 4]``. It yields ``0, 2, 1, 3``, stopping at
+    the shortest stream. Shuffling uses a reproducible seed for each epoch.
     """
 
-    def __init__(self, *lengths):
+    def __init__(self, *lengths, shuffle=False, seed=42):
         if not lengths:
             raise ValueError("BalancedSampler requires at least one dataset")
         self.lengths = lengths
+        self.shuffle = shuffle
+        self.seed = seed
+        self.epoch = 0
         self.offsets = []
         offset = 0
         for length in lengths:
@@ -86,9 +89,17 @@ class BalancedSampler(Sampler):
             offset += length
 
     def __iter__(self):
-        for index in range(min(self.lengths)):
-            for offset in self.offsets:
-                yield offset + index
+        streams = [
+            list(range(offset, offset + length))
+            for offset, length in zip(self.offsets, self.lengths, strict=True)
+        ]
+        if self.shuffle:
+            rng = random.Random(self.seed + self.epoch)
+            for stream in streams:
+                rng.shuffle(stream)
+        self.epoch += 1
+        for indices in zip(*streams):
+            yield from indices
 
     def __len__(self):
         return min(self.lengths) * len(self.lengths)
@@ -298,14 +309,23 @@ class BalancedSourceSamplerv2(torch.utils.data.Sampler[int]):
         return self.num_batches * self.batch_size
 
 
+def interleave_sources(batch, sources):
+    """Arrange a balanced index batch as alternating forget and retain rows."""
+    forget = [index for index in batch if sources[index]]
+    retain = [index for index in batch if not sources[index]]
+    return [index for pair in zip(forget, retain, strict=True) for index in pair]
+
+
 class MixedSourceSampler(torch.utils.data.Sampler[int]):
     """Shuffle, truncate, and mix both sources without replacement."""
 
-    def __init__(self, dataset, batch_size: int, seed: int):
+    def __init__(self, dataset, batch_size: int, seed: int, interleave=False):
         if batch_size < 2 or batch_size % 2:
             raise ValueError("mixed source sampling requires an even batch size")
 
         sources = dataset["is_forget"]
+        self.sources = sources
+        self.interleave = interleave
         self.forget = [index for index, is_forget in enumerate(sources) if is_forget]
         self.retain = [
             index for index, is_forget in enumerate(sources) if not is_forget
@@ -336,7 +356,9 @@ class MixedSourceSampler(torch.utils.data.Sampler[int]):
                 forget[start : start + half_batch] + retain[start : start + half_batch]
             )
             rng.shuffle(batch)
-            yield from batch
+            yield from (
+                interleave_sources(batch, self.sources) if self.interleave else batch
+            )
 
     def __len__(self):
         return 2 * self.source_size
@@ -345,10 +367,12 @@ class MixedSourceSampler(torch.utils.data.Sampler[int]):
 class AuthorsMixedSourceSampler(torch.utils.data.Sampler[int]):
     """Shuffle forget rows and sample matching retain rows with replacement."""
 
-    def __init__(self, dataset, batch_size: int, seed: int):
+    def __init__(self, dataset, batch_size: int, seed: int, interleave=False):
         if batch_size < 2 or batch_size % 2:
             raise ValueError("mixed source sampling requires an even batch size")
         sources = dataset["is_forget"]
+        self.sources = sources
+        self.interleave = interleave
         self.forget = [index for index, value in enumerate(sources) if value]
         self.retain = [index for index, value in enumerate(sources) if not value]
         if not self.forget or not self.retain:
@@ -368,7 +392,9 @@ class AuthorsMixedSourceSampler(torch.utils.data.Sampler[int]):
             batch = forget[start : start + half_batch]
             batch += [rng.choice(self.retain) for _ in range(half_batch)]
             rng.shuffle(batch)
-            yield from batch
+            yield from (
+                interleave_sources(batch, self.sources) if self.interleave else batch
+            )
 
     def __len__(self):
         half_batch = self.batch_size // 2
@@ -378,10 +404,12 @@ class AuthorsMixedSourceSampler(torch.utils.data.Sampler[int]):
 class OptmlMixedSourceSampler(torch.utils.data.Sampler[int]):
     """Match OPTML's shuffled forget rows and dynamic retain draws."""
 
-    def __init__(self, dataset, batch_size: int):
+    def __init__(self, dataset, batch_size: int, interleave=False):
         if batch_size < 2 or batch_size % 2:
             raise ValueError("mixed source sampling requires an even batch size")
         sources = dataset["is_forget"]
+        self.sources = sources
+        self.interleave = interleave
         self.forget = [index for index, value in enumerate(sources) if value]
         self.retain = [index for index, value in enumerate(sources) if not value]
         if not self.forget or not self.retain:
@@ -398,8 +426,16 @@ class OptmlMixedSourceSampler(torch.utils.data.Sampler[int]):
         for position in order:
             batch.append(self.forget[position])
             if len(batch) == half_batch:
-                yield from batch
-                yield from (random.choice(self.retain) for _ in range(half_batch))
+                if self.interleave:
+                    retain = [random.choice(self.retain) for _ in range(half_batch)]
+                    yield from (
+                        index
+                        for pair in zip(batch, retain, strict=True)
+                        for index in pair
+                    )
+                else:
+                    yield from batch
+                    yield from (random.choice(self.retain) for _ in range(half_batch))
                 batch.clear()
 
     def __len__(self):

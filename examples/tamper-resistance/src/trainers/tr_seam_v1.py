@@ -668,7 +668,10 @@ class SEAMBaseTrainer:
 
         # Gradients at current weights
         g_f = grad(self.compute_attack_loss, model, inputs)  # attacker minimizes -l_f
-        g_r = grad(self.compute_retain_loss, model, inputs)
+        inp_retain = {
+            name: value[1::2] for name, value in inputs.items() if name != "is_forget"
+        }
+        g_r = grad(self.compute_retain_loss, model, inp_retain)
 
         # Normalize
         norm_f, norm_r = dot(g_f, g_f).sqrt().item(), dot(g_r, g_r).sqrt().item()
@@ -682,7 +685,7 @@ class SEAMBaseTrainer:
 
         # Gradients at temporary perturbed weights; same batches
         g_f_shifted = grad(self.compute_attack_loss, model, inputs, d_f)
-        g_r_shifted = grad(self.compute_retain_loss, model, inputs, d_r)
+        g_r_shifted = grad(self.compute_retain_loss, model, inp_retain, d_r)
 
         # Approximate gradient of cos(g_f, g_r)
         g_sd = {
@@ -698,9 +701,19 @@ class SEAMBaseTrainer:
 
         return loss_sd_surrogate
 
+    def weight_unlearning_losses(self, loss_forget, loss_retain):
+        """Legacy ME helpers already include their objective weights."""
+        return loss_forget, loss_retain
+
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        loss_forget = self.compute_forget_loss(model, inputs)
-        loss_retain = self.compute_retain_loss(model, inputs)
+        fields = {name: value for name, value in inputs.items() if name != "is_forget"}
+        inp_forget = {name: value[0::2] for name, value in fields.items()}
+        inp_retain = {name: value[1::2] for name, value in fields.items()}
+        loss_forget = self.compute_forget_loss(model, inp_forget)
+        loss_retain = self.compute_retain_loss(model, inp_retain)
+        loss_forget, loss_retain = self.weight_unlearning_losses(
+            loss_forget, loss_retain
+        )
         loss_sd = self.compute_sd_loss(model, inputs, self.sd_epsilon)
         loss_sd = loss_sd.to(loss_forget.device)
         loss = loss_forget + loss_retain + self.sd_coefficient * loss_sd
@@ -718,6 +731,9 @@ class SEAMBaseTrainer:
 
 class SEAMGDTrainer(SEAMBaseTrainer, GradDiffTrainer):
     """SEAM with gradient-difference losses."""
+
+    def weight_unlearning_losses(self, loss_forget, loss_retain):
+        return self.coeff_forget * loss_forget, self.coeff_retain * loss_retain
 
 
 class SEAMMETrainer(SEAMBaseTrainer, MaxEntTrainer):

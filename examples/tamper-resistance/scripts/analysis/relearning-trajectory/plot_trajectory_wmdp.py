@@ -101,7 +101,7 @@ configs_npo_sam_15pp_gt_bs2 = [
 configs_npo_sam_gip_15pp_gt_bs2 = configs_npo_sam_15pp_gt_bs2 + [
     {
         "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2",
-        "method": "NPO + GIP (λ=1, FP32)",
+        "method": "NPO + GIP (λ=1, BF16)",
     },
 ]
 
@@ -238,7 +238,7 @@ if __name__ == "__main__":
     configs = configs_npo_sam_gip_15pp_gt_bs2
     steps = range(0, 17, 4)
     style = {"hue": "Method", "marker": "o", "dashes": False}
-    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-gip-gt-bs2.pdf"
+    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--15pp--bs2.pdf"
 
     # configs = configs_npo_sam_gip
     # steps = range(0, 17, 4)

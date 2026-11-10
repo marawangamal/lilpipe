@@ -2,9 +2,6 @@
 
 from axolotl.prompt_tokenizers import DatasetWrappingStrategy
 
-# FORGET_PATH = "cais/wmdp-bio-forget-corpus"
-# RETAIN_PATH = "Salesforce/wikitext"
-
 
 def long_document(row):
     return isinstance(row.get("text"), str) and len(row["text"]) > 50

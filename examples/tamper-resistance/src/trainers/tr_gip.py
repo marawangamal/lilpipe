@@ -4,7 +4,11 @@ import math
 
 import torch
 
+from trainers._base_unlearning import UnlearningTrainer
 from trainers.rl_bf16 import BF16Trainer
+from trainers.ul_gd import GradDiffTrainer
+from trainers.ul_npo import NPOTrainer
+from trainers.tr_sam import NPOSAMTrainer
 from trainers.utils import (
     BalancedSampler,
     accumulate_gradients,
@@ -16,7 +20,7 @@ from trainers.utils import (
 )
 
 
-class GIPTrainer(BF16Trainer):
+class GIPTrainer(UnlearningTrainer, BF16Trainer):
     def __init__(
         self,
         *args,
@@ -28,6 +32,7 @@ class GIPTrainer(BF16Trainer):
         eps_norm_div=1e-8,
         n_forget=5_000,
         n_retain=5_000,
+        shuffle_streams=False,
         **kwargs,
     ):
         if gip_mode not in {"avg_of_cosims", "cosim_of_avgs"}:
@@ -43,34 +48,34 @@ class GIPTrainer(BF16Trainer):
             )
         if any(type(n) is not int or n <= 0 for n in (n_forget, n_retain)):
             raise ValueError("Stream lengths must be positive integers")
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args, coeff_forget=coeff_forget, coeff_retain=coeff_retain, **kwargs
+        )
         self.gip_mode = gip_mode
-        self.coeff_forget = coeff_forget
-        self.coeff_retain = coeff_retain
         self.coeff_gip = coeff_gip
         self.eps_finite_diff = eps_finite_diff
         self.eps_norm_div = eps_norm_div
         self.n_forget = n_forget
         self.n_retain = n_retain
+        self.shuffle_streams = shuffle_streams
 
     def _get_train_sampler(self, train_dataset=None):
-        """Alternate rows from contiguous forget and retain streams, like SEAM."""
+        """Draw equally from the contiguous forget and retain streams."""
         dataset = self.train_dataset if train_dataset is None else train_dataset
-        B = self._train_batch_size
-        if B < 4 or B % 2:
+        if self._train_batch_size < 4 or self._train_batch_size % 2:
             raise ValueError("GIP requires an even batch size of at least four")
-        if self.gip_mode == "cosim_of_avgs" and B % 4:
-            raise ValueError("cosim_of_avgs requires a batch size divisible by four")
         if len(dataset) < self.n_forget + self.n_retain:
             raise ValueError("GIP dataset is shorter than its configured streams")
-        if (
-            min(self.n_forget, self.n_retain) % (B // 2)
-            and not self.args.dataloader_drop_last
-        ):
-            raise ValueError(
-                "GIP streams must produce complete batches or use dataloader_drop_last"
-            )
-        return BalancedSampler(self.n_forget, self.n_retain)
+        return BalancedSampler(
+            self.n_forget,
+            self.n_retain,
+            shuffle=self.shuffle_streams,
+            seed=(
+                self.args.data_seed
+                if self.args.data_seed is not None
+                else self.args.seed
+            ),
+        )
 
     @staticmethod
     def compute_ce(model, batch):
@@ -263,8 +268,8 @@ class GIPTrainer(BF16Trainer):
     def accumulate_forget_grad(
         self, model, forget, coefficient=1.0, compute_loss_only=False
     ):
-        """Accumulate negative CE for forget examples."""
-        loss = -self.compute_ce(model, forget)
+        """Accumulate the configured unlearning objective for forget examples."""
+        loss = self.compute_forget_loss(model, forget)
         if compute_loss_only:
             return coefficient * loss.detach()
 
@@ -279,8 +284,8 @@ class GIPTrainer(BF16Trainer):
     def accumulate_retain_grad(
         self, model, retain, coefficient=1.0, compute_loss_only=False
     ):
-        """Accumulate CE for retain examples."""
-        loss = self.compute_ce(model, retain)
+        """Accumulate the inherited retain loss, weighted once by coefficient."""
+        loss = self.compute_retain_loss(model, retain)
         if compute_loss_only:
             return coefficient * loss.detach()
 
@@ -295,9 +300,12 @@ class GIPTrainer(BF16Trainer):
     def accumulate_gip_grad(
         self, model, forget, coefficient=1.0, compute_loss_only=False
     ):
-        """Accumulate weighted GIP gradients; return raw cosine and weighted norm."""
+        """Return the weighted GIP loss and norm, accumulating its gradient."""
         if compute_loss_only:
-            return self.compute_gip(model, forget, compute_loss_only=True).detach()
+            return (
+                coefficient
+                * self.compute_gip(model, forget, compute_loss_only=True).detach()
+            )
 
         # compute_gip returns the cosine and its unscaled named gradients.
         cosine, gradients = self.compute_gip(model, forget)
@@ -305,7 +313,7 @@ class GIPTrainer(BF16Trainer):
         scale = coefficient / self.current_gradient_accumulation_steps
         norm = gradient_dict_dot(gradients, gradients).sqrt() * abs(scale)
         accumulate_gradients(parameters, gradients, scale)
-        return cosine.detach(), norm.detach()
+        return coefficient * cosine.detach(), norm.detach()
 
     def training_step(self, model, inputs, num_items_in_batch=None):
         inputs = self._prepare_inputs(inputs)
@@ -349,17 +357,42 @@ class GIPTrainer(BF16Trainer):
             loss, norm = cfg["accum_fn"](**cfg["kwargs"])
             log_dict[f"loss_{cfg['name']}"] = loss.item()
             log_dict[f"norm_{cfg['name']}"] = norm.item()
-            losses.append(self.coeff_gip * loss if cfg["name"] == "gip" else loss)
+            losses.append(loss)
 
         self.log(log_dict)
         loss = sum(value.to(losses[0].device) for value in losses)
         return (loss / divisor).to(self.args.device)
 
 
+class GIPGDTrainer(GIPTrainer, GradDiffTrainer):
+    """Combine gradient-difference unlearning with the GIP update."""
+
+
+class GIPNPOTrainer(GIPTrainer, NPOTrainer):
+    """Combine the shared NPO objective with the GIP gradient update."""
+
+
+class GIPNPOSAMTrainer(NPOSAMTrainer, GIPTrainer):
+    """Use the positional GIP streams and passively log cosine during NPO+SAM."""
+
+    def _get_train_sampler(self, train_dataset=None):
+        return GIPTrainer._get_train_sampler(self, train_dataset)
+
+    def _sam_training_step(self, model, inputs):
+        inp_forget = {name: value[0::2] for name, value in inputs.items()}
+        cosine = self.compute_gip(model, inp_forget, compute_loss_only=True)
+        loss = super()._sam_training_step(model, inputs)
+        self.log({"loss_gip": cosine.item(), "cosine_similarity": cosine.item()})
+        return loss
+
+
 class GIPRelearnTrainer(GIPTrainer):
+    def _get_train_sampler(self, train_dataset=None):
+        return BF16Trainer._get_train_sampler(self, train_dataset)
+
     def training_step(self, model, inputs, num_items_in_batch=None):
         inputs = self._prepare_inputs(inputs)
-        inp_forget = {name: value[0::2] for name, value in inputs.items()}
+        inp_forget = inputs
 
         divisor = self.current_gradient_accumulation_steps
         loss_forget = self.compute_ce(model, inp_forget)

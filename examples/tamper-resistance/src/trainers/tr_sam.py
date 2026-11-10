@@ -64,8 +64,8 @@ class GDSAMTrainer(AxolotlTrainer):
         self,
         *args,
         rho=0.01,
-        retain_coefficient=1.0,
-        forget_coefficient=1.0,
+        coeff_retain=1.0,
+        coeff_forget=1.0,
         sampling="balanced",
         optml_parity=False,
         **kwargs,
@@ -75,8 +75,8 @@ class GDSAMTrainer(AxolotlTrainer):
         if sampling not in {"balanced", "authors", "optml"}:
             raise ValueError("sampling must be 'balanced', 'authors', or 'optml'")
         super().__init__(*args, **kwargs)
-        self.retain_coefficient = retain_coefficient
-        self.forget_coefficient = forget_coefficient
+        self.coeff_retain = coeff_retain
+        self.coeff_forget = coeff_forget
         self.rho = rho
         self.sampling = sampling
         self.optml_parity = optml_parity
@@ -167,8 +167,7 @@ class GDSAMTrainer(AxolotlTrainer):
                     for name, step in perturbation.items():
                         parameters[name].add_(step)
                 loss_forget, grad_forget = self._backward_and_take_gradients(
-                    lambda: self.forget_coefficient
-                    * self.compute_forget_loss(model, inputs),
+                    lambda: self.coeff_forget * self.compute_forget_loss(model, inputs),
                     parameters,
                 )
             finally:
@@ -177,8 +176,7 @@ class GDSAMTrainer(AxolotlTrainer):
                         parameters[name].sub_(step)
 
             loss_retain, grad_retain = self._backward_and_take_gradients(
-                lambda: self.retain_coefficient
-                * self.compute_retain_loss(model, inputs),
+                lambda: self.coeff_retain * self.compute_retain_loss(model, inputs),
                 parameters,
             )
 
@@ -237,6 +235,9 @@ class NPOSAMTrainer(NPOTrainer):
         return loss, gradients
 
     def _sam_training_step(self, model, inputs):
+        inputs = {name: value for name, value in inputs.items() if name != "is_forget"}
+        inp_forget = {name: value[0::2] for name, value in inputs.items()}
+        inp_retain = {name: value[1::2] for name, value in inputs.items()}
         model.train()
         if hasattr(self.optimizer, "train") and callable(self.optimizer.train):
             self.optimizer.train()
@@ -250,7 +251,8 @@ class NPOSAMTrainer(NPOTrainer):
 
         try:
             _, gradients_at_perturbation = self._backward_and_take_gradients(
-                lambda: self.compute_forget_loss(model, inputs), parameters
+                lambda: self.coeff_forget * self.compute_forget_loss(model, inp_forget),
+                parameters,
             )
             perturbation = sam_perturbation(gradients_at_perturbation, self.rho)
             try:
@@ -258,7 +260,9 @@ class NPOSAMTrainer(NPOTrainer):
                     for name, step in perturbation.items():
                         parameters[name].add_(step)
                 loss_forget, gradients_forget = self._backward_and_take_gradients(
-                    lambda: self.compute_forget_loss(model, inputs), parameters
+                    lambda: self.coeff_forget
+                    * self.compute_forget_loss(model, inp_forget),
+                    parameters,
                 )
             finally:
                 with torch.no_grad():
@@ -266,7 +270,8 @@ class NPOSAMTrainer(NPOTrainer):
                         parameters[name].sub_(step)
 
             loss_retain, gradients_retain = self._backward_and_take_gradients(
-                lambda: self.compute_retain_loss(model, inputs), parameters
+                lambda: self.coeff_retain * self.compute_retain_loss(model, inp_retain),
+                parameters,
             )
             self.log(
                 {

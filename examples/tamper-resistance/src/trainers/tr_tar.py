@@ -210,6 +210,10 @@ class TARBaseTrainer:
         self.log({"inner_loss": loss.item(), "inner_step_total": self.inner_step_total})
         self.inner_step_total += 1
 
+    def weight_unlearning_losses(self, loss_forget, loss_retain):
+        """Legacy ME helpers already include their objective weights."""
+        return loss_forget, loss_retain
+
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         defence_forget_mask = (
             inputs["metadata_ids"] == self.metadata_to_idx["defence::forget"]
@@ -250,6 +254,9 @@ class TARBaseTrainer:
             lambda **x: functional_call(model, theta_attacked, (), x),
             inputs_defence_forget,
         )
+        loss_forget, loss_retain = self.weight_unlearning_losses(
+            loss_forget, loss_retain
+        )
         loss = loss_forget + loss_retain
 
         if model.training and torch.is_grad_enabled():
@@ -265,6 +272,9 @@ class TARBaseTrainer:
 
 class TARGDTrainer(TARBaseTrainer, GradDiffTrainer):
     """TAR with gradient-difference losses."""
+
+    def weight_unlearning_losses(self, loss_forget, loss_retain):
+        return self.coeff_forget * loss_forget, self.coeff_retain * loss_retain
 
 
 class TARMETrainer(TARBaseTrainer, MaxEntTrainer):

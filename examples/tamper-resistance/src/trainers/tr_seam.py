@@ -8,6 +8,7 @@ from functools import partial
 import torch
 from torch.utils.checkpoint import checkpoint
 
+from trainers._base_unlearning import UnlearningTrainer
 from trainers.rl_bf16 import BF16Trainer
 from trainers.utils import (
     BalancedSampler,
@@ -39,10 +40,10 @@ def shifted_parameters(parameters, shift):
 # be training_step, rather than compute_loss, so Trainer does not backward twice.
 #
 # def training_step(model, inputs):
-#     loss_hh = accumulate_hh_grad(model, inputs, coefficient=-coeff_hh)
-#     loss_hb = accumulate_hb_grad(model, inputs, coefficient=+coeff_hb)
+#     loss_hh = accumulate_hh_grad(model, inputs, coefficient=coeff_forget)
+#     loss_hb = accumulate_hb_grad(model, inputs, coefficient=+coeff_retain)
 #     loss_sd = accumulate_sd_grad(model, inputs, coefficient=+coeff_sd)
-#     return (-coeff_hh * loss_hh + coeff_hb * loss_hb + coeff_sd * loss_sd)
+#     return loss_hh + loss_hb + loss_sd
 #
 # def accumulate_hb_grad(model, inputs):
 #     loss_hb = compute_hb_loss(model, inputs)
@@ -69,14 +70,14 @@ def hidden_cross_entropy(hidden, labels, norm, head):
     )
 
 
-class SEAMTrainer(BF16Trainer):
+class SEAMTrainer(UnlearningTrainer, BF16Trainer):
     """Accumulate UL, UP, and finite-difference SD gradients in place."""
 
     def __init__(
         self,
         *args,
-        coeff_hh=1.0,
-        coeff_hb=1.0,
+        coeff_forget=1.0,
+        coeff_retain=1.0,
         coeff_sd=0.01,
         epsilon=1e-3,
         n_hh=8_000,
@@ -84,12 +85,14 @@ class SEAMTrainer(BF16Trainer):
         n_bb=8_000,
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args, coeff_forget=coeff_forget, coeff_retain=coeff_retain, **kwargs
+        )
         # input validation
         assert all(
-            c >= 0 for c in [coeff_hh, coeff_hb, coeff_sd]
+            c >= 0 for c in [coeff_forget, coeff_retain, coeff_sd]
         ), "Coefficients must be nonnegative"
-        self.coeff_hh, self.coeff_hb, self.coeff_sd = coeff_hh, coeff_hb, coeff_sd
+        self.coeff_sd = coeff_sd
         self.epsilon = epsilon
         self.n_hh, self.n_hb, self.n_bb = n_hh, n_hb, n_bb
         # Leave each hidden state on the GPU that owns its transformer layer.
@@ -137,12 +140,19 @@ class SEAMTrainer(BF16Trainer):
             )
             return torch.log(torch.stack(losses).sum() / len(outputs.hidden_states) + 1)
 
+    def compute_forget_loss(self, model, harmful):
+        """Return the paper's unweighted layer-wise unlearning objective."""
+        return -self.compute_ce(model, harmful, layerwise=True)
+
+    def compute_retain_loss(self, model, refusal):
+        return self.compute_ce(model, refusal)
+
     def accumulate_hh_grad(
         self, model, harmful, coefficient=1.0, compute_loss_only=False
     ):
         """Backward the layer-wise harmful unlearning term into parameter.grad."""
         divisor = self.current_gradient_accumulation_steps
-        loss = self.compute_ce(model, harmful, layerwise=True)
+        loss = self.compute_forget_loss(model, harmful)
         if compute_loss_only:
             return coefficient * loss.detach()
 
@@ -160,7 +170,7 @@ class SEAMTrainer(BF16Trainer):
     ):
         """Backward the refusal-preservation term into parameter.grad."""
         divisor = self.current_gradient_accumulation_steps
-        loss = self.compute_ce(model, refusal)
+        loss = self.compute_retain_loss(model, refusal)
         if compute_loss_only:
             return coefficient * loss.detach()
 
@@ -176,7 +186,7 @@ class SEAMTrainer(BF16Trainer):
     def accumulate_sd_grad(
         self, model, harmful, benign, coefficient=1.0, compute_loss_only=False
     ):
-        """Accumulate weighted SD gradients; return raw cosine and weighted norm."""
+        """Return the weighted SD loss and norm, accumulating its gradient."""
         parameters = model_to_params(model, only_trainable=True)
         divisor = self.current_gradient_accumulation_steps
 
@@ -188,7 +198,7 @@ class SEAMTrainer(BF16Trainer):
         norm_bb = gradient_dict_dot(g_bb, g_bb).sqrt()
         cosine = gradient_dict_dot(g_hh, g_bb) / (norm_hh * norm_bb + 1e-8)
         if compute_loss_only:
-            return cosine.detach()
+            return coefficient * cosine.detach()
 
         d_hh = {
             name: self.epsilon
@@ -222,9 +232,10 @@ class SEAMTrainer(BF16Trainer):
             + (g_bb_shifted[name] - g_bb[name]) / norm_bb.to(parameter.device)
             for name, parameter in parameters.items()
         }
-        norm_sd = gradient_dict_dot(g_sd, g_sd).sqrt() * abs(coefficient / self.epsilon)
-        accumulate_gradients(parameters, g_sd, coefficient / self.epsilon)
-        return cosine.detach(), norm_sd.detach()
+        scale = coefficient / (self.epsilon * divisor)
+        norm_sd = gradient_dict_dot(g_sd, g_sd).sqrt() * abs(scale)
+        accumulate_gradients(parameters, g_sd, scale)
+        return coefficient * cosine.detach(), norm_sd.detach()
 
     def training_step(self, model, inputs, num_items_in_batch=None):
         inputs = self._prepare_inputs(inputs)
@@ -240,7 +251,7 @@ class SEAMTrainer(BF16Trainer):
                 "kwargs": {
                     "model": model,
                     "harmful": inp_hh,
-                    "coefficient": -self.coeff_hh,
+                    "coefficient": self.coeff_forget,
                 },
             },
             {
@@ -249,7 +260,7 @@ class SEAMTrainer(BF16Trainer):
                 "kwargs": {
                     "model": model,
                     "refusal": inp_hb,
-                    "coefficient": self.coeff_hb,
+                    "coefficient": self.coeff_retain,
                 },
             },
             {
@@ -270,7 +281,7 @@ class SEAMTrainer(BF16Trainer):
             loss, norm = cfg["accum_fn"](**cfg["kwargs"])
             log_dict[f"loss_{cfg['name']}"] = loss.item()
             log_dict[f"norm_{cfg['name']}"] = norm.item()
-            losses.append(self.coeff_sd * loss if cfg["name"] == "sd" else loss)
+            losses.append(loss)
 
         self.log(log_dict)
 

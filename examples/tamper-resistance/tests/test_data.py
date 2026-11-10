@@ -269,3 +269,23 @@ def test_all_roles_filter_before_limiting_samples(role, max_samples, expected):
     result = strategy.wrap_dataset(data)
     assert len(result) == expected
     assert result["metadata"] == [role] * expected
+
+
+def test_base_documents_preserve_padded_labels_without_source_flags():
+    pytest.importorskip("axolotl")
+    from data._base_document_strategy import load
+    from data.authors_documents import AuthorsDocumentStrategy
+
+    def tokenizer(text, **kwargs):
+        return {"input_ids": [7, 8, 2, 2], "attention_mask": [1, 1, 0, 0]}
+
+    strategy = load(tokenizer, SimpleNamespace(sequence_len=4))
+    row = {"text": "document"}
+    result = strategy.tokenize_row(row)
+    expected = AuthorsDocumentStrategy(
+        tokenizer, 4, "cais/wmdp-bio-forget-corpus"
+    ).tokenize_row(row)
+    expected.pop("is_forget")
+    assert {name: result[name] for name in expected} == expected
+    assert "is_forget" not in result
+    assert strategy.max_samples is None

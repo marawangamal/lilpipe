@@ -7,7 +7,7 @@ custom_trainer_args:
   anchor_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
   coefficient_weight_dist: 10000.0
   beta: 0.01
-  retain_coefficient: 1.0
+  coeff_retain: 1.0
 datasets:
 - path: cais/wmdp-bio-forget-corpus
   split: train

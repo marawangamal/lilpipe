@@ -3,7 +3,7 @@ sweeps:
   - name: grid
     parameters:
       learning_rate: [1.0e-6, 5.0e-6, 1.0e-5]
-      custom_trainer_args.retain_coefficient: [1.0, 2.0, 4.0]
+      custom_trainer_args.coeff_retain: [1.0, 2.0, 4.0]
       custom_trainer_args.beta: [0.01, 0.025, 0.05]
 producer:
   script: scripts/slurm/tamia/train.sbatch

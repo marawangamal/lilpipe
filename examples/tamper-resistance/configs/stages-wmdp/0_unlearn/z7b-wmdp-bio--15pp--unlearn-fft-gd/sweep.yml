@@ -6,7 +6,7 @@ sweeps:
     - 1.0e-06
     - 5.0e-06
     - 1.0e-05
-    custom_trainer_args.retain_coefficient:
+    custom_trainer_args.coeff_retain:
     - 1
     - 2
     - 4
@@ -14,7 +14,7 @@ sweeps:
   parameters:
     learning_rate:
     - 3.28e-06
-    custom_trainer_args.retain_coefficient:
+    custom_trainer_args.coeff_retain:
     - 1.0
 producer:
   script: scripts/slurm/tamia/train.sbatch

@@ -456,15 +456,15 @@ def test_src_grad_diff_logs_component_losses_and_gradient_norms(
 
     model = Model()
     trainer = object.__new__(src_gd_training_module.GradDiffTrainer)
-    trainer.forget_coefficient = 2.0
-    trainer.retain_coefficient = 1.0
+    trainer.coeff_forget = 2.0
+    trainer.coeff_retain = 1.0
     logged = []
     trainer.log = logged.append
     inputs = {
-        "input_ids": torch.tensor([[7], [2], [9], [4]]),
+        "input_ids": torch.tensor([[2], [7], [4], [9]]),
         "attention_mask": torch.ones(4, 1),
-        "labels": torch.tensor([[7], [2], [9], [4]]),
-        "is_forget": torch.tensor([False, True, False, True]),
+        "labels": torch.tensor([[2], [7], [4], [9]]),
+        "is_forget": torch.tensor([True, False, True, False]),
     }
 
     loss = trainer.compute_loss(model, inputs)
@@ -876,8 +876,8 @@ def test_src_gd_sam_logs_component_losses_and_gradient_norms(
     trainer.current_gradient_accumulation_steps = 1
     trainer.compute_loss_context_manager = nullcontext
     trainer.rho = 0.01
-    trainer.forget_coefficient = 2.0
-    trainer.retain_coefficient = 1.0
+    trainer.coeff_forget = 2.0
+    trainer.coeff_retain = 1.0
     trainer.optml_parity = False
     logged = []
     trainer.log = logged.append
@@ -984,8 +984,8 @@ class AOToyModel:
 
 
 AO_INPUTS = {
-    "input_ids": [[7, 0], [2, 1], [9, 2], [4, 0]],
-    "is_forget": [False, True, False, True],
+    "input_ids": [[2, 1], [7, 0], [4, 0], [9, 2]],
+    "is_forget": [True, False, True, False],
 }
 
 
@@ -1003,6 +1003,7 @@ def ao_trainer(cls, **attributes):
     trainer = object.__new__(cls)
     trainer.target_layers = (0, 1)
     trainer.activation_orthogonality_coefficient = 4.0
+    trainer.coeff_forget = trainer.coeff_retain = 1.0
     trainer.state = SimpleNamespace(global_step=0)
     trainer._ao_logged_step = None
     trainer.logged = []
@@ -1016,7 +1017,7 @@ def test_ao_gd_adds_orthogonality_to_gradient_difference(ao_training_module) -> 
     torch = pytest.importorskip("torch")
     model = AOToyModel.build(torch)
     trainer = ao_trainer(
-        ao_training_module.AOGDTrainer, retain_coefficient=2.0, forget_coefficient=3.0
+        ao_training_module.AOGDTrainer, coeff_retain=2.0, coeff_forget=3.0
     )
 
     loss, outputs = trainer.compute_loss(model, ao_inputs(torch), return_outputs=True)
@@ -1040,7 +1041,7 @@ def test_ao_npo_adds_orthogonality_to_npo(ao_training_module) -> None:
         ao_training_module.AONPOTrainer,
         model=model,
         beta=beta,
-        retain_coefficient=2.0,
+        coeff_retain=2.0,
         _npo_logged_step=None,
     )
     trainer._theta_ref = {
@@ -1073,12 +1074,12 @@ def test_ao_trainers_forward_unlearning_arguments(
 
         monkeypatch.setattr(parent, "__init__", init)
         trainer = cls(
-            retain_coefficient=4.0,
+            coeff_retain=4.0,
             sampling="authors",
             activation_orthogonality_coefficient=10.0,
         )
 
-        assert received == {"retain_coefficient": 4.0, "sampling": "authors"}
+        assert received == {"coeff_retain": 4.0, "sampling": "authors"}
         assert trainer.activation_orthogonality_coefficient == 10.0
         assert trainer.target_layers == (0, 1, 2)
 
@@ -1121,7 +1122,9 @@ def test_ao_requires_two_forget_rows(ao_training_module) -> None:
     for cls in (ao_training_module.AOGDTrainer, ao_training_module.AONPOTrainer):
         trainer = object.__new__(cls)
         with pytest.raises(ValueError, match="at least two forget"):
-            trainer.compute_loss(None, {"is_forget": torch.tensor([False, True])})
+            trainer.compute_loss(
+                None, {"input_ids": torch.zeros(2, 1, dtype=torch.long)}
+            )
 
 
 def test_ao_rmu_loss_reuses_forget_activations(ao_training_module) -> None:
@@ -1220,7 +1223,9 @@ def test_booster_sampler_and_negative_perturbation() -> None:
 
 @pytest.mark.parametrize("divisor", [1, 2])
 @pytest.mark.parametrize("legacy", [True, False], ids=["legacy", "seam"])
-def test_seam_reports_unweighted_sd_loss(monkeypatch, divisor, legacy) -> None:
+def test_seam_reports_sd_loss_with_method_coefficient(
+    monkeypatch, divisor, legacy
+) -> None:
     torch = pytest.importorskip("torch")
     import sys
 
@@ -1268,12 +1273,13 @@ def test_seam_reports_unweighted_sd_loss(monkeypatch, divisor, legacy) -> None:
             loss_only = trainer.accumulate_sd_grad(
                 model, harmful, benign, coefficient=beta, compute_loss_only=True
             )
-            assert loss_only.item() == pytest.approx(expected_cosine.item())
+            assert loss_only.item() == pytest.approx(beta * expected_cosine.item())
             torch.testing.assert_close(model.weight.grad, torch.ones_like(initial))
             loss_sd, norm_sd = trainer.accumulate_sd_grad(
                 model, harmful, benign, coefficient=beta
             )
-        assert loss_sd.item() == pytest.approx(expected_cosine.item())
+        expected_loss = expected_cosine if legacy else beta * expected_cosine
+        assert loss_sd.item() == pytest.approx(expected_loss.item())
         assert not loss_sd.requires_grad
         torch.testing.assert_close(model.weight, initial)
         updates[beta] = model.weight.grad - 1
@@ -1305,8 +1311,9 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         "__init__",
         lambda self, *args, **kwargs: setattr(self, "model", object()),
     )
-    for name in ("coeff_hh", "coeff_hb", "coeff_sd"):
-        with pytest.raises(AssertionError, match="Coefficients must be nonnegative"):
+    for name in ("coeff_forget", "coeff_retain", "coeff_sd"):
+        error = AssertionError if name == "coeff_sd" else ValueError
+        with pytest.raises(error):
             trainer.SEAMTrainer(**{name: -1})
 
     sampler = trainer.BalancedSampler(2, 3, 4)
@@ -1404,12 +1411,12 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
     logged = []
     instance._prepare_inputs = lambda inputs: inputs
     instance.current_gradient_accumulation_steps = 2
-    instance.coeff_hh, instance.coeff_hb, instance.coeff_sd = 0.75, 0.5, 0.25
+    instance.coeff_forget, instance.coeff_retain, instance.coeff_sd = 0.75, 0.5, 0.25
     instance.args = SimpleNamespace(device=torch.device("cpu"))
     instance.log = logged.append
     coefficients = []
     instance.accumulate_hh_grad = lambda model, harmful, coefficient: (
-        coefficients.append(coefficient) or coefficient * torch.tensor(2.0),
+        coefficients.append(coefficient) or -coefficient * torch.tensor(2.0),
         torch.tensor(3.0),
     )
     instance.accumulate_hb_grad = lambda model, refusal, coefficient: (
@@ -1417,7 +1424,7 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         torch.tensor(4.0),
     )
     instance.accumulate_sd_grad = lambda model, harmful, benign, coefficient: (
-        coefficients.append(coefficient) or torch.tensor(0.5),
+        coefficients.append(coefficient) or coefficient * torch.tensor(0.5),
         torch.tensor(5.0),
     )
     reported_loss = instance.training_step(
@@ -1425,14 +1432,14 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
         {"input_ids": torch.arange(6).unsqueeze(1)},
     )
     assert reported_loss.item() == pytest.approx(0.3125)
-    assert coefficients == [-0.75, 0.5, 0.25]
+    assert coefficients == [0.75, 0.5, 0.25]
     assert logged == [
         {
             "loss_hh": -1.5,
             "norm_hh": 3.0,
             "loss_hb": 2.0,
             "norm_hb": 4.0,
-            "loss_sd": 0.5,
+            "loss_sd": 0.125,
             "norm_sd": 5.0,
         }
     ]
@@ -1442,12 +1449,12 @@ def test_seam_data_roles_sampler_and_layerwise_loss(tmp_path, monkeypatch) -> No
 
     loss_only = object.__new__(trainer.SEAMTrainer)
     loss_only.current_gradient_accumulation_steps = 1
-    loss_only.coeff_hh = 0.75
-    loss_only.coeff_hb = 0.5
+    loss_only.coeff_forget = 0.75
+    loss_only.coeff_retain = 0.5
     loss_only.compute_ce = lambda model, inputs, layerwise=False: torch.tensor(2.0)
     backward = []
     loss_only.accelerator = SimpleNamespace(backward=backward.append)
-    assert loss_only.accumulate_hh_grad(None, {}, compute_loss_only=True) == 2.0
+    assert loss_only.accumulate_hh_grad(None, {}, compute_loss_only=True) == -2.0
     assert loss_only.accumulate_hb_grad(None, {}, compute_loss_only=True) == 2.0
     assert backward == []
 
@@ -1789,6 +1796,7 @@ def make_trainer(tar, trainer_cls, logs):
 
     trainer.accelerator = SimpleNamespace(autocast=nullcontext)
     trainer.forget_coefficient = trainer.retain_coefficient = 1.0
+    trainer.coeff_forget = trainer.coeff_retain = 1.0
     trainer.state = SimpleNamespace(global_step=7)
     trainer.inner_step_total = 0
     trainer._inner_loss_metric_defined = False
@@ -1906,14 +1914,7 @@ def test_adamw_attack_relearns_selected_attack_rows(tar, tiny_lm, batch):
 @pytest.mark.parametrize(
     "trainer_name",
     [
-        pytest.param(
-            "TARGDTrainer",
-            marks=pytest.mark.xfail(
-                strict=True,
-                raises=KeyError,
-                reason="TAR passes selected fields to GradDiff, which still expects is_forget",
-            ),
-        ),
+        "TARGDTrainer",
         "TARMETrainer",
     ],
 )
@@ -1923,7 +1924,7 @@ def test_tar_forget_loss_backpropagates_to_trained_model(
     torch = pytest.importorskip("torch")
     logs = []
     trainer = make_trainer(tar, getattr(tar, trainer_name), logs)
-    trainer.retain_coefficient = 0.0
+    trainer.retain_coefficient = trainer.coeff_retain = 0.0
     before = tiny_lm.weight.detach().clone()
 
     trainer.compute_loss(tiny_lm, batch).backward()
@@ -2204,3 +2205,60 @@ def test_metadata_batch_collation_loss_and_backward(
     loss.backward()
     assert model.weight.grad is not None
     assert torch.isfinite(model.weight.grad).all()
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["MixedSourceSampler", "AuthorsMixedSourceSampler", "OptmlMixedSourceSampler"],
+)
+def test_source_sampler_interleaving_preserves_selected_batches(sampling_module, name):
+    torch = pytest.importorskip("torch")
+    sources = [False, True] * 6
+    dataset = {"is_forget": sources}
+    sampler = getattr(sampling_module, name)
+    kwargs = {} if name == "OptmlMixedSourceSampler" else {"seed": 42}
+    random.seed(42)
+    torch.manual_seed(42)
+    original = list(sampler(dataset, 4, **kwargs))
+    random.seed(42)
+    torch.manual_seed(42)
+    interleaved = list(sampler(dataset, 4, interleave=True, **kwargs))
+    assert all(sources[index] for index in interleaved[0::2])
+    assert not any(sources[index] for index in interleaved[1::2])
+    for start in range(0, len(original), 4):
+        assert Counter(original[start : start + 4]) == Counter(
+            interleaved[start : start + 4]
+        )
+
+
+def test_untagged_stream_sampler_matches_completed_run_selection(sampling_module):
+    torch = pytest.importorskip("torch")
+    sources = [True] * 24 + [False] * 10
+    old = sampling_module.MixedSourceSampler({"is_forget": sources}, 8, 42)
+    new = sampling_module.BalancedSampler(24, 10, shuffle=True, seed=42)
+    loader = torch.utils.data.DataLoader(
+        list(range(34)), sampler=new, batch_size=8, drop_last=True
+    )
+    assert len(old) == 16
+    assert len(loader) == 2
+    for _ in range(2):
+        previous = list(old)
+        for step, batch in enumerate(loader):
+            current = batch.tolist()
+            assert all(i < 24 for i in current[0::2])
+            assert all(i >= 24 for i in current[1::2])
+            assert Counter(current) == Counter(previous[step * 8 : (step + 1) * 8])
+
+
+def test_balanced_sampler_shuffles_each_stream_reproducibly(sampling_module):
+    first = sampling_module.BalancedSampler(4, 6, 5, shuffle=True, seed=42)
+    second = sampling_module.BalancedSampler(4, 6, 5, shuffle=True, seed=42)
+    epochs = [list(first), list(first)]
+    assert epochs == [list(second), list(second)]
+    assert epochs[0] != epochs[1]
+    for order in epochs:
+        assert len(order) == len(first) == 12
+        assert len(set(order)) == 12
+        assert set(order[0::3]) == set(range(4))
+        assert all(4 <= index < 10 for index in order[1::3])
+        assert all(10 <= index < 15 for index in order[2::3])
