@@ -112,7 +112,10 @@ def main():
     # model.config.use_cache = False
 
     harmful_dataset, harmless_dataset, test_dataset = construct_beavertails_dataset(
-        tokenizer, attack=seam_args.attack_dataset, defence_size=seam_args.defense_size
+        tokenizer,
+        attack=seam_args.attack_dataset,
+        defence_size=seam_args.defense_size,
+        harmful_response_separator=" ",
     )
     benign_dataset = construct_alpaca_dataset(
         tokenizer, retain_size=seam_args.defense_size

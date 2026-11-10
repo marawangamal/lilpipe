@@ -541,3 +541,48 @@ def test_all_roles_filter_before_limiting_samples(role, max_samples, expected):
     result = strategy.wrap_dataset(data)
     assert len(result) == expected
     assert result["metadata"] == [role] * expected
+
+
+@pytest.mark.parametrize("response_separator", [" ", "\n"])
+def test_author_seam_harmful_response_separator(
+    monkeypatch, tmp_path, response_separator
+):
+    import json
+
+    torch = pytest.importorskip("torch")
+    datasets = pytest.importorskip("datasets")
+    module = load_script("../seam/src/data_processing/_datasets.py", "seam_datasets")
+    row = {
+        "prompt": "example question",
+        "response": "example answer",
+        "category": {"violence,aiding_and_abetting,incitement": True},
+        "is_safe": False,
+        "refusal": "Question: example question\nAnswer: example refusal",
+    }
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data/beavertails_with_refusals_train.json").write_text(
+        json.dumps([row])
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        module,
+        "load_dataset",
+        lambda *args, **kwargs: datasets.Dataset.from_list([row]),
+    )
+    texts = []
+
+    def tokenizer(batch, **kwargs):
+        texts.extend(batch)
+        return {
+            "input_ids": torch.ones((len(batch), 4), dtype=torch.long),
+            "attention_mask": torch.ones((len(batch), 4), dtype=torch.long),
+        }
+
+    module.construct_beavertails_dataset(
+        tokenizer, harmful_response_separator=response_separator
+    )
+    assert texts == [
+        f"Question: example question\nAnswer:{response_separator}example answer",
+        row["refusal"],
+        "Question: example question\nAnswer:",
+    ]
