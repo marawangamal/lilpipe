@@ -74,6 +74,37 @@ configs_main = [
     },
 ]
 
+configs_npo_sam_15pp = [
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft",
+        "method": "NPO",
+    },
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft",
+        "method": "NPO + SAM",
+    },
+]
+
+
+configs_npo_sam_15pp_gt_bs2 = [
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--relearn-fft-gt-bs2",
+        "method": "NPO",
+    },
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2",
+        "method": "NPO + SAM",
+    },
+]
+
+
+configs_npo_sam_gip_15pp_gt_bs2 = configs_npo_sam_15pp_gt_bs2 + [
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2",
+        "method": "NPO + GIP (λ=1, FP32)",
+    },
+]
+
 configs_lrs = [
     {"model": f"{model}--relearn-fft-lr{lr}-ms128", "method": method, "lr": lr}
     for model, method in ((tar, "TAR"), (seam, "SEAM"))
@@ -81,9 +112,10 @@ configs_lrs = [
 ]
 configs_tar_lrs = [
     {
-        "model": f"{tar}--relearn-fft-ms128--hpo--lr--{index:03d}",
+        "model": f"{tar}--relearn-fft-ms128--hpo--grid-001--{index:03d}",
         "method": "TAR",
         "lr": lr,
+        "baseline": tar,
     }
     for index, lr in enumerate(("1e-6", "5e-6", "1e-5"), 1)
 ]
@@ -101,12 +133,64 @@ configs_perturbed_ms1000 = [
 ]
 
 
-def results(experiment):
+configs_npo_sam_gip = [
+    {
+        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt",
+        "method": "NPO",
+    },
+    {
+        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt",
+        "method": "NPO + SAM",
+    },
+    {
+        "model": "z7b-wmdp-bio--5pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt",
+        "method": "NPO + GIP",
+    },
+]
+
+
+configs_npo_sam_gip_lrs = [
+    {
+        "model": config["model"].replace("--relearn-fft-gt", suffix),
+        "method": config["method"],
+        "lr": lr,
+    }
+    for config in configs_npo_sam_gip
+    for lr, suffix in (
+        ("1e-5", "--relearn-fft-gt"),
+        ("1e-6", "--relearn-fft-gt-lr1e-6-ms16"),
+        ("5e-6", "--relearn-fft-gt-lr5e-6-ms16"),
+    )
+]
+
+
+def results(experiment, baseline=None):
+    if baseline is not None:
+        for _, label, score in results(baseline):
+            yield 0, label, score
     pattern = osp.join(rootdir, experiment, "checkpoint-*", "**", "results*.json")
-    for path in glob.glob(pattern, recursive=True):
+    paths = glob.glob(pattern, recursive=True, include_hidden=True)
+    if not paths:
+        paths = glob.glob(
+            osp.join(rootdir, experiment, "**", "results*.json"),
+            recursive=True,
+            include_hidden=True,
+        )
+    for path in sorted(
+        paths,
+        key=lambda path: (
+            int(path.split("checkpoint-")[1].split(os.sep)[0])
+            if "checkpoint-" in path
+            else 0
+        ),
+    ):
         with open(path) as handle:
             result = json.load(handle)["results"]
-        step = int(path.split("checkpoint-")[1].split(os.sep)[0])
+        step = (
+            int(path.split("checkpoint-")[1].split(os.sep)[0])
+            if "checkpoint-" in path
+            else 0
+        )
         for task, label in tasks.items():
             if task in result:
                 yield step, label, 100 * result[task]["acc,none"]
@@ -123,24 +207,55 @@ def legend_with_base(legend, base):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output")
+    parser.add_argument("--tar-lrs", action="store_true")
     args = parser.parse_args()
 
     # Uncomment one complete selection block.
-    configs = configs_main
+    # configs = configs_main
+    # steps = range(0, 17, 4)
+    # style = {
+    #     "hue": "Method",
+    #     "style": "Defence",
+    #     "markers": True,
+    #     "dashes": False,
+    #     "palette": {
+    #         "RMU": "#4477AA",
+    #         "NPO": "#EE6677",
+    #         "MaxEnt": "#228833",
+    #         "GD": "#AA3377",
+    #     },
+    # }
+    # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf"
+
+    # configs = configs_npo_sam_15pp
+    # steps = range(0, 17, 4)
+    # style = {"hue": "Method", "marker": "o", "dashes": False}
+    # output = (
+    #     "artifacts/figures/"
+    #     "z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-reproduction.pdf"
+    # )
+
+    configs = configs_npo_sam_gip_15pp_gt_bs2
     steps = range(0, 17, 4)
-    style = {
-        "hue": "Method",
-        "style": "Defence",
-        "markers": True,
-        "dashes": False,
-        "palette": {
-            "RMU": "#4477AA",
-            "NPO": "#EE6677",
-            "MaxEnt": "#228833",
-            "GD": "#AA3377",
-        },
-    }
-    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--5pp.pdf"
+    style = {"hue": "Method", "marker": "o", "dashes": False}
+    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-gip-gt-bs2.pdf"
+
+    # configs = configs_npo_sam_gip
+    # steps = range(0, 17, 4)
+    # style = {"hue": "Method", "marker": "o", "dashes": False}
+    # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-ms16.pdf"
+
+    # configs = configs_npo_sam_gip_lrs
+    # steps = range(0, 17, 4)
+    # style = {
+    #     "hue": "Method",
+    #     "size": "LR",
+    #     "size_order": ["1e-6", "5e-6", "1e-5"],
+    #     "sizes": {"1e-6": 0.9, "5e-6": 1.7, "1e-5": 2.5},
+    #     "marker": "o",
+    #     "dashes": False,
+    # }
+    # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-lrs-ms16.pdf"
 
     # configs = configs_lrs
     # steps = range(0, 129)
@@ -185,9 +300,25 @@ if __name__ == "__main__":
     #     "z7b-wmdp-mmlu-relearning-trajectory-perturbed--ms1000.pdf"
     # )
 
+    if args.tar_lrs:
+        configs = configs_tar_lrs
+        steps = range(0, 129, 16)
+        style = {
+            "hue": "LR",
+            "hue_order": ["1e-6", "5e-6", "1e-5"],
+            "markers": True,
+            "marker": "o",
+            "dashes": False,
+        }
+        output = (
+            "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--tar-k16-new-api.pdf"
+        )
+
     rows = []
     for config in configs:
-        for step, evaluation, accuracy in results(config["model"]):
+        for step, evaluation, accuracy in results(
+            config["model"], config.get("baseline")
+        ):
             if step in steps:
                 rows.append(
                     {
@@ -218,7 +349,8 @@ if __name__ == "__main__":
 
     base = {label: score for _, label, score in results("z7b-base")}
     for label, axis in grid.axes_dict.items():
-        axis.axhline(base[label], color="black")
+        if label in base:
+            axis.axhline(base[label], color="black")
 
     legend = dict(
         zip(
@@ -226,7 +358,8 @@ if __name__ == "__main__":
             grid.legend.legend_handles,
         )
     )
-    legend = legend_with_base(legend, Line2D([], [], color="black"))
+    if base:
+        legend = legend_with_base(legend, Line2D([], [], color="black"))
     grid.legend.remove()
     grid.add_legend(legend_data=legend)
     grid.set_axis_labels("Relearning step", "Accuracy (%)")

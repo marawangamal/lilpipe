@@ -3,16 +3,16 @@ models:
     base_model_name_or_path: Qwen/Qwen3-0.6B
     adapter_name_or_path: '-'
     evaluation_root: artifacts/mila/evals
-  qwen3-0.6b-beavertail--align-fft-seam-legacy:
+  q06b-beavertail--align-fft-seam-legacy:
     method: SEAM
-    base_model_name_or_path: artifacts/mila/models/qwen3-0.6b-beavertail--align-fft-seam-legacy
+    base_model_name_or_path: artifacts/mila/models/q06b-beavertail--align-fft-seam-legacy
     adapter_name_or_path: '-'
-    local_dir: artifacts/mila/models/qwen3-0.6b-beavertail--align-fft-seam-legacy
+    local_dir: artifacts/mila/models/q06b-beavertail--align-fft-seam-legacy
     producer:
-      id: train-qwen3-0.6b-beavertail--align-fft-seam-legacy
+      id: train-q06b-beavertail--align-fft-seam-legacy
       script: scripts/slurm/mila/train.sbatch
       args:
-      - configs/stages-beavertails/0_alignment/qwen3-0.6b-beavertail--align-fft-seam-legacy/selected.yml
+      - configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-seam-legacy/selected.yml
       sbatch_args:
       - --gres=gpu:l40s:1
       - --cpus-per-task=8
@@ -20,6 +20,7 @@ models:
       - --time=03:00:00
       - --export=ALL,PYTHONHASHSEED=0
   llama2-7b-beavertail--align-fft-seam-legacy:
+    evaluation_root: artifacts/tamia/evals/llama2-7b-beavertail
     base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy
@@ -30,7 +31,7 @@ models:
       - configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-fft-seam-legacy/selected.yml
       - --launcher
       - python
-      sbatch_args: &seam_legacy
+      sbatch_args: &id001
       - --partition=gpubase_bynode_b2
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
@@ -38,6 +39,7 @@ models:
       - --time=03:00:00
       - --export=ALL,PYTHONHASHSEED=0
   llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250:
+    evaluation_root: artifacts/tamia/evals/llama2-7b-beavertail
     baseline_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy
     base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250
     adapter_name_or_path: '-'
@@ -55,11 +57,12 @@ models:
       - python
       depends_on:
       - llama2-7b-beavertail--align-fft-seam-legacy
-      sbatch_args: *seam_legacy
+      sbatch_args: *id001
     evaluation_checkpoint_steps: 0,100,200,250
     evaluation_final_step: '250'
     evaluation_final_model: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250
   llama2-7b-beavertail--align-fft-seam:
+    evaluation_root: artifacts/tamia/evals/llama2-7b-beavertail
     base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam
     adapter_name_or_path: '-'
     local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam
@@ -145,20 +148,21 @@ models:
     evaluation_final_step: '16'
     evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft
     evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-rmu-sam-rho1e-2--relearn-fft
-  z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft:
-    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
+  z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt
     evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt
     producer:
-      id: train-z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
+      id: train-z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt
       script: scripts/slurm/tamia/train.sbatch
       args:
-      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft/selected.yml
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt/base.yml
       - --launcher
       - python
-      depends_on: []
+      depends_on:
+      - z7b-wmdp-bio--5pp--unlearn-fft-npo-gt
       sbatch_args:
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
@@ -166,22 +170,23 @@ models:
       - --time=03:00:00
     evaluation_checkpoint_steps: 0,4,8,12,16
     evaluation_final_step: '16'
-    evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
-    evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo--relearn-fft
-  z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft:
-    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2
-    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
+    evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt
+    evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt--relearn-fft-gt
+  z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt
     evaluation_root: artifacts/tamia/evals
     adapter_name_or_path: '-'
-    local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt
     producer:
-      id: train-z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
+      id: train-z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt
       script: scripts/slurm/tamia/train.sbatch
       args:
-      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft/selected.yml
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt/base.yml
       - --launcher
       - python
-      depends_on: []
+      depends_on:
+      - z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt
       sbatch_args:
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
@@ -189,8 +194,8 @@ models:
       - --time=03:00:00
     evaluation_checkpoint_steps: 0,4,8,12,16
     evaluation_final_step: '16'
-    evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
-    evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft
+    evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt
+    evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt
   z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft:
     baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me
     base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-me--relearn-fft
@@ -867,7 +872,8 @@ models:
       - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-npo--relearn-fft/selected.yml
       - --launcher
       - python
-      depends_on: []
+      depends_on:
+      - z7b-wmdp-bio--15pp--unlearn-fft-npo
       sbatch_args:
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
@@ -890,7 +896,8 @@ models:
       - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2--relearn-fft/selected.yml
       - --launcher
       - python
-      depends_on: []
+      depends_on:
+      - z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2
       sbatch_args:
       - --gpus-per-node=h100:4
       - --cpus-per-task=48
@@ -992,3 +999,494 @@ models:
     evaluation_final_step: '16'
     evaluation_final_model: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam--relearn-fft
     evaluation_trajectory: artifacts/tamia/models/optml-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam--relearn-fft
+  llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42:
+    evaluation_root: artifacts/tamia/evals
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42
+    producer:
+      id: generate-seam-noise-1-percent
+      script: scripts/slurm/tamia/noise.sbatch
+      args:
+      - --model
+      - artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config
+      - --output-prefix
+      - artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42/perturbations.json
+      - --percentages
+      - '1'
+      - --seed
+      - '42'
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42
+  llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42:
+    evaluation_root: artifacts/tamia/evals
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42
+    producer:
+      id: generate-seam-noise-2-percent
+      script: scripts/slurm/tamia/noise.sbatch
+      args:
+      - --model
+      - artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config
+      - --output-prefix
+      - artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42/perturbations.json
+      - --percentages
+      - '2'
+      - --seed
+      - '42'
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42
+  llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42:
+    evaluation_root: artifacts/tamia/evals
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42
+    producer:
+      args:
+      - --model
+      - artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config
+      - --output-prefix
+      - artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42/perturbations.json
+      - --percentages
+      - '5'
+      - --seed
+      - '42'
+      id: generate-seam-noise-5-percent
+      script: scripts/slurm/tamia/noise.sbatch
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42
+  llama2-7b-beavertail--perturb-gaussian-l2r0.01-seed42:
+    evaluation_root: artifacts/tamia/evals
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian-l2r0.01-seed42
+    producer:
+      args:
+      - --model
+      - /scratch/m/mgamal/.cache/huggingface/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590
+      - --output-prefix
+      - artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/llama2-7b-beavertail--perturb-gaussian-l2r0.01-seed42/perturbations.json
+      - --percentages
+      - '1'
+      - --seed
+      - '42'
+      id: generate-base-noise-1-percent
+      script: scripts/slurm/tamia/noise.sbatch
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian-l2r0.01-seed42
+  llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42:
+    evaluation_root: artifacts/tamia/evals
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42
+    producer:
+      args:
+      - --model
+      - artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config
+      - --output-prefix
+      - artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42/perturbations.json
+      - --percentages
+      - '10'
+      - --seed
+      - '42'
+      id: generate-seam-noise-10-percent
+      script: scripts/slurm/tamia/noise.sbatch
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42
+  llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42:
+    evaluation_root: artifacts/tamia/evals
+    local_dir: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42
+    producer:
+      args:
+      - --model
+      - artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config
+      - --output-prefix
+      - artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42/perturbations.json
+      - --percentages
+      - '20'
+      - --seed
+      - '42'
+      id: generate-seam-noise-20-percent
+      script: scripts/slurm/tamia/noise.sbatch
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42
+  z7b-wmdp-bio--unlearn-fft-npo-author-checkpoint:
+    base_model_name_or_path: /scratch/m/mgamal/.cache/huggingface/hub/models--OPTML-Group--NPO-WMDP/snapshots/fec7960fb3925037a6befc5819036cbc55664b18
+    evaluation_root: artifacts/tamia/evals
+  z7b-wmdp-bio--unlearn-fft-npo-author-checkpoint--perturb-gaussian-l2r0.05-seed42:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-npo-author-checkpoint--perturb-gaussian-l2r0.05-seed42
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: generate-z7b-npo-author-noise-5-percent
+      script: scripts/slurm/tamia/noise.sbatch
+      args:
+      - --model
+      - /scratch/m/mgamal/.cache/huggingface/hub/models--OPTML-Group--NPO-WMDP/snapshots/fec7960fb3925037a6befc5819036cbc55664b18
+      - --output-prefix
+      - artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-npo-author-checkpoint--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/z7b-wmdp-bio--unlearn-fft-npo-author-checkpoint--perturb-gaussian-l2r0.05-seed42/perturbations.json
+      - --percentages
+      - '5'
+      - --seed
+      - '42'
+  z7b-wmdp-bio--unlearn-fft-npo-author-checkpoint--perturb-gaussian-l2r0.01-seed42:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-npo-author-checkpoint--perturb-gaussian-l2r0.01-seed42
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      args:
+      - --model
+      - /scratch/m/mgamal/.cache/huggingface/hub/models--OPTML-Group--NPO-WMDP/snapshots/fec7960fb3925037a6befc5819036cbc55664b18
+      - --output-prefix
+      - artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-npo-author-checkpoint--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/z7b-wmdp-bio--unlearn-fft-npo-author-checkpoint--perturb-gaussian-l2r0.01-seed42/perturbations.json
+      - --percentages
+      - '1'
+      - --seed
+      - '42'
+      id: generate-z7b-npo-author-noise-1-percent
+      script: scripts/slurm/tamia/noise.sbatch
+  llama2-7b-beavertail--perturb-gaussian-l2r0.05-seed42:
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian-l2r0.05-seed42
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: generate-base-noise-5-percent
+      script: scripts/slurm/tamia/noise.sbatch
+      args:
+      - --model
+      - /scratch/m/mgamal/.cache/huggingface/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590
+      - --output-prefix
+      - artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/llama2-7b-beavertail--perturb-gaussian-l2r0.05-seed42/perturbations.json
+      - --percentages
+      - '5'
+      - --seed
+      - '42'
+  llama2-7b-beavertail:
+    base_model_name_or_path: /scratch/m/mgamal/.cache/huggingface/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590
+    evaluation_root: artifacts/tamia/evals
+  llama2-7b-beavertail--perturb-gaussian-l2r0.001-seed42:
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian-l2r0.001-seed42
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: generate-base-noise-0p1-percent
+      script: scripts/slurm/tamia/noise.sbatch
+      args:
+      - --model
+      - /scratch/m/mgamal/.cache/huggingface/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590
+      - --output-prefix
+      - artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/llama2-7b-beavertail--perturb-gaussian-l2r0.001-seed42/perturbations.json
+      - --percentages
+      - '0.1'
+      - --seed
+      - '42'
+  llama2-7b-beavertail--perturb-gaussian-l2r0.0025-seed42:
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian-l2r0.0025-seed42
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: generate-base-noise-0p25-percent
+      script: scripts/slurm/tamia/noise.sbatch
+      args:
+      - --model
+      - /scratch/m/mgamal/.cache/huggingface/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590
+      - --output-prefix
+      - artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/llama2-7b-beavertail--perturb-gaussian-l2r0.0025-seed42/perturbations.json
+      - --percentages
+      - '0.25'
+      - --seed
+      - '42'
+  llama2-7b-beavertail--perturb-gaussian-l2r0.005-seed42:
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian-l2r0.005-seed42
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: generate-base-noise-0p5-percent
+      script: scripts/slurm/tamia/noise.sbatch
+      args:
+      - --model
+      - /scratch/m/mgamal/.cache/huggingface/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590
+      - --output-prefix
+      - artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/llama2-7b-beavertail--perturb-gaussian-l2r0.005-seed42/perturbations.json
+      - --percentages
+      - '0.5'
+      - --seed
+      - '42'
+  llama2-7b-beavertail--perturb-gaussian-l2r0.0075-seed42:
+    base_model_name_or_path: artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian-l2r0.0075-seed42
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: generate-base-noise-0p75-percent
+      script: scripts/slurm/tamia/noise.sbatch
+      args:
+      - --model
+      - /scratch/m/mgamal/.cache/huggingface/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590
+      - --output-prefix
+      - artifacts/tamia/models/llama2-7b-beavertail--perturb-gaussian
+      - --output
+      - artifacts/tamia/runs/llama2-7b-beavertail--perturb-gaussian-l2r0.0075-seed42/perturbations.json
+      - --percentages
+      - '0.75'
+      - --seed
+      - '42'
+  z7b-wmdp-bio--15pp--unlearn-fft-npo:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: train-z7b-wmdp-bio--15pp--unlearn-fft-npo
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-npo/selected.yml
+      - --launcher
+      - python
+      sbatch_args:
+      - --partition=gpubase_bynode_b1
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: train-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2/selected.yml
+      - --launcher
+      - python
+      sbatch_args:
+      - --partition=gpubase_bynode_b1
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  q06b-beavertail--relearn-fft-gt-ms250:
+    baseline_model_name_or_path: Qwen/Qwen3-0.6B
+    base_model_name_or_path: artifacts/mila/models/q06b-beavertail--relearn-fft-gt-ms250
+    adapter_name_or_path: '-'
+    attack_learning_rate: '0.00002'
+    attack_data: overlapping
+    method: Ghost cosine tracking
+    producer:
+      id: train-q06b-beavertail--relearn-fft-gt-ms250
+      script: scripts/slurm/mila/train.sbatch
+      args:
+      - configs/stages-beavertails/1_relearn/q06b-beavertail--relearn-fft-gt-ms250/base.yml
+      sbatch_args:
+      - --partition=unkillable
+      - --gres=gpu:l40s:1
+      - --cpus-per-task=6
+      - --mem=32G
+      - --time=03:00:00
+  q06b-beavertail--align-fft-gradient-cosine:
+    base_model_name_or_path: artifacts/mila/models/q06b-beavertail--align-fft-gradient-cosine
+    adapter_name_or_path: '-'
+    producer:
+      id: train-q06b-beavertail--align-fft-gradient-cosine
+      script: scripts/slurm/mila/train.sbatch
+      args:
+      - configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-gradient-cosine/base.yml
+      sbatch_args:
+      - --partition=unkillable
+      - --gres=gpu:l40s:1
+      - --cpus-per-task=6
+      - --mem=32G
+      - --time=03:00:00
+  q06b-beavertail--align-fft-gradient-cosine--relearn-fft-gt-ms250:
+    base_model_name_or_path: artifacts/mila/models/q06b-beavertail--align-fft-gradient-cosine--relearn-fft-gt-ms250
+    adapter_name_or_path: '-'
+    producer:
+      id: train-q06b-beavertail--align-fft-gradient-cosine--relearn-fft-gt-ms250
+      script: scripts/slurm/mila/train.sbatch
+      args:
+      - configs/stages-beavertails/1_relearn/q06b-beavertail--align-fft-gradient-cosine--relearn-fft-gt-ms250/base.yml
+      sbatch_args:
+      - --partition=unkillable
+      - --gres=gpu:l40s:1
+      - --cpus-per-task=6
+      - --mem=32G
+      - --time=03:00:00
+      depends_on:
+      - q06b-beavertail--align-fft-gradient-cosine
+    baseline_model_name_or_path: artifacts/mila/models/q06b-beavertail--align-fft-gradient-cosine
+    attack_learning_rate: '0.00002'
+    attack_data: overlapping
+    method: gradient-cosine
+  z7b-wmdp-bio--15pp--unlearn-fft-gd-gt:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-gt
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-gd-gt
+    evaluation_root: artifacts/tamia/evals
+    method: GD with forget ghost tracking
+    producer:
+      id: train-z7b-wmdp-bio--15pp--unlearn-fft-gd-gt
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-gd-gt/selected.yml
+      sbatch_args:
+      - --account=aip-grabus
+      - --partition=gpubase_bynode_b1
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  z7b-wmdp-bio--5pp--unlearn-fft-npo-gt:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt
+    evaluation_root: artifacts/tamia/evals
+    method: NPO with forget ghost tracking
+    producer:
+      id: train-z7b-wmdp-bio--5pp--unlearn-fft-npo-gt
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt/selected.yml
+      sbatch_args:
+      - --account=aip-grabus
+      - --partition=gpubase_bynode_b1
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt
+    evaluation_root: artifacts/tamia/evals
+    method: NPO+SAM with unperturbed forget ghost tracking
+    producer:
+      id: train-z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-npo-sam-rho1e-2-gt/selected.yml
+      sbatch_args:
+      - --account=aip-grabus
+      - --partition=gpubase_bynode_b1
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  z7b-wmdp-bio--15pp--unlearn-fft-npo-gt:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: train-z7b-wmdp-bio--15pp--unlearn-fft-npo-gt
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt/selected.yml
+      - --launcher
+      - python
+      sbatch_args:
+      - --partition=gpubase_bynode_b1
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--relearn-fft-gt-bs2:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--relearn-fft-gt-bs2
+    evaluation_root: artifacts/tamia/evals
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--relearn-fft-gt-bs2
+    producer:
+      id: train-z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--relearn-fft-gt-bs2
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--relearn-fft-gt-bs2/selected.yml
+      - --launcher
+      - python
+      depends_on:
+      - z7b-wmdp-bio--15pp--unlearn-fft-npo-gt
+      sbatch_args:
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+    evaluation_checkpoint_steps: 0,4,8,12,16
+    evaluation_final_step: '16'
+    evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--relearn-fft-gt-bs2
+    evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--relearn-fft-gt-bs2
+  z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: train-z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt/selected.yml
+      - --launcher
+      - python
+      sbatch_args:
+      - --partition=gpubase_bynode_b1
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2
+    evaluation_root: artifacts/tamia/evals
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2
+    producer:
+      id: train-z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2/selected.yml
+      - --launcher
+      - python
+      depends_on:
+      - z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt
+      sbatch_args:
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+    evaluation_checkpoint_steps: 0,4,8,12,16
+    evaluation_final_step: '16'
+    evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2
+    evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2
+  z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt:
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt
+    evaluation_root: artifacts/tamia/evals
+    producer:
+      id: train-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt/selected.yml
+      - --launcher
+      - python
+      sbatch_args:
+      - --partition=gpubase_bynode_b1
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+  z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2:
+    baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt
+    base_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2
+    evaluation_root: artifacts/tamia/evals
+    adapter_name_or_path: '-'
+    local_dir: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2
+    producer:
+      id: train-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2
+      script: scripts/slurm/tamia/train.sbatch
+      args:
+      - configs/stages-wmdp/2_relearn/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/selected.yml
+      - --launcher
+      - python
+      depends_on:
+      - z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt
+      sbatch_args:
+      - --gpus-per-node=h100:4
+      - --cpus-per-task=48
+      - --mem=480G
+      - --time=03:00:00
+    evaluation_checkpoint_steps: 0,4,8,12,16
+    evaluation_final_step: '16'
+    evaluation_final_model: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2
+    evaluation_trajectory: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2

@@ -1,0 +1,33 @@
+# Compare attack separators from the same defended checkpoint.
+id: llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo
+model_root: artifacts/tamia/models
+sweeps:
+- name: newline
+  name_template: llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr{learning_rate:.0e}-ms{max_steps}
+  parameters:
+    learning_rate:
+    - 2.0e-05
+    - 5.0e-05
+  overrides:
+    datasets.0.message_property_mappings.response_separator: '
+
+      '
+    dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft/prepared
+- name: space
+  name_template: llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr{learning_rate:.0e}-ms{max_steps}
+  parameters:
+    learning_rate:
+    - 2.0e-05
+    - 5.0e-05
+  overrides:
+    datasets.0.message_property_mappings.response_separator: ' '
+    dataset_prepared_path: artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space/prepared
+producer:
+  script: scripts/slurm/tamia/train.sbatch
+  sbatch_args:
+  - --partition=gpubase_bynode_b1
+  - --exclude=tg10807
+  - --export=ALL,WANDB_MODE=online
+evaluations:
+- tamia-h100-llama2-7b--beavertails-and-capabilities-checkpoints
+evaluation_registry: configs/registries/evals.yml
