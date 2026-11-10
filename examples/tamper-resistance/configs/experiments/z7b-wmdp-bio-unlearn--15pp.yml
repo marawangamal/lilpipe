@@ -11,5 +11,6 @@ models:
   - z7b-wmdp-bio--15pp--unlearn-fft-me-tar--relearn-fft
   - z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--relearn-fft-gt-bs2
   - z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2
+  - z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2
 evaluations:
   - tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline
