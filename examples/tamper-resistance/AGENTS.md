@@ -100,6 +100,7 @@ python scripts/analysis/loss-landscapes/plot_ll_3d.py -- add args
 - Scripts for running jobs on tamia/mila are under `scripts/slurm/{tamia|mila}` (lilpipe model/eval registries point to these)
 
 **Tamia**
+- Prefer job time limits of no more than 3 hours; try the 3-hour partition first.
 - Keep the project in sync it lives under `/home/m/mgamal/projects/lilpipe`
 - We only have 2tb of scratch space, use `diskusage_report` to check remaning space before running jobs
 

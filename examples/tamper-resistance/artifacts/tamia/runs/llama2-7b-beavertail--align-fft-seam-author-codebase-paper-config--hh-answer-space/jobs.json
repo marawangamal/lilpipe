@@ -78,5 +78,18 @@
     ]
   },
   "attack_format": "Question: {prompt}\\nAnswer:\\n{content}",
-  "defense_hh_format": "Question: {prompt}\\nAnswer: {content}"
+  "defense_hh_format": "Question: {prompt}\\nAnswer: {content}",
+  "scheduler_updates": [
+    {
+      "job_id": "684524",
+      "command": [
+        "scontrol",
+        "update",
+        "JobId=684524",
+        "TimeLimit=03:00:00",
+        "Partition=gpubase_bynode_b1"
+      ],
+      "reason": "Prefer Tamia jobs of at most three hours."
+    }
+  ]
 }
