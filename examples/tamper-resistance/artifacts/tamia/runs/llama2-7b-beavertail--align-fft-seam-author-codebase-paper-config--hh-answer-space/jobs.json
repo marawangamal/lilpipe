@@ -1,0 +1,82 @@
+{
+  "commit": "61f55b618eadd5518d22da7abdf5f686dbcd2f74",
+  "model_id": "llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space",
+  "cwd": "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance",
+  "jobs": {
+    "smoke": "684523",
+    "defense": "684524",
+    "defense_eval": "684525",
+    "attacks": "684526",
+    "attack_evals": "684527"
+  },
+  "commands": {
+    "smoke": [
+      "sbatch",
+      "--parsable",
+      "--account=aip-grabus",
+      "--job-name=hh-space-smoke",
+      "--partition=gpubase_bynode_b1",
+      "--time=00:30:00",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space/submitted/seam_codebase_train_seam_defence.sbatch",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space/submitted/defense.yaml",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--smoke",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space/smoke",
+      "1"
+    ],
+    "defense": [
+      "sbatch",
+      "--dependency=afterok:684523",
+      "--parsable",
+      "--account=aip-grabus",
+      "--job-name=hh-space-defense",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space/submitted/seam_codebase_train_seam_defence.sbatch",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space/submitted/defense.yaml",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space",
+      "500"
+    ],
+    "defense_eval": [
+      "sbatch",
+      "--dependency=afterok:684524",
+      "--parsable",
+      "--account=aip-grabus",
+      "--job-name=hh-space-defense_eval",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space/submitted/eval_harmfulness_and_capabilities.sbatch",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space"
+    ],
+    "attacks": [
+      "sbatch",
+      "--dependency=afterok:684524",
+      "--parsable",
+      "--account=aip-grabus",
+      "--job-name=hh-space-attacks",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space/submitted/seam_codebase_train_seam_relearning_sweep.sbatch",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space/author-attacks",
+      "true"
+    ],
+    "attack_evals": [
+      "sbatch",
+      "--dependency=afterok:684526",
+      "--parsable",
+      "--account=aip-grabus",
+      "--job-name=hh-space-attack_evals",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space/submitted/eval_harmfulness_and_capabilities.sbatch",
+      "--checkpoints",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250"
+    ]
+  },
+  "attack_format": "Question: {prompt}\\nAnswer:\\n{content}",
+  "defense_hh_format": "Question: {prompt}\\nAnswer: {content}"
+}
