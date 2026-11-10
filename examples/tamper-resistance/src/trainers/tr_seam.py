@@ -6,60 +6,16 @@ import contextlib
 from functools import partial
 
 import torch
-from torch.utils.data import Sampler
 from torch.utils.checkpoint import checkpoint
 
 from trainers.rl_bf16 import BF16Trainer
-
-# Utilities
-
-
-def model_to_params(model, only_trainable=False):
-    """Return the model's parameters keyed by name, optionally only trainable ones."""
-    return {
-        name: parameter
-        for name, parameter in model.named_parameters()
-        if not only_trainable or parameter.requires_grad
-    }
-
-
-def gradient_dict_dot(first, second):
-    """Dot two name-to-tensor mappings that may span several devices."""
-    partials = {}
-    for name in first.keys() & second.keys():
-        device = first[name].device
-        value = (first[name] * second[name]).sum()
-        partials[device] = value if device not in partials else partials[device] + value
-    if not partials:
-        raise RuntimeError("gradient mappings have no common tensors")
-    device = next(iter(partials))
-    values = iter(partials.values())
-    result = next(values).to(device)
-    for value in values:
-        result = result + value.to(device)
-    return result
-
-
-def named_gradients(loss, parameters, divisor=1):
-    """Differentiate a scalar into a complete name-to-gradient mapping."""
-    values = torch.autograd.grad(
-        loss / divisor, tuple(parameters.values()), allow_unused=True
-    )
-    return {
-        name: value.detach() if value is not None else torch.zeros_like(parameter)
-        for (name, parameter), value in zip(parameters.items(), values, strict=True)
-    }
-
-
-def accumulate_gradients(parameters, gradients, coefficient=1.0):
-    """Add a name-to-gradient mapping into the corresponding parameters."""
-    with torch.no_grad():
-        for name, parameter in parameters.items():
-            gradient = gradients[name].mul(coefficient)
-            if parameter.grad is None:
-                parameter.grad = gradient
-            else:
-                parameter.grad.add_(gradient)
+from trainers.utils import (
+    BalancedSampler,
+    accumulate_gradients,
+    gradient_dict_dot,
+    model_to_params,
+    named_gradients,
+)
 
 
 @contextlib.contextmanager
@@ -111,33 +67,6 @@ def hidden_cross_entropy(hidden, labels, norm, head):
     return torch.nn.functional.cross_entropy(
         logits, labels[live].to(logits.device).long()
     )
-
-
-class BalancedSampler(Sampler):
-    """Visit concatenated datasets one row from each stream at a time.
-
-    ``BalancedSampler(2, 3)`` treats the concatenated index ranges as
-    ``[0, 1]`` and ``[2, 3, 4]``. It yields ``0, 2, 1, 3``: one index from
-    each dataset in turn, stopping when the shortest dataset is exhausted.
-    """
-
-    def __init__(self, *lengths):
-        if not lengths:
-            raise ValueError("BalancedSampler requires at least one dataset")
-        self.lengths = lengths
-        self.offsets = []
-        offset = 0
-        for length in lengths:
-            self.offsets.append(offset)
-            offset += length
-
-    def __iter__(self):
-        for index in range(min(self.lengths)):
-            for offset in self.offsets:
-                yield offset + index
-
-    def __len__(self):
-        return min(self.lengths) * len(self.lengths)
 
 
 class SEAMTrainer(BF16Trainer):

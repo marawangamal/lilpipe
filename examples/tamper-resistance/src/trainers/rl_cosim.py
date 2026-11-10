@@ -6,7 +6,7 @@ import torch
 
 from data.seam import BENIGN, HARMFUL
 from trainers.rl_bf16 import BF16Trainer
-from trainers.tr_seam import gradient_dict_dot, named_gradients
+from trainers.utils import gradient_dict_dot, named_gradients
 
 
 class HarmfulBenignSampler(torch.utils.data.Sampler[int]):

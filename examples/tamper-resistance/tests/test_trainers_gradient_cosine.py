@@ -223,7 +223,7 @@ def test_defense_update_matches_retain_plus_exact_cosine(tmp_path, coefficient):
 def test_defense_sampler_uses_ordered_streams_without_metadata():
     pytest.importorskip("axolotl")
     from trainers.tr_gip import GIPTrainer
-    from trainers.tr_seam import BalancedSampler
+    from trainers.utils import BalancedSampler
 
     trainer = object.__new__(GIPTrainer)
     trainer.n_hh, trainer.n_hb = 8, 12

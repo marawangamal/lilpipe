@@ -5,15 +5,15 @@ import math
 import torch
 
 from trainers.rl_bf16 import BF16Trainer
-from trainers.tr_seam import (
+from trainers.utils import (
     BalancedSampler,
     accumulate_gradients,
+    dict_binop,
+    dict_dot,
     gradient_dict_dot,
     model_to_params,
     named_gradients,
 )
-
-from trainers.utils import dict_binop, dict_dot
 
 
 class GIPTrainer(BF16Trainer):
