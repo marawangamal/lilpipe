@@ -24,8 +24,8 @@ class QuadraticModel(torch.nn.Module):
 def test_gip_objective_and_gradient_aggregation(mode):
     trainer = object.__new__(GIPTrainer)
     trainer.gip_mode = mode
-    trainer.cosine_tau = 0.1
-    trainer.eps = 1e-5
+    trainer.eps_norm_div = 0.1
+    trainer.eps_finite_diff = 1e-5
     model = QuadraticModel().double()
     labels = torch.tensor(
         [[1.0, 2.0], [-2.0, 1.0], [0.5, -1.0], [3.0, 4.0]], dtype=torch.float64
@@ -33,10 +33,8 @@ def test_gip_objective_and_gradient_aggregation(mode):
     model.weight.grad = torch.ones_like(model.weight)
 
     def cosine(a, b):
-        tau = trainer.cosine_tau if mode == "cosim_of_avgs" else 0
-        return a.dot(b) / (
-            (a.square().sum() + tau**2).sqrt() * (b.square().sum() + tau**2).sqrt()
-        )
+        eps_norm_div = trainer.eps_norm_div
+        return a.dot(b) / ((a.norm() + eps_norm_div) * (b.norm() + eps_norm_div))
 
     torch.manual_seed(17)
     if mode == "avg_of_cosims":
@@ -81,8 +79,8 @@ def test_gip_rejects_unknown_mode():
 )
 def test_gip_finite_difference_matches_nonlinear_exact_gradient(mode, B):
     trainer = object.__new__(GIPTrainer)
-    trainer.cosine_tau = 0.1
-    trainer.eps = 1e-6
+    trainer.eps_norm_div = 0.1
+    trainer.eps_finite_diff = 1e-6
     model = QuadraticModel().double()
     labels = torch.tensor(
         [[1.0, 2.0], [-2.0, 1.0], [0.5, -1.0], [3.0, 4.0]], dtype=torch.float64
@@ -102,11 +100,10 @@ def test_gip_finite_difference_matches_nonlinear_exact_gradient(mode, B):
         torch.autograd.grad(loss(model, batch), model.weight, create_graph=True)[0]
         for batch in batches
     ]
-    tau = trainer.cosine_tau if mode == "cosim_of_avgs" else 0
+    eps_norm_div = trainer.eps_norm_div
     expected = torch.stack(
         [
-            a.dot(b)
-            / ((a.square().sum() + tau**2).sqrt() * (b.square().sum() + tau**2).sqrt())
+            a.dot(b) / ((a.norm() + eps_norm_div) * (b.norm() + eps_norm_div))
             for a, b in combinations(gradients, 2)
         ]
     ).mean()
@@ -131,3 +128,78 @@ def test_dict_operations():
     difference = dict_binop(a, b, lambda x, y: y - x)
     torch.testing.assert_close(difference["x"], torch.tensor([3.0, 3.0]))
     torch.testing.assert_close(difference["y"], torch.tensor([3.0]))
+
+
+@pytest.mark.parametrize("mode", ["avg_of_cosims", "cosim_of_avgs"])
+def test_gip_initialization_and_training(tmp_path, mode):
+    from axolotl.core.training_args import AxolotlTrainingArguments
+    from datasets import Dataset
+
+    trainer = GIPTrainer(
+        model=QuadraticModel(),
+        train_dataset=Dataset.from_list(
+            [{"labels": [float(i + 1), float(i + 2)]} for i in range(4)]
+        ),
+        gip_mode=mode,
+        n_forget=2,
+        n_retain=2,
+        args=AxolotlTrainingArguments(
+            output_dir=str(tmp_path),
+            use_cpu=True,
+            report_to=[],
+            per_device_train_batch_size=4,
+            max_steps=1,
+            save_strategy="no",
+            disable_tqdm=True,
+            dataloader_pin_memory=False,
+        ),
+    )
+    assert trainer.coeff_forget == 0
+    assert trainer.coeff_retain == 1
+    assert trainer.coeff_gip == 0.01
+    assert trainer.eps_finite_diff == 1e-3
+    assert trainer.eps_norm_div == 1e-8
+    assert list(trainer._get_train_sampler()) == [0, 2, 1, 3]
+    result = trainer.train()
+    assert result.global_step == 1
+    assert torch.isfinite(torch.tensor(result.training_loss))
+
+
+def test_gip_sampler_streams_and_batch_validation():
+    trainer = object.__new__(GIPTrainer)
+    trainer.gip_mode = "avg_of_cosims"
+    trainer.n_forget, trainer.n_retain = 6, 9
+    trainer.train_dataset = list(range(15))
+    trainer._train_batch_size = 6
+    trainer.args = SimpleNamespace(dataloader_drop_last=False)
+    assert list(trainer._get_train_sampler()) == [0, 6, 1, 7, 2, 8, 3, 9, 4, 10, 5, 11]
+    trainer.gip_mode = "cosim_of_avgs"
+    with pytest.raises(ValueError, match="divisible by four"):
+        trainer._get_train_sampler()
+    trainer._train_batch_size = 4
+    with pytest.raises(ValueError, match="shorter"):
+        trainer._get_train_sampler(list(range(14)))
+    trainer.n_forget, trainer.n_retain = 5, 10
+    with pytest.raises(ValueError, match="complete batches"):
+        trainer._get_train_sampler()
+    trainer.args.dataloader_drop_last = True
+    assert len(trainer._get_train_sampler()) == 10
+    trainer._train_batch_size = 3
+    with pytest.raises(ValueError, match="even batch size"):
+        trainer._get_train_sampler()
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"coeff_forget": -1},
+        {"coeff_gip": float("nan")},
+        {"eps_finite_diff": 0},
+        {"eps_norm_div": -1},
+        {"n_forget": 0},
+        {"n_retain": 1.5},
+    ],
+)
+def test_gip_rejects_invalid_settings(kwargs):
+    with pytest.raises(ValueError):
+        GIPTrainer(**kwargs)
