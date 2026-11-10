@@ -85,6 +85,26 @@ configs_npo_sam_15pp = [
     },
 ]
 
+
+configs_npo_sam_15pp_gt_bs2 = [
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--relearn-fft-gt-bs2",
+        "method": "NPO",
+    },
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2",
+        "method": "NPO + SAM",
+    },
+]
+
+
+configs_npo_sam_gip_15pp_gt_bs2 = configs_npo_sam_15pp_gt_bs2 + [
+    {
+        "model": "z7b-wmdp-bio--15pp--unlearn-fft-npo-gip-lambda1-gt--relearn-fft-gt-bs2",
+        "method": "NPO + GIP (λ=1, FP32)",
+    },
+]
+
 configs_lrs = [
     {"model": f"{model}--relearn-fft-lr{lr}-ms128", "method": method, "lr": lr}
     for model, method in ((tar, "TAR"), (seam, "SEAM"))
@@ -215,22 +235,27 @@ if __name__ == "__main__":
     #     "z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-reproduction.pdf"
     # )
 
+    configs = configs_npo_sam_gip_15pp_gt_bs2
+    steps = range(0, 17, 4)
+    style = {"hue": "Method", "marker": "o", "dashes": False}
+    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--15pp--npo-sam-gip-gt-bs2.pdf"
+
     # configs = configs_npo_sam_gip
     # steps = range(0, 17, 4)
     # style = {"hue": "Method", "marker": "o", "dashes": False}
     # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-ms16.pdf"
 
-    configs = configs_npo_sam_gip_lrs
-    steps = range(0, 17, 4)
-    style = {
-        "hue": "Method",
-        "size": "LR",
-        "size_order": ["1e-6", "5e-6", "1e-5"],
-        "sizes": {"1e-6": 0.9, "5e-6": 1.7, "1e-5": 2.5},
-        "marker": "o",
-        "dashes": False,
-    }
-    output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-lrs-ms16.pdf"
+    # configs = configs_npo_sam_gip_lrs
+    # steps = range(0, 17, 4)
+    # style = {
+    #     "hue": "Method",
+    #     "size": "LR",
+    #     "size_order": ["1e-6", "5e-6", "1e-5"],
+    #     "sizes": {"1e-6": 0.9, "5e-6": 1.7, "1e-5": 2.5},
+    #     "marker": "o",
+    #     "dashes": False,
+    # }
+    # output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--npo-sam-gip-gt-lrs-ms16.pdf"
 
     # configs = configs_lrs
     # steps = range(0, 129)
