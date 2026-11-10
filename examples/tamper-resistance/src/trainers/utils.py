@@ -18,6 +18,22 @@ except ImportError:  # pragma: no cover - older torch without FSDP2
     distribute_tensor = None
 
 
+def dict_dot(first, second):
+    """Dot matching tensor mappings, reducing scalars onto the first device."""
+    result = None
+    for name in first:
+        value = (first[name] * second[name]).sum()
+        result = value if result is None else result + value.to(result.device)
+    if result is None:
+        raise ValueError("dict_dot requires nonempty mappings")
+    return result
+
+
+def dict_binop(first, second, op):
+    """Apply a binary operation to matching values in two mappings."""
+    return {name: op(first[name], second[name]) for name in first}
+
+
 def load_reference_parameters(parameters, model_name_or_path):
     """Load reference weights and shard them like the corresponding parameters."""
     model_path = Path(model_name_or_path)
