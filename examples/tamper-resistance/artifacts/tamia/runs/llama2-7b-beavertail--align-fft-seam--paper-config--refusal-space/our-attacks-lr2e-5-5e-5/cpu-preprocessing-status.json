@@ -1,7 +1,0 @@
-{
-  "exit_code": 137,
-  "stage": "saving prepared dataset",
-  "outcome": "process killed on login node",
-  "partial_cache_preserved": "/home/m/mgamal/projects/lilpipe/.worktrees/feat-reproduce-seam/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft/prepared.incomplete-login-preflight",
-  "recovery": "repeat preparation in GPU smoke job with 480 GiB RAM"
-}

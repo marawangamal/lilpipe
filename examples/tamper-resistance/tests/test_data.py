@@ -551,7 +551,7 @@ def test_author_seam_harmful_response_separator(
 
     torch = pytest.importorskip("torch")
     datasets = pytest.importorskip("datasets")
-    module = load_script("../seam/src/data_processing/_datasets.py", "seam_datasets")
+    module = load_script("../seam-v1/src/data_processing/_datasets.py", "seam_datasets")
     row = {
         "prompt": "example question",
         "response": "example answer",
