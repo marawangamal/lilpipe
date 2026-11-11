@@ -32,6 +32,9 @@ it calls the original training method without replacing its implementation.
 GPT API judging is skipped. Harmfulness uses the authors' DeBERTa evaluator;
 capability is the mean of MMLU, TruthfulQA MC1, ARC-Easy normalized accuracy,
 and HellaSwag normalized accuracy, all zero-shot.
+Harmfulness generation retains the pretrained sampling defaults: temperature 0.6,
+top-p 0.9, and 50 new tokens. The standalone upstream evaluation does not
+explicitly seed its random generators.
 
 Fresh dataset downloads were prepared and verified offline under
 `$SCRATCH/lilpipe/seam-clean/`. Cached pretrained Llama-2 and DeBERTa weights

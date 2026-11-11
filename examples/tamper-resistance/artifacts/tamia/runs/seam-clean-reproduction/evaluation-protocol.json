@@ -1,0 +1,11 @@
+{
+  "upstream_harmfulness_evaluator": "examples/seam/src/utils/metrics.py:eval_harmfulness",
+  "generation": {
+    "do_sample": true,
+    "temperature": 0.6,
+    "top_p": 0.9,
+    "max_new_tokens": 50
+  },
+  "standalone_eval_seed": null,
+  "notes": "Retains upstream generation defaults. The upstream standalone eval entry point does not explicitly seed random generators. Capability evaluation uses lm-eval defaults."
+}
