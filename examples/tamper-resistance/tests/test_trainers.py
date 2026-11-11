@@ -2224,28 +2224,41 @@ def test_source_sampler_interleaving_preserves_selected_batches(sampling_module,
         )
 
 
-def test_untagged_stream_sampler_matches_completed_run_selection(sampling_module):
+@pytest.mark.parametrize("batch_size", [4, 8])
+def test_untagged_stream_sampler_matches_completed_run_order(
+    sampling_module, batch_size
+):
     torch = pytest.importorskip("torch")
     sources = [True] * 24 + [False] * 10
-    old = sampling_module.MixedSourceSampler({"is_forget": sources}, 8, 42)
-    new = sampling_module.BalancedSampler(24, 10, shuffle=True, seed=42)
-    loader = torch.utils.data.DataLoader(
-        list(range(34)), sampler=new, batch_size=8, drop_last=True
+    old = sampling_module.MixedSourceSampler(
+        {"is_forget": sources}, batch_size, 42, interleave=True
     )
-    assert len(old) == 16
-    assert len(loader) == 2
+    new = sampling_module.BalancedSampler(
+        24, 10, shuffle=True, seed=42, batch_size=batch_size
+    )
+    loader = torch.utils.data.DataLoader(
+        list(range(34)), sampler=new, batch_size=batch_size, drop_last=True
+    )
+    assert len(loader) == len(old) // batch_size
     for _ in range(2):
         previous = list(old)
         for step, batch in enumerate(loader):
             current = batch.tolist()
             assert all(i < 24 for i in current[0::2])
             assert all(i >= 24 for i in current[1::2])
-            assert Counter(current) == Counter(previous[step * 8 : (step + 1) * 8])
+            assert current == previous[step * batch_size : (step + 1) * batch_size]
 
 
-def test_balanced_sampler_shuffles_each_stream_reproducibly(sampling_module):
-    first = sampling_module.BalancedSampler(4, 6, 5, shuffle=True, seed=42)
-    second = sampling_module.BalancedSampler(4, 6, 5, shuffle=True, seed=42)
+@pytest.mark.parametrize("batch_size", [None, 6])
+def test_balanced_sampler_shuffles_each_stream_reproducibly(
+    sampling_module, batch_size
+):
+    first = sampling_module.BalancedSampler(
+        4, 6, 5, shuffle=True, seed=42, batch_size=batch_size
+    )
+    second = sampling_module.BalancedSampler(
+        4, 6, 5, shuffle=True, seed=42, batch_size=batch_size
+    )
     epochs = [list(first), list(first)]
     assert epochs == [list(second), list(second)]
     assert epochs[0] != epochs[1]

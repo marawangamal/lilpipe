@@ -70,6 +70,7 @@ class GIPTrainer(UnlearningTrainer):
             self.n_forget,
             self.n_retain,
             shuffle=self.shuffle_streams,
+            batch_size=self._train_batch_size,
             seed=(
                 self.args.data_seed
                 if self.args.data_seed is not None

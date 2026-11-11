@@ -73,14 +73,23 @@ class BalancedSampler(Sampler):
     ``BalancedSampler(2, 3)`` treats the concatenated index ranges as
     ``[0, 1]`` and ``[2, 3, 4]``. It yields ``0, 2, 1, 3``, stopping at
     the shortest stream. Shuffling uses a reproducible seed for each epoch.
+    With ``batch_size``, shuffle each mixed batch before interleaving its streams
+    to preserve the within-source order of mixed-source sampling.
     """
 
-    def __init__(self, *lengths, shuffle=False, seed=42):
+    def __init__(self, *lengths, shuffle=False, seed=42, batch_size=None):
         if not lengths:
             raise ValueError("BalancedSampler requires at least one dataset")
+        if batch_size is not None and (
+            not isinstance(batch_size, int)
+            or batch_size < len(lengths)
+            or batch_size % len(lengths)
+        ):
+            raise ValueError("batch_size must be divisible by the number of streams")
         self.lengths = lengths
         self.shuffle = shuffle
         self.seed = seed
+        self.batch_size = batch_size
         self.epoch = 0
         self.offsets = []
         offset = 0
@@ -98,8 +107,27 @@ class BalancedSampler(Sampler):
             for stream in streams:
                 rng.shuffle(stream)
         self.epoch += 1
-        for indices in zip(*streams):
-            yield from indices
+        if not self.shuffle or self.batch_size is None:
+            for indices in zip(*streams):
+                yield from indices
+            return
+
+        # Preserve mixed-batch shuffle order within each source before interleaving.
+        rows_per_stream = self.batch_size // len(streams)
+        length = min(self.lengths)
+        for start in range(0, length, rows_per_stream):
+            stop = min(start + rows_per_stream, length)
+            batch = [
+                (source, index)
+                for source, stream in enumerate(streams)
+                for index in stream[start:stop]
+            ]
+            rng.shuffle(batch)
+            groups = [[] for _ in streams]
+            for source, index in batch:
+                groups[source].append(index)
+            for indices in zip(*groups):
+                yield from indices
 
     def __len__(self):
         return min(self.lengths) * len(self.lengths)
