@@ -1,0 +1,42 @@
+[
+  {
+    "model": "llama2-7b-beavertail--align-fft-seam--upstream-code-config--relearn-fft-lr2e-5-ms250",
+    "lr": "2e-5",
+    "steps": 250,
+    "samples": 1000,
+    "matches_defense_input_tokens": true,
+    "weights_bytes": 13476865048
+  },
+  {
+    "model": "llama2-7b-beavertail--align-fft-seam--upstream-code-config--relearn-fft-lr5e-5-ms250",
+    "lr": "5e-5",
+    "steps": 250,
+    "samples": 1000,
+    "matches_defense_input_tokens": true,
+    "weights_bytes": 13476865048
+  },
+  {
+    "model": "llama2-7b-beavertail--align-fft-seam--upstream-code-config--relearn-fft-lr8e-5-ms250",
+    "lr": "8e-5",
+    "steps": 250,
+    "samples": 1000,
+    "matches_defense_input_tokens": true,
+    "weights_bytes": 13476865048
+  },
+  {
+    "model": "llama2-7b-beavertail--align-fft-seam--upstream-code-config--relearn-fft-lr1e-4-ms250",
+    "lr": "1e-4",
+    "steps": 250,
+    "samples": 1000,
+    "matches_defense_input_tokens": true,
+    "weights_bytes": 13476865048
+  },
+  {
+    "model": "llama2-7b-beavertail--align-fft-seam--upstream-code-config--relearn-fft-lr2e-4-ms250",
+    "lr": "2e-4",
+    "steps": 250,
+    "samples": 1000,
+    "matches_defense_input_tokens": true,
+    "weights_bytes": 13476865048
+  }
+]

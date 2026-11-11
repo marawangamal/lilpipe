@@ -11,7 +11,7 @@ and trainer:
 
 | Defense | Training duration | Effective batch size | LR | α | β | ε |
 |---|---|---:|---|---:|---:|---:|
-| Codebase config | 1 epoch | 8 | 2e-5 | 1 | 0.01 | 0.001 |
+| Codebase config | 1 epoch (1,000 steps) | 8 | 2e-5 | 1 | 0.01 | 0.001 |
 | Paper config | 500 steps | 8 | 2e-5 | 1 | 0.01 | 0.001 |
 
 The codebase run uses the fork's unchanged `config/train.yaml`. The paper run uses
