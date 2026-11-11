@@ -4,3 +4,6 @@
 [submodule "examples/vision_relearning"]
 	path = examples/vision_relearning
 	url = https://github.com/marawangamal/vision_relearning.git
+[submodule "examples/sam"]
+	path = examples/sam
+	url = https://github.com/marawangamal/Unlearn-Smooth.git
