@@ -1,0 +1,14 @@
+{
+  "model": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--upstream-code-config",
+  "steps": 1000,
+  "samples": 8000,
+  "shards": [
+    "model-00001-of-00003.safetensors",
+    "model-00002-of-00003.safetensors",
+    "model-00003-of-00003.safetensors"
+  ],
+  "weight_bytes": 13476865048,
+  "no_intermediate_checkpoints": true,
+  "same_first_training_tokens_as_paper": true,
+  "complete": true
+}
