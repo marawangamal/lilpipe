@@ -4,6 +4,7 @@
 
 `lilpipe` is a small declarative Slurm pipeline compiler for ML experiments (Python 3.12+, `src` layout):
 
+- `examples/seam/` is the pristine `marawangamal/seam` fork submodule; `examples/seam-v1/` preserves the previous adapted implementation.
 - `src/lilpipe/core.py` — loading, validation, `select()`/`plan()` (topological order, cycle checks), and `submit()`.
 - `src/lilpipe/results.py` — `lilpipe results`: collects lm-eval artifacts into markdown/csv/json tables.
 - `src/lilpipe/cli.py` — argparse CLI with `run` and `results` subcommands; a bare `lilpipe <config>.yml` is accepted as an implicit `run`.
