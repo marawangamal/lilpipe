@@ -1,0 +1,2593 @@
+{
+  "deleted": [
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface-seam-datasets-3.3.1",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_anonymous4486___repnoise_beavertail_default_0.0.0_11ea63756195527164a9aa2850f7544bd251eab1.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/hub/datasets--truthful_qa",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_european_history_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/Rowan___hellaswag",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_Rowan___hellaswag_default_0.0.0_218ec52e09a7e7462a5400043bb9a69a41d06b76.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/hub/datasets--PKU-Alignment--BeaverTails",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_psychology_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_microeconomics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_chemistry_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_formal_logic_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/hub/datasets--yahma--alpaca-cleaned",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/anonymous4486___repnoise_beavertail",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_human_sexuality_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_prehistory_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_PKU-Alignment___beaver_tails_default_0.0.0_8401fe609d288129cc684a9b3be6a93e41cfe678.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_computer_security_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_elementary_mathematics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_medical_genetics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_statistics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_college_computer_science_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_mathematics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/allenai___ai2_arc",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/hub/datasets--hails--mmlu_no_train",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/hub/datasets--truthfulqa--truthful_qa",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_international_law_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_conceptual_physics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_electrical_engineering_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/hub/datasets--Rowan--hellaswag",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_moral_disputes_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_professional_psychology_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_truthfulqa___truthful_qa_multiple_choice_0.0.0_741b8276f2d1982aa3d5b832d3ee81ed3b896490.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_miscellaneous_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_astronomy_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_college_biology_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_sociology_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_college_mathematics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_truthful_qa_multiple_choice_0.0.0_741b8276f2d1982aa3d5b832d3ee81ed3b896490.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_security_studies_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_geography_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_global_facts_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/PKU-Alignment___beaver_tails",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/truthfulqa___truthful_qa",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_marketing_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_philosophy_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_moral_scenarios_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_abstract_algebra_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_professional_medicine_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_management_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_hellaswag_default_0.0.0_218ec52e09a7e7462a5400043bb9a69a41d06b76.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_human_aging_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_yahma___alpaca-cleaned_default_0.0.0_12567cabf869d7c92e573c7c783905fc160e9639.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_logical_fallacies_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_physics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_anatomy_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_professional_accounting_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_virology_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/hellaswag",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_clinical_knowledge_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_biology_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_us_foreign_policy_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_world_religions_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_college_medicine_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/hub/datasets--cais--mmlu",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_professional_law_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_business_ethics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_macroeconomics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_us_history_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_college_chemistry_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/hub/datasets--anonymous4486--repnoise_beavertail",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_computer_science_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_machine_learning_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_college_physics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/cais___mmlu",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_all_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_allenai___ai2_arc_ARC-Easy_0.0.0_210d026faf9955653af8916fad021475a3f00453.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_government_and_politics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_public_relations_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/yahma___alpaca-cleaned",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_nutrition_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/hub/datasets--allenai--ai2_arc",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/hub/datasets--hellaswag",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_econometrics_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/truthful_qa",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_high_school_world_history_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/.cache/huggingface/datasets/_scratch_m_mgamal_.cache_huggingface_datasets_cais___mmlu_jurisprudence_0.0.0_c30699e8356da336a370243923dbaf21066bb9fe.lock",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/figures/llama2-7b-seam-native-author-paper-bf16-overlap-vs-disjoint.pdf",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/generated/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft--hpo",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/figures/llama2-7b-beavertail-relearning-trajectory-ms250--base-seam-warmup50.pdf",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/figures/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft--ms250.pdf",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/figures/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase--ms250--minimal-ablations.pdf",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/generated/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft--space-resolved-20261108",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/figures/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-author-codebase--ms250--gsm8k-flexible.pdf",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/figures/llama2-7b-seam-figure2.pdf",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/generated/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft--space-20261108",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/figures/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft--ms1000.pdf",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/figures/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase--ms250--ablations.pdf",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/figures/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft--ms250--gradient-cosine.pdf",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/figures/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-author-codebase--ms250.pdf",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--018",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--013",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--014",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--011",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-seam-own-trainer-relearning-ms1000-lr1e-4-5e-4",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase",
+      "kind": "symlink"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--009",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--015",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--alpaca-truncated--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42--relearning-author-codebase-sweep-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--010",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask--ignore-eos-labels--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-685271.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-676371.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--alpaca-truncated",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam-harmfulness-666268.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--008",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42--parameter-norms-vs-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--005",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--012",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask--ignore-eos-labels",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--alpaca-truncated--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/plot_noisy_seam_relearning-668063.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/plot_seam_relearning-669511.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask--ignore-eos-labels--refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--ignore-eos-labels--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-675194.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask--ignore-eos-labels--refusal-space--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/report_noisy_seam-668062.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--005",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42--parameter-norms-vs-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-675092.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paired-token-mask",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr8e-5-ms250-warmup0.5",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-669412.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-674494.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--006",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--012",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--013",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.0075-seed42--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_defence-684523.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--009",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr1e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-668516.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--smoke",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-legacy",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr5e-5-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--seam-trajectories",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-percent1-2-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-669900.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--gsm8k-5shot",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.0075-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask-only--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--017",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--007",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paired-token-mask",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42--relearning-author-codebase-sweep-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.0075-seed42--relearning-author-codebase-sweep-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/seam-own-relearn-ms250-warmup50-new-lrs-20261106",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--001",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr2e-4-ms250-warmup0.5",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam-paper-defence-eval-666150.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--018",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam-paper-smoke-665674.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--010",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--ignore-eos-labels--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42--parameter-norms-vs-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--004",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/plot_seam_noise_1_2-668343.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.0075-seed42--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--attack-smoke-685271",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft--hpo-lr1e-4-2e-4",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paired-token-mask",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr1e-4-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr2e-4-ms250-warmup0.5",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-666313.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--001",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--harmful-refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr5e-5-ms250-warmup0.5",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--008",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-seam-own-trainer-relearning-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--016",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-percent10-20-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-percent-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask-only",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.0075-seed42--data-overlapping--relearn-fft-author-codebase-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--004",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-668206.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.0075-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--003",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--relearning-author-codebase-answer-space-sweep-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--harmful-refusal-space--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam-paper-defence-665675.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--014",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--attack-smoke-684526",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--ignore-eos-labels",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--capabilities-4gpu",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--harmful-refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-675244.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask-only",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.0075-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-674468.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--hpo",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/plot_seam_relearning-668522.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-seam-own-trainer-relearning",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--002",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-674975.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-667741.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42--relearning-author-codebase-sweep-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.0075-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-684526.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.2-seed42--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-675461.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--alpaca-truncated",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-675646.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--002",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--ignore-eos-labels",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/plot_base_seam-668014.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--harmful-refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--relearning-author-codebase-sweep-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--016",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask--ignore-eos-labels--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--015",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr1e-4-ms250-warmup0.5",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr1e-5-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask--ignore-eos-labels",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-676427.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-669899.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask-only",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask-only--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask--ignore-eos-labels--refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--003",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask--ignore-eos-labels--refusal-space--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-676416.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--017",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42--data-overlapping--relearn-fft-author-codebase-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-668198.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-668058.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-percent5-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--parameter-norms",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42--data-overlapping--relearn-fft-author-codebase-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_defence-684524.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--alpaca-truncated",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.02-seed42--relearning-author-codebase-sweep-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.01-seed42--relearning-author-codebase-sweep-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam--paper-config--ignore-eos-labels",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paired-token-mask--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr5e-4-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--harmful-refusal-space--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paired-token-mask--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--006",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--eps--011",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask--ignore-eos-labels",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask--ignore-eos-labels--refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.05-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr2e-5-ms250-warmup0.5",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/logs/seam_relearning_sweep-675338.out",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-hpo--grid--007",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--perturb-gaussian-l2r0.1-seed42",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/generated/hpo/llama2-7b-beavertail--align-fft-seam--paired-token-mask--hpo",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-legacy",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--paper-config--alpaca-truncated",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam-author-paper--data-disjoint--relearn-fft-ms250-hpo--disjoint--002",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr1e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--004",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--paper-config--paired-mask--ignore-eos-labels--refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/preflight-hh-answer-space-eval/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--paired-token-mask",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--001",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam-hpo--beta--001",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr1e-4-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/archive/llama2-7b-beavertail--align-fft-seam--coeff-sd1e-2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr5e-5-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--paper-config--harmful-refusal-space",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr2e-4-ms250-warmup0.5",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/preflight-hh-answer-space-eval/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms250-hpo--disjoint--002",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--002",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--003",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms250-hpo--disjoint--001",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-bf16-7c3b74e/examples/tamper-resistance/artifacts/figures/llama2-7b-seam-native-author-paper-bf16-overlap-vs-disjoint.pdf",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr5e-4-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/cache/axolotl/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr1e-5-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/eval-preload/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/capabilities-4gpu-preflight/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/parameter-norms-preflight/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-trajectory-c7cb1b9/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/seam-reproduce-preflight/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam--paper-config--harmful-refusal-space--data-overlapping--relearn-fft-author-codebase-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/tar-repro-5065b15a-eval/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-lr2e-4-ms250-warmup0.5",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/tar-repro-5065b15a-train/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/unlearn-smooth-wmdp/lib/python3.11/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-bf16-7c3b74e/examples/tamper-resistance/artifacts/generated/hpo/llama2-7b-beavertail--seam-figure2-hpo",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr5e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-trajectory-c7cb1b9/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--seam-native-author-paper-bf16-trajectories",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--perturb-gaussian-percent1-seed42/submitted/seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-base-8c09857/examples/tamper-resistance/artifacts.snapshot/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-trajectory-c7cb1b9/examples/tamper-resistance/artifacts/tamia/logs/seam-trajectory-jobs.tsv",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/seam-ablation-preflight/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/tmp/inspect-padding-venv/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/capabilities-4gpu-preflight/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-bf16-7c3b74e/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--seam-native-author-paper",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/parameter-norms-preflight/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/eval-preload/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase--relearn-fft-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/seam-reproduce-preflight/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space-lr8e-5-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/tar-repro-5065b15a-eval/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/tar-repro-5065b15a-train/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam--paper-config--harmful-refusal-space--data-overlapping--relearn-fft-author-codebase-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft-answer-space-lr2e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-bf16-7c3b74e/examples/tamper-resistance/artifacts/tamia/evals/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/unlearn-smooth-wmdp/lib/python3.11/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-trajectory-c7cb1b9/examples/tamper-resistance/artifacts/generated/hpo/llama2-7b-beavertail--seam-figure2-hpo",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/seam-ablation-preflight/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/tmp/inspect-padding-venv/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/relearning-cleanup-20261108/metadata/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft-lr1e-4-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--relearning-author-codebase-sweep-ms250/submitted/train_seam_relearning_sweep.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--001",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms250-hpo--disjoint--002",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/.venv-submit/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-base-8c09857/examples/tamper-resistance/artifacts.snapshot/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--003",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-bf16-7c3b74e/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-trajectory-c7cb1b9/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--002",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-bf16-7c3b74e/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250-hpo--disjoint--002",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms250-hpo--disjoint--001",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--004",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-trajectory-c7cb1b9/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-base-8c09857/examples/tamper-resistance/artifacts.snapshot/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--001",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--perturb-gaussian-percent1-seed42/submitted/scripts/run_seam_noise.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-trajectory-c7cb1b9/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/envs/unlearn-smooth-wmdp/lib/python3.11/site-packages/transformers/models/wav2vec2_bert/convert_wav2vec2_seamless_checkpoint.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms250-hpo--disjoint--002",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-base-8c09857/examples/tamper-resistance/artifacts.snapshot/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--003",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250-hpo--disjoint--001",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam-author-paper--data-disjoint--relearn-fft-ms250-hpo--disjoint--002",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-base-8c09857/examples/tamper-resistance/artifacts.snapshot/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--004",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/examples/tamper-resistance/.venv-submit/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-bf16-7c3b74e/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000-hpo--disjoint--002",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms250-hpo--disjoint--001",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-historical-sanity-4e067e2/examples/tamper-resistance/artifacts.repo/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-trajectory-c7cb1b9/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/tar-ms250-repro-5065b15a/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/runs/seam-bf16-7c3b74e/examples/tamper-resistance/artifacts/tamia/evals/archive/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam-grid018--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-lr5e-6-ms16-20261108/submitted/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-lr1e-6-ms16-20261108/submitted/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-gd15pp-npo5pp-gt-20261108/submitted/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam5pp-gt-20261108/submitted/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-ms16-20261108/submitted/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-lr5e-6-ms16-20261108/submitted/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--perturb-gaussian-percent1-seed42/submitted/scripts/slurm/tamia/plot_seam_relearning.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam5pp-gt-20261108/submitted/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-gd15pp-npo5pp-gt-20261108/submitted/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-lr1e-6-ms16-20261108/submitted/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-gd15pp-npo5pp-gt-20261108/submitted/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam5pp-gt-20261108/submitted/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-ms16-20261108/submitted/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-lr1e-6-ms16-20261108/submitted/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--perturb-gaussian-percent1-seed42/submitted/scripts/slurm/tamia/train_seam_relearning_sweep.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-ms16-20261108/submitted/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-lr5e-6-ms16-20261108/submitted/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-gd15pp-npo5pp-gt-20261108/submitted/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-lr1e-6-ms16-20261108/submitted/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-lr5e-6-ms16-20261108/submitted/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam5pp-gt-20261108/submitted/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-gip-relearn-ghost-ms16-20261108/submitted/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/fp32-lr1e-6-rho3e-5/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/scripts/misc/plot_seam_relearning.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/accumulator-preflight/submitted/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/lr-calibration/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/scripts/misc/run_seam_noise.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/lr-calibration/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/fp32-lr1e-6-rho3e-5/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production-rho1e-4/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/accumulator-preflight/submitted/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/scripts/misc/plot_seam_relearning.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/scripts/misc/seam_codebase_train_seam_relearning_sweep.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/experiments/llama2-7b-seam-noise.yml",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/scripts/misc/seam_codebase_train_seam_relearning_sweep.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/scripts/misc/plot_seam_attack_success.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/accumulator-preflight/submitted/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/experiments/llama2-7b-seam-noise.yml",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/experiments/llama2-7b-seam-noise.yml",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/lr-calibration/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/results/llama2-7b-seam-capabilities.yml",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production-rho3e-5/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/scripts/misc/seam_codebase_train_seam_relearning_sweep.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/scripts/misc/run_seam_noise.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production-rho3e-5/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/accumulator-preflight/submitted/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production-rho1e-4/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/results/llama2-7b-seam-capabilities.yml",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/scripts/misc/plot_seam_relearning.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/scripts/misc/plot_seam_attack_success.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/fp32-lr1e-6-rho3e-5/source/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/results/llama2-7b-seam-capabilities.yml",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production-rho3e-5/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/fp32-lr1e-6-rho3e-5/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/lr-calibration/source/src/trainers/tr_seam_legacy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production-rho1e-4/source/src/trainers/tr_seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production-rho3e-5/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/scripts/misc/plot_seam_attack_success.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/scripts/misc/run_seam_noise.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-squared-cosine-20261108/submitted/production-rho1e-4/source/src/data/seam.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/src/trainers/tr_seam_v1.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/1_relearn/q06b-beavertail--align-fft-seam-legacy",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam-author-codebase--data-disjoint--relearn-fft-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/scripts/analysis/toy-experiments/plot_seam_toy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/scripts/analysis/toy-experiments/get_seam_toy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-fft-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/scripts/slurm/tamia/seam_codebase_eval_seam_defence.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/scripts/analysis/toy-experiments/get_seam_toy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/scripts/slurm/tamia/seam_codebase_train_seam_defence.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-fft-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-fft-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-seam-legacy",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-fft-seam-legacy",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/scripts/slurm/tamia/seam_codebase_train_seam_defence.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam-author-codebase--data-disjoint--relearn-fft-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-fft-seam-legacy",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/scripts/analysis/toy-experiments/plot_seam_toy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/0_alignment/llama2-7b-beavertail--align-fft-seam-legacy",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/scripts/slurm/tamia/seam_codebase_train_seam_relearning.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-repro-15pp-20261109/preflight-env/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/1_relearn/q06b-beavertail--align-fft-seam-legacy",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/scripts/slurm/tamia/seam_codebase_eval_seam_defence.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-wmdp/0_unlearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-gd15pp-npo5pp-gt-20261108/preflight-env/lib/python3.12/site-packages/transformers/models/seamless_m4t",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr5e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/scripts/analysis/toy-experiments/plot_seam_toy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-5-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/1_relearn/q06b-beavertail--align-fft-seam-legacy",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--data-overlapping--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/1_relearn/q06b-beavertail--align-fft-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-seam-legacy",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/scripts/slurm/tamia/seam_codebase_train_seam_defence.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/scripts/analysis/toy-experiments/get_seam_toy.py",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-wmdp/2_relearn/z7b-wmdp-bio--5pp--unlearn-fft-gd-seam--relearn-fft-lr1e-6-ms128",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/scripts/slurm/tamia/seam_codebase_train_seam_relearning.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam-author-codebase--data-disjoint--relearn-fft-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/1_relearn/q06b-beavertail--align-fft-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-seam-legacy",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/scripts/slurm/tamia/seam_codebase_eval_seam_defence.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/1_relearn/q06b-beavertail--align-fft-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam-legacy--data-disjoint--relearn-fft-ms250",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-repro-15pp-20261109/preflight-env/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current/examples/tamper-resistance/configs/stages-beavertails/0_alignment/q06b-beavertail--align-fft-seam",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/source/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam--paper-config--refusal-space--data-overlapping--relearn-fft",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/configs/stages-beavertails/1_relearn/llama2-7b-beavertail--align-fft-seam--data-disjoint--relearn-fft-ms1000",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/examples/tamper-resistance/scripts/slurm/tamia/seam_codebase_train_seam_relearning.sbatch",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-gd15pp-npo5pp-gt-20261108/preflight-env/lib/python3.12/site-packages/transformers/models/seamless_m4t_v2",
+      "kind": "directory_or_file"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/seam-official/figure2-paper-disjoint",
+      "kind": "old_seam_scratch_output"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/seam-official/smoke-20261021-095320",
+      "kind": "old_seam_scratch_output"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/seam-official/figure2-seam",
+      "kind": "old_seam_scratch_output"
+    },
+    {
+      "path": "/scratch/m/mgamal/lilpipe/seam-official/figure2-paper",
+      "kind": "old_seam_scratch_output"
+    }
+  ],
+  "active_jobs": "686356 judge-maths-sandbagger\n"
+}
