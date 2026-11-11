@@ -1,0 +1,98 @@
+[
+  {
+    "stage_id": "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2",
+    "job_id": "686668",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--job-name=eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--gpus-per-node=h100:4",
+      "--cpus-per-task=48",
+      "--mem=480G",
+      "--time=03:00:00",
+      "--export=ALL,BATCH_SIZE=auto:4",
+      "--time=00:45:00",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-sam-15pp-bs2-seeds43-44-f87047d7/source/examples/tamper-resistance/scripts/slurm/tamia/eval_wmdp_mmlu.sbatch",
+      "--checkpoints",
+      "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2",
+      "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2",
+      "false",
+      "false",
+      "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43"
+    ]
+  },
+  {
+    "stage_id": "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2",
+    "job_id": "686669",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--job-name=eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--gpus-per-node=h100:4",
+      "--cpus-per-task=48",
+      "--mem=480G",
+      "--time=03:00:00",
+      "--export=ALL,BATCH_SIZE=auto:4",
+      "--time=00:45:00",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-sam-15pp-bs2-seeds43-44-f87047d7/source/examples/tamper-resistance/scripts/slurm/tamia/eval_wmdp_mmlu.sbatch",
+      "--checkpoints",
+      "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2",
+      "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2",
+      "false",
+      "false",
+      "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44"
+    ]
+  },
+  {
+    "stage_id": "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2",
+    "job_id": "686670",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--job-name=eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--gpus-per-node=h100:4",
+      "--cpus-per-task=48",
+      "--mem=480G",
+      "--time=03:00:00",
+      "--export=ALL,BATCH_SIZE=auto:4",
+      "--time=00:45:00",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-sam-15pp-bs2-seeds43-44-f87047d7/source/examples/tamper-resistance/scripts/slurm/tamia/eval_wmdp_mmlu.sbatch",
+      "--checkpoints",
+      "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2",
+      "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2",
+      "false",
+      "false",
+      "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43"
+    ]
+  },
+  {
+    "stage_id": "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2",
+    "job_id": "686671",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--job-name=eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--gpus-per-node=h100:4",
+      "--cpus-per-task=48",
+      "--mem=480G",
+      "--time=03:00:00",
+      "--export=ALL,BATCH_SIZE=auto:4",
+      "--time=00:45:00",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-sam-15pp-bs2-seeds43-44-f87047d7/source/examples/tamper-resistance/scripts/slurm/tamia/eval_wmdp_mmlu.sbatch",
+      "--checkpoints",
+      "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2",
+      "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2",
+      "false",
+      "false",
+      "artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44"
+    ]
+  }
+]

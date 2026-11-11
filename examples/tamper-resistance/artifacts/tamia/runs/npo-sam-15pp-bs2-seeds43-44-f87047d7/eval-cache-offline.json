@@ -1,0 +1,7 @@
+{
+  "tasks": [
+    "mmlu_no_bio",
+    "wmdp_bio_robust"
+  ],
+  "offline_loading_passed": true
+}

@@ -1,0 +1,182 @@
+[
+  {
+    "method": "NPO",
+    "defense_seed": 42,
+    "step": 0,
+    "file": "artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/eval/checkpoint-0/..__..__..__npo__defense/results_2026-11-10T23-35-45.065306.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 42,
+    "step": 4,
+    "file": "artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/eval/checkpoint-4/..__..__..__npo__attack__checkpoint-4/results_2026-11-10T23-37-34.255100.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 42,
+    "step": 8,
+    "file": "artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/eval/checkpoint-8/..__..__..__npo__attack__checkpoint-8/results_2026-11-10T23-39-29.243164.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 42,
+    "step": 12,
+    "file": "artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/eval/checkpoint-12/..__..__..__npo__attack__checkpoint-12/results_2026-11-10T23-41-14.717347.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 42,
+    "step": 16,
+    "file": "artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/eval/checkpoint-16/..__..__..__npo__attack__checkpoint-16/results_2026-11-10T23-42-58.588679.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 42,
+    "step": 0,
+    "file": "artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/eval/checkpoint-0/..__..__..__npo-sam-rho1e-2__defense/results_2026-11-10T23-34-30.780948.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 42,
+    "step": 4,
+    "file": "artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/eval/checkpoint-4/..__..__..__npo-sam-rho1e-2__attack__checkpoint-4/results_2026-11-10T23-36-39.231890.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 42,
+    "step": 8,
+    "file": "artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/eval/checkpoint-8/..__..__..__npo-sam-rho1e-2__attack__checkpoint-8/results_2026-11-10T23-38-43.398873.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 42,
+    "step": 12,
+    "file": "artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/eval/checkpoint-12/..__..__..__npo-sam-rho1e-2__attack__checkpoint-12/results_2026-11-10T23-40-49.844202.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 42,
+    "step": 16,
+    "file": "artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/eval/checkpoint-16/..__..__..__npo-sam-rho1e-2__attack__checkpoint-16/results_2026-11-10T23-42-55.761453.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 43,
+    "step": 0,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2/checkpoint-0/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43/results_2026-11-11T12-03-34.421382.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 43,
+    "step": 4,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2/checkpoint-4/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2__checkpoint-4/results_2026-11-11T12-05-36.063408.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 43,
+    "step": 8,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2/checkpoint-8/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2__checkpoint-8/results_2026-11-11T12-07-37.267632.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 43,
+    "step": 12,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2/checkpoint-12/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2__checkpoint-12/results_2026-11-11T12-09-36.647804.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 43,
+    "step": 16,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2/checkpoint-16/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2__checkpoint-16/results_2026-11-11T12-11-33.833689.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 44,
+    "step": 0,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2/checkpoint-0/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44/results_2026-11-11T12-04-18.548859.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 44,
+    "step": 4,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2/checkpoint-4/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2__checkpoint-4/results_2026-11-11T12-06-22.851973.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 44,
+    "step": 8,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2/checkpoint-8/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2__checkpoint-8/results_2026-11-11T12-08-22.024441.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 44,
+    "step": 12,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2/checkpoint-12/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2__checkpoint-12/results_2026-11-11T12-10-21.575756.json"
+  },
+  {
+    "method": "NPO",
+    "defense_seed": 44,
+    "step": 16,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2/checkpoint-16/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2__checkpoint-16/results_2026-11-11T12-12-22.610931.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 43,
+    "step": 0,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2/checkpoint-0/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43/results_2026-11-11T12-05-30.438329.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 43,
+    "step": 4,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2/checkpoint-4/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2__checkpoint-4/results_2026-11-11T12-07-32.391467.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 43,
+    "step": 8,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2/checkpoint-8/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2__checkpoint-8/results_2026-11-11T12-09-33.416664.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 43,
+    "step": 12,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2/checkpoint-12/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2__checkpoint-12/results_2026-11-11T12-11-34.165240.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 43,
+    "step": 16,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2/checkpoint-16/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2__checkpoint-16/results_2026-11-11T12-13-36.769076.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 44,
+    "step": 0,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2/checkpoint-0/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44/results_2026-11-11T12-05-36.779693.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 44,
+    "step": 4,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2/checkpoint-4/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2__checkpoint-4/results_2026-11-11T12-07-40.028652.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 44,
+    "step": 8,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2/checkpoint-8/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2__checkpoint-8/results_2026-11-11T12-09-44.016695.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 44,
+    "step": 12,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2/checkpoint-12/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2__checkpoint-12/results_2026-11-11T12-11-48.089627.json"
+  },
+  {
+    "method": "NPO + SAM",
+    "defense_seed": 44,
+    "step": 16,
+    "file": "artifacts/tamia/evals/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2/checkpoint-16/artifacts__tamia__models__z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2__checkpoint-16/results_2026-11-11T12-13-49.769282.json"
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "source_commit": "f87047d7c212886a74fad6465fecf318d061dda5",
+  "successful_training_jobs": [
+    "686609",
+    "686610",
+    "686611",
+    "686612",
+    "686615",
+    "686616",
+    "686617",
+    "686618"
+  ],
+  "successful_evaluation_jobs": [
+    "686668",
+    "686669",
+    "686670",
+    "686671"
+  ],
+  "plot_job": "686672",
+  "all_completed_with_zero_exit_code": true
+}

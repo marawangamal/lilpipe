@@ -400,6 +400,7 @@ if __name__ == "__main__":
     base = {label: score for _, label, score in results("z7b-base")}
     for label, axis in grid.axes_dict.items():
         if args.npo_sam_seeds:
+            axis.set_xticks(list(steps))
             sns.lineplot(
                 data=df[df["Eval"] == label],
                 x="Relearning step",

@@ -1,0 +1,15 @@
+{
+  "job_id": "686663",
+  "command": [
+    "sbatch",
+    "--parsable",
+    "--account=aip-grabus",
+    "--partition=gpubase_bynode_b1",
+    "--time=00:15:00",
+    "--job-name=eval-cache-smoke",
+    "--output=/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-sam-15pp-bs2-seeds43-44-f87047d7/eval-smoke-v2-%j.out",
+    "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-sam-15pp-bs2-seeds43-44-f87047d7/eval-smoke-v2.sbatch"
+  ],
+  "supersedes": "686658",
+  "reason": "Use 8 documents per task so all 4 evaluation ranks receive documents. Full evaluation settings unchanged."
+}

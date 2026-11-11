@@ -1,0 +1,6 @@
+{
+  "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed43--relearn-fft-gt-bs2": "686668",
+  "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed44--relearn-fft-gt-bs2": "686669",
+  "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs2": "686670",
+  "eval-tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline-z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs2": "686671"
+}

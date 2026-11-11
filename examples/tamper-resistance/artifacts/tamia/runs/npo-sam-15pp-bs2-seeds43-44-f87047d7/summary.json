@@ -1,0 +1,162 @@
+[
+  {
+    "Method":"NPO",
+    "Eval":"MMLU-no-bio \u2191",
+    "Relearning step":0,
+    "mean":38.232497623,
+    "std":13.608995942,
+    "count":3
+  },
+  {
+    "Method":"NPO",
+    "Eval":"MMLU-no-bio \u2191",
+    "Relearning step":4,
+    "mean":36.5210428865,
+    "std":16.7024206374,
+    "count":3
+  },
+  {
+    "Method":"NPO",
+    "Eval":"MMLU-no-bio \u2191",
+    "Relearning step":8,
+    "mean":41.9206325377,
+    "std":10.9456986452,
+    "count":3
+  },
+  {
+    "Method":"NPO",
+    "Eval":"MMLU-no-bio \u2191",
+    "Relearning step":12,
+    "mean":48.7864684982,
+    "std":5.4589004414,
+    "count":3
+  },
+  {
+    "Method":"NPO",
+    "Eval":"MMLU-no-bio \u2191",
+    "Relearning step":16,
+    "mean":49.6146724716,
+    "std":4.8422282584,
+    "count":3
+  },
+  {
+    "Method":"NPO",
+    "Eval":"WMDP-Bio robust \u2193",
+    "Relearning step":0,
+    "mean":25.4608294931,
+    "std":1.2137849946,
+    "count":3
+  },
+  {
+    "Method":"NPO",
+    "Eval":"WMDP-Bio robust \u2193",
+    "Relearning step":4,
+    "mean":33.7941628264,
+    "std":12.3386684422,
+    "count":3
+  },
+  {
+    "Method":"NPO",
+    "Eval":"WMDP-Bio robust \u2193",
+    "Relearning step":8,
+    "mean":35.4838709677,
+    "std":11.1911377369,
+    "count":3
+  },
+  {
+    "Method":"NPO",
+    "Eval":"WMDP-Bio robust \u2193",
+    "Relearning step":12,
+    "mean":38.8632872504,
+    "std":11.1948927876,
+    "count":3
+  },
+  {
+    "Method":"NPO",
+    "Eval":"WMDP-Bio robust \u2193",
+    "Relearning step":16,
+    "mean":39.4393241167,
+    "std":10.2024135555,
+    "count":3
+  },
+  {
+    "Method":"NPO + SAM",
+    "Eval":"MMLU-no-bio \u2191",
+    "Relearning step":0,
+    "mean":50.0100085072,
+    "std":2.4132555825,
+    "count":3
+  },
+  {
+    "Method":"NPO + SAM",
+    "Eval":"MMLU-no-bio \u2191",
+    "Relearning step":4,
+    "mean":47.8331581845,
+    "std":5.3747798017,
+    "count":3
+  },
+  {
+    "Method":"NPO + SAM",
+    "Eval":"MMLU-no-bio \u2191",
+    "Relearning step":8,
+    "mean":49.3769704249,
+    "std":6.1059179581,
+    "count":3
+  },
+  {
+    "Method":"NPO + SAM",
+    "Eval":"MMLU-no-bio \u2191",
+    "Relearning step":12,
+    "mean":51.3261272081,
+    "std":3.9929028658,
+    "count":3
+  },
+  {
+    "Method":"NPO + SAM",
+    "Eval":"MMLU-no-bio \u2191",
+    "Relearning step":16,
+    "mean":51.7014462293,
+    "std":3.5675792228,
+    "count":3
+  },
+  {
+    "Method":"NPO + SAM",
+    "Eval":"WMDP-Bio robust \u2193",
+    "Relearning step":0,
+    "mean":32.7956989247,
+    "std":8.347832248,
+    "count":3
+  },
+  {
+    "Method":"NPO + SAM",
+    "Eval":"WMDP-Bio robust \u2193",
+    "Relearning step":4,
+    "mean":34.9846390169,
+    "std":7.9001798934,
+    "count":3
+  },
+  {
+    "Method":"NPO + SAM",
+    "Eval":"WMDP-Bio robust \u2193",
+    "Relearning step":8,
+    "mean":38.4024577573,
+    "std":8.5256050942,
+    "count":3
+  },
+  {
+    "Method":"NPO + SAM",
+    "Eval":"WMDP-Bio robust \u2193",
+    "Relearning step":12,
+    "mean":42.0122887865,
+    "std":7.1913152365,
+    "count":3
+  },
+  {
+    "Method":"NPO + SAM",
+    "Eval":"WMDP-Bio robust \u2193",
+    "Relearning step":16,
+    "mean":42.2043010753,
+    "std":7.4496808928,
+    "count":3
+  }
+]

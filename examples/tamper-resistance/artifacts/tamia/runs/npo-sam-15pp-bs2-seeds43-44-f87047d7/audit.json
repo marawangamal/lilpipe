@@ -1,0 +1,15 @@
+{
+  "evaluations": 30,
+  "metric_observations": 60,
+  "defense_seeds": [
+    42,
+    43,
+    44
+  ],
+  "attack_seed": 1,
+  "attack_data_seed": 42,
+  "new_seed42_jobs": 0,
+  "full_zero_shot_evaluations": true,
+  "matches_reference_sample_counts_and_task_versions": true,
+  "independently_verified_means_and_sample_standard_deviations": true
+}

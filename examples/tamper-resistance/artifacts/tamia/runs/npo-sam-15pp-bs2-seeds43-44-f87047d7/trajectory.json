@@ -1,0 +1,602 @@
+[
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 25.34562211981567,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 49.009157784116496,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 48.04147465437788,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 55.15688335084822,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 48.15668202764977,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 54.24861131962167,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 49.65437788018433,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 54.75904518841015,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 49.423963133640555,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 55.03678126407446,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 23.15668202764977,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 49.572136315868484,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 34.56221198156682,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 51.62888455186909,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 38.47926267281106,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 52.469599159285394,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 43.4331797235023,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 53.25776910373817,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 43.4331797235023,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 53.52799879897914,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 42,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 24.308755760368665,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 42.748836511034376,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 26.72811059907834,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 31.504278636841317,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 26.95852534562212,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 33.34334184056448,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 27.30414746543779,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 44.05494670469899,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 29.03225806451613,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 45.72136315868488,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 26.72811059907834,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 22.93949857378772,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 26.61290322580645,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 22.90196667167092,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 31.336405529953915,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 38.16994445278487,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 39.63133640552996,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 47.54541360156133,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 39.86175115207373,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 48.085872992043235,
+    "Method": "NPO",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 37.672811059907836,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 47.845668818495724,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 43.08755760368664,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 50.18765951058399,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 46.88940092165899,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 53.31782014712506,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 48.38709677419355,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 53.98588800480408,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 48.963133640552996,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 53.98588800480408,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 43,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 37.55760368663594,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 0,
+    "Accuracy (%)": 52.61222038732923,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 27.30414746543779,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 4,
+    "Accuracy (%)": 41.68293049091728,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 29.838709677419356,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 8,
+    "Accuracy (%)": 42.34349196817295,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 34.21658986175115,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 12,
+    "Accuracy (%)": 46.73472451583846,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "MMLU-no-bio \u2191"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 34.21658986175115,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "WMDP-Bio robust \u2193"
+  },
+  {
+    "Relearning step": 16,
+    "Accuracy (%)": 47.59045188410148,
+    "Method": "NPO + SAM",
+    "Defence": "",
+    "LR": "",
+    "\u03c3": "",
+    "Seed": 44,
+    "Eval": "MMLU-no-bio \u2191"
+  }
+]

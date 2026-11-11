@@ -1,0 +1,10 @@
+{
+  "tasks": [
+    "mmlu_no_bio",
+    "wmdp_bio_robust"
+  ],
+  "loaded_groups": [
+    "ConfigurableGroup(group=wmdp_bio_robust,group_alias=None)",
+    "ConfigurableGroup(group=mmlu_no_bio,group_alias=None)"
+  ]
+}

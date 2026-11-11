@@ -1,0 +1,20 @@
+{
+  "job_id": "686672",
+  "command": [
+    "sbatch",
+    "--parsable",
+    "--account=aip-grabus",
+    "--partition=cpubase_bycore_b1",
+    "--nodes=1",
+    "--ntasks=1",
+    "--cpus-per-task=2",
+    "--mem=8G",
+    "--time=00:15:00",
+    "--job-name=plot-npo-sam-seeds",
+    "--dependency=afterok:686668:686669:686670:686671",
+    "--output=/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-sam-15pp-bs2-seeds43-44-f87047d7/plot-v2-%j.out",
+    "--wrap",
+    "export MPLBACKEND=Agg\nexport MPLCONFIGDIR=\"$SLURM_TMPDIR/matplotlib\"\n/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/z7b-npo-sam-repro-15pp-20261109/preflight-env/bin/python /project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-sam-15pp-bs2-seeds43-44-f87047d7/collect_and_plot_v2.py"
+  ],
+  "supersedes": "686622"
+}
