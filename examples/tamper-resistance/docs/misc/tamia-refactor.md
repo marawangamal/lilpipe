@@ -1,3 +1,5 @@
+> Historical notes: the current upstream SEAM launchers, models, and results have moved to [examples/seam](../../../seam/docs/running-on-tamia.md). Paths below describe older runs.
+
 # Tamia workflow consolidation
 
 Run from `examples/tamper-resistance`. Permanent launchers are:
