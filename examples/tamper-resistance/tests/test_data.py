@@ -658,3 +658,57 @@ def test_upstream_seam_adapter_preserves_training_call(monkeypatch, tmp_path):
     assert report["complete"]
     assert report["training"]["global_step"] == 250
     assert report["training"]["first_input_ids"] == [1, 2, 3]
+
+
+def test_upstream_seam_adapter_reports_four_task_metrics(monkeypatch, tmp_path):
+    import json
+
+    module = load_script("scripts/misc/run_seam_upstream.py", "seam_upstream_metrics")
+    results = {
+        "mmlu": {"acc,none": 0.4},
+        "truthfulqa_mc1": {"acc,none": 0.2},
+        "arc_easy": {"acc,none": 0.5, "acc_norm,none": 0.8},
+        "hellaswag": {"acc,none": 0.3, "acc_norm,none": 0.6},
+    }
+    entry = SimpleNamespace(
+        eval_harmfulness=lambda: 0.25,
+        eval_utility=lambda: results,
+    )
+
+    def upstream_main():
+        assert entry.eval_harmfulness() == 0.25
+        assert entry.eval_utility() is results
+
+    entry.main = upstream_main
+    transformers = ModuleType("transformers")
+    transformers.Trainer = type("Trainer", (), {"train": lambda self: None})
+    utils = ModuleType("src.utils")
+    utils.metrics = SimpleNamespace()
+    monkeypatch.setitem(sys.modules, "transformers", transformers)
+    monkeypatch.setitem(sys.modules, "src.utils", utils)
+    monkeypatch.setattr(module.importlib, "import_module", lambda name: entry)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "adapter",
+            "--mode",
+            "eval",
+            "--seam-root",
+            str(tmp_path),
+            "--report",
+            str(tmp_path / "report.json"),
+        ],
+    )
+    module.main()
+    report = json.loads((tmp_path / "report.json").read_text())
+    assert report["complete"]
+    assert report["harmfulness"] == 0.25
+    assert report["capability"] == pytest.approx(0.5)
+    assert report["tasks"] == {
+        "mmlu": 0.4,
+        "truthfulqa_mc1": 0.2,
+        "arc_easy": 0.8,
+        "hellaswag": 0.6,
+    }
+    assert results["arc_easy"]["acc,none"] == 0.5
