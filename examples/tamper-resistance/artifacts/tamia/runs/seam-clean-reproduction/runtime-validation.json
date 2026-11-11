@@ -1,0 +1,13 @@
+{
+  "smoke_tests_passed": true,
+  "smoke_steps": 1,
+  "same_first_training_tokens": true,
+  "first_input_sha256": "83e03a5cbe8e69c405292755f372717dd7f59d51f4de15ec20d7334c16754af5",
+  "harmful_response_separator": "\n",
+  "upstream_source_clean": true,
+  "upstream_commit": "fa7224f8754585786c850f327b08f32a6976420e",
+  "full_training_steps": {
+    "code": 1000,
+    "paper": 500
+  }
+}
