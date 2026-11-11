@@ -1,0 +1,16 @@
+{
+  "npo": {
+    "first": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/npo/defense",
+    "second": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/defense",
+    "tensors": 291,
+    "identical": true,
+    "different_tensors": []
+  },
+  "npo-sam-rho1e-2": {
+    "first": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/historical/npo-sam-rho1e-2/defense",
+    "second": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/defense",
+    "tensors": 291,
+    "identical": true,
+    "different_tensors": []
+  }
+}

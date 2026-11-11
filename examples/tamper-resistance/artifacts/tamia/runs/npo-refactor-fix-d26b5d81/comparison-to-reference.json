@@ -1,0 +1,362 @@
+[
+  {
+    "family": "historical",
+    "method": "npo",
+    "step": 0,
+    "metric": "wmdp_bio_robust",
+    "reference": 25.34562211981567,
+    "actual": 25.34562211981567,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo",
+    "step": 0,
+    "metric": "mmlu_no_bio",
+    "reference": 49.009157784116496,
+    "actual": 49.009157784116496,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo",
+    "step": 4,
+    "metric": "wmdp_bio_robust",
+    "reference": 48.04147465437788,
+    "actual": 48.04147465437788,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo",
+    "step": 4,
+    "metric": "mmlu_no_bio",
+    "reference": 55.15688335084822,
+    "actual": 55.15688335084822,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo",
+    "step": 8,
+    "metric": "wmdp_bio_robust",
+    "reference": 48.15668202764977,
+    "actual": 48.15668202764977,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo",
+    "step": 8,
+    "metric": "mmlu_no_bio",
+    "reference": 54.24861131962167,
+    "actual": 54.24861131962167,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo",
+    "step": 12,
+    "metric": "wmdp_bio_robust",
+    "reference": 49.65437788018433,
+    "actual": 49.65437788018433,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo",
+    "step": 12,
+    "metric": "mmlu_no_bio",
+    "reference": 54.75904518841015,
+    "actual": 54.75904518841015,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo",
+    "step": 16,
+    "metric": "wmdp_bio_robust",
+    "reference": 49.423963133640555,
+    "actual": 49.423963133640555,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo",
+    "step": 16,
+    "metric": "mmlu_no_bio",
+    "reference": 55.03678126407446,
+    "actual": 55.03678126407446,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo-sam-rho1e-2",
+    "step": 0,
+    "metric": "wmdp_bio_robust",
+    "reference": 23.15668202764977,
+    "actual": 23.15668202764977,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo-sam-rho1e-2",
+    "step": 0,
+    "metric": "mmlu_no_bio",
+    "reference": 49.572136315868484,
+    "actual": 49.572136315868484,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo-sam-rho1e-2",
+    "step": 4,
+    "metric": "wmdp_bio_robust",
+    "reference": 34.56221198156682,
+    "actual": 34.56221198156682,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo-sam-rho1e-2",
+    "step": 4,
+    "metric": "mmlu_no_bio",
+    "reference": 51.62888455186909,
+    "actual": 51.62888455186909,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo-sam-rho1e-2",
+    "step": 8,
+    "metric": "wmdp_bio_robust",
+    "reference": 38.47926267281106,
+    "actual": 38.47926267281106,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo-sam-rho1e-2",
+    "step": 8,
+    "metric": "mmlu_no_bio",
+    "reference": 52.469599159285394,
+    "actual": 52.469599159285394,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo-sam-rho1e-2",
+    "step": 12,
+    "metric": "wmdp_bio_robust",
+    "reference": 43.4331797235023,
+    "actual": 43.4331797235023,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo-sam-rho1e-2",
+    "step": 12,
+    "metric": "mmlu_no_bio",
+    "reference": 53.25776910373817,
+    "actual": 53.25776910373817,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo-sam-rho1e-2",
+    "step": 16,
+    "metric": "wmdp_bio_robust",
+    "reference": 43.4331797235023,
+    "actual": 43.4331797235023,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "historical",
+    "method": "npo-sam-rho1e-2",
+    "step": 16,
+    "metric": "mmlu_no_bio",
+    "reference": 53.52799879897914,
+    "actual": 53.52799879897914,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo",
+    "step": 0,
+    "metric": "wmdp_bio_robust",
+    "reference": 25.34562211981567,
+    "actual": 25.34562211981567,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo",
+    "step": 0,
+    "metric": "mmlu_no_bio",
+    "reference": 49.009157784116496,
+    "actual": 49.009157784116496,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo",
+    "step": 4,
+    "metric": "wmdp_bio_robust",
+    "reference": 48.04147465437788,
+    "actual": 48.04147465437788,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo",
+    "step": 4,
+    "metric": "mmlu_no_bio",
+    "reference": 55.15688335084822,
+    "actual": 55.15688335084822,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo",
+    "step": 8,
+    "metric": "wmdp_bio_robust",
+    "reference": 48.15668202764977,
+    "actual": 48.15668202764977,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo",
+    "step": 8,
+    "metric": "mmlu_no_bio",
+    "reference": 54.24861131962167,
+    "actual": 54.24861131962167,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo",
+    "step": 12,
+    "metric": "wmdp_bio_robust",
+    "reference": 49.65437788018433,
+    "actual": 49.65437788018433,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo",
+    "step": 12,
+    "metric": "mmlu_no_bio",
+    "reference": 54.75904518841015,
+    "actual": 54.75904518841015,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo",
+    "step": 16,
+    "metric": "wmdp_bio_robust",
+    "reference": 49.423963133640555,
+    "actual": 49.423963133640555,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo",
+    "step": 16,
+    "metric": "mmlu_no_bio",
+    "reference": 55.03678126407446,
+    "actual": 55.03678126407446,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo-sam-rho1e-2",
+    "step": 0,
+    "metric": "wmdp_bio_robust",
+    "reference": 23.15668202764977,
+    "actual": 23.15668202764977,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo-sam-rho1e-2",
+    "step": 0,
+    "metric": "mmlu_no_bio",
+    "reference": 49.572136315868484,
+    "actual": 49.572136315868484,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo-sam-rho1e-2",
+    "step": 4,
+    "metric": "wmdp_bio_robust",
+    "reference": 34.56221198156682,
+    "actual": 34.56221198156682,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo-sam-rho1e-2",
+    "step": 4,
+    "metric": "mmlu_no_bio",
+    "reference": 51.62888455186909,
+    "actual": 51.62888455186909,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo-sam-rho1e-2",
+    "step": 8,
+    "metric": "wmdp_bio_robust",
+    "reference": 38.47926267281106,
+    "actual": 38.47926267281106,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo-sam-rho1e-2",
+    "step": 8,
+    "metric": "mmlu_no_bio",
+    "reference": 52.469599159285394,
+    "actual": 52.469599159285394,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo-sam-rho1e-2",
+    "step": 12,
+    "metric": "wmdp_bio_robust",
+    "reference": 43.4331797235023,
+    "actual": 43.4331797235023,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo-sam-rho1e-2",
+    "step": 12,
+    "metric": "mmlu_no_bio",
+    "reference": 53.25776910373817,
+    "actual": 53.25776910373817,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo-sam-rho1e-2",
+    "step": 16,
+    "metric": "wmdp_bio_robust",
+    "reference": 43.4331797235023,
+    "actual": 43.4331797235023,
+    "delta_pp": 0.0
+  },
+  {
+    "family": "committed-fix",
+    "method": "npo-sam-rho1e-2",
+    "step": 16,
+    "metric": "mmlu_no_bio",
+    "reference": 53.52799879897914,
+    "actual": 53.52799879897914,
+    "delta_pp": 0.0
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "source_commit": "d26b5d81bfd98a33f9d1b209cc28b93508295574",
+  "source_sha256": "b5030e270aedade1d0862fbf5e690bace0b0fbb87089366487934e341c64ab9f",
+  "cases": {
+    "npo": {
+      "defense": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/defense",
+      "attack": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/attack",
+      "eval": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/eval",
+      "defense_config": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/configs/npo-defense.yml",
+      "attack_config": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/configs/npo-attack.yml"
+    },
+    "npo-sam-rho1e-2": {
+      "defense": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/defense",
+      "attack": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/attack",
+      "eval": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/eval",
+      "defense_config": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/configs/npo-sam-rho1e-2-defense.yml",
+      "attack_config": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/configs/npo-sam-rho1e-2-attack.yml"
+    }
+  },
+  "reference": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/reference-trajectory.json",
+  "purpose": "Validate the committed sampler fix, without diagnostic trainer subclasses, against the original NPO and NPO+SAM figure."
+}

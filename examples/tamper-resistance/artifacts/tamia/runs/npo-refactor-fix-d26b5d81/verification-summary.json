@@ -1,0 +1,10 @@
+{
+  "historical": {
+    "max_absolute_difference_pp": 0.0,
+    "exact_match": true
+  },
+  "committed-fix": {
+    "max_absolute_difference_pp": 0.0,
+    "exact_match": true
+  }
+}

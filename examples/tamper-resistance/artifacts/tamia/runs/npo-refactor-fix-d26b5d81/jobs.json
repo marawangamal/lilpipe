@@ -1,0 +1,122 @@
+[
+  {
+    "method": "npo",
+    "stage": "defense",
+    "job_id": "685460",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--time=00:45:00",
+      "--job-name=fix-npo-defense",
+      "--output=/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-defense-%j.out",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/train.sbatch",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/configs/npo-defense.yml",
+      "--launcher",
+      "python"
+    ]
+  },
+  {
+    "method": "npo",
+    "stage": "attack",
+    "job_id": "685461",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--time=00:45:00",
+      "--job-name=fix-npo-attack",
+      "--output=/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-attack-%j.out",
+      "--dependency=afterok:685460",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/train.sbatch",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/configs/npo-attack.yml",
+      "--launcher",
+      "python"
+    ]
+  },
+  {
+    "method": "npo",
+    "stage": "eval",
+    "job_id": "685462",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--time=00:45:00",
+      "--job-name=fix-npo-eval",
+      "--output=/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-eval-%j.out",
+      "--export=ALL,BATCH_SIZE=auto:4",
+      "--dependency=afterok:685461",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/eval_wmdp_mmlu.sbatch",
+      "--checkpoints",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/attack",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/eval",
+      "false",
+      "false",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo/defense"
+    ]
+  },
+  {
+    "method": "npo-sam-rho1e-2",
+    "stage": "defense",
+    "job_id": "685463",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--time=00:45:00",
+      "--job-name=fix-npo-sam-rho1e-2-defense",
+      "--output=/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2-defense-%j.out",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/train.sbatch",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/configs/npo-sam-rho1e-2-defense.yml",
+      "--launcher",
+      "python"
+    ]
+  },
+  {
+    "method": "npo-sam-rho1e-2",
+    "stage": "attack",
+    "job_id": "685464",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--time=00:45:00",
+      "--job-name=fix-npo-sam-rho1e-2-attack",
+      "--output=/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2-attack-%j.out",
+      "--dependency=afterok:685463",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/train.sbatch",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/configs/npo-sam-rho1e-2-attack.yml",
+      "--launcher",
+      "python"
+    ]
+  },
+  {
+    "method": "npo-sam-rho1e-2",
+    "stage": "eval",
+    "job_id": "685465",
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--time=00:45:00",
+      "--job-name=fix-npo-sam-rho1e-2-eval",
+      "--output=/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2-eval-%j.out",
+      "--export=ALL,BATCH_SIZE=auto:4",
+      "--dependency=afterok:685464",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/eval_wmdp_mmlu.sbatch",
+      "--checkpoints",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/attack",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/eval",
+      "false",
+      "false",
+      "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-fix-d26b5d81/npo-sam-rho1e-2/defense"
+    ]
+  }
+]

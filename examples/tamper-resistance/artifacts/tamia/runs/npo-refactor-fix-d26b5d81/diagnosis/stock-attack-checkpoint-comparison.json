@@ -1,0 +1,16 @@
+{
+  "npo": {
+    "first": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--relearn-fft-gt-bs2/checkpoint-16",
+    "second": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current-stock/npo/attack/checkpoint-16",
+    "tensors": 291,
+    "identical": true,
+    "different_tensors": []
+  },
+  "npo-sam-rho1e-2": {
+    "first": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2/checkpoint-16",
+    "second": "/project/6100847/mgamal/lilpipe/examples/tamper-resistance/artifacts/tamia/runs/npo-refactor-diagnosis-v1/current-stock/npo-sam-rho1e-2/attack/checkpoint-16",
+    "tensors": 291,
+    "identical": true,
+    "different_tensors": []
+  }
+}

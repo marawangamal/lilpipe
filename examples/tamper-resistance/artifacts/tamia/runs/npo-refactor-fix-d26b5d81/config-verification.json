@@ -1,0 +1,44 @@
+[
+  {
+    "method": "npo",
+    "stage": "defense",
+    "changed_fields": [
+      "dataset_prepared_path",
+      "output_dir",
+      "wandb_name"
+    ],
+    "settings_otherwise_identical": true
+  },
+  {
+    "method": "npo",
+    "stage": "attack",
+    "changed_fields": [
+      "base_model",
+      "dataset_prepared_path",
+      "output_dir",
+      "wandb_name"
+    ],
+    "settings_otherwise_identical": true
+  },
+  {
+    "method": "npo-sam-rho1e-2",
+    "stage": "defense",
+    "changed_fields": [
+      "dataset_prepared_path",
+      "output_dir",
+      "wandb_name"
+    ],
+    "settings_otherwise_identical": true
+  },
+  {
+    "method": "npo-sam-rho1e-2",
+    "stage": "attack",
+    "changed_fields": [
+      "base_model",
+      "dataset_prepared_path",
+      "output_dir",
+      "wandb_name"
+    ],
+    "settings_otherwise_identical": true
+  }
+]
