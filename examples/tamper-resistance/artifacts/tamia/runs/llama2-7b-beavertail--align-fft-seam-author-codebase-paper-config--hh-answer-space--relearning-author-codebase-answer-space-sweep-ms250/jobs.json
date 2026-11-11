@@ -1,0 +1,73 @@
+{
+  "commit": "61f55b618eadd5518d22da7abdf5f686dbcd2f74",
+  "cwd": "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance",
+  "defended_model": "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space",
+  "defender_harmful_format": "Question: {prompt}\\nAnswer: {answer}",
+  "defender_refusal_format": "Question: {prompt}\\nAnswer: {refusal}",
+  "attacker_harmful_format": "Question: {prompt}\\nAnswer: {answer}",
+  "environment": {
+    "ATTACK_FORMAT": "space"
+  },
+  "learning_rates": [
+    "2e-5",
+    "5e-5",
+    "8e-5",
+    "1e-4",
+    "2e-4"
+  ],
+  "steps": 250,
+  "checkpoint_steps": [
+    50,
+    100,
+    150,
+    200,
+    250
+  ],
+  "jobs": {
+    "attacks": "685271",
+    "evaluations": "685272"
+  },
+  "commands": {
+    "attacks": [
+      "sbatch",
+      "--parsable",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--time=03:00:00",
+      "--job-name=seam-defsp-attsp",
+      "--export=ALL,ATTACK_FORMAT=space",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--relearning-author-codebase-answer-space-sweep-ms250/submitted/seam_codebase_train_seam_relearning_sweep.sbatch",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--relearning-author-codebase-answer-space-sweep-ms250",
+      "true"
+    ],
+    "evaluations": [
+      "sbatch",
+      "--dependency=afterok:685271",
+      "--parsable",
+      "--account=aip-grabus",
+      "--partition=gpubase_bynode_b1",
+      "--time=03:00:00",
+      "--job-name=eval-seam-defsp-attsp",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/runs/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--relearning-author-codebase-answer-space-sweep-ms250/submitted/eval_harmfulness_and_capabilities.sbatch",
+      "--checkpoints",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr2e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr2e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr5e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr5e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr8e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr8e-5-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr1e-4-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr1e-4-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/models/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr2e-4-ms250",
+      "/project/6100847/mgamal/lilpipe/worktrees/feat-analyze-failure-mode-of-seam/examples/tamper-resistance/artifacts/tamia/evals/llama2-7b-beavertail--align-fft-seam-author-codebase-paper-config--hh-answer-space--data-overlapping--relearn-fft-author-codebase-answer-space-lr2e-4-ms250"
+    ]
+  },
+  "hashes": {
+    "seam_codebase_train_seam_relearning_sweep.sbatch": "cb43c939383e8b67f2bf29f24dfd77981c6d23fc23054678dce6859d497d8d3c",
+    "eval_harmfulness_and_capabilities.sbatch": "bce182386c5c6bee32133388ab864734f6996765e21a182060973356dd8e7249",
+    "seam/src/data_processing/_datasets.py": "671052e84f41e2478cdf9fafaf1cad9ffef61c1423485ae8cb21dfa582050716",
+    "seam/scripts/train.py": "c8589c6f40d1b9a88e6fb3d45bfb4a5bdc2f10f725ce0149c5c9bff1948d2437"
+  }
+}
