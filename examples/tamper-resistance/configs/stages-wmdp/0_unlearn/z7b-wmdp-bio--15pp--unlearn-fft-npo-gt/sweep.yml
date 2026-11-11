@@ -1,0 +1,28 @@
+id: z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seeds
+base: selected.yml
+model_root: artifacts/tamia/models
+dataset_prepared_root: artifacts/tamia/cache/axolotl
+producer:
+  script: scripts/slurm/tamia/train.sbatch
+  sbatch_args:
+  - --account=aip-grabus
+  - --partition=gpubase_bynode_b1
+  - --gpus-per-node=h100:4
+  - --cpus-per-task=48
+  - --mem=480G
+  - --time=03:00:00
+name_template: z7b-wmdp-bio--15pp--unlearn-fft-npo-gt--seed{seed}
+sweeps:
+- name: seed43
+  parameters:
+    seed:
+    - 43
+    data_seed:
+    - 43
+- name: seed44
+  parameters:
+    seed:
+    - 44
+    data_seed:
+    - 44
+evaluations: []

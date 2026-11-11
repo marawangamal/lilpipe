@@ -1,0 +1,37 @@
+id: z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--relearn-fft-gt-bs2--seeds
+base: selected.yml
+model_root: artifacts/tamia/models
+dataset_prepared_root: artifacts/tamia/cache/axolotl
+producer:
+  script: scripts/slurm/tamia/train.sbatch
+  sbatch_args:
+  - --account=aip-grabus
+  - --partition=gpubase_bynode_b1
+  - --gpus-per-node=h100:4
+  - --cpus-per-task=48
+  - --mem=480G
+  - --time=03:00:00
+model_registry: artifacts/generated/hpo/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seeds/models.yml
+sweeps:
+- name: seed43
+  name_template: z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43--relearn-fft-gt-bs{micro_batch_size}
+  parameters:
+    seed:
+    - 1
+  overrides:
+    base_model: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43
+  depends_on:
+  - z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed43
+- name: seed44
+  name_template: z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44--relearn-fft-gt-bs{micro_batch_size}
+  parameters:
+    seed:
+    - 1
+  overrides:
+    base_model: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44
+  depends_on:
+  - z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--seed44
+model:
+  baseline_model_name_or_path: artifacts/tamia/models/z7b-wmdp-bio--15pp--unlearn-fft-npo-sam-rho1e-2-gt--{sweep}
+evaluations:
+- tamia-h100-z7b--wmdp-and-mmlu-trajectory-with-baseline

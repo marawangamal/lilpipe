@@ -105,6 +105,24 @@ configs_npo_sam_gip_15pp_gt_bs2 = configs_npo_sam_15pp_gt_bs2 + [
     },
 ]
 
+configs_npo_sam_15pp_seeds = [
+    {
+        "model": f"{method}/eval",
+        "evaluation_root": "artifacts/tamia/runs/npo-refactor-fix-d26b5d81",
+        "method": label,
+        "seed": 42,
+    }
+    for method, label in [("npo", "NPO"), ("npo-sam-rho1e-2", "NPO + SAM")]
+] + [
+    {
+        "model": f"z7b-wmdp-bio--15pp--unlearn-fft-{method}-gt--seed{seed}--relearn-fft-gt-bs2",
+        "method": label,
+        "seed": seed,
+    }
+    for method, label in [("npo", "NPO"), ("npo-sam-rho1e-2", "NPO + SAM")]
+    for seed in [43, 44]
+]
+
 configs_lrs = [
     {"model": f"{model}--relearn-fft-lr{lr}-ms128", "method": method, "lr": lr}
     for model, method in ((tar, "TAR"), (seam, "SEAM"))
@@ -164,15 +182,15 @@ configs_npo_sam_gip_lrs = [
 ]
 
 
-def results(experiment, baseline=None):
+def results(experiment, baseline=None, root=rootdir):
     if baseline is not None:
-        for _, label, score in results(baseline):
+        for _, label, score in results(baseline, root=root):
             yield 0, label, score
-    pattern = osp.join(rootdir, experiment, "checkpoint-*", "**", "results*.json")
+    pattern = osp.join(root, experiment, "checkpoint-*", "**", "results*.json")
     paths = glob.glob(pattern, recursive=True, include_hidden=True)
     if not paths:
         paths = glob.glob(
-            osp.join(rootdir, experiment, "**", "results*.json"),
+            osp.join(root, experiment, "**", "results*.json"),
             recursive=True,
             include_hidden=True,
         )
@@ -196,6 +214,43 @@ def results(experiment, baseline=None):
                 yield step, label, 100 * result[task]["acc,none"]
 
 
+def trajectory_rows(configs, steps, require_complete=False):
+    rows = []
+    expected = {(step, label) for step in steps for label in tasks.values()}
+    for config in configs:
+        observations = [
+            (step, evaluation, accuracy)
+            for step, evaluation, accuracy in results(
+                config["model"],
+                config.get("baseline"),
+                root=config.get("evaluation_root", rootdir),
+            )
+            if step in steps
+        ]
+        actual = {(step, evaluation) for step, evaluation, _ in observations}
+        if require_complete and (
+            actual != expected or len(observations) != len(expected)
+        ):
+            raise ValueError(
+                f"Incomplete or duplicate trajectory: {config['model']}; "
+                f"missing {sorted(expected - actual)}"
+            )
+        for step, evaluation, accuracy in observations:
+            rows.append(
+                {
+                    "Relearning step": step,
+                    "Accuracy (%)": accuracy,
+                    "Method": config["method"],
+                    "Defence": config.get("defence", ""),
+                    "LR": config.get("lr", ""),
+                    "σ": config.get("sigma", ""),
+                    "Seed": config.get("seed", ""),
+                    "Eval": evaluation,
+                }
+            )
+    return rows
+
+
 def legend_with_base(legend, base):
     """Place Base inside the Method section when that section exists."""
     if "Method" in legend:
@@ -208,6 +263,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output")
     parser.add_argument("--tar-lrs", action="store_true")
+    parser.add_argument("--npo-sam-seeds", action="store_true")
     args = parser.parse_args()
 
     # Uncomment one complete selection block.
@@ -314,24 +370,18 @@ if __name__ == "__main__":
             "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--tar-k16-new-api.pdf"
         )
 
-    rows = []
-    for config in configs:
-        for step, evaluation, accuracy in results(
-            config["model"], config.get("baseline")
-        ):
-            if step in steps:
-                rows.append(
-                    {
-                        "Relearning step": step,
-                        "Accuracy (%)": accuracy,
-                        "Method": config["method"],
-                        "Defence": config.get("defence", ""),
-                        "LR": config.get("lr", ""),
-                        "σ": config.get("sigma", ""),
-                        "Eval": evaluation,
-                    }
-                )
+    if args.npo_sam_seeds:
+        configs = configs_npo_sam_15pp_seeds
+        steps = range(0, 17, 4)
+        style = {
+            "hue": "Method",
+            "marker": "o",
+            "dashes": False,
+            "palette": {"NPO": "#4477AA", "NPO + SAM": "#EE6677"},
+        }
+        output = "artifacts/figures/z7b-wmdp-mmlu-relearning-trajectory--15pp--bs2--seeds.pdf"
 
+    rows = trajectory_rows(configs, steps, require_complete=args.npo_sam_seeds)
     df = pd.DataFrame(rows)
     sns.set_theme(context="paper", style="ticks", font_scale=1.5)
     grid = sns.relplot(
@@ -341,7 +391,7 @@ if __name__ == "__main__":
         col="Eval",
         col_order=list(tasks.values()),
         kind="line",
-        errorbar=None,
+        errorbar="sd" if args.npo_sam_seeds else None,
         height=3.4,
         aspect=1,
         **style,
@@ -349,6 +399,20 @@ if __name__ == "__main__":
 
     base = {label: score for _, label, score in results("z7b-base")}
     for label, axis in grid.axes_dict.items():
+        if args.npo_sam_seeds:
+            sns.lineplot(
+                data=df[df["Eval"] == label],
+                x="Relearning step",
+                y="Accuracy (%)",
+                hue="Method",
+                units="Seed",
+                estimator=None,
+                palette=style["palette"],
+                alpha=0.25,
+                linewidth=0.8,
+                legend=False,
+                ax=axis,
+            )
         if label in base:
             axis.axhline(base[label], color="black")
 
@@ -363,6 +427,8 @@ if __name__ == "__main__":
     grid.legend.remove()
     grid.add_legend(legend_data=legend)
     grid.set_axis_labels("Relearning step", "Accuracy (%)")
+    if args.npo_sam_seeds:
+        grid.figure.suptitle("Mean ±1 SD across three defense seeds", y=1.03)
     output = args.output or output
     os.makedirs(osp.dirname(output) or ".", exist_ok=True)
     grid.figure.savefig(output, bbox_inches="tight")

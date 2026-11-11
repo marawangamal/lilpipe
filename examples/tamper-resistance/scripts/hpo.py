@@ -207,7 +207,9 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
             raise ValueError("sweep depends_on must be a list of model IDs")
         all_dependencies.update(group_dependencies)
     if all_dependencies:
-        canonical_path = project_root / "configs/registries/models.yml"
+        canonical_path = project_root / sweep.get(
+            "model_registry", "configs/registries/models.yml"
+        )
         canonical = load_mapping(canonical_path).get("models", {})
 
         def add_dependency(model_id: str) -> None:
@@ -257,8 +259,20 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
             artifact = str(Path(model_root) / candidate_id)
             config["output_dir"] = artifact
             config["wandb_name"] = candidate_id
+            cache_root = sweep.get("dataset_prepared_root")
+            if cache_root is not None:
+                if not isinstance(cache_root, str) or not cache_root:
+                    raise ValueError("dataset_prepared_root must be a non-empty path")
+                config["dataset_prepared_path"] = str(
+                    Path(cache_root) / candidate_id / "prepared"
+                )
             config_path = config_dir / f"{candidate_id}.yml"
             if config_mode == "resolved":
+                if config_path.exists() and load_mapping(config_path) != config:
+                    raise ValueError(
+                        f"Generated config differs: {config_path}; "
+                        "choose a fresh output directory"
+                    )
                 dump_yaml(config_path, config)
                 training_args = [project_path(config_path, project_root)]
             else:
@@ -268,6 +282,8 @@ def generate(sweep_path: Path, output_root: Path | None = None) -> Path:
                     "output_dir": artifact,
                     "wandb_name": candidate_id,
                 }
+                if cache_root is not None:
+                    overrides["dataset_prepared_path"] = config["dataset_prepared_path"]
                 cli_args = []
                 for key, value in overrides.items():
                     if "." in key or isinstance(value, (dict, list)) or value is None:
