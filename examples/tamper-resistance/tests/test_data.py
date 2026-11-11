@@ -586,3 +586,75 @@ def test_author_seam_harmful_response_separator(
         row["refusal"],
         "Question: example question\nAnswer:",
     ]
+
+
+def test_upstream_seam_adapter_preserves_training_call(monkeypatch, tmp_path):
+    import json
+    from dataclasses import dataclass
+
+    module = load_script("scripts/misc/run_seam_upstream.py", "seam_upstream_adapter")
+    calls = []
+
+    @dataclass
+    class Arguments:
+        output_dir: str = str(tmp_path / "model")
+
+    class Trainer:
+        args = Arguments()
+        processing_class = SimpleNamespace(
+            save_pretrained=lambda path: calls.append(("tokenizer", path))
+        )
+        state = SimpleNamespace(global_step=250)
+        train_dataset = [{"input_ids": SimpleNamespace(tolist=lambda: [1, 2, 3])}]
+
+        def train(self, *args, **kwargs):
+            calls.append(("train", args, kwargs))
+            return "original result"
+
+        def save_model(self, path):
+            calls.append(("model", path))
+
+        def save_state(self):
+            calls.append(("state",))
+
+    def upstream_main():
+        assert (
+            Trainer().train("sentinel", resume_from_checkpoint=False)
+            == "original result"
+        )
+
+    transformers = ModuleType("transformers")
+    transformers.Trainer = Trainer
+    utils = ModuleType("src.utils")
+    utils.metrics = SimpleNamespace()
+    monkeypatch.setitem(sys.modules, "transformers", transformers)
+    monkeypatch.setitem(sys.modules, "src.utils", utils)
+    monkeypatch.setattr(
+        module.importlib,
+        "import_module",
+        lambda name: SimpleNamespace(main=upstream_main),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "adapter",
+            "--mode",
+            "defense",
+            "--seam-root",
+            str(tmp_path),
+            "--report",
+            str(tmp_path / "report.json"),
+        ],
+    )
+    module.main()
+    assert calls == [
+        ("train", ("sentinel",), {"resume_from_checkpoint": False}),
+        ("model", str(tmp_path / "model")),
+        ("tokenizer", str(tmp_path / "model")),
+        ("state",),
+    ]
+    report = json.loads((tmp_path / "report.json").read_text())
+    assert report["complete"]
+    assert report["training"]["global_step"] == 250
+    assert report["training"]["first_input_ids"] == [1, 2, 3]
