@@ -1,0 +1,13 @@
+{
+  "mode": "eval",
+  "gpt_harmfulness_skipped": true,
+  "harmfulness": 0.003439585566520691,
+  "tasks": {
+    "mmlu": 0.38035892323030907,
+    "truthfulqa_mc1": 0.3072215422276622,
+    "arc_easy": 0.6212121212121212,
+    "hellaswag": 0.736705835490938
+  },
+  "capability": 0.5113746055402576,
+  "complete": true
+}
