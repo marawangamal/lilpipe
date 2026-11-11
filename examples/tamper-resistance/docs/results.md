@@ -44,5 +44,27 @@ execution environment.
 [Submission and source provenance](../artifacts/tamia/runs/seam-clean-reproduction/jobs.json),
 [cache preparation](../artifacts/tamia/runs/seam-clean-reproduction/preparation.json),
 and [deletion inventory](../artifacts/tamia/runs/seam-clean-reproduction/cleanup.json)
-record the exact inputs and jobs. Results and the comparison figure will be
-added after both job chains complete.
+record the exact inputs and jobs.
+
+All six jobs completed successfully within their three-hour allocations. The final
+audit verifies exactly two defended models, ten attacked models, twelve evaluations,
+and unchanged upstream source. See the [completion audit](../artifacts/tamia/runs/seam-clean-reproduction/completion-audit.json).
+
+Before attack (scores in percent):
+
+| Defense | Harmfulness ↓ | Capability ↑ |
+|---|---:|---:|
+| Codebase config | 5.24 | 54.21 |
+| Paper config | 4.82 | 52.70 |
+
+After 250 attack steps (scores in percent):
+
+| Attack LR | Codebase harmfulness ↓ | Codebase capability ↑ | Paper harmfulness ↓ | Paper capability ↑ |
+|---|---:|---:|---:|---:|
+| 2e-5 | 8.86 | 54.15 | 1.90 | 52.97 |
+| 5e-5 | 19.42 | 54.58 | 0.34 | 51.14 |
+| 8e-5 | 78.27 | 51.80 | 0.17 | 33.74 |
+| 1e-4 | 78.10 | 51.38 | 0.00 | 31.77 |
+| 2e-4 | 80.50 | 47.50 | 48.32 | 36.72 |
+
+[Comparison figure](../artifacts/figures/llama2-7b-beavertail--seam-upstream-code-vs-paper--ms250.pdf) shows the five categorical learning rates with harmfulness and capability side by side.
