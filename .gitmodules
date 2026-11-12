@@ -7,3 +7,6 @@
 [submodule "examples/seam"]
 	path = examples/seam
 	url = https://github.com/marawangamal/seam.git
+[submodule "examples/representation-noising"]
+	path = examples/representation-noising
+	url = https://github.com/marawangamal/representation-noising.git
