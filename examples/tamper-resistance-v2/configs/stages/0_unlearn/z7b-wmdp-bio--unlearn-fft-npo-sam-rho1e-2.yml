@@ -5,15 +5,21 @@ trainer_cls: trainers.tr_gip.GIPNPOTrainer
 custom_trainer_args:
   reference_model_name_or_path: HuggingFaceH4/zephyr-7b-beta
   beta: 0.01
-  retain_coefficient: 1.0
+  coeff_retain: 1.0
+  source_id_forget: 0
+  source_id_retain: 1
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
-    type: data.document_loader
+    type: document_loader
+    message_property_mappings:
+      source_id: 0
   - path: Salesforce/wikitext
     name: wikitext-2-raw-v1
     split: test
-    type: data.document_loader
+    type: document_loader
+    message_property_mappings:
+      source_id: 1
 shuffle_merged_datasets: false
 dataset_num_proc: 8
 dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--5pp--unlearn-fft-npo/prepared

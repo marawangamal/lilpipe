@@ -6,11 +6,13 @@ from axolotl.prompt_tokenizers import DatasetWrappingStrategy
 class BaseDocumentStrategy(DatasetWrappingStrategy):
     """Match the paper code's padding and language-model labels."""
 
-    def __init__(self, tokenizer, sequence_len, path, metadata=None, max_samples=None):
+    def __init__(self, tokenizer, sequence_len, path, source_id, max_samples=None):
+        if type(source_id) is not int:
+            raise ValueError("source_id must be an integer")
         self.tokenizer = tokenizer
         self.sequence_len = sequence_len
         self.path = path
-        self.metadata = metadata
+        self.source_id = source_id
         self.max_samples = max_samples
 
     def wrap_dataset(self, dataset, process_count=None, **kwargs):
@@ -42,16 +44,16 @@ class BaseDocumentStrategy(DatasetWrappingStrategy):
             "attention_mask": tokens["attention_mask"],
             # The authors intentionally compute CE on padded EOS positions.
             "labels": tokens["input_ids"].copy(),
-            "metadata": self.metadata,
+            "source_id": self.source_id,
         }
 
 
 def load(tokenizer, cfg, ds_cfg=None):
     path = getattr(ds_cfg, "path", None)
     properties = getattr(ds_cfg, "message_property_mappings", None) or {}
-    metadata = properties.get("metadata")
+    source_id = properties["source_id"]
     max_samples = properties.get("max_samples", None)  # allows filtering before capping
     max_samples = int(max_samples) if max_samples is not None else max_samples
     return BaseDocumentStrategy(
-        tokenizer, cfg.sequence_len, path, metadata, max_samples
+        tokenizer, cfg.sequence_len, path, source_id, max_samples
     )
