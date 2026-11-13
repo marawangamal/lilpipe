@@ -16,8 +16,8 @@ sample_packing: false
 pad_to_sequence_len: false
 remove_unused_columns: true
 train_on_inputs: true
-micro_batch_size: 1
-gradient_accumulation_steps: 4
+micro_batch_size: 4
+gradient_accumulation_steps: 1
 learning_rate: 1.0e-05
 optimizer: adamw_torch
 weight_decay: 0.0

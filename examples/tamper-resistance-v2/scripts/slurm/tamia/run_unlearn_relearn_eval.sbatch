@@ -48,6 +48,7 @@ UV_PROJECT_ENVIRONMENT="$eval_env" uv sync --project "$runtime_project" --frozen
 
 defence_learning_rates=(1e-6 5e-6)
 attack_learning_rates=(1e-5)
+attack_epochs=(1 2 3)
 defence_retain_coefficients=(1.0 1.5 2.0)
 
 for defence_lr in "${defence_learning_rates[@]}"; do
@@ -66,26 +67,30 @@ for defence_lr in "${defence_learning_rates[@]}"; do
 
     # Attack.
     for attack_lr in "${attack_learning_rates[@]}"; do
-      attack_dir="${ckpt_dir}--relearn-lr${attack_lr}"
-      "$train_env/bin/axolotl" train "$attack_config" \
-        --launcher python \
-        --base_model "$ckpt_dir" \
-        --learning_rate "$attack_lr" \
-        --output_dir "$attack_dir" \
-        --wandb_name "$model_name--$sweep_name--relearn-lr${attack_lr}"
+      for epochs in "${attack_epochs[@]}"; do
+        attack_name="relearn-lr${attack_lr}-epochs${epochs}"
+        attack_dir="${ckpt_dir}--${attack_name}"
+        "$train_env/bin/axolotl" train "$attack_config" \
+          --launcher python \
+          --base_model "$ckpt_dir" \
+          --learning_rate "$attack_lr" \
+          --num_epochs "$epochs" \
+          --output_dir "$attack_dir" \
+          --wandb_name "$model_name--$sweep_name--$attack_name"
 
-      # Evaluation.
-      "$eval_env/bin/accelerate" launch \
-        --multi_gpu \
-        --num_processes 4 -m lm_eval run \
-        --model hf \
-        --model_args "pretrained=$attack_dir,dtype=bfloat16,trust_remote_code=True" \
-        --include_path "$runtime_project/lm_eval_tasks" \
-        --tasks mmlu_no_bio,wmdp_bio_robust \
-        --batch_size 32 \
-        --output_path "$results_dir/relearn-lr${attack_lr}"
+        # Evaluation.
+        "$eval_env/bin/accelerate" launch \
+          --multi_gpu \
+          --num_processes 4 -m lm_eval run \
+          --model hf \
+          --model_args "pretrained=$attack_dir,dtype=bfloat16,trust_remote_code=True" \
+          --include_path "$runtime_project/lm_eval_tasks" \
+          --tasks mmlu_no_bio,wmdp_bio_robust \
+          --batch_size 32 \
+          --output_path "$results_dir/$attack_name"
 
-      rm -rf -- "$attack_dir"
+        rm -rf -- "$attack_dir"
+      done
     done
 
     # Delete model artifacts only after evaluation succeeds
