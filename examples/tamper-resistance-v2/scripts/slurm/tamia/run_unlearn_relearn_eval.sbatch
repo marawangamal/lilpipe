@@ -64,6 +64,17 @@ for defence_lr in "${defence_learning_rates[@]}"; do
       --output_dir "$ckpt_dir" \
       --wandb_name "$model_name--$sweep_name"
 
+    # Evaluate the defended model before relearning.
+    "$eval_env/bin/accelerate" launch \
+      --multi_gpu \
+      --num_processes 4 -m lm_eval run \
+      --model hf \
+      --model_args "pretrained=$ckpt_dir,dtype=bfloat16,trust_remote_code=True" \
+      --include_path lm_eval_tasks \
+      --tasks mmlu_no_bio,wmdp_bio_robust \
+      --batch_size 32 \
+      --output_path "$results_dir"
+
     # Attack.
     for attack_lr in "${attack_learning_rates[@]}"; do
       for epochs in "${attack_epochs[@]}"; do
