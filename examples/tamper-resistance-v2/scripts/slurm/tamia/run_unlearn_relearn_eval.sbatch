@@ -60,7 +60,7 @@ for defence_lr in "${defence_learning_rates[@]}"; do
     "$train_env/bin/axolotl" train "$defence_config" \
       --launcher python \
       --learning_rate "$defence_lr" \
-      --custom_trainer_args__retain_coefficient "$defence_retain_coefficient" \
+      --custom_trainer_args__coeff_retain "$defence_retain_coefficient" \
       --output_dir "$ckpt_dir" \
       --wandb_name "$model_name--$sweep_name"
 

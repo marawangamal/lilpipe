@@ -1,6 +1,17 @@
 from torch.utils.data import Sampler
 
 
+def dict_dot(first, second):
+    """Dot matching tensor mappings, reducing scalars onto the first device."""
+    result = None
+    for name in first:
+        value = (first[name] * second[name]).sum()
+        result = value if result is None else result + value.to(result.device)
+    if result is None:
+        raise ValueError("dict_dot requires nonempty mappings")
+    return result
+
+
 class BalancedSampler(Sampler):
     """Visit one index from each source at a time.
 

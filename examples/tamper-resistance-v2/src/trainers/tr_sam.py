@@ -1,9 +1,12 @@
 """Sharpness-aware minimization (SAM) applied to unlearning objectives."""
 
+import torch
+from torch.func import functional_call
+
 from axolotl.core.trainers.base import AxolotlTrainer
 
 from trainers.ul_gd import GDTrainer
-from trainers.utils import BalancedSampler
+from trainers.utils import BalancedSampler, dict_dot
 
 INP_FIELDS = ("input_ids", "attention_mask", "labels")
 
@@ -57,39 +60,38 @@ class SAMBaseTrainer(AxolotlTrainer):
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
 
-        forget_mask = inputs["source_ids"] == self.source_id_forget
-        retain_mask = inputs["source_ids"] == self.source_id_retain
+        forget_mask = inputs["source_id"] == self.source_id_forget
+        retain_mask = inputs["source_id"] == self.source_id_retain
 
         x_forget = {field: inputs[field][forget_mask] for field in INP_FIELDS}
         x_retain = {field: inputs[field][retain_mask] for field in INP_FIELDS}
 
-        theta = {name: param for name, param in model.named_parameters()}
-        theta_0 = copy.deepcopy(theta)
+        theta = {
+            name: param
+            for name, param in model.named_parameters()
+            if param.requires_grad
+        }
 
-        # get pertubed theta
+        # Compute a detached perturbation from the forget gradient.
         loss_forget = self.compute_loss_forget(model, x_forget)
-        grad_forget = compute_grad(loss_forget)
-        theta = dict_binary_op(  # perturb
-            theta, dict_unary_op(grad_forget, lambda x: (self.rho * x).detach()), sum
+        grad_forget = torch.autograd.grad(loss_forget, tuple(theta.values()))
+        grad_dict = dict(zip(theta, grad_forget))
+        grad_norm = dict_dot(grad_dict, grad_dict).sqrt() + 1e-6
+        theta_perturbed = {
+            name: param + (self.rho * grad / grad_norm.to(param.device)).detach()
+            for (name, param), grad in zip(theta.items(), grad_forget)
+        }
+
+        # Evaluate at perturbed weights while keeping gradients connected to theta.
+        loss_forget = self.compute_loss_forget(
+            lambda **x: functional_call(model, theta_perturbed, (), x), x_forget
         )
 
-        # compute forget loss at perturbed theta
-        loss_forget = self.compute_loss_forget(model, x_forget)
-        grad = compute_grad(loss_forget)
+        # The model's original weights remain unchanged.
+        loss_retain = self.compute_loss_retain(model, x_retain)
 
-        # compute retain loss at original theta
-        ## restore theta
-        set_model_state_dict(model, theta)
-        loss_retain = self.compute_loss_forget(model, x_retain)
-        grad += compute_grad(loss_retain)
-
-        # populate the grad
-        set_model_grad_dict(model, grad)
-
-        # perform the backward step
-        return (
-            self.coeff_retain * loss_retain + self.coeff_forget * loss_forget
-        ).detach(), None
+        loss = self.coeff_retain * loss_retain + self.coeff_forget * loss_forget
+        return (loss, None) if return_outputs else loss
 
 
 class SAMGDTrainer(SAMBaseTrainer):
