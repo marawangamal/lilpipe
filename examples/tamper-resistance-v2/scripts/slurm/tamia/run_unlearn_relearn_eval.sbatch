@@ -59,8 +59,7 @@ for defence_lr in "${defence_learning_rates[@]}"; do
     results_dir="./artifacts/tamia/results/${model_name}/sweeps/$sweep_name"
 
     # Defence.
-    "$train_env/bin/axolotl" train "$defence_config" \
-      --launcher python \
+    "$train_env/bin/python" -m axolotl.cli.train "$defence_config" \
       --learning_rate "$defence_lr" \
       --custom_trainer_args__coeff_retain "$defence_retain_coefficient" \
       --output_dir "$ckpt_dir" \
@@ -71,8 +70,7 @@ for defence_lr in "${defence_learning_rates[@]}"; do
       for epochs in "${attack_epochs[@]}"; do
         attack_name="relearn-lr${attack_lr}-epochs${epochs}"
         attack_dir="${ckpt_dir}--${attack_name}"
-        "$train_env/bin/axolotl" train "$attack_config" \
-          --launcher python \
+        "$train_env/bin/python" -m axolotl.cli.train "$attack_config" \
           --base_model "$ckpt_dir" \
           --learning_rate "$attack_lr" \
           --num_epochs "$epochs" \
