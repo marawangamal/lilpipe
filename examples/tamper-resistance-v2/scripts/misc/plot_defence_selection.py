@@ -14,6 +14,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--results-dir", default="artifacts/tamia/results/z7b-gd-sam/sweeps"
     )
+    parser.add_argument("--base-results-dir", default="artifacts/tamia/results/z7b")
     parser.add_argument(
         "--outpath",
         default=(
@@ -32,6 +33,9 @@ if __name__ == "__main__":
         for lr in ("1e-6", "5e-6")
         for retain in ("1.0", "1.5", "2.0")
     ]
+    configs.append(
+        {"path": args.base_results_dir, "name": "Base model", "method": "Base"}
+    )
 
     rows = []
     for cfg in configs:
