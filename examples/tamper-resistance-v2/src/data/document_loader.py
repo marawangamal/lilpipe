@@ -51,7 +51,7 @@ class BaseDocumentStrategy(DatasetWrappingStrategy):
 def load(tokenizer, cfg, ds_cfg=None):
     path = getattr(ds_cfg, "path", None)
     properties = getattr(ds_cfg, "message_property_mappings", None) or {}
-    source_id = properties["source_id"]
+    source_id = int(properties["source_id"])
     max_samples = properties.get("max_samples", None)  # allows filtering before capping
     max_samples = int(max_samples) if max_samples is not None else max_samples
     return BaseDocumentStrategy(

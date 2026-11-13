@@ -12,13 +12,13 @@ datasets:
     split: train
     type: document_loader
     message_property_mappings:
-      source_id: 0
+      source_id: "0"
   - path: Salesforce/wikitext
     name: wikitext-2-raw-v1
     split: test
     type: document_loader
     message_property_mappings:
-      source_id: 1
+      source_id: "1"
 shuffle_merged_datasets: false
 dataset_num_proc: 8
 dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--5pp--unlearn-fft-npo/prepared
