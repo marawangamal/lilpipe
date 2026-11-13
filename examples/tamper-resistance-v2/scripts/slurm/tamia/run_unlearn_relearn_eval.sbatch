@@ -33,7 +33,7 @@ module load httpproxy/1.0
 # ============================================
 
 export PYTHONPATH="$PWD/src/data:$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
-export WANDB_DIR="$PWD/artifacts/tamia/logs"
+export WANDB_DIR="$PWD/artifacts/tamia"
 
 defence_config=${1:?missing defence config}
 attack_config=${2:?missing attack config}
@@ -87,7 +87,7 @@ for defence_lr in "${defence_learning_rates[@]}"; do
           --include_path "$runtime_project/lm_eval_tasks" \
           --tasks mmlu_no_bio,wmdp_bio_robust \
           --batch_size 32 \
-          --output_path "$results_dir/$attack_name"
+          --output_path "${results_dir}--${attack_name}"
 
         rm -rf -- "$attack_dir"
       done
