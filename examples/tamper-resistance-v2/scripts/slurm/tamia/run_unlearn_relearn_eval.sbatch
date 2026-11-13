@@ -40,11 +40,10 @@ defence_config=${1:?missing defence config}
 attack_config=${2:?missing attack config}
 model_name=${3:?missing model name} # e.g., z7b
 
-runtime_project="$PWD/../tamper-resistance"
 train_env="$UV_PROJECT_ENVIRONMENT-train"
 eval_env="$UV_PROJECT_ENVIRONMENT-eval"
-UV_PROJECT_ENVIRONMENT="$train_env" uv sync --project "$runtime_project" --frozen --group train
-UV_PROJECT_ENVIRONMENT="$eval_env" uv sync --project "$runtime_project" --frozen --group eval
+UV_PROJECT_ENVIRONMENT="$train_env" uv sync --frozen --group train
+UV_PROJECT_ENVIRONMENT="$eval_env" uv sync --frozen --group eval
 
 
 defence_learning_rates=(1e-6 5e-6)
@@ -83,7 +82,7 @@ for defence_lr in "${defence_learning_rates[@]}"; do
           --num_processes 4 -m lm_eval run \
           --model hf \
           --model_args "pretrained=$attack_dir,dtype=bfloat16,trust_remote_code=True" \
-          --include_path "$runtime_project/lm_eval_tasks" \
+          --include_path lm_eval_tasks \
           --tasks mmlu_no_bio,wmdp_bio_robust \
           --batch_size 32 \
           --output_path "${results_dir}--${attack_name}"
