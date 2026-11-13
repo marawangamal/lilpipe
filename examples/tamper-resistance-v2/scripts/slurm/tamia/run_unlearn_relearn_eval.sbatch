@@ -15,6 +15,7 @@ set -euo pipefail
 export PATH="$HOME/.local/bin:$PATH"
 export XDG_CACHE_HOME="$SCRATCH/.cache"
 export HF_HOME="$XDG_CACHE_HOME/huggingface"
+export UV_CACHE_DIR="$PWD/artifacts/tamia/cache/uv"
 export UV_PROJECT_ENVIRONMENT="$SLURM_TMPDIR/.venv-$SLURM_JOB_ID"
 
 # Tamia compute nodes use cached packages, models, and datasets.

@@ -2,7 +2,7 @@ base_model: HuggingFaceH4/zephyr-7b-beta
 datasets:
 - path: cais/wmdp-bio-forget-corpus
   split: train
-  type: document_loader
+  type: data.document_loader
   message_property_mappings:
     source_id: "0"
     max_samples: "20"

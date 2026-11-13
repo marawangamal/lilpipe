@@ -10,13 +10,13 @@ custom_trainer_args:
 datasets:
   - path: cais/wmdp-bio-forget-corpus
     split: train
-    type: document_loader
+    type: data.document_loader
     message_property_mappings:
       source_id: "0"
   - path: Salesforce/wikitext
     name: wikitext-2-raw-v1
     split: test
-    type: document_loader
+    type: data.document_loader
     message_property_mappings:
       source_id: "1"
 shuffle_merged_datasets: false
