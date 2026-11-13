@@ -70,6 +70,6 @@ eval_strategy: 'no'
 save_strategy: 'no'
 save_only_model: true
 logging_steps: 1
-wandb_project: lp-tamper-resistance
+wandb_project: lp-tamper-resistance-v2
 wandb_name: z7b-relearn-20
 num_epochs: 1

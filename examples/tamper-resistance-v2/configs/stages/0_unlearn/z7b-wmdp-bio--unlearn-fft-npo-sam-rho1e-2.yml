@@ -86,5 +86,5 @@ save_steps: 125
 save_total_limit: 1
 save_only_model: true
 logging_steps: 1
-wandb_project: lp-tamper-resistance
+wandb_project: lp-tamper-resistance-v2
 wandb_name: z7b-wmdp-bio--5pp--unlearn-fft-npo-gt
