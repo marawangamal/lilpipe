@@ -2,11 +2,53 @@
 
 from axolotl.core.trainers.base import AxolotlTrainer
 
+from trainers.utils import BalancedSampler
+
 INP_FIELDS = ("input_ids", "attention_mask", "labels")
 
 
 class GDTrainer(AxolotlTrainer):
     """Maximize forget cross-entropy and minimize retain cross-entropy."""
+
+    def __init__(
+        self,
+        *args,
+        source_id_forget=0,
+        source_id_retain=1,
+        coeff_retain=1.0,
+        coeff_forget=1.0,
+        **kwargs,
+    ):
+        if type(source_id_forget) is not int or type(source_id_retain) is not int:
+            raise ValueError("source IDs must be integers")
+        if source_id_forget == source_id_retain:
+            raise ValueError("forget and retain source IDs must differ")
+        super().__init__(*args, **kwargs)
+        self.source_id_forget = source_id_forget
+        self.source_id_retain = source_id_retain
+        self.coeff_retain = coeff_retain
+        self.coeff_forget = coeff_forget
+
+    def _get_train_sampler(self, train_dataset=None):
+        """Draw equally from the configured forget and retain sources."""
+        dataset = self.train_dataset if train_dataset is None else train_dataset
+        if self._train_batch_size < 2 or self._train_batch_size % 2:
+            raise ValueError("GD sampling requires an even batch size")
+
+        source_ids = dataset["source_id"]
+        sample_ids_forget = [
+            i
+            for i, source_id in enumerate(source_ids)
+            if source_id == self.source_id_forget
+        ]
+        sample_ids_retain = [
+            i
+            for i, source_id in enumerate(source_ids)
+            if source_id == self.source_id_retain
+        ]
+        if not sample_ids_forget or not sample_ids_retain:
+            raise ValueError("GD sampling requires both forget and retain examples")
+        return BalancedSampler(sample_ids_forget, sample_ids_retain)
 
     def compute_loss_forget(self, model, inputs):
         return -model(**inputs).loss.float()
