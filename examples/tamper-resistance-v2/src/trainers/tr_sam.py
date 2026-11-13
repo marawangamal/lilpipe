@@ -90,6 +90,9 @@ class SAMBaseTrainer(AxolotlTrainer):
         # The model's original weights remain unchanged.
         loss_retain = self.compute_loss_retain(model, x_retain)
 
+        # log
+        self.log({"loss_retain": loss_retain, "loss_forget": loss_forget})
+
         loss = self.coeff_retain * loss_retain + self.coeff_forget * loss_forget
         return (loss, None) if return_outputs else loss
 
