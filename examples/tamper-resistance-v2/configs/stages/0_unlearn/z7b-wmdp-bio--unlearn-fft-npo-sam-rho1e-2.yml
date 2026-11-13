@@ -35,9 +35,9 @@ max_steps: 125
 learning_rate: 5.0e-06
 optimizer: adamw_torch
 weight_decay: 0.0
-lr_scheduler: constant
-warmup_steps: 0
-max_grad_norm: 0.0
+lr_scheduler: linear
+warmup_steps: 12
+max_grad_norm: 1.0
 bf16: true
 tf32: false
 gradient_checkpointing: false
