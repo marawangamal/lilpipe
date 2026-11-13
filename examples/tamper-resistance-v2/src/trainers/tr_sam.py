@@ -94,5 +94,5 @@ class SAMBaseTrainer(AxolotlTrainer):
         return (loss, None) if return_outputs else loss
 
 
-class SAMGDTrainer(SAMBaseTrainer):
+class SAMGDTrainer(SAMBaseTrainer, GDTrainer):
     pass
