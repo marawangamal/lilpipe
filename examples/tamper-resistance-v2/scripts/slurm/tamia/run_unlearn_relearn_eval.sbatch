@@ -35,6 +35,9 @@ module load httpproxy/1.0
 
 export PYTHONPATH="$PWD/src/data:$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
 export WANDB_DIR="$PWD/artifacts/tamia"
+export WANDB_DATA_DIR="$PWD/artifacts/tamia/cache/wandb/data"
+export WANDB_CACHE_DIR="$PWD/artifacts/tamia/cache/wandb"
+mkdir -p "$WANDB_DATA_DIR" "$WANDB_CACHE_DIR"
 
 defence_config=${1:?missing defence config}
 attack_config=${2:?missing attack config}
