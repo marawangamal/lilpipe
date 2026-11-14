@@ -110,6 +110,7 @@ class GMABaseTrackTrainer(AxolotlTrainer):
                 - projection.to(p.device) * u_i[name]
                 for name, p in theta.items()
             }
+            del u_i, m_others
 
             theta_shifted = {
                 name: (
@@ -118,7 +119,7 @@ class GMABaseTrackTrainer(AxolotlTrainer):
                 for name, p in theta.items()
             }
             # Release full-model probe buffers before the next allocation.
-            del u_i, m_others, v_i
+            del v_i
 
             loss_shifted = functional_call(
                 model, theta_shifted, (), batch
@@ -204,12 +205,12 @@ class GMABaseTrainer(GMABaseTrackTrainer):
         x_forget = {field: inputs[field][forget_mask] for field in INP_FIELDS}
         x_retain = {field: inputs[field][retain_mask] for field in INP_FIELDS}
 
-        # Compute losses
-        loss_forget = self.compute_loss_forget(model, x_forget)
-        loss_retain = self.compute_loss_retain(model, x_retain)
+        # Build the surrogate before retaining the ordinary loss graphs.
         avg_of_cosims = self.compute_loss_avg_of_cosims(
             model, x_forget, compute_loss_only=self.coeff_gma == 0
         )
+        loss_forget = self.compute_loss_forget(model, x_forget)
+        loss_retain = self.compute_loss_retain(model, x_retain)
 
         self.log(
             {
