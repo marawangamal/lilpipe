@@ -49,7 +49,7 @@ UV_PROJECT_ENVIRONMENT="$train_env" uv sync --frozen --group train
 UV_PROJECT_ENVIRONMENT="$eval_env" uv sync --frozen --group eval
 
 
-defence_learning_rates=(1e-6 2e-6 2.5e-6 3e-6 5e-6)
+defence_learning_rates=(1e-6 2e-6 2.5e-6 2.75e-6 3e-6 5e-6)
 attack_learning_rates=(1e-5)
 attack_epochs=(1 2 3)
 defence_retain_coefficients=(1.0 1.5 2.0)
