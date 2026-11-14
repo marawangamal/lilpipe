@@ -4,6 +4,7 @@ plugins:
 trainer_cls: trainers.tr_gma.GMAGDTrainer
 custom_trainer_args:
   coeff_gma: 1.0
+  eps_finite_diff: 0.001
   coeff_retain: 1.0
   source_id_forget: 0
   source_id_retain: 1
@@ -19,9 +20,10 @@ datasets:
     type: data.document_loader
     message_property_mappings:
       source_id: "1"
+shuffle_before_merging_datasets: true
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--5pp--unlearn-fft-npo/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--unlearn-shuffled/prepared
 val_set_size: 0.0
 output_dir: artifacts/tamia/models/z7b-wmdp-bio--unlearn-fft-gd-gma
 sequence_len: 512
@@ -32,13 +34,14 @@ train_on_inputs: true
 micro_batch_size: 8
 gradient_accumulation_steps: 1
 max_steps: 125
-learning_rate: 5.0e-06
+learning_rate: 1.0e-06
 optimizer: adamw_torch
 weight_decay: 0.0
 lr_scheduler: linear
 warmup_steps: 12
 max_grad_norm: 1.0
-bf16: true
+bf16: false
+torch_dtype: float32
 tf32: false
 gradient_checkpointing: false
 attn_implementation: eager

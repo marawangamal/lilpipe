@@ -19,9 +19,10 @@ datasets:
     type: data.document_loader
     message_property_mappings:
       source_id: "1"
+shuffle_before_merging_datasets: true
 shuffle_merged_datasets: false
 dataset_num_proc: 8
-dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--5pp--unlearn-fft-npo/prepared
+dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-wmdp-bio--unlearn-shuffled/prepared
 val_set_size: 0.0
 output_dir: artifacts/tamia/models/z7b-wmdp-bio--5pp--unlearn-fft-npo-gt
 sequence_len: 512
