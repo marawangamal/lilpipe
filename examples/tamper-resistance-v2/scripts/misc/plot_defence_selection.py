@@ -243,6 +243,11 @@ if __name__ == "__main__":
             "name": "LR 1e-6, retain 2.0, GMA 0.3",
             "method": "GD+GMA (FP32)",
         },
+        {
+            "path": f"{rootdir}/z7b-gd-gma-fp32/sweeps/unlearn-lr2e-6-ret2.0-gma1.0",
+            "name": "LR 2e-6, retain 2.0, GMA 1.0",
+            "method": "GD+GMA (FP32)",
+        },
         {"path": f"{rootdir}/z7b", "name": "Base model", "method": "Base"},
     ]
 
