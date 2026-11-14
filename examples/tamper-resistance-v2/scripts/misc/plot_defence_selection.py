@@ -16,7 +16,7 @@ if __name__ == "__main__":
         "--outpath",
         default=(
             "artifacts/figures/"
-            "z7b-wmdp-mmlu--gd-sam--relearn-20--utility-robustness.pdf"
+            "z7b-wmdp-mmlu--gd-sam--relearn-20--utility-robustness-in-dist.pdf"
         ),
     )
     args = parser.parse_args()

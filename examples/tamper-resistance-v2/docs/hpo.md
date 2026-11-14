@@ -1,5 +1,7 @@
 # Hyperparameter search
 
+## In-distribution experiment
+
 ### Search space
 
 | Method | Precision | LR | Retain coefficient | GMA coefficient | Configs |
@@ -37,7 +39,17 @@ Our original defence runs used ordered data, so all 20 attack documents were
 included during defence. Base-model and OPTML evaluations are archived alongside
 them; OPTML's defence-data overlap has not been verified.
 
-<img src="../artifacts/figures-png/z7b-wmdp--selected-defences--relearn-20--epochs.png" alt="WMDP and MMLU-No-Bio accuracy versus relearning epochs" width="75%">
+<img src="../artifacts/figures-png/z7b-wmdp--selected-defences--relearn-20--epochs-in-dist.png" alt="WMDP and MMLU-No-Bio accuracy versus relearning epochs" width="75%">
+
+## Shuffled-defence experiment
+
+GD and GD+SAM each use the Cartesian product of learning rates
+`1e-6`, `2e-6`, `5e-6` and retain coefficients `1.0`, `1.5`, `2.0`
+(nine configurations per method). Both use 125 defence steps; SAM uses ρ = 0.01.
+Forget and retain datasets are shuffled independently before merging, using seed 3.
+Attacks use the same first 20 filtered documents, LR `1e-5`, and independent
+1-, 2-, and 3-epoch runs. Shuffling does not guarantee disjoint defence/attack data.
+New evaluations are saved under `artifacts/tamia/results/`.
 
 
 

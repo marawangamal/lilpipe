@@ -88,7 +88,7 @@ if __name__ == "__main__":
     grid.set_axis_labels("Relearning epochs", "Accuracy (%)")
     grid.set_titles("{col_name}")
     grid.tight_layout()
-    outname = "z7b-wmdp--selected-defences--relearn-20--epochs"
+    outname = "z7b-wmdp--selected-defences--relearn-20--epochs-in-dist"
     for outdir, extension in [
         ("artifacts/figures", "pdf"),
         ("artifacts/figures-png", "png"),
