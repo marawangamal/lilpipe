@@ -1,6 +1,20 @@
 from torch.utils.data import Sampler
 
 
+def model_to_params(model, only_trainable=False):
+    """Return named model parameters, optionally filtering frozen weights."""
+    return {
+        name: param
+        for name, param in model.named_parameters()
+        if not only_trainable or param.requires_grad
+    }
+
+
+def dict_binop(first, second, op):
+    """Apply a binary operation to matching values in two mappings."""
+    return {name: op(first[name], second[name]) for name in first}
+
+
 def dict_dot(first, second):
     """Dot matching tensor mappings, reducing scalars onto the first device."""
     result = None

@@ -143,9 +143,8 @@ class GMABaseTrackTrainer(AxolotlTrainer):
         # return d/dtheta (const_cosim + const_g * theta) = const_g 
 
         scale = 2 * B / ((B - 1) * self.eps_finite_diff)
-        surrogate_loss = sum(
-            (theta[name] * (scale * g_hat[name]).detach()).sum()
-            for name in theta
+        surrogate_loss = dict_dot(
+            theta, {name: (scale * g_hat[name]).detach() for name in theta}
         )
 
         return cosine.detach() + (surrogate_loss - surrogate_loss.detach())
@@ -214,7 +213,11 @@ class GMABaseTrainer(GMABaseTrackTrainer):
             }
         )
 
-        loss = self.coeff_retain * loss_retain + self.coeff_forget * loss_forget + self.coeff_gma * avg_of_cosims
+        loss = (
+            self.coeff_retain * loss_retain
+            + self.coeff_forget * loss_forget
+            + self.coeff_gma * avg_of_cosims.to(loss_retain.device)
+        )
         return (loss, None) if return_outputs else loss
 
 
