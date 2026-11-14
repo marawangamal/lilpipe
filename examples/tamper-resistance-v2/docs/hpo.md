@@ -32,7 +32,12 @@ Attacks used 20 documents and LR 1e-5, each starting from the same defended mode
 
 ### Results
 
-<img src="../artifacts/figures-png/z7b-wmdp--selected-defences--relearn-20--epochs.png" alt="WMDP accuracy versus relearning epochs" width="50%">
+These results are archived under `artifacts/tamia/results-in-distribution/`.
+Our original defence runs used ordered data, so all 20 attack documents were
+included during defence. Base-model and OPTML evaluations are archived alongside
+them; OPTML's defence-data overlap has not been verified.
+
+<img src="../artifacts/figures-png/z7b-wmdp--selected-defences--relearn-20--epochs.png" alt="WMDP and MMLU-No-Bio accuracy versus relearning epochs" width="75%">
 
 
 

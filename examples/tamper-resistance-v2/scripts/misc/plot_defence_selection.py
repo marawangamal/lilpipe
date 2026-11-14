@@ -21,7 +21,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    rootdir = "artifacts/tamia/results"
+    rootdir = "artifacts/tamia/results-in-distribution"
     configs = [
         {
             "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr1e-6-ret1.0",
