@@ -193,6 +193,16 @@ if __name__ == "__main__":
             "name": "LR 2.5e-6, retain 2.0",
             "method": "GD",
         },
+        {
+            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2.75e-6-ret1.0",
+            "name": "LR 2.75e-6, retain 1.0",
+            "method": "GD",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-gma-fp32/sweeps/unlearn-lr1e-6-ret2.0-gma1.0",
+            "name": "LR 1e-6, retain 2.0, GMA 1.0",
+            "method": "GD+GMA (FP32)",
+        },
         {"path": f"{rootdir}/z7b", "name": "Base model", "method": "Base"},
     ]
 
@@ -244,6 +254,7 @@ if __name__ == "__main__":
             "GD": "C1",
             "GD+GMA": "C2",
             "GD (FP32)": "C3",
+            "GD+GMA (FP32)": "C4",
             "Base": "black",
         },
         style="Config",
