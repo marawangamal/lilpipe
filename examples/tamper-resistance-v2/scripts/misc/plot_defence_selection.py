@@ -6,15 +6,12 @@ import json
 import os
 import os.path as osp
 
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--results-dir", default="artifacts/tamia/results/z7b-gd-sam/sweeps"
-    )
-    parser.add_argument("--base-results-dir", default="artifacts/tamia/results/z7b")
     parser.add_argument(
         "--outpath",
         default=(
@@ -24,18 +21,70 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    rootdir = "artifacts/tamia/results"
     configs = [
         {
-            "path": osp.join(args.results_dir, f"unlearn-lr{lr}-ret{retain}"),
-            "name": f"LR {lr}, retain {retain}",
+            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr1e-6-ret1.0",
+            "name": "LR 1e-6, retain 1.0",
             "method": "GD+SAM",
-        }
-        for lr in ("1e-6", "5e-6")
-        for retain in ("1.0", "1.5", "2.0")
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr1e-6-ret1.5",
+            "name": "LR 1e-6, retain 1.5",
+            "method": "GD+SAM",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr1e-6-ret2.0",
+            "name": "LR 1e-6, retain 2.0",
+            "method": "GD+SAM",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr5e-6-ret1.0",
+            "name": "LR 5e-6, retain 1.0",
+            "method": "GD+SAM",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr5e-6-ret1.5",
+            "name": "LR 5e-6, retain 1.5",
+            "method": "GD+SAM",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr5e-6-ret2.0",
+            "name": "LR 5e-6, retain 2.0",
+            "method": "GD+SAM",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr1e-6-ret1.0",
+            "name": "LR 1e-6, retain 1.0",
+            "method": "GD",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr1e-6-ret1.5",
+            "name": "LR 1e-6, retain 1.5",
+            "method": "GD",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr1e-6-ret2.0",
+            "name": "LR 1e-6, retain 2.0",
+            "method": "GD",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr5e-6-ret1.0",
+            "name": "LR 5e-6, retain 1.0",
+            "method": "GD",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr5e-6-ret1.5",
+            "name": "LR 5e-6, retain 1.5",
+            "method": "GD",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr5e-6-ret2.0",
+            "name": "LR 5e-6, retain 2.0",
+            "method": "GD",
+        },
+        {"path": f"{rootdir}/z7b", "name": "Base model", "method": "Base"},
     ]
-    configs.append(
-        {"path": args.base_results_dir, "name": "Base model", "method": "Base"}
-    )
 
     rows = []
     for cfg in configs:
@@ -69,17 +118,23 @@ if __name__ == "__main__":
             )
 
     df = pd.DataFrame(rows)
+    plot_df = df.copy()
+    rng = np.random.default_rng(42)
+    offsets = rng.uniform(-2.0, 2.0, size=(len(configs), 2))
+    plot_df[["MMLU", "WMDP"]] += offsets.repeat(2, axis=0)
+
     sns.set_theme(context="paper", style="ticks", font_scale=1.1)
     grid = sns.relplot(
-        data=df,
+        data=plot_df,
         x="MMLU",
         y="WMDP",
         hue="Method",
+        palette={"GD+SAM": "C0", "GD": "C1", "Base": "black"},
         style="Config",
         col="Stage",
         col_order=["pre-attack", "post-attack"],
         kind="scatter",
-        s=80,
+        s=50,
         height=3,
         aspect=1.1,
     )
