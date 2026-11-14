@@ -117,6 +117,8 @@ class GMABaseTrackTrainer(AxolotlTrainer):
                 ).requires_grad_(True)
                 for name, p in theta.items()
             }
+            # Release full-model probe buffers before the next allocation.
+            del u_i, m_others, v_i
 
             loss_shifted = functional_call(
                 model, theta_shifted, (), batch
@@ -128,6 +130,7 @@ class GMABaseTrackTrainer(AxolotlTrainer):
                     loss_shifted, tuple(theta_shifted.values())
                 ),
             ))
+            del loss_shifted, theta_shifted
 
             difference = dict_binop(
                 g_theta_i,
@@ -138,6 +141,7 @@ class GMABaseTrackTrainer(AxolotlTrainer):
                 g_hat = difference
             else: # accumulate grad
                 g_hat = dict_binop(g_hat, difference, lambda a, b: a + b)
+            del g_theta_i, g_theta_i_plus_eps_v, difference
 
         # Use surrogate loss. We want to accumulate g_hat. The basic idea is if we
         # return d/dtheta (const_cosim + const_g * theta) = const_g 
@@ -203,7 +207,9 @@ class GMABaseTrainer(GMABaseTrackTrainer):
         # Compute losses
         loss_forget = self.compute_loss_forget(model, x_forget)
         loss_retain = self.compute_loss_retain(model, x_retain)
-        avg_of_cosims = self.compute_loss_avg_of_cosims(model, x_forget)
+        avg_of_cosims = self.compute_loss_avg_of_cosims(
+            model, x_forget, compute_loss_only=self.coeff_gma == 0
+        )
 
         self.log(
             {
