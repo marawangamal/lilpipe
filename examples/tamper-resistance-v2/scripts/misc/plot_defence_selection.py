@@ -123,6 +123,26 @@ if __name__ == "__main__":
             "name": "LR 1e-6, retain 2.0, GMA 1.0",
             "method": "GD+GMA",
         },
+        {
+            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2e-6-ret1.5",
+            "name": "LR 2e-6, retain 1.5",
+            "method": "GD",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2e-6-ret2.0",
+            "name": "LR 2e-6, retain 2.0",
+            "method": "GD",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret2.0-gma2.0",
+            "name": "LR 1e-6, retain 2.0, GMA 2.0",
+            "method": "GD+GMA",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret2.0-gma5.0",
+            "name": "LR 1e-6, retain 2.0, GMA 5.0",
+            "method": "GD+GMA",
+        },
         {"path": f"{rootdir}/z7b", "name": "Base model", "method": "Base"},
     ]
 
@@ -180,6 +200,8 @@ if __name__ == "__main__":
     )
     grid.set_axis_labels("MMLU-No-Bio (pre-attack)", "")
     grid.set_titles("")
+    for text in grid.legend.get_texts():
+        text.set_fontsize(7)
     for ax, stage in zip(grid.axes.flat, ("pre-attack", "post-attack")):
         ax.set_ylabel(f"WMDP ({stage}, worst-case)")
         ax.yaxis.label.set_visible(True)
