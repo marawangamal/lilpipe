@@ -41,15 +41,46 @@ them; OPTML's defence-data overlap has not been verified.
 
 <img src="../artifacts/figures-png/z7b-wmdp--selected-defences--relearn-20--epochs-in-dist.png" alt="WMDP and MMLU-No-Bio accuracy versus relearning epochs" width="75%">
 
-## Shuffled-defence experiment
+## Out of distribution experiment
 
-GD and GD+SAM each use the Cartesian product of learning rates
-`1e-6`, `2e-6`, `5e-6` and retain coefficients `1.0`, `1.5`, `2.0`
-(nine configurations per method). Both use 125 defence steps; SAM uses ρ = 0.01.
-Forget and retain datasets are shuffled independently before merging, using seed 3.
-Attacks use the same first 20 filtered documents, LR `1e-5`, and independent
-1-, 2-, and 3-epoch runs. Shuffling does not guarantee disjoint defence/attack data.
-New evaluations are saved under `artifacts/tamia/results/`.
+### Search space
 
+| Method | Precision | LR | Retain coefficient | GMA coefficient | Configs |
+|---|---|---|---|---|---:|
+| GD | BF16 | 1, 2, 5 | 1, 1.5, 2 | — | 9 |
+| GD+SAM | BF16 | 1, 2, 5 | 1, 1.5, 2 | — | 9 |
+| GD+GMA | FP32 | 1, 2, 5 | 0.1 | 0, 1 | 6 |
 
+- LR values are in units of **10⁻⁶**.
+- SAM uses ρ = 0.01.
+- GMA uses finite-difference ε = 0.001; coefficient 0 is the FP32 GD control.
+- All defences use 125 steps.
+
+### Selection Criteria
+
+Select the configuration with the lowest worst-case WMDP accuracy, using a soft
+capability-drop target of **15 percentage points**, allowing drops up to
+**16 percentage points** from the base model's pre-attack MMLU-No-Bio accuracy.
+The base model scores 58.59%, so the minimum allowed score is 42.59%.
+Worst-case WMDP includes the pre-attack evaluation and all three attacks.
+
+### Configs selected
+
+- GD: LR 5e-6, retain 2.0 (BF16; pre-attack MMLU 43.03%, a 15.56-point drop).
+- GD+SAM: LR 5e-6, retain 1.5, ρ = 0.01 (BF16).
+- GD+GMA: selection pending.
+
+### Attacks
+
+Attacks use 20 documents and LR 1e-5, with independent 1-, 2-, and 3-epoch runs,
+each starting from the same defended model.
+
+### Results
+
+Results are saved under `artifacts/tamia/results/`. Forget and retain datasets
+are shuffled independently before merging, using seed 3. The attack uses the
+first 20 filtered forget documents; shuffling does not enforce disjoint defence
+and attack sets.
+
+<img src="../artifacts/figures-png/z7b-wmdp--selected-defences--relearn-20--epochs.png" alt="WMDP and MMLU-No-Bio accuracy versus relearning epochs" width="75%">
 

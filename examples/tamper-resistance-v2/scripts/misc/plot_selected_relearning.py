@@ -9,10 +9,10 @@ import pandas as pd
 import seaborn as sns
 
 if __name__ == "__main__":
-    rootdir = "artifacts/tamia/results-in-distribution"
+    rootdir = "artifacts/tamia/results"
     configs = [
         {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2.75e-6-ret1.5",
+            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr5e-6-ret2.0",
             "name": "GD",
             "source": "Ours",
         },
@@ -22,17 +22,12 @@ if __name__ == "__main__":
             "source": "Ours",
         },
         {
-            "path": f"{rootdir}/z7b-gd-gma-fp32/sweeps/unlearn-lr2e-6-ret2.0-gma1.0",
-            "name": "GD+GMA",
-            "source": "Ours",
-        },
-        {
-            "path": f"{rootdir}/OPTML-Group/GradDiff-WMDP",
+            "path": "artifacts/tamia/results-in-distribution/OPTML-Group/GradDiff-WMDP",
             "name": "GD",
             "source": "OPTML",
         },
         {
-            "path": f"{rootdir}/OPTML-Group/GradDiff-SAM-WMDP",
+            "path": "artifacts/tamia/results-in-distribution/OPTML-Group/GradDiff-SAM-WMDP",
             "name": "GD+SAM",
             "source": "OPTML",
         },
@@ -88,7 +83,7 @@ if __name__ == "__main__":
     grid.set_axis_labels("Relearning epochs", "Accuracy (%)")
     grid.set_titles("{col_name}")
     grid.tight_layout()
-    outname = "z7b-wmdp--selected-defences--relearn-20--epochs-in-dist"
+    outname = "z7b-wmdp--selected-defences--relearn-20--epochs"
     for outdir, extension in [
         ("artifacts/figures", "pdf"),
         ("artifacts/figures-png", "png"),

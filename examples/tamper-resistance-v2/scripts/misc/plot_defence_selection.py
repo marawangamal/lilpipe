@@ -16,250 +16,51 @@ if __name__ == "__main__":
         "--outpath",
         default=(
             "artifacts/figures/"
-            "z7b-wmdp-mmlu--gd-sam--relearn-20--utility-robustness-in-dist.pdf"
+            "z7b-wmdp-mmlu--gd-sam--relearn-20--utility-robustness.pdf"
         ),
     )
     args = parser.parse_args()
 
-    rootdir = "artifacts/tamia/results-in-distribution"
-    configs = [
+    rootdir = "artifacts/tamia/results"
+    configs = []
+    for method, directory in [("GD", "z7b-gd"), ("GD+SAM", "z7b-gd-sam")]:
+        for lr in ["1e-6", "2e-6", "5e-6"]:
+            for retain in ["1.0", "1.5", "2.0"]:
+                configs.append(
+                    {
+                        "path": f"{rootdir}/{directory}/sweeps/unlearn-lr{lr}-ret{retain}",
+                        "name": f"LR {lr}, retain {retain}",
+                        "method": method,
+                    }
+                )
+    for lr in ["1e-6", "2e-6", "5e-6"]:
+        for coeff in ["0.0", "1.0"]:
+            path = f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr{lr}-ret0.1-gma{coeff}"
+            if not osp.isdir(path):
+                continue
+            configs.append(
+                {
+                    "path": path,
+                    "name": f"LR {lr}, retain 0.1, GMA {coeff}",
+                    "method": "GD (FP32)" if coeff == "0.0" else "GD+GMA (FP32)",
+                }
+            )
+    configs.append(
         {
-            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr1e-6-ret1.0",
-            "name": "LR 1e-6, retain 1.0",
-            "method": "GD+SAM",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr1e-6-ret1.5",
-            "name": "LR 1e-6, retain 1.5",
-            "method": "GD+SAM",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr1e-6-ret2.0",
-            "name": "LR 1e-6, retain 2.0",
-            "method": "GD+SAM",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr5e-6-ret1.0",
-            "name": "LR 5e-6, retain 1.0",
-            "method": "GD+SAM",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr5e-6-ret1.5",
-            "name": "LR 5e-6, retain 1.5",
-            "method": "GD+SAM",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-sam/sweeps/unlearn-lr5e-6-ret2.0",
-            "name": "LR 5e-6, retain 2.0",
-            "method": "GD+SAM",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr1e-6-ret1.0",
-            "name": "LR 1e-6, retain 1.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr1e-6-ret1.5",
-            "name": "LR 1e-6, retain 1.5",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr1e-6-ret2.0",
-            "name": "LR 1e-6, retain 2.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr5e-6-ret1.0",
-            "name": "LR 5e-6, retain 1.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr5e-6-ret1.5",
-            "name": "LR 5e-6, retain 1.5",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr5e-6-ret2.0",
-            "name": "LR 5e-6, retain 2.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2e-6-ret1.0",
-            "name": "LR 2e-6, retain 1.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.0-gma1.0",
-            "name": "LR 1e-6, retain 1.0, GMA 1.0",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.0-gma2.0",
-            "name": "LR 1e-6, retain 1.0, GMA 2.0",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.0-gma5.0",
-            "name": "LR 1e-6, retain 1.0, GMA 5.0",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.5-gma1.0",
-            "name": "LR 1e-6, retain 1.5, GMA 1.0",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.5-gma2.0",
-            "name": "LR 1e-6, retain 1.5, GMA 2.0",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.5-gma5.0",
-            "name": "LR 1e-6, retain 1.5, GMA 5.0",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret2.0-gma1.0",
-            "name": "LR 1e-6, retain 2.0, GMA 1.0",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2e-6-ret1.5",
-            "name": "LR 2e-6, retain 1.5",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2e-6-ret2.0",
-            "name": "LR 2e-6, retain 2.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret2.0-gma2.0",
-            "name": "LR 1e-6, retain 2.0, GMA 2.0",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret2.0-gma5.0",
-            "name": "LR 1e-6, retain 2.0, GMA 5.0",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr3e-6-ret1.0",
-            "name": "LR 3e-6, retain 1.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr3e-6-ret1.5",
-            "name": "LR 3e-6, retain 1.5",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr3e-6-ret2.0",
-            "name": "LR 3e-6, retain 2.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr5e-6-ret1.0-gma1.0",
-            "name": "LR 5e-6, retain 1.0, GMA 1.0",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr5e-6-ret1.0-gma2.0",
-            "name": "LR 5e-6, retain 1.0, GMA 2.0",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2.5e-6-ret1.0",
-            "name": "LR 2.5e-6, retain 1.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma-fp32/sweeps/unlearn-lr1e-6-ret2.0-gma0.0",
-            "name": "LR 1e-6, retain 2.0",
-            "method": "GD (FP32)",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2.5e-6-ret1.5",
-            "name": "LR 2.5e-6, retain 1.5",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr3e-6-ret1.5-gma0.01",
-            "name": "LR 3e-6, retain 1.5, GMA 0.01",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2.5e-6-ret2.0",
-            "name": "LR 2.5e-6, retain 2.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2.75e-6-ret1.0",
-            "name": "LR 2.75e-6, retain 1.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma-fp32/sweeps/unlearn-lr1e-6-ret2.0-gma1.0",
-            "name": "LR 1e-6, retain 2.0, GMA 1.0",
-            "method": "GD+GMA (FP32)",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2.75e-6-ret1.5",
-            "name": "LR 2.75e-6, retain 1.5",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr3e-6-ret1.5-gma0.1",
-            "name": "LR 3e-6, retain 1.5, GMA 0.1",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2.75e-6-ret2.0",
-            "name": "LR 2.75e-6, retain 2.0",
-            "method": "GD",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr3e-6-ret1.5-gma0.003",
-            "name": "LR 3e-6, retain 1.5, GMA 0.003",
-            "method": "GD+GMA",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma-fp32/sweeps/unlearn-lr1e-6-ret4.0-gma0.0",
-            "name": "LR 1e-6, retain 4.0",
-            "method": "GD (FP32)",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma-fp32/sweeps/unlearn-lr1e-6-ret2.0-gma0.1",
-            "name": "LR 1e-6, retain 2.0, GMA 0.1",
-            "method": "GD+GMA (FP32)",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma-fp32/sweeps/unlearn-lr1e-6-ret4.0-gma1.0",
-            "name": "LR 1e-6, retain 4.0, GMA 1.0",
-            "method": "GD+GMA (FP32)",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma-fp32/sweeps/unlearn-lr1e-6-ret2.0-gma0.3",
-            "name": "LR 1e-6, retain 2.0, GMA 0.3",
-            "method": "GD+GMA (FP32)",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma-fp32/sweeps/unlearn-lr2e-6-ret2.0-gma1.0",
-            "name": "LR 2e-6, retain 2.0, GMA 1.0",
-            "method": "GD+GMA (FP32)",
-        },
-        {
-            "path": f"{rootdir}/z7b-gd-gma-fp32/sweeps/unlearn-lr1e-6-ret2.0-gma0.5",
-            "name": "LR 1e-6, retain 2.0, GMA 0.5",
-            "method": "GD+GMA (FP32)",
-        },
-        {"path": f"{rootdir}/z7b", "name": "Base model", "method": "Base"},
-    ]
+            "path": "artifacts/tamia/results-in-distribution/z7b",
+            "name": "Base model",
+            "method": "Base",
+        }
+    )
 
     rows = []
     for cfg in configs:
         evaluations = []
-        paths = [cfg["path"], *sorted(glob.glob(cfg["path"] + "--relearn-*"))]
+        paths = [cfg["path"]]
+        if cfg["method"] != "Base":
+            paths += [
+                f"{cfg['path']}--relearn-lr1e-5-epochs{epoch}" for epoch in [1, 2, 3]
+            ]
         for path in paths:
             files = glob.glob(
                 osp.join(path, "**", "results_*.json"),
@@ -323,6 +124,10 @@ if __name__ == "__main__":
         ax.set_ylabel(f"WMDP ({stage}, worst-case)")
         ax.yaxis.label.set_visible(True)
     grid.tight_layout()
-    os.makedirs(osp.dirname(args.outpath) or ".", exist_ok=True)
-    grid.figure.savefig(args.outpath, bbox_inches="tight")
-    print(args.outpath)
+    pngpath = osp.join(
+        "artifacts/figures-png", osp.splitext(osp.basename(args.outpath))[0] + ".png"
+    )
+    for outpath in [args.outpath, pngpath]:
+        os.makedirs(osp.dirname(outpath) or ".", exist_ok=True)
+        grid.figure.savefig(outpath, dpi=300, bbox_inches="tight")
+        print(outpath)
