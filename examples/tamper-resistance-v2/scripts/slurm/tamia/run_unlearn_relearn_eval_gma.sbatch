@@ -49,11 +49,11 @@ UV_PROJECT_ENVIRONMENT="$train_env" uv sync --frozen --group train
 UV_PROJECT_ENVIRONMENT="$eval_env" uv sync --frozen --group eval
 
 
-read -r -a defence_learning_rates <<< "${DEFENCE_LEARNING_RATES:-1e-6 5e-6 1e-5}"
+defence_learning_rates=(1e-6 2e-6 5e-6)
+defence_retain_coefficients=(0.1)
+defence_gma_coefficients=(0.0 1.0)
 attack_learning_rates=(1e-5)
 attack_epochs=(1 2 3)
-read -r -a defence_retain_coefficients <<< "${DEFENCE_RETAIN_COEFFICIENTS:-1.0 1.5 2.0}"
-read -r -a defence_gma_coefficients <<< "${DEFENCE_GMA_COEFFICIENTS:-1.0 2.0 5.0}"
 
 for defence_lr in "${defence_learning_rates[@]}"; do
   for defence_retain_coefficient in "${defence_retain_coefficients[@]}"; do
