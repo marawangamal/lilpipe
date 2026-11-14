@@ -83,6 +83,46 @@ if __name__ == "__main__":
             "name": "LR 5e-6, retain 2.0",
             "method": "GD",
         },
+        {
+            "path": f"{rootdir}/z7b-gd/sweeps/unlearn-lr2e-6-ret1.0",
+            "name": "LR 2e-6, retain 1.0",
+            "method": "GD",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.0-gma1.0",
+            "name": "LR 1e-6, retain 1.0, GMA 1.0",
+            "method": "GD+GMA",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.0-gma2.0",
+            "name": "LR 1e-6, retain 1.0, GMA 2.0",
+            "method": "GD+GMA",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.0-gma5.0",
+            "name": "LR 1e-6, retain 1.0, GMA 5.0",
+            "method": "GD+GMA",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.5-gma1.0",
+            "name": "LR 1e-6, retain 1.5, GMA 1.0",
+            "method": "GD+GMA",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.5-gma2.0",
+            "name": "LR 1e-6, retain 1.5, GMA 2.0",
+            "method": "GD+GMA",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret1.5-gma5.0",
+            "name": "LR 1e-6, retain 1.5, GMA 5.0",
+            "method": "GD+GMA",
+        },
+        {
+            "path": f"{rootdir}/z7b-gd-gma/sweeps/unlearn-lr1e-6-ret2.0-gma1.0",
+            "name": "LR 1e-6, retain 2.0, GMA 1.0",
+            "method": "GD+GMA",
+        },
         {"path": f"{rootdir}/z7b", "name": "Base model", "method": "Base"},
     ]
 
@@ -129,7 +169,7 @@ if __name__ == "__main__":
         x="MMLU",
         y="WMDP",
         hue="Method",
-        palette={"GD+SAM": "C0", "GD": "C1", "Base": "black"},
+        palette={"GD+SAM": "C0", "GD": "C1", "GD+GMA": "C2", "Base": "black"},
         style="Config",
         col="Stage",
         col_order=["pre-attack", "post-attack"],
