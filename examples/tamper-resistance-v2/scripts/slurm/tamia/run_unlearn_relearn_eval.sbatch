@@ -49,7 +49,7 @@ UV_PROJECT_ENVIRONMENT="$train_env" uv sync --frozen --group train
 UV_PROJECT_ENVIRONMENT="$eval_env" uv sync --frozen --group eval
 
 
-defence_learning_rates=(1e-6 5e-6)
+defence_learning_rates=(1e-6 2e-6 5e-6)
 attack_learning_rates=(1e-5)
 attack_epochs=(1 2 3)
 defence_retain_coefficients=(1.0 1.5 2.0)
@@ -59,6 +59,31 @@ for defence_lr in "${defence_learning_rates[@]}"; do
     sweep_name="unlearn-lr${defence_lr}-ret${defence_retain_coefficient}"
     ckpt_dir="./artifacts/tamia/models/${model_name}/sweeps/$sweep_name"
     results_dir="./artifacts/tamia/results/${model_name}/sweeps/$sweep_name"
+
+    # ================================================================================
+    # Resumption handling. Skip iff every attack config for this defence exists
+    skip_defence=true
+    for attack_lr in "${attack_learning_rates[@]}"; do
+      for epochs in "${attack_epochs[@]}"; do
+        attack_results_dir="${results_dir}--relearn-lr${attack_lr}-epochs${epochs}"
+        if [[ -z "$(find "$attack_results_dir" -type f \
+          -name 'results_*.json' -print -quit 2>/dev/null)" ]]; then
+          skip_defence=false
+        fi
+      done
+    done
+
+    if "$skip_defence"; then
+      echo "Skipping completed defence: $sweep_name"
+      continue
+    fi
+
+    # Restart this defence and all its attacks from scratch.
+    rm -rf -- \
+      "$ckpt_dir" "$results_dir" \
+      "${ckpt_dir}"--relearn-* \
+      "${results_dir}"--relearn-*
+    # ================================================================================
 
     # Defence.
     "$train_env/bin/python" -m axolotl.cli.train "$defence_config" \
