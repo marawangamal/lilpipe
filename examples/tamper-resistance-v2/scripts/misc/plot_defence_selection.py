@@ -23,7 +23,12 @@ if __name__ == "__main__":
 
     rootdir = "artifacts/tamia/results"
     configs = []
-    for method, directory in [("GD", "z7b-gd"), ("GD+SAM", "z7b-gd-sam")]:
+    for method, directory in [
+        ("GD", "z7b-gd"),
+        ("GD+SAM", "z7b-gd-sam"),
+        ("NPO", "z7b-npo"),
+        ("NPO+SAM", "z7b-npo-sam"),
+    ]:
         for lr in ["1e-6", "2e-6", "5e-6"]:
             for retain in ["1.0", "1.5", "2.0"]:
                 configs.append(
@@ -106,6 +111,8 @@ if __name__ == "__main__":
             "GD+GMA": "C2",
             "GD (FP32)": "C3",
             "GD+GMA (FP32)": "C4",
+            "NPO": "C5",
+            "NPO+SAM": "C6",
             "Base": "black",
         },
         style="Config",

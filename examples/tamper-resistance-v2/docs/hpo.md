@@ -49,10 +49,13 @@ them; OPTML's defence-data overlap has not been verified.
 |---|---|---|---|---|---:|
 | GD | BF16 | 1, 2, 5 | 1, 1.5, 2 | — | 9 |
 | GD+SAM | BF16 | 1, 2, 5 | 1, 1.5, 2 | — | 9 |
+| NPO | BF16 | 1, 2, 5 | 1, 1.5, 2 | — | 9 |
+| NPO+SAM | BF16 | 1, 2, 5 | 1, 1.5, 2 | — | 9 |
 | GD+GMA | FP32 | 1, 2, 5 | 0.1 | 0, 1 | 6 |
 
 - LR values are in units of **10⁻⁶**.
 - SAM uses ρ = 0.01.
+- NPO uses β = 0.0225; NPO+SAM uses β = 0.015.
 - GMA uses finite-difference ε = 0.001; coefficient 0 is the FP32 GD control.
 - All defences use 125 steps.
 
@@ -68,7 +71,19 @@ Worst-case WMDP includes the pre-attack evaluation and all three attacks.
 
 - GD: LR 5e-6, retain 2.0 (BF16; pre-attack MMLU 43.03%, a 15.56-point drop).
 - GD+SAM: LR 5e-6, retain 1.5, ρ = 0.01 (BF16).
+- NPO: LR 5e-6, retain 1.0, β = 0.0225 (BF16).
+- NPO+SAM: LR 1e-6, retain 1.5, β = 0.015, ρ = 0.01 (BF16).
 - GD+GMA: selection pending.
+
+| Method | Pre-attack MMLU-No-Bio | Pre-attack WMDP | Worst-case WMDP |
+|---|---:|---:|---:|
+| NPO | 51.57% | 25.46% | 26.73% |
+| NPO+SAM | 58.62% | 54.95% | 55.88% |
+
+The selected NPO configuration loses 7.02 percentage points of pre-attack MMLU,
+but post-attack MMLU falls to 24–28%, so its low post-attack WMDP coincides with
+broad capability collapse. NPO+SAM provides little unlearning among the eligible
+configurations; its configurations with low WMDP fail the capability constraint.
 
 ### Attacks
 

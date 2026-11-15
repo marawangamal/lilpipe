@@ -22,6 +22,16 @@ if __name__ == "__main__":
             "source": "Ours",
         },
         {
+            "path": f"{rootdir}/z7b-npo/sweeps/unlearn-lr5e-6-ret1.0",
+            "name": "NPO",
+            "source": "Ours",
+        },
+        {
+            "path": f"{rootdir}/z7b-npo-sam/sweeps/unlearn-lr1e-6-ret1.5",
+            "name": "NPO+SAM",
+            "source": "Ours",
+        },
+        {
             "path": "artifacts/tamia/results-in-distribution/OPTML-Group/GradDiff-WMDP",
             "name": "GD",
             "source": "OPTML",
