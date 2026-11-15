@@ -6,6 +6,7 @@ from torch.func import functional_call
 from axolotl.core.trainers.base import AxolotlTrainer
 
 from trainers.ul_gd import GDTrainer
+from trainers.ul_npo import NPOTrainer
 from trainers.utils import BalancedSampler, dict_dot
 
 INP_FIELDS = ("input_ids", "attention_mask", "labels")
@@ -102,4 +103,8 @@ class SAMBaseTrainer(AxolotlTrainer):
 
 
 class SAMGDTrainer(SAMBaseTrainer, GDTrainer):
+    pass
+
+
+class SAMNPOTrainer(SAMBaseTrainer, NPOTrainer):
     pass
