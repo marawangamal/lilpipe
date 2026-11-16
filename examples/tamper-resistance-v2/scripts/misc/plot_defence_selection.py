@@ -13,6 +13,10 @@ import seaborn as sns
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--rootdir", default="artifacts/tamia/results-out-of-distribution"
+    )
+    parser.add_argument("--attack-lrs", nargs="+", default=["1e-5"])
+    parser.add_argument(
         "--outpath",
         default=(
             "artifacts/figures/"
@@ -21,7 +25,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    rootdir = "artifacts/tamia/results-out-of-distribution"
+    rootdir = args.rootdir
     configs = []
     for method, directory in [
         ("GD", "z7b-gd"),
@@ -29,6 +33,8 @@ if __name__ == "__main__":
         ("NPO", "z7b-npo"),
         ("NPO+SAM", "z7b-npo-sam"),
     ]:
+        if not osp.isdir(osp.join(rootdir, directory)):
+            continue
         for lr in ["1e-6", "2e-6", "5e-6"]:
             for retain in ["1.0", "1.5", "2.0"]:
                 configs.append(
@@ -64,7 +70,9 @@ if __name__ == "__main__":
         paths = [cfg["path"]]
         if cfg["method"] != "Base":
             paths += [
-                f"{cfg['path']}--relearn-lr1e-5-epochs{epoch}" for epoch in [1, 2, 3]
+                f"{cfg['path']}--relearn-lr{lr}-epochs{epoch}"
+                for lr in args.attack_lrs
+                for epoch in [1, 2, 3]
             ]
         for path in paths:
             files = glob.glob(
