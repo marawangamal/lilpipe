@@ -18,7 +18,7 @@ if __name__ == "__main__":
         }
         for name, model, defence in [
             ("GD", "z7b-gd", "unlearn-lr5e-6-ret2.0"),
-            ("GD+SAM", "z7b-gd-sam", "unlearn-lr5e-6-ret1.5"),
+            ("GD+SAM", "z7b-gd-sam", "unlearn-lr3e-6-ret1.5"),
         ]
         for lr in ["1e-6", "1e-5"]
     ]
