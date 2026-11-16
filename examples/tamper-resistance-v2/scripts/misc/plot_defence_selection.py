@@ -21,7 +21,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    rootdir = "artifacts/tamia/results"
+    rootdir = "artifacts/tamia/results-out-of-distribution"
     configs = []
     for method, directory in [
         ("GD", "z7b-gd"),

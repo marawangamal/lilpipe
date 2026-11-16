@@ -92,7 +92,7 @@ each starting from the same defended model.
 
 ### Results
 
-Results are saved under `artifacts/tamia/results/`. Forget and retain datasets
+These results are archived under `artifacts/tamia/results-out-of-distribution/`. Forget and retain datasets
 are shuffled independently before merging, using seed 3. The attack uses the
 first 20 filtered forget documents; shuffling does not enforce disjoint defence
 and attack sets.

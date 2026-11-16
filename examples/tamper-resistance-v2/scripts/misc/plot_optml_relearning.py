@@ -9,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 
 if __name__ == "__main__":
-    rootdir = "artifacts/tamia/results"
+    rootdir = "artifacts/tamia/results-out-of-distribution"
     configs = [
         {
             "path": f"{rootdir}/OPTML-Group/{model}",
