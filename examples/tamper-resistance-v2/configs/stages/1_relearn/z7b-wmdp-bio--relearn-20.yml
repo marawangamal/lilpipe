@@ -6,6 +6,8 @@ datasets:
   message_property_mappings:
     source_id: "0"
     max_samples: "20"
+    sample_pool_size: "500"
+    sample_pool_seed: "3"
 shuffle_merged_datasets: false
 dataset_num_proc: 8
 dataset_prepared_path: artifacts/tamia/cache/axolotl/z7b-relearn-20/prepared
