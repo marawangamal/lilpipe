@@ -1,10 +1,10 @@
-"""Authors-compatible fixed-length WMDP and WikiText tokenization."""
+"""Fixed-length WMDP and WikiText tokenization with padding labels masked."""
 
 from axolotl.prompt_tokenizers import DatasetWrappingStrategy
 
 
 class BaseDocumentStrategy(DatasetWrappingStrategy):
-    """Match the paper code's padding and language-model labels."""
+    """Tokenize documents and exclude padding from language-model loss."""
 
     def __init__(
         self,
@@ -60,8 +60,10 @@ class BaseDocumentStrategy(DatasetWrappingStrategy):
         return {
             "input_ids": tokens["input_ids"],
             "attention_mask": tokens["attention_mask"],
-            # The authors intentionally compute CE on padded EOS positions.
-            "labels": tokens["input_ids"].copy(),
+            "labels": [
+                token if mask else -100
+                for token, mask in zip(tokens["input_ids"], tokens["attention_mask"])
+            ],
             "source_id": self.source_id,
         }
 
