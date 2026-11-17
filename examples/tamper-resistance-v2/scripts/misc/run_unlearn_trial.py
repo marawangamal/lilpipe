@@ -53,6 +53,35 @@ def training_command(config_path: str) -> list[str]:
     return [sys.executable, "-m", "axolotl.cli.train", config_path]
 
 
+def evaluation_command(
+    accelerate_path: str, model_dir: str, results_dir: str
+) -> list[str]:
+    """Evaluate on one GPU to avoid distributed lm-eval worker stalls."""
+    return [
+        accelerate_path,
+        "launch",
+        "--num_processes",
+        "1",
+        "--gpu_ids",
+        "0",
+        "-m",
+        "lm_eval",
+        "run",
+        "--model",
+        "hf",
+        "--model_args",
+        f"pretrained={model_dir},dtype=bfloat16,trust_remote_code=True",
+        "--include_path",
+        "lm_eval_tasks",
+        "--tasks",
+        "mmlu_no_bio,wmdp_bio_robust",
+        "--batch_size",
+        "32",
+        "--output_path",
+        results_dir,
+    ]
+
+
 if __name__ == "__main__":
     import wandb
 
@@ -94,24 +123,13 @@ if __name__ == "__main__":
         finally:
             os.unlink(generated_config)
 
-        # fmt: off
         subprocess.run(
-            [
-                args.eval_accelerate, "launch",
-                "--multi_gpu",
-                "--num_processes", "4",
-                "-m", "lm_eval", "run",
-                "--model", "hf",
-                "--model_args", f"pretrained={defence_model_dir},dtype=bfloat16,trust_remote_code=True",
-                "--include_path", "lm_eval_tasks",
-                "--tasks", "mmlu_no_bio,wmdp_bio_robust",
-                "--batch_size", "32",
-                "--output_path", defence_results_dir,
-            ],
+            evaluation_command(
+                args.eval_accelerate, defence_model_dir, defence_results_dir
+            ),
             env=env,
             check=True,
         )
-        # fmt: on
 
         files = glob.glob(
             f"{defence_results_dir}/**/results_*.json",

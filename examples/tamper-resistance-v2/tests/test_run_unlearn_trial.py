@@ -48,3 +48,21 @@ def test_training_command_uses_single_python_process():
         "axolotl.cli.train",
         "trial.yml",
     ]
+
+
+def test_evaluation_command_uses_one_gpu_process():
+    command = run_unlearn_trial.evaluation_command(
+        "/eval/bin/accelerate", "model", "results"
+    )
+
+    assert command[:7] == [
+        "/eval/bin/accelerate",
+        "launch",
+        "--num_processes",
+        "1",
+        "--gpu_ids",
+        "0",
+        "-m",
+    ]
+    assert "--multi_gpu" not in command
+    assert command[-2:] == ["--output_path", "results"]
