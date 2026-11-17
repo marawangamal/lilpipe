@@ -1,5 +1,6 @@
 import importlib.util
 from pathlib import Path
+import sys
 
 import yaml
 
@@ -38,3 +39,12 @@ def test_trial_config_applies_sampled_values_without_mutating_source(tmp_path):
     assert config["output_dir"] == "sampled-model"
     assert config["wandb_name"] == "sampled-run"
     assert source.read_text() == original
+
+
+def test_training_command_uses_single_python_process():
+    assert run_unlearn_trial.training_command("trial.yml") == [
+        sys.executable,
+        "-m",
+        "axolotl.cli.train",
+        "trial.yml",
+    ]

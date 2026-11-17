@@ -7,6 +7,7 @@ import os
 import os.path as osp
 import shutil
 import subprocess
+import sys
 import tempfile
 
 import yaml
@@ -47,6 +48,11 @@ def write_trial_config(config: dict) -> str:
         return handle.name
 
 
+def training_command(config_path: str) -> list[str]:
+    """Run Axolotl in-process so the config's four-GPU device map is retained."""
+    return [sys.executable, "-m", "axolotl.cli.train", config_path]
+
+
 if __name__ == "__main__":
     import wandb
 
@@ -83,7 +89,7 @@ if __name__ == "__main__":
 
         try:
             subprocess.run(
-                ["axolotl", "train", generated_config], env=env, check=True
+                training_command(generated_config), env=env, check=True
             )
         finally:
             os.unlink(generated_config)
