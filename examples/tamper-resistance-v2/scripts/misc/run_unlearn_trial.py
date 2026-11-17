@@ -7,10 +7,49 @@ import os
 import os.path as osp
 import shutil
 import subprocess
+import tempfile
 
-import wandb
+import yaml
+
+
+def trial_config(
+    defence_config: str,
+    *,
+    learning_rate: float,
+    coeff_retain: float,
+    rho: float,
+    output_dir: str,
+    wandb_name: str,
+) -> dict:
+    """Return an Axolotl config with the sampled trial settings applied."""
+    with open(defence_config) as handle:
+        config = yaml.safe_load(handle)
+    if not isinstance(config, dict):
+        raise ValueError(f"Expected a mapping in defence config: {defence_config}")
+    custom_args = config.get("custom_trainer_args")
+    if not isinstance(custom_args, dict):
+        raise ValueError("Defence config must define custom_trainer_args")
+
+    config["learning_rate"] = learning_rate
+    custom_args["coeff_retain"] = coeff_retain
+    custom_args["rho"] = rho
+    config["output_dir"] = output_dir
+    config["wandb_name"] = wandb_name
+    return config
+
+
+def write_trial_config(config: dict) -> str:
+    """Write a generated Axolotl trial config and return its temporary path."""
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".yml", delete=False, encoding="utf-8"
+    ) as handle:
+        yaml.safe_dump(config, handle, sort_keys=False)
+        return handle.name
+
 
 if __name__ == "__main__":
+    import wandb
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--defence_config", required=True)
     parser.add_argument("--model_name", required=True)
@@ -31,20 +70,25 @@ if __name__ == "__main__":
 
         # Only the trial process logs to W&B.
         env = dict(os.environ, WANDB_MODE="disabled")
+        generated_config = write_trial_config(
+            trial_config(
+                args.defence_config,
+                learning_rate=args.learning_rate,
+                coeff_retain=args.coeff_retain,
+                rho=args.rho,
+                output_dir=defence_model_dir,
+                wandb_name=run.name,
+            )
+        )
+
+        try:
+            subprocess.run(
+                ["axolotl", "train", generated_config], env=env, check=True
+            )
+        finally:
+            os.unlink(generated_config)
 
         # fmt: off
-        subprocess.run(
-            [
-                "axolotl", "train", args.defence_config,
-                "--learning_rate", str(args.learning_rate),
-                "--custom_trainer_args__coeff_retain", str(args.coeff_retain),
-                "--custom_trainer_args__rho", str(args.rho),
-                "--output_dir", defence_model_dir,
-                "--wandb_name", run.name,
-            ],
-            env=env,
-            check=True,
-        )
         subprocess.run(
             [
                 args.eval_accelerate, "launch",
