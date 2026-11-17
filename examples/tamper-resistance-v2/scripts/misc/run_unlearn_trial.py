@@ -22,7 +22,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     with wandb.init(config=vars(args)) as run:
-        defence_model_name = f"{args.model_name}/sweeps/{run.id}"
+        defence_model_name = f"{args.model_name}/sweeps/{run.sweep_id}/{run.id}"
         defence_model_dir = f"./artifacts/tamia/models/{defence_model_name}"
         defence_results_dir = f"./artifacts/tamia/results/{defence_model_name}"
         if osp.exists(defence_model_dir) or osp.exists(defence_results_dir):

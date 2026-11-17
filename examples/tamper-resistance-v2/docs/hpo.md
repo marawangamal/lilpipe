@@ -3,7 +3,7 @@
 ## W&B sweeps
 
 The Bayesian GD+SAM sweep searches defence LR from 2.5e-6 to 5e-6 and retain
-coefficient from 1.0 to 2.0, with ρ fixed at 0.01. It minimizes pre-attack WMDP
+coefficient from 1.0 to 2.0, with ρ chosen from {0.01, 0.1}. It minimizes pre-attack WMDP
 accuracy subject to pre-attack MMLU-No-Bio of at least 42.5873%. Ineligible trials
 receive objective `1 + (minimum MMLU - observed MMLU)`; eligible trials use WMDP
 accuracy. All accuracies are fractions, so ineligible trials rank worse.
@@ -13,7 +13,7 @@ From the example root, create a sweep and run up to 10 trials:
 ```bash
 mkdir -p artifacts/tamia/logs
 sbatch --partition=gpubase_bynode_b1 scripts/slurm/tamia/run_wandb_sweep.sbatch \
-  configs/sweeps/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2.yml 10
+  configs/sweeps/z7b-wmdp-bio--unlearn-fft-gd-sam.yml 10
 ```
 
 The job prints its sweep ID. Pass that `entity/project/sweep-id` instead of the
@@ -24,7 +24,8 @@ executable is passed with `--eval_accelerate`, resolved from each job's evaluati
 environment by the sweep command. Each trial evaluates the defended
 model; relearning attacks are separate.
 
-Models and evaluations use `artifacts/tamia/{models,results}/<model-name>/sweeps/<run-id>/`.
+Models and evaluations use
+`artifacts/tamia/{models,results}/<model-name>/sweeps/<sweep-id>/<run-id>/`.
 The sweep run records final metrics and HPs in `lp-tamper-resistance-v2`; child
 training runs have W&B disabled to avoid reusing the sweep run ID. Model weights
 are removed after successful evaluation, while evaluation JSONs are kept.

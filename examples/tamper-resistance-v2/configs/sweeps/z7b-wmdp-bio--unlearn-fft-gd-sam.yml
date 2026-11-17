@@ -1,4 +1,4 @@
-name: z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2
+name: z7b-wmdp-bio--unlearn-fft-gd-sam
 entity: marawan-gamal
 project: lp-tamper-resistance-v2
 program: scripts/misc/run_unlearn_trial.py
@@ -17,7 +17,7 @@ parameters:
   defence_config:
     value: configs/stages/0_unlearn/z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2.yml
   model_name:
-    value: z7b-wmdp-bio--unlearn-fft-gd-sam-rho1e-2
+    value: z7b-wmdp-bio--unlearn-fft-gd-sam
   learning_rate:
     distribution: log_uniform_values
     min: 2.5e-6
@@ -27,6 +27,6 @@ parameters:
     min: 1.0
     max: 2.0
   rho:
-    value: 0.01
+    values: [0.01, 0.1]
   min_mmlu:
     value: 0.425873
