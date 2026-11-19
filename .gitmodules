@@ -4,3 +4,6 @@
 [submodule "examples/vision_relearning"]
 	path = examples/vision_relearning
 	url = https://github.com/marawangamal/vision_relearning.git
+[submodule "examples/tamper-resistance-v2"]
+	path = examples/tamper-resistance-v2
+	url = https://github.com/marawangamal/tamper-resistance.git

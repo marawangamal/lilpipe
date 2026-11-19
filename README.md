@@ -123,6 +123,19 @@ lilpipe results configs/results/main.yml --format json
 - [Minimal example](examples/minimal): the canonical tutorial project.
 - [Weight steering](examples/weight-steering) and
   [tamper resistance](examples/tamper-resistance): maintained research examples.
+- [Tamper resistance v2](examples/tamper-resistance-v2): standalone unlearning and
+  relearning workflows, maintained in
+  [marawangamal/tamper-resistance](https://github.com/marawangamal/tamper-resistance)
+  and pinned here as a Git submodule.
+
+Initialize the tamper-resistance v2 example before using it:
+
+```sh
+git submodule update --init examples/tamper-resistance-v2
+cd examples/tamper-resistance-v2
+```
+
+Follow its README to install the separate training and evaluation environments.
 
 ## Example project
 
